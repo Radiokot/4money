@@ -1,0 +1,24 @@
+.gradle
+/local.properties
+local.properties
+/build
+/captures
+.externalNativeBuild
+.cxx
+*.log
+*.jks
+
+# IntelliJ
+*.iml
+.idea/
+/workspace.xml
+
+# MacOS
+.DS_Store
+*/.DS_Store
+
+# Built application files
+*.apk
+*.aab
+app/release*/
+app/debug*/
