@@ -19,12 +19,64 @@
 
 package ua.com.radiokot.money.uikit
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.sp
+import java.util.Locale
 
 @Composable
-@Preview
-fun AccountListHeader() {
-    BasicText(text = "Hello world!")
+fun AccountListHeader(
+    title: String,
+    amount: ViewAmount,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        BasicText(
+            text = title,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = TextStyle(
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            modifier = Modifier
+                .weight(1f),
+        )
+
+        BasicText(
+            text = amount.format(Locale.ROOT),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = TextStyle(
+                fontSize = 16.sp,
+            ),
+        )
+    }
 }
+
+@Composable
+@Preview(
+    widthDp = 140,
+)
+fun AccountListHeaderPreview(
+    @PreviewParameter(ViewAmountPreviewParameterProvider::class) amount: ViewAmount,
+) {
+    AccountListHeader(
+        title = "Savings",
+        amount = amount,
+    )
+}
+
