@@ -19,30 +19,28 @@
 
 package ua.com.radiokot.money.uikit
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
 
 @Composable
-fun AccountListHeader(
+fun AccountListItem(
     title: String,
-    amount: ViewAmount,
+    balance: ViewAmount,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Column(
         modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
     ) {
         BasicText(
             text = title,
@@ -50,14 +48,13 @@ fun AccountListHeader(
             overflow = TextOverflow.Ellipsis,
             style = TextStyle(
                 fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            ),
-            modifier = Modifier
-                .weight(1f),
+            )
         )
 
+        Spacer(modifier = Modifier.height(4.dp))
+
         BasicText(
-            text = amount.format(Locale.ROOT),
+            text = balance.format(Locale.ROOT),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             style = TextStyle(
@@ -69,14 +66,13 @@ fun AccountListHeader(
 
 @Composable
 @Preview(
-    widthDp = 140,
+    widthDp = 200,
 )
-fun AccountListHeaderPreview(
-    @PreviewParameter(ViewAmountPreviewParameterProvider::class) amount: ViewAmount,
+private fun AccountListItemPreview(
+    @PreviewParameter(ViewAmountPreviewParameterProvider::class) balance: ViewAmount,
 ) {
-    AccountListHeader(
-        title = "Savings",
-        amount = amount,
+    AccountListItem(
+        title = "Melting cube bank – Visa 4422",
+        balance = balance,
     )
 }
-

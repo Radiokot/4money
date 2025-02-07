@@ -26,11 +26,19 @@ class ViewAmountPreviewParameterProvider : PreviewParameterProvider<ViewAmount> 
                     symbol = "₿",
                     precision = 8,
                 ),
-            ), ViewAmount(
+            ),
+            ViewAmount(
                 value = BigInteger("210"),
                 currency = ViewCurrency(
                     symbol = "sat",
                     precision = 0,
+                ),
+            ),
+            ViewAmount(
+                value = BigInteger("0"),
+                currency = ViewCurrency(
+                    symbol = "г",
+                    precision = 2,
                 ),
             )
         )
