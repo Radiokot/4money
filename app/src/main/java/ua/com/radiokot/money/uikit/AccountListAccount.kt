@@ -54,7 +54,7 @@ fun AccountListItem(
         Spacer(modifier = Modifier.height(4.dp))
 
         BasicText(
-            text = balance.format(Locale.ROOT),
+            text = balance.format(Locale.getDefault()),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             style = TextStyle(

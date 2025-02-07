@@ -57,7 +57,7 @@ fun AccountListHeader(
         )
 
         BasicText(
-            text = amount.format(Locale.ROOT),
+            text = amount.format(Locale.getDefault()),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             style = TextStyle(
