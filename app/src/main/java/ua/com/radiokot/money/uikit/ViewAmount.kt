@@ -19,6 +19,12 @@
 
 package ua.com.radiokot.money.uikit
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.sp
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.Locale
@@ -33,8 +39,30 @@ class ViewAmount(
     val decimalValue: BigDecimal =
         value.toBigDecimal().movePointLeft(currency.precision)
 
-    fun format(locale: Locale): String =
-        currency.getAmountFormat(locale).format(decimalValue)
+    fun format(locale: Locale): AnnotatedString = buildAnnotatedString {
+        withStyle(
+            style = SpanStyle(
+                color = when (value.signum()) {
+                    1 -> Color.Black
+                    -1 -> Color.Red
+                    else -> Color.LightGray
+                }
+            )
+        ) {
+            val plainString = currency.getAmountFormat(locale).format(decimalValue)
+            val currencySymbolStartIndex = plainString.indexOf(currency.symbol)
+
+            append(plainString)
+
+            addStyle(
+                style = SpanStyle(
+                    fontSize = 13.sp,
+                ),
+                start = currencySymbolStartIndex,
+                end = currencySymbolStartIndex + currency.symbol.length,
+            )
+        }
+    }
 
     override fun toString(): String =
         "${decimalValue.toPlainString()} ${currency.symbol}"

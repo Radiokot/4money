@@ -40,6 +40,13 @@ class ViewAmountPreviewParameterProvider : PreviewParameterProvider<ViewAmount> 
                     symbol = "г",
                     precision = 2,
                 ),
-            )
+            ),
+            ViewAmount(
+                value = BigInteger("-5000"),
+                currency = ViewCurrency(
+                    symbol = "$",
+                    precision = 2,
+                ),
+            ),
         )
 }
