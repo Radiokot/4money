@@ -53,6 +53,12 @@ dependencies {
     implementation libs.androidx.compose.ui.tooling.preview
     debugImplementation libs.androidx.compose.ui.tooling
 
+    Provider koinBom = platform(libs.koin.bom)
+    implementation koinBom
+    implementation libs.koin.android
+    implementation libs.koin.core
+    implementation libs.koin.core.viewmodel
+
     testImplementation libs.junit
 
     androidTestImplementation composeBom

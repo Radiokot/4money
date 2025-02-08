@@ -3,13 +3,18 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:name=".MoneyApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
-        tools:targetApi="31" />
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+        tools:targetApi="31">
 
+        <activity
+            android:name=".accounts.view.AccountsActivity"
+            android:exported="true" />
+    </application>
 </manifest>

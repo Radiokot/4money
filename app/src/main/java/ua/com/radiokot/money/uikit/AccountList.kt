@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.uikit
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -51,6 +52,7 @@ fun AccountList(
                             .padding(
                                 vertical = 12.dp,
                             )
+                            .fillMaxWidth()
                     )
                 }
 
@@ -65,6 +67,7 @@ fun AccountList(
                             .padding(
                                 vertical = 4.dp,
                             )
+                            .fillMaxWidth()
                     )
                 }
             }

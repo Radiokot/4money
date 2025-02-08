@@ -20,15 +20,17 @@
 package ua.com.radiokot.money.accounts.view
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.uikit.ViewAccountListItem
 
-class AccountsScreenViewModel(
+class AccountsViewModel(
     private val accountRepository: AccountRepository,
 ) : ViewModel() {
 
@@ -39,11 +41,12 @@ class AccountsScreenViewModel(
         subscribeToAccounts()
     }
 
-    private fun subscribeToAccounts() {
+    private fun subscribeToAccounts() = viewModelScope.launch {
         accountRepository.getAccountsFlow()
             .flowOn(Dispatchers.Default)
             .map { accounts ->
                 accounts.map(ViewAccountListItem::Account)
             }
+            .collect(_accountListItems)
     }
 }
