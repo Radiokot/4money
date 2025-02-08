@@ -25,6 +25,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
+import ua.com.radiokot.money.currency.data.Currency
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.Locale
@@ -38,6 +39,14 @@ class ViewAmount(
 ) {
     val decimalValue: BigDecimal =
         value.toBigDecimal().movePointLeft(currency.precision)
+
+    constructor(
+        value: BigInteger,
+        currency: Currency,
+    ) : this(
+        value = value,
+        currency = ViewCurrency(currency),
+    )
 
     fun format(locale: Locale): AnnotatedString = buildAnnotatedString {
         withStyle(

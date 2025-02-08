@@ -17,27 +17,13 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.uikit
+package ua.com.radiokot.money.accounts.data
 
-import ua.com.radiokot.money.accounts.data.Account
+import kotlinx.coroutines.flow.Flow
 
-sealed interface ViewAccountListItem {
-    data class Header(
-        val title: String,
-        val amount: ViewAmount,
-    ) : ViewAccountListItem
+interface AccountRepository {
 
-    data class Account(
-        val title: String,
-        val balance: ViewAmount,
-    ) : ViewAccountListItem {
+    suspend fun getAccounts(): List<Account>
 
-        constructor(account: ua.com.radiokot.money.accounts.data.Account) : this(
-            title = account.title,
-            balance = ViewAmount(
-                value = account.balance,
-                currency = account.currency,
-            )
-        )
-    }
+    fun getAccountsFlow(): Flow<List<Account>>
 }
