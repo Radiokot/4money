@@ -14,7 +14,7 @@ class ViewAmountPreviewParameterProvider : PreviewParameterProvider<ViewAmount> 
                 ),
             ),
             ViewAmount(
-                value = BigInteger("567899"),
+                value = BigInteger("567890"),
                 currency = ViewCurrency(
                     symbol = "€",
                     precision = 2,

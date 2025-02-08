@@ -20,9 +20,6 @@
 package ua.com.radiokot.money.uikit
 
 import ua.com.radiokot.money.currency.data.Currency
-import java.text.DecimalFormat
-import java.text.NumberFormat
-import java.util.Locale
 
 class ViewCurrency(
     val symbol: String,
@@ -32,13 +29,4 @@ class ViewCurrency(
         symbol = currency.symbol,
         precision = currency.precision,
     )
-
-    fun getAmountFormat(locale: Locale): NumberFormat =
-        (NumberFormat.getCurrencyInstance(locale) as DecimalFormat).apply {
-            maximumFractionDigits = precision
-            minimumFractionDigits = 0
-            decimalFormatSymbols = decimalFormatSymbols.apply {
-                currencySymbol = symbol
-            }
-        }
 }

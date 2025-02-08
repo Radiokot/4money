@@ -23,11 +23,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import ua.com.radiokot.money.currency.data.Currency
-import java.math.BigDecimal
 import java.math.BigInteger
+import java.text.DecimalFormatSymbols
+import java.text.NumberFormat
 import java.util.Locale
 
 /**
@@ -37,9 +37,6 @@ class ViewAmount(
     val value: BigInteger,
     val currency: ViewCurrency,
 ) {
-    val decimalValue: BigDecimal =
-        value.toBigDecimal().movePointLeft(currency.precision)
-
     constructor(
         value: BigInteger,
         currency: Currency,
@@ -49,7 +46,10 @@ class ViewAmount(
     )
 
     fun format(locale: Locale): AnnotatedString = buildAnnotatedString {
-        withStyle(
+        val precision = currency.precision
+        val (integerPart, decimalPart) = value.divideAndRemainder(BigInteger.TEN.pow(precision))
+
+        pushStyle(
             style = SpanStyle(
                 color = when (value.signum()) {
                     1 -> Color.Black
@@ -57,22 +57,27 @@ class ViewAmount(
                     else -> Color.LightGray
                 }
             )
-        ) {
-            val plainString = currency.getAmountFormat(locale).format(decimalValue)
-            val currencySymbolStartIndex = plainString.indexOf(currency.symbol)
+        )
 
-            append(plainString)
+        append(NumberFormat.getNumberInstance(locale).format(integerPart))
 
-            addStyle(
-                style = SpanStyle(
-                    fontSize = 13.sp,
-                ),
-                start = currencySymbolStartIndex,
-                end = currencySymbolStartIndex + currency.symbol.length,
+        if (decimalPart.signum() != 0) {
+            append(DecimalFormatSymbols.getInstance(locale).decimalSeparator)
+            append(
+                decimalPart.toString()
+                    .padStart(precision, '0')
             )
         }
+
+        pushStyle(
+            style = SpanStyle(
+                fontSize = 13.sp,
+            ),
+        )
+
+        append(" ${currency.symbol}")
     }
 
     override fun toString(): String =
-        "${decimalValue.toPlainString()} ${currency.symbol}"
+        "$value ${currency.symbol}"
 }
