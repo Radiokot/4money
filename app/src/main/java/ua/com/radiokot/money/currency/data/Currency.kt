@@ -19,12 +19,10 @@
 
 package ua.com.radiokot.money.currency.data
 
-import java.math.BigDecimal
-import java.math.BigInteger
+import java.util.UUID
 
 class Currency(
     /**
-     * Identifier of the currency.
      * An [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217#Active_codes_(list_one)) code,
      * or a custom one code.
      */
@@ -38,10 +36,13 @@ class Currency(
     /**
      * Non-negative number of digits after the decimal point,
      * not greater than 18.
-     *
-     * @see getDecimalAmount
      */
-    val precision: Int,
+    val precision: Short,
+
+    /**
+     * A unique identifier of the record.
+     */
+    val id: String = UUID.randomUUID().toString(),
 ) {
     init {
         require(code.isNotEmpty()) {
@@ -57,23 +58,16 @@ class Currency(
         }
     }
 
-    /**
-     * @return decimal representation of the given [amount]
-     * considering currency's [precision].
-     */
-    fun getDecimalAmount(amount: BigInteger): BigDecimal =
-        BigDecimal(amount, precision)
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Currency) return false
 
-        if (code != other.code) return false
+        if (id != other.id) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return code.hashCode()
+        return id.hashCode()
     }
 }

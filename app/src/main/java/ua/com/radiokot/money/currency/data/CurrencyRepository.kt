@@ -17,16 +17,13 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.uikit
+package ua.com.radiokot.money.currency.data
 
-import ua.com.radiokot.money.currency.data.Currency
+import kotlinx.coroutines.flow.Flow
 
-class ViewCurrency(
-    val symbol: String,
-    val precision: Int,
-) {
-    constructor(currency: Currency) : this(
-        symbol = currency.symbol,
-        precision = currency.precision,
-    )
+interface CurrencyRepository {
+
+    suspend fun getCurrencies(): List<Currency>
+
+    fun getCurrenciesFlow(): Flow<List<Currency>>
 }

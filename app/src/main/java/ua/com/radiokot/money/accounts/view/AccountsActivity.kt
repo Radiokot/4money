@@ -40,7 +40,7 @@ import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.uikit.AccountList
 import ua.com.radiokot.money.uikit.ViewAccountListItem
-import ua.com.radiokot.money.uikit.ViewAmount
+import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 
 class AccountsActivity : UserSessionScopeActivity() {

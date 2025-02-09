@@ -27,6 +27,7 @@ android {
 
         buildConfigField 'String', 'SUPABASE_URL', "\"${localProperties.getProperty('supabaseUrl')}\""
         buildConfigField 'String', 'SUPABASE_ANON_KEY', "\"${localProperties.getProperty('supabaseAnonKey')}\""
+        buildConfigField 'String', 'POWERSYNC_URL', "\"${localProperties.getProperty('powerSyncUrl')}\""
         buildConfigField 'String', 'AUTH_TEMP_CREDENTIAL', "\"${localProperties.getProperty('authTempCredential')}\""
 
         resValue 'string', 'uri_scheme', 'money21m'
@@ -76,6 +77,7 @@ dependencies {
 
     implementation libs.powersync.core
     implementation libs.powersync.connector.supabase
+    implementation libs.supabase.postgrest
 
     implementation libs.kotlin.logging
     implementation libs.slf4j.api

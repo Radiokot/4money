@@ -17,7 +17,7 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.uikit
+package ua.com.radiokot.money.currency.view
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -46,7 +46,7 @@ class ViewAmount(
     )
 
     fun format(locale: Locale): AnnotatedString = buildAnnotatedString {
-        val precision = currency.precision
+        val precision = currency.precision.toInt()
         val (integerPart, decimalPart) = value.divideAndRemainder(BigInteger.TEN.pow(precision))
 
         pushStyle(

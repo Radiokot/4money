@@ -24,6 +24,7 @@ import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.FlowType
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.logging.LogLevel
+import io.github.jan.supabase.postgrest.Postgrest
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -48,6 +49,7 @@ val authModule = module {
                 else
                     LogLevel.ERROR
 
+            install(Postgrest)
             install(Auth) {
                 flowType = FlowType.PKCE
                 scheme = androidContext().getString(R.string.uri_scheme)

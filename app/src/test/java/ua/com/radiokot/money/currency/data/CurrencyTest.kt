@@ -21,33 +21,8 @@ package ua.com.radiokot.money.currency.data
 
 import org.junit.Assert
 import org.junit.Test
-import java.math.BigInteger
 
 class CurrencyTest {
-
-    @Test
-    fun getDecimalAmount_IfPositivePrecision() {
-        val currency = Currency(
-            code = "USD",
-            symbol = "$",
-            precision = 2
-        )
-
-        val amount = currency.getDecimalAmount(BigInteger("10012"))
-        Assert.assertEquals("100.12", amount.toPlainString())
-    }
-
-    @Test
-    fun getDecimalAmount_IfZeroPrecision() {
-        val currency = Currency(
-            code = "USD",
-            symbol = "$",
-            precision = 0
-        )
-
-        val amount = currency.getDecimalAmount(BigInteger("100"))
-        Assert.assertEquals("100", amount.toPlainString())
-    }
 
     @Test
     fun equals_IfCodeEquals() {

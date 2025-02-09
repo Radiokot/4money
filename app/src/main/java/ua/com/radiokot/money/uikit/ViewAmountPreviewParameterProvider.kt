@@ -1,6 +1,8 @@
 package ua.com.radiokot.money.uikit
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import ua.com.radiokot.money.currency.view.ViewAmount
+import ua.com.radiokot.money.currency.view.ViewCurrency
 import java.math.BigInteger
 
 class ViewAmountPreviewParameterProvider : PreviewParameterProvider<ViewAmount> {

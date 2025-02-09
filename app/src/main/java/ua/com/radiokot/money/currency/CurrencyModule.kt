@@ -17,32 +17,25 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.accounts
+package ua.com.radiokot.money.currency
 
-import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import ua.com.radiokot.money.accounts.data.AccountRepository
-import ua.com.radiokot.money.accounts.data.MockedAccountRepository
-import ua.com.radiokot.money.accounts.view.AccountsViewModel
 import ua.com.radiokot.money.auth.data.UserSession
-import ua.com.radiokot.money.currency.currencyModule
+import ua.com.radiokot.money.currency.data.CurrencyRepository
+import ua.com.radiokot.money.currency.data.PowerSyncCurrencyRepository
+import ua.com.radiokot.money.powersync.powerSyncModule
 
-val accountsModule = module {
+val currencyModule = module {
     includes(
-        currencyModule,
+        powerSyncModule,
     )
 
     scope<UserSession> {
         scoped {
-            MockedAccountRepository()
-        } bind AccountRepository::class
-
-        viewModel {
-            AccountsViewModel(
-                accountRepository = get(),
-                currencyRepository = get(),
+            PowerSyncCurrencyRepository(
+                database = get(),
             )
-        } bind AccountsViewModel::class
+        } bind CurrencyRepository::class
     }
 }
