@@ -4,6 +4,14 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = project.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
+} else {
+    throw new Exception("Required local properties file is missing: " + localPropertiesFile)
+}
+
 android {
     namespace 'ua.com.radiokot.money'
     compileSdk 35
@@ -16,6 +24,13 @@ android {
         versionName "0.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField 'String', 'SUPABASE_URL', "\"${localProperties.getProperty('supabaseUrl')}\""
+        buildConfigField 'String', 'SUPABASE_ANON_KEY', "\"${localProperties.getProperty('supabaseAnonKey')}\""
+        buildConfigField 'String', 'AUTH_TEMP_CREDENTIAL', "\"${localProperties.getProperty('authTempCredential')}\""
+
+        resValue 'string', 'uri_scheme', 'money21m'
+        resValue 'string', 'auth_uri_host', 'auth'
     }
 
     buildFeatures {
@@ -58,6 +73,9 @@ dependencies {
     implementation libs.koin.android
     implementation libs.koin.core
     implementation libs.koin.core.viewmodel
+
+    implementation libs.powersync.core
+    implementation libs.powersync.connector.supabase
 
     testImplementation libs.junit
 

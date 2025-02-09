@@ -24,6 +24,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
 import ua.com.radiokot.money.accounts.accountsModule
+import ua.com.radiokot.money.auth.authModule
 
 class MoneyApp : Application() {
 
@@ -35,6 +36,7 @@ class MoneyApp : Application() {
             androidContext(this@MoneyApp)
 
             modules(
+                authModule,
                 accountsModule,
             )
         }

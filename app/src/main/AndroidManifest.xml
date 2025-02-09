@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:name=".MoneyApp"
         android:allowBackup="true"
@@ -16,5 +19,27 @@
         <activity
             android:name=".accounts.view.AccountsActivity"
             android:exported="true" />
+
+        <activity
+            android:name=".auth.view.AuthActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="@string/auth_uri_host"
+                    android:scheme="@string/uri_scheme" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>
