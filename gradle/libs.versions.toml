@@ -10,6 +10,9 @@ composeBom = "2025.01.00"
 activity = "1.10.0"
 koin-bom = "4.0.2"
 powersync = "1.0.0-BETA20"
+kotlin-logging = "7.0.3"
+slf4j-api = "2.0.16"
+slf4j-handroid = "2.0.13"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -30,6 +33,9 @@ koin-core = { group = "io.insert-koin", name = "koin-core" }
 koin-core-viewmodel = { group = "io.insert-koin", name = "koin-core-viewmodel" }
 powersync-core = { group = "com.powersync", name = "core", version.ref = "powersync" }
 powersync-connector-supabase = { group = "com.powersync", name = "connector-supabase", version.ref = "powersync" }
+kotlin-logging = { group = "io.github.oshai", name = "kotlin-logging-jvm", version.ref = "kotlin-logging" }
+slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api" }
+slf4j-handroid = { group = "com.gitlab.mvysny.slf4j", name = "slf4j-handroid", version.ref = "slf4j-handroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

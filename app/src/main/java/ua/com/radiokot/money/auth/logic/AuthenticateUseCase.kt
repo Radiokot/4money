@@ -23,23 +23,50 @@ import android.content.Intent
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import ua.com.radiokot.money.auth.data.UserSession
+import ua.com.radiokot.money.lazyLogger
 
 class AuthenticateUseCase(
     private val supabaseClient: SupabaseClient,
+    private val userSessionHolder: UserSessionHolder,
 ) {
+    private val log by lazyLogger("AuthenticateUC")
+
     suspend fun start(
         login: String,
         password: String,
     ): Result<StartResult> = runCatching {
+        log.debug {
+            "start(): starting:" +
+                    "\nlogin=$login," +
+                    "\npassword=$password"
+        }
+
         supabaseClient.auth.signInWith(Email) {
             this.email = login
             this.password = password
         }
 
-        return@runCatching if (supabaseClient.auth.currentSessionOrNull() != null) {
-            StartResult.Done
+        val settledSession = supabaseClient.auth.currentSessionOrNull()
+
+        if (settledSession != null) {
+            log.debug {
+                "start(): done, the session is settled already"
+            }
+
+            userSessionHolder.set(
+                UserSession(
+                    supabaseUserSession = settledSession,
+                )
+            )
+
+            return@runCatching StartResult.Done
         } else {
-            StartResult.Started
+            log.debug {
+                "start(): started, but needs finishing"
+            }
+
+            return@runCatching StartResult.Started
         }
     }
 
@@ -47,14 +74,26 @@ class AuthenticateUseCase(
         resultIntent: Intent,
     ): Result<Boolean> = runCatching {
         val code = resultIntent.data?.getQueryParameter("code")
-            ?: return@runCatching false
+        if (code == null) {
+            log.warn {
+                "finish(): URI has no code"
+            }
 
-        val session = supabaseClient.auth.exchangeCodeForSession(
-            code = code,
-            saveSession = true
+            return@runCatching false
+        }
+
+        userSessionHolder.set(
+            UserSession(
+                supabaseUserSession = supabaseClient.auth.exchangeCodeForSession(
+                    code = code,
+                    saveSession = true,
+                )
+            )
         )
 
-        // TODO handle the user data.
+        log.warn {
+            "finish(): done"
+        }
 
         return@runCatching true
     }

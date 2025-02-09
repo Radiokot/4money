@@ -17,27 +17,18 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.accounts
+package ua.com.radiokot.money.auth.data
 
-import org.koin.core.module.dsl.viewModel
-import org.koin.dsl.bind
-import org.koin.dsl.module
-import ua.com.radiokot.money.accounts.data.AccountRepository
-import ua.com.radiokot.money.accounts.data.MockedAccountRepository
-import ua.com.radiokot.money.accounts.view.AccountsViewModel
-import ua.com.radiokot.money.auth.data.UserSession
+import io.github.jan.supabase.auth.user.UserSession
 
-val accountsModule = module {
-
-    scope<UserSession> {
-        scoped {
-            MockedAccountRepository()
-        } bind AccountRepository::class
-
-        viewModel {
-            AccountsViewModel(
-                accountRepository = get(),
-            )
-        } bind AccountsViewModel::class
-    }
+class UserSession(
+    val userInfo: UserInfo,
+) {
+    constructor(supabaseUserSession: UserSession) : this(
+        userInfo = UserInfo(
+            id = requireNotNull(supabaseUserSession.user?.id) {
+                "The session must not be anonymous"
+            },
+        )
+    )
 }

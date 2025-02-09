@@ -17,27 +17,12 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.accounts
+package ua.com.radiokot.money.auth.logic
 
-import org.koin.core.module.dsl.viewModel
-import org.koin.dsl.bind
-import org.koin.dsl.module
-import ua.com.radiokot.money.accounts.data.AccountRepository
-import ua.com.radiokot.money.accounts.data.MockedAccountRepository
-import ua.com.radiokot.money.accounts.view.AccountsViewModel
 import ua.com.radiokot.money.auth.data.UserSession
 
-val accountsModule = module {
-
-    scope<UserSession> {
-        scoped {
-            MockedAccountRepository()
-        } bind AccountRepository::class
-
-        viewModel {
-            AccountsViewModel(
-                accountRepository = get(),
-            )
-        } bind AccountsViewModel::class
-    }
+interface UserSessionHolder {
+    fun set(session: UserSession)
+    fun clear()
+    val isSet: Boolean
 }

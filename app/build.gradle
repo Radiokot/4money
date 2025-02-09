@@ -77,6 +77,12 @@ dependencies {
     implementation libs.powersync.core
     implementation libs.powersync.connector.supabase
 
+    implementation libs.kotlin.logging
+    implementation libs.slf4j.api
+    implementation(libs.slf4j.handroid) {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+    }
+
     testImplementation libs.junit
 
     androidTestImplementation composeBom

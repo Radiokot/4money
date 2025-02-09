@@ -20,16 +20,27 @@
 package ua.com.radiokot.money
 
 import android.app.Application
+import android.os.Build
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
+import kotlinx.coroutines.runBlocking
+import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
+import org.slf4j.impl.HandroidLoggerAdapter
 import ua.com.radiokot.money.accounts.accountsModule
 import ua.com.radiokot.money.auth.authModule
+import ua.com.radiokot.money.auth.data.UserSession
+import ua.com.radiokot.money.auth.logic.UserSessionHolder
 
 class MoneyApp : Application() {
+    private val log by lazyLogger("App")
 
     override fun onCreate() {
         super.onCreate()
+
+        initLogging()
 
         startKoin {
             androidLogger()
@@ -40,5 +51,42 @@ class MoneyApp : Application() {
                 accountsModule,
             )
         }
+
+        initSessionHolder()
+    }
+
+    private fun initLogging() {
+        HandroidLoggerAdapter.APP_NAME = "4MN"
+        HandroidLoggerAdapter.DEBUG = BuildConfig.DEBUG
+        HandroidLoggerAdapter.ANDROID_API_LEVEL = Build.VERSION.SDK_INT
+    }
+
+    private fun initSessionHolder() {
+        val supabaseSession = runBlocking {
+            get<SupabaseClient>().run {
+                auth.loadFromStorage(
+                    autoRefresh = false,
+                )
+                auth.currentSessionOrNull()
+            }
+        }
+
+        if (supabaseSession == null) {
+            log.debug {
+                "initSessionHolder(): no stored session found"
+            }
+            return
+        }
+
+        log.debug {
+            "initSessionHolder(): setting the loaded session:" +
+                    "\nuserId=${supabaseSession.user?.id}"
+        }
+
+        get<UserSessionHolder>().set(
+            UserSession(
+                supabaseUserSession = supabaseSession,
+            )
+        )
     }
 }

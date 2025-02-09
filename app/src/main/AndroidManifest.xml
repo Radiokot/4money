@@ -18,17 +18,19 @@
 
         <activity
             android:name=".accounts.view.AccountsActivity"
-            android:exported="true" />
-
-        <activity
-            android:name=".auth.view.AuthActivity"
-            android:exported="true"
-            android:launchMode="singleTop">
+            android:exported="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+        </activity>
+
+        <activity
+            android:name=".auth.view.AuthActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

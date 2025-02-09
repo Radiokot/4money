@@ -30,6 +30,8 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.R
+import ua.com.radiokot.money.auth.logic.KoinScopeUserSessionHolder
+import ua.com.radiokot.money.auth.logic.UserSessionHolder
 import ua.com.radiokot.money.auth.logic.AuthenticateUseCase
 import ua.com.radiokot.money.auth.view.AuthViewModel
 
@@ -55,8 +57,15 @@ val authModule = module {
     } bind SupabaseClient::class
 
     single {
+        KoinScopeUserSessionHolder(
+            koin = getKoin(),
+        )
+    } bind UserSessionHolder::class
+
+    single {
         AuthenticateUseCase(
             supabaseClient = get(),
+            userSessionHolder = get(),
         )
     } bind AuthenticateUseCase::class
 
