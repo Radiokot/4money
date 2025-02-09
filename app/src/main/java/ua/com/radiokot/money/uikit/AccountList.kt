@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.uikit
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -39,6 +40,9 @@ fun AccountList(
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit = {},
 ) {
     LazyColumn(
+        contentPadding = PaddingValues(
+            vertical = 8.dp,
+        ),
         modifier = modifier,
     ) {
         items(
@@ -52,7 +56,7 @@ fun AccountList(
                         amount = item.amount,
                         modifier = Modifier
                             .padding(
-                                vertical = 12.dp,
+                                vertical = 8.dp,
                             )
                             .fillMaxWidth()
                     )
@@ -67,7 +71,7 @@ fun AccountList(
                                 onAccountItemClicked(item)
                             }
                             .padding(
-                                vertical = 4.dp,
+                                vertical = 8.dp,
                             )
                             .fillMaxWidth()
                     )

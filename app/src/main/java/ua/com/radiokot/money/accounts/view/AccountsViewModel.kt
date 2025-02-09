@@ -28,13 +28,11 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.AccountRepository
-import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.uikit.ViewAccountListItem
 
 class AccountsViewModel(
     private val accountRepository: AccountRepository,
-    private val currencyRepository: CurrencyRepository,
 ) : ViewModel() {
 
     private val log by lazyLogger("AccountsVM")
@@ -43,15 +41,6 @@ class AccountsViewModel(
 
     init {
         subscribeToAccounts()
-
-        viewModelScope.launch {
-            currencyRepository.getCurrencies().forEach { currency ->
-                log.debug {
-                    "init(): loaded currency:" +
-                            "\ncode=${currency.code}"
-                }
-            }
-        }
     }
 
     private fun subscribeToAccounts() = viewModelScope.launch {

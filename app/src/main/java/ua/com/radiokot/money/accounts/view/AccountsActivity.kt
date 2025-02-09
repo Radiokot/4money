@@ -20,7 +20,6 @@
 package ua.com.radiokot.money.accounts.view
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,11 +35,10 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
+import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.uikit.AccountList
 import ua.com.radiokot.money.uikit.ViewAccountListItem
-import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 
 class AccountsActivity : UserSessionScopeActivity() {
@@ -52,10 +50,6 @@ class AccountsActivity : UserSessionScopeActivity() {
 
         if (goToAuthIfNoSession()) {
             return
-        }
-
-        scope.get<UserSession>().userInfo.id.also {
-            Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
         }
 
         setContent {

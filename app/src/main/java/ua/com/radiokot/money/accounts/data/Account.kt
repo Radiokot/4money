@@ -21,10 +21,11 @@ package ua.com.radiokot.money.accounts.data
 
 import ua.com.radiokot.money.currency.data.Currency
 import java.math.BigInteger
+import java.util.UUID
 
 data class Account(
-    val id: String,
     val title: String,
     val balance: BigInteger,
     val currency: Currency,
+    val id: String = UUID.randomUUID().toString(),
 )

@@ -23,7 +23,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.accounts.data.AccountRepository
-import ua.com.radiokot.money.accounts.data.MockedAccountRepository
+import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.accounts.view.AccountsViewModel
 import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.currency.currencyModule
@@ -35,13 +35,14 @@ val accountsModule = module {
 
     scope<UserSession> {
         scoped {
-            MockedAccountRepository()
+            PowerSyncAccountRepository(
+                database = get(),
+            )
         } bind AccountRepository::class
 
         viewModel {
             AccountsViewModel(
                 accountRepository = get(),
-                currencyRepository = get(),
             )
         } bind AccountsViewModel::class
     }
