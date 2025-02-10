@@ -166,7 +166,7 @@ private fun AccountsScreenPreview(
                 ViewAccountListItem.Account(
                     title = "Account #1",
                     balance = amount,
-                    source = "1",
+                    key = "1",
                 )
             )
         ),

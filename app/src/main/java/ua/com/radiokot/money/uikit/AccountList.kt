@@ -116,7 +116,7 @@ private fun AccountListPreview() {
                         precision = 2,
                     ),
                 ),
-                source = "acc1",
+                key = "acc1",
             ),
             ViewAccountListItem.Account(
                 title = "Account #2",
@@ -127,7 +127,7 @@ private fun AccountListPreview() {
                         precision = 2,
                     ),
                 ),
-                source = "acc2",
+                key = "acc2",
             ),
             ViewAccountListItem.Header(
                 title = "Savings",
@@ -149,7 +149,7 @@ private fun AccountListPreview() {
                         precision = 8,
                     ),
                 ),
-                source = "acc3",
+                key = "acc3",
             ),
         ).let(::MutableStateFlow)
     )

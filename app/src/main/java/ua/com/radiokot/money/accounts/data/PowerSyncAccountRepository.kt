@@ -22,6 +22,7 @@ package ua.com.radiokot.money.accounts.data
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import ua.com.radiokot.money.currency.data.Currency
 import java.math.BigInteger
@@ -36,6 +37,7 @@ class PowerSyncAccountRepository(
                 sql = SELECT,
                 mapper = ::toAccount,
             )
+            .sortedBy(Account::title)
 
     override fun getAccountsFlow(): Flow<List<Account>> =
         database
@@ -43,6 +45,7 @@ class PowerSyncAccountRepository(
                 sql = SELECT,
                 mapper = ::toAccount,
             )
+            .map { it.sortedBy(Account::title) }
 
     override suspend fun getAccountById(id: String): Account? =
         database

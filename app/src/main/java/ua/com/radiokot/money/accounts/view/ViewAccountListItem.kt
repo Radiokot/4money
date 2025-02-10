@@ -19,19 +19,45 @@
 
 package ua.com.radiokot.money.accounts.view
 
+import androidx.compose.runtime.Immutable
 import ua.com.radiokot.money.currency.view.ViewAmount
+import kotlin.random.Random
 
+@Immutable
 sealed interface ViewAccountListItem {
-    data class Header(
+
+    val key: Any
+
+    class Header(
         val title: String,
         val amount: ViewAmount,
-        val key: Any,
-    ) : ViewAccountListItem
+        override val key: Any,
+    ) : ViewAccountListItem {
 
-    data class Account(
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Header) return false
+
+            if (title != other.title) return false
+            if (amount != other.amount) return false
+            if (key != other.key) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = title.hashCode()
+            result = 31 * result + amount.hashCode()
+            result = 31 * result + key.hashCode()
+            return result
+        }
+    }
+
+    class Account(
         val title: String,
         val balance: ViewAmount,
-        val source: Any,
+        val source: ua.com.radiokot.money.accounts.data.Account? = null,
+        override val key: Any = source?.hashCode() ?: Random.nextInt(),
     ) : ViewAccountListItem {
 
         constructor(account: ua.com.radiokot.money.accounts.data.Account) : this(
@@ -42,5 +68,23 @@ sealed interface ViewAccountListItem {
             ),
             source = account,
         )
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Account) return false
+
+            if (title != other.title) return false
+            if (balance != other.balance) return false
+            if (key != other.key) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = title.hashCode()
+            result = 31 * result + balance.hashCode()
+            result = 31 * result + key.hashCode()
+            return result
+        }
     }
 }
