@@ -33,7 +33,7 @@ import java.util.Locale
 /**
  * Amount presentable to the user.
  */
-class ViewAmount(
+data class ViewAmount(
     val value: BigInteger,
     val currency: ViewCurrency,
 ) {
@@ -79,5 +79,5 @@ class ViewAmount(
     }
 
     override fun toString(): String =
-        "$value ${currency.symbol}"
+        "$value * 10^-${currency.precision} ${currency.symbol}"
 }

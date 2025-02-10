@@ -20,7 +20,12 @@
 package ua.com.radiokot.money.accounts.view
 
 import android.os.Bundle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +33,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -35,8 +41,11 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
@@ -47,8 +56,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.currency.view.ViewAmount
@@ -58,6 +69,7 @@ import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 class AccountsActivity : UserSessionScopeActivity() {
 
     private val viewModel: AccountsViewModel by viewModel()
+    private val actionSheetViewModel: AccountActionSheetViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +81,21 @@ class AccountsActivity : UserSessionScopeActivity() {
         setContent {
             AccountsScreenRoot(
                 viewModel = viewModel,
+                actionSheetViewModel = actionSheetViewModel,
             )
+        }
+
+        lifecycleScope.launch {
+            subscribeToEvents()
+        }
+    }
+
+    private suspend fun subscribeToEvents(): Unit = viewModel.events.collect { event ->
+        when (event) {
+            is AccountsViewModel.Event.OpenAccountActions ->
+                actionSheetViewModel.open(
+                    account = event.account,
+                )
         }
     }
 }
@@ -77,10 +103,40 @@ class AccountsActivity : UserSessionScopeActivity() {
 @Composable
 private fun AccountsScreenRoot(
     viewModel: AccountsViewModel,
-) = AccountsScreen(
-    listItemsFlow = viewModel.accountListItems,
-    onAccountItemClicked = viewModel::onAccountItemClicked,
-)
+    actionSheetViewModel: AccountActionSheetViewModel,
+) = Box(
+    modifier = Modifier
+        .fillMaxSize()
+        .safeDrawingPadding()
+) {
+    AccountsScreen(
+        listItemsFlow = viewModel.accountListItems,
+        onAccountItemClicked = viewModel::onAccountItemClicked,
+    )
+
+    val isSheetOpened by actionSheetViewModel._isOpened.collectAsState()
+    AnimatedVisibility(
+        visible = isSheetOpened,
+        enter = slideInVertically(
+            initialOffsetY = Int::unaryPlus,
+        ),
+        exit = slideOutVertically(
+            targetOffsetY = Int::unaryPlus,
+        ),
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+    ) {
+        val accountDetailsState = actionSheetViewModel.accountDetails.collectAsState()
+        val accountDetails = accountDetailsState.value
+            ?: return@AnimatedVisibility
+
+        AccountActionSheet(
+            accountDetails = accountDetails,
+            onBalanceClicked = actionSheetViewModel::onBalanceClicked,
+            onBackPressed = actionSheetViewModel::onBackPressed,
+        )
+    }
+}
 
 @Composable
 private fun AccountsScreen(
@@ -119,20 +175,24 @@ private fun AccountsScreenPreview(
 }
 
 @Composable
-private fun AccountActionsSheet(
+private fun AccountActionSheet(
     accountDetails: ViewAccountDetails,
     onBalanceClicked: () -> Unit,
+    onBackPressed: () -> Unit,
 ) = Column(
     horizontalAlignment = Alignment.CenterHorizontally,
     modifier = Modifier
+        .shadow(8.dp)
         .safeDrawingPadding()
         .fillMaxWidth()
-        .border(
-            width = 1.dp,
-            color = Color.LightGray,
+        .background(Color(0xFFF9FBE7))
+        .padding(
+            horizontal = 16.dp,
+            vertical = 32.dp,
         )
-        .padding(16.dp)
 ) {
+    BackHandler(onBack = onBackPressed)
+
     BasicText(
         text = accountDetails.title,
         style = TextStyle(
@@ -186,10 +246,11 @@ private fun AccountActionsSheet(
 private fun AccountActionSheetPreview(
     @PreviewParameter(ViewAmountPreviewParameterProvider::class, limit = 1)
     amount: ViewAmount,
-) = AccountActionsSheet(
+) = AccountActionSheet(
     accountDetails = ViewAccountDetails(
         title = "Account #1",
         balance = amount,
     ),
     onBalanceClicked = {},
+    onBackPressed = {},
 )

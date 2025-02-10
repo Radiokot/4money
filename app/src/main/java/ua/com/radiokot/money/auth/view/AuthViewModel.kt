@@ -28,12 +28,13 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.auth.logic.AuthenticateUseCase
+import ua.com.radiokot.money.eventSharedFlow
 
 class AuthViewModel(
     private val authUseCase: AuthenticateUseCase,
 ) : ViewModel() {
 
-    private val _events: MutableSharedFlow<Event> = MutableSharedFlow()
+    private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
     fun onAuthenticateClicked() {

@@ -22,7 +22,7 @@ package ua.com.radiokot.money.accounts.view
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.currency.view.ViewAmount
 
-class ViewAccountDetails(
+data class ViewAccountDetails(
     val title: String,
     val balance: ViewAmount,
 ) {

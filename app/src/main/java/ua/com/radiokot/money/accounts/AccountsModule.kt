@@ -24,6 +24,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
+import ua.com.radiokot.money.accounts.view.AccountActionSheetViewModel
 import ua.com.radiokot.money.accounts.view.AccountsViewModel
 import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.currency.currencyModule
@@ -45,5 +46,9 @@ val accountsModule = module {
                 accountRepository = get(),
             )
         } bind AccountsViewModel::class
+
+        viewModel {
+            AccountActionSheetViewModel()
+        } bind AccountActionSheetViewModel::class
     }
 }

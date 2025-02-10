@@ -17,16 +17,16 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.currency.view
+package ua.com.radiokot.money
 
-import ua.com.radiokot.money.currency.data.Currency
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 
-data class ViewCurrency(
-    val symbol: String,
-    val precision: Short,
-) {
-    constructor(currency: Currency) : this(
-        symbol = currency.symbol,
-        precision = currency.precision,
+/**
+ * @return a buffered [MutableSharedFlow], configured for event publishing.
+ */
+fun <T> eventSharedFlow() =
+    MutableSharedFlow<T>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
-}

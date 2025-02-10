@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
+import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 
 class AccountsViewModel(
@@ -40,7 +41,7 @@ class AccountsViewModel(
     private val log by lazyLogger("AccountsVM")
     private val _accountListItems = MutableStateFlow<List<ViewAccountListItem>>(emptyList())
     val accountListItems = _accountListItems.asStateFlow()
-    private val _events: MutableSharedFlow<Event> = MutableSharedFlow()
+    private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
     init {
@@ -76,6 +77,7 @@ class AccountsViewModel(
     }
 
     sealed interface Event {
+
         class OpenAccountActions(
             val account: Account,
         ) : Event
