@@ -114,7 +114,7 @@ private fun AccountsScreenRoot(
         onAccountItemClicked = viewModel::onAccountItemClicked,
     )
 
-    val isSheetOpened by actionSheetViewModel._isOpened.collectAsState()
+    val isSheetOpened by actionSheetViewModel.isOpened.collectAsState()
     AnimatedVisibility(
         visible = isSheetOpened,
         enter = slideInVertically(

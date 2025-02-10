@@ -22,6 +22,7 @@ package ua.com.radiokot.money.accounts.data
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.mapNotNull
 import ua.com.radiokot.money.currency.data.Currency
 import java.math.BigInteger
 
@@ -32,16 +33,33 @@ class PowerSyncAccountRepository(
     override suspend fun getAccounts(): List<Account> =
         database
             .getAll(
-                sql = SELECT_QUERY,
+                sql = SELECT,
                 mapper = ::toAccount,
             )
 
     override fun getAccountsFlow(): Flow<List<Account>> =
         database
             .watch(
-                sql = SELECT_QUERY,
+                sql = SELECT,
                 mapper = ::toAccount,
             )
+
+    override suspend fun getAccountById(id: String): Account? =
+        database
+            .getOptional(
+                sql = SELECT_BY_ID,
+                parameters = listOf(id),
+                mapper = ::toAccount,
+            )
+
+    override fun getAccountByIdFlow(id: String): Flow<Account> =
+        database
+            .watch(
+                sql = SELECT_BY_ID,
+                parameters = listOf(id),
+                mapper = ::toAccount,
+            )
+            .mapNotNull(List<Account>::firstOrNull)
 
     private fun toAccount(sqlCursor: SqlCursor): Account = sqlCursor.run {
         var column = 0
@@ -62,9 +80,9 @@ class PowerSyncAccountRepository(
     }
 }
 
-//private const val SELECT_QUERY = "SELECT currency_id, id, title, balance FROM accounts"
-private const val SELECT_QUERY =
+private const val SELECT =
     "SELECT currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
             "accounts.id, accounts.title, accounts.balance, accounts.currency_id " +
             "FROM accounts, currencies " +
             "WHERE accounts.currency_id = currencies.id"
+private const val SELECT_BY_ID = "$SELECT AND accounts.id = ?"

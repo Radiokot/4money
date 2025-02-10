@@ -48,7 +48,9 @@ val accountsModule = module {
         } bind AccountsViewModel::class
 
         viewModel {
-            AccountActionSheetViewModel()
+            AccountActionSheetViewModel(
+                accountRepository = get(),
+            )
         } bind AccountActionSheetViewModel::class
     }
 }

@@ -20,18 +20,26 @@
 package ua.com.radiokot.money.accounts.view
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
+import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.lazyLogger
 
-class AccountActionSheetViewModel : ViewModel() {
+class AccountActionSheetViewModel(
+    private val accountRepository: AccountRepository,
+) : ViewModel() {
 
     private val log by lazyLogger("AccountActionSheetVM")
-    val _accountDetails: MutableStateFlow<ViewAccountDetails?> = MutableStateFlow(null)
+    private val _accountDetails: MutableStateFlow<ViewAccountDetails?> = MutableStateFlow(null)
     val accountDetails = _accountDetails
-    val _isOpened: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _isOpened: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isOpened = _isOpened.asStateFlow()
+    private var accountSubscriptionJob: Job? = null
 
     fun open(account: Account) {
         log.debug {
@@ -39,7 +47,15 @@ class AccountActionSheetViewModel : ViewModel() {
                     "\naccount=$account"
         }
 
-        _accountDetails.tryEmit(ViewAccountDetails(account))
+        accountSubscriptionJob?.cancel()
+        accountSubscriptionJob = viewModelScope.launch {
+            _accountDetails.emit(ViewAccountDetails(account))
+            accountRepository
+                .getAccountByIdFlow(account.id)
+                .map(::ViewAccountDetails)
+                .collect(_accountDetails)
+        }
+
         _isOpened.tryEmit(true)
     }
 
@@ -55,12 +71,18 @@ class AccountActionSheetViewModel : ViewModel() {
             log.warn {
                 "onBackPressed(): ignoring back press as the sheet is already closed"
             }
+            return
         }
 
+        close()
+    }
+
+    private fun close() {
         log.debug {
-            "onBackPressed(): closing"
+            "close(): closing"
         }
 
+        accountSubscriptionJob?.cancel()
         _isOpened.tryEmit(false)
     }
 }
