@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import ua.com.radiokot.money.accounts.view.ViewAccountListItem
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import java.math.BigInteger
@@ -115,7 +116,7 @@ private fun AccountListPreview() {
                         precision = 2,
                     ),
                 ),
-                key = "acc1",
+                source = "acc1",
             ),
             ViewAccountListItem.Account(
                 title = "Account #2",
@@ -126,7 +127,7 @@ private fun AccountListPreview() {
                         precision = 2,
                     ),
                 ),
-                key = "acc2",
+                source = "acc2",
             ),
             ViewAccountListItem.Header(
                 title = "Savings",
@@ -148,7 +149,7 @@ private fun AccountListPreview() {
                         precision = 8,
                     ),
                 ),
-                key = "acc3",
+                source = "acc3",
             ),
         ).let(::MutableStateFlow)
     )

@@ -17,28 +17,30 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.accounts.data
+package ua.com.radiokot.money.accounts.view
 
-import ua.com.radiokot.money.currency.data.Currency
-import java.math.BigInteger
-import java.util.UUID
+import ua.com.radiokot.money.currency.view.ViewAmount
 
-data class Account(
-    val title: String,
-    val balance: BigInteger,
-    val currency: Currency,
-    val id: String = UUID.randomUUID().toString(),
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Account) return false
+sealed interface ViewAccountListItem {
+    data class Header(
+        val title: String,
+        val amount: ViewAmount,
+        val key: Any,
+    ) : ViewAccountListItem
 
-        if (id != other.id) return false
+    data class Account(
+        val title: String,
+        val balance: ViewAmount,
+        val source: Any,
+    ) : ViewAccountListItem {
 
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return id.hashCode()
+        constructor(account: ua.com.radiokot.money.accounts.data.Account) : this(
+            title = account.title,
+            balance = ViewAmount(
+                value = account.balance,
+                currency = account.currency,
+            ),
+            source = account,
+        )
     }
 }

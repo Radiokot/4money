@@ -17,30 +17,20 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.uikit
+package ua.com.radiokot.money.accounts.view
 
+import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.currency.view.ViewAmount
 
-sealed interface ViewAccountListItem {
-    data class Header(
-        val title: String,
-        val amount: ViewAmount,
-        val key: Any,
-    ) : ViewAccountListItem
-
-    data class Account(
-        val title: String,
-        val balance: ViewAmount,
-        val key: Any,
-    ) : ViewAccountListItem {
-
-        constructor(account: ua.com.radiokot.money.accounts.data.Account) : this(
-            title = account.title,
-            balance = ViewAmount(
-                value = account.balance,
-                currency = account.currency,
-            ),
-            key = account.id,
+class ViewAccountDetails(
+    val title: String,
+    val balance: ViewAmount,
+) {
+    constructor(account: Account) : this(
+        title = account.title,
+        balance = ViewAmount(
+            value = account.balance,
+            currency = account.currency,
         )
-    }
+    )
 }

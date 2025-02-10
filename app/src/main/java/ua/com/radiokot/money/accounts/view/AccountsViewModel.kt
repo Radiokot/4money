@@ -22,14 +22,16 @@ package ua.com.radiokot.money.accounts.view
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.lazyLogger
-import ua.com.radiokot.money.uikit.ViewAccountListItem
 
 class AccountsViewModel(
     private val accountRepository: AccountRepository,
@@ -38,6 +40,8 @@ class AccountsViewModel(
     private val log by lazyLogger("AccountsVM")
     private val _accountListItems = MutableStateFlow<List<ViewAccountListItem>>(emptyList())
     val accountListItems = _accountListItems.asStateFlow()
+    private val _events: MutableSharedFlow<Event> = MutableSharedFlow()
+    val events = _events.asSharedFlow()
 
     init {
         subscribeToAccounts()
@@ -50,5 +54,30 @@ class AccountsViewModel(
                 accounts.map(ViewAccountListItem::Account)
             }
             .collect(_accountListItems)
+    }
+
+    fun onAccountItemClicked(item: ViewAccountListItem.Account) {
+        val account = item.source as? Account
+        if (account == null) {
+            log.warn {
+                "onAccountItemClicked(): missing account source"
+            }
+            return
+        }
+
+        log.debug {
+            "onAccountItemClicked(): opening account actions:" +
+                    "\naccount=$account"
+        }
+
+        _events.tryEmit(
+            Event.OpenAccountActions(account)
+        )
+    }
+
+    sealed interface Event {
+        class OpenAccountActions(
+            val account: Account,
+        ) : Event
     }
 }
