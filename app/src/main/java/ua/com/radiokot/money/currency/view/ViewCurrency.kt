@@ -19,9 +19,11 @@
 
 package ua.com.radiokot.money.currency.view
 
+import androidx.compose.runtime.Immutable
 import ua.com.radiokot.money.currency.data.Currency
 
-data class ViewCurrency(
+@Immutable
+class ViewCurrency(
     val symbol: String,
     val precision: Short,
 ) {
@@ -29,4 +31,20 @@ data class ViewCurrency(
         symbol = currency.symbol,
         precision = currency.precision,
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ViewCurrency) return false
+
+        if (symbol != other.symbol) return false
+        if (precision != other.precision) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = symbol.hashCode()
+        result = 31 * result + precision
+        return result
+    }
 }

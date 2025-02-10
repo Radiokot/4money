@@ -41,4 +41,8 @@ data class Account(
     override fun hashCode(): Int {
         return id.hashCode()
     }
+
+    override fun toString(): String {
+        return "Account(title='$title', id='$id')"
+    }
 }

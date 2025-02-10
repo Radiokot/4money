@@ -43,6 +43,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -206,6 +207,10 @@ private fun AccountActionSheet(
 
     Spacer(modifier = Modifier.height(16.dp))
 
+    val clickableBalanceModifier = remember {
+        Modifier.clickable { onBalanceClicked() }
+    }
+
     BasicText(
         text = accountDetails.balance.format(
             locale = LocalConfiguration.current.locales[0],
@@ -218,7 +223,7 @@ private fun AccountActionSheet(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onBalanceClicked() }
+            .then(clickableBalanceModifier)
     )
 
     Spacer(modifier = Modifier.height(24.dp))
@@ -230,7 +235,7 @@ private fun AccountActionSheet(
         BasicText(
             text = "Balance",
             modifier = Modifier
-                .clickable { onBalanceClicked() }
+                .then(clickableBalanceModifier)
                 .border(
                     width = 1.dp,
                     color = Color.DarkGray,

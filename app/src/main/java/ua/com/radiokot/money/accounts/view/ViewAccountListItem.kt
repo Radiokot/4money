@@ -32,26 +32,7 @@ sealed interface ViewAccountListItem {
         val title: String,
         val amount: ViewAmount,
         override val key: Any,
-    ) : ViewAccountListItem {
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other !is Header) return false
-
-            if (title != other.title) return false
-            if (amount != other.amount) return false
-            if (key != other.key) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = title.hashCode()
-            result = 31 * result + amount.hashCode()
-            result = 31 * result + key.hashCode()
-            return result
-        }
-    }
+    ) : ViewAccountListItem
 
     class Account(
         val title: String,
@@ -68,23 +49,5 @@ sealed interface ViewAccountListItem {
             ),
             source = account,
         )
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other !is Account) return false
-
-            if (title != other.title) return false
-            if (balance != other.balance) return false
-            if (key != other.key) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = title.hashCode()
-            result = 31 * result + balance.hashCode()
-            result = 31 * result + key.hashCode()
-            return result
-        }
     }
 }

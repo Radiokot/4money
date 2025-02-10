@@ -70,4 +70,8 @@ class Currency(
     override fun hashCode(): Int {
         return id.hashCode()
     }
+
+    override fun toString(): String {
+        return "Currency(code='$code')"
+    }
 }

@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.currency.view
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -33,7 +34,8 @@ import java.util.Locale
 /**
  * Amount presentable to the user.
  */
-data class ViewAmount(
+@Immutable
+class ViewAmount(
     val value: BigInteger,
     val currency: ViewCurrency,
 ) {
@@ -80,4 +82,20 @@ data class ViewAmount(
 
     override fun toString(): String =
         "$value * 10^-${currency.precision} ${currency.symbol}"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ViewAmount) return false
+
+        if (value != other.value) return false
+        if (currency != other.currency) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = value.hashCode()
+        result = 31 * result + currency.hashCode()
+        return result
+    }
 }

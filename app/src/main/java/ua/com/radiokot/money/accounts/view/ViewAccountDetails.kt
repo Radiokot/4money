@@ -19,10 +19,12 @@
 
 package ua.com.radiokot.money.accounts.view
 
+import androidx.compose.runtime.Immutable
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.currency.view.ViewAmount
 
-data class ViewAccountDetails(
+@Immutable
+class ViewAccountDetails(
     val title: String,
     val balance: ViewAmount,
 ) {
@@ -33,4 +35,20 @@ data class ViewAccountDetails(
             currency = account.currency,
         )
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ViewAccountDetails) return false
+
+        if (title != other.title) return false
+        if (balance != other.balance) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = title.hashCode()
+        result = 31 * result + balance.hashCode()
+        return result
+    }
 }
