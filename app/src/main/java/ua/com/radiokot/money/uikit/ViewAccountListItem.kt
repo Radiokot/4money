@@ -25,11 +25,13 @@ sealed interface ViewAccountListItem {
     data class Header(
         val title: String,
         val amount: ViewAmount,
+        val key: Any,
     ) : ViewAccountListItem
 
     data class Account(
         val title: String,
         val balance: ViewAmount,
+        val key: Any,
     ) : ViewAccountListItem {
 
         constructor(account: ua.com.radiokot.money.accounts.data.Account) : this(
@@ -37,7 +39,8 @@ sealed interface ViewAccountListItem {
             balance = ViewAmount(
                 value = account.balance,
                 currency = account.currency,
-            )
+            ),
+            key = account.id,
         )
     }
 }

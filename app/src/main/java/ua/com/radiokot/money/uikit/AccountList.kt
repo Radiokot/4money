@@ -26,19 +26,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import java.math.BigInteger
 
 @Composable
 fun AccountList(
-    items: List<ViewAccountListItem>,
+    itemListFlow: StateFlow<List<ViewAccountListItem>>,
     modifier: Modifier = Modifier,
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit = {},
 ) {
+    val itemList by itemListFlow.collectAsState()
+
     LazyColumn(
         contentPadding = PaddingValues(
             vertical = 8.dp,
@@ -46,7 +52,7 @@ fun AccountList(
         modifier = modifier,
     ) {
         items(
-            items = items,
+            items = itemList,
             key = ViewAccountListItem::hashCode,
         ) { item ->
             when (item) {
@@ -88,7 +94,7 @@ fun AccountList(
 )
 private fun AccountListPreview() {
     AccountList(
-        items = listOf(
+        itemListFlow = listOf(
             ViewAccountListItem.Header(
                 title = "Accounts",
                 amount = ViewAmount(
@@ -98,6 +104,7 @@ private fun AccountListPreview() {
                         precision = 2,
                     ),
                 ),
+                key = "header1",
             ),
             ViewAccountListItem.Account(
                 title = "Account #1",
@@ -108,6 +115,7 @@ private fun AccountListPreview() {
                         precision = 2,
                     ),
                 ),
+                key = "acc1",
             ),
             ViewAccountListItem.Account(
                 title = "Account #2",
@@ -118,6 +126,7 @@ private fun AccountListPreview() {
                         precision = 2,
                     ),
                 ),
+                key = "acc2",
             ),
             ViewAccountListItem.Header(
                 title = "Savings",
@@ -128,9 +137,10 @@ private fun AccountListPreview() {
                         precision = 2,
                     ),
                 ),
+                key = "header2",
             ),
             ViewAccountListItem.Account(
-                title = "Account #2",
+                title = "Account #3",
                 balance = ViewAmount(
                     value = BigInteger("100000000"),
                     currency = ViewCurrency(
@@ -138,7 +148,8 @@ private fun AccountListPreview() {
                         precision = 8,
                     ),
                 ),
+                key = "acc3",
             ),
-        )
+        ).let(::MutableStateFlow)
     )
 }

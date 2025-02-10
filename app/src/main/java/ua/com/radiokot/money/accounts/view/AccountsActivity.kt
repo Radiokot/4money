@@ -26,8 +26,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -75,9 +73,8 @@ private fun AccountsScreen(
         .safeDrawingPadding()
         .padding(16.dp)
 ) {
-    val listItemsSate by listItemsFlow.collectAsState()
     AccountList(
-        items = listItemsSate,
+        itemListFlow = listItemsFlow,
         modifier = Modifier.fillMaxWidth(),
     )
 }
@@ -94,6 +91,7 @@ private fun AccountsScreenPreview(
                 ViewAccountListItem.Account(
                     title = "Account #1",
                     balance = amount,
+                    key = "1",
                 )
             )
         )
