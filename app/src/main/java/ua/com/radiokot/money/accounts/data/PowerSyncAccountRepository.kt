@@ -69,15 +69,15 @@ class PowerSyncAccountRepository(
 
         val currency = Currency(
             id = getString(column)!!,
-            code = getString(++column)!!,
-            symbol = getString(++column)!!,
+            code = getString(++column)!!.trim(),
+            symbol = getString(++column)!!.trim(),
             precision = getLong(++column)!!.toShort(),
         )
 
         Account(
             id = getString(++column)!!,
-            title = getString(++column)!!,
-            balance = BigInteger(getString(++column)!!),
+            title = getString(++column)!!.trim(),
+            balance = BigInteger(getString(++column)!!.trim()),
             currency = currency,
         )
     }

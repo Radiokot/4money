@@ -41,8 +41,8 @@ class PowerSyncCurrencyRepository(
 
     private fun toCurrency(sqlCursor: SqlCursor) = sqlCursor.run {
         Currency(
-            code = getString(0)!!,
-            symbol = getString(1)!!,
+            code = getString(0)!!.trim(),
+            symbol = getString(1)!!.trim(),
             precision = getLong(2)!!.toShort(),
             id = getString(3)!!,
         )
