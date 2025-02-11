@@ -28,7 +28,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,19 +37,34 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -66,6 +80,7 @@ import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.uikit.AccountList
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
+import java.text.DecimalFormatSymbols
 
 class AccountsActivity : UserSessionScopeActivity() {
 
@@ -128,11 +143,12 @@ private fun AccountsScreenRoot(
             .align(Alignment.BottomCenter)
     ) {
         val accountDetailsState = actionSheetViewModel.accountDetails.collectAsState()
-        val accountDetails = accountDetailsState.value
-            ?: return@AnimatedVisibility
+        val modeState = actionSheetViewModel.mode.collectAsState()
 
         AccountActionSheet(
-            accountDetails = accountDetails,
+            accountDetails = accountDetailsState.value
+                ?: return@AnimatedVisibility,
+            mode = modeState.value,
             onBalanceClicked = actionSheetViewModel::onBalanceClicked,
             onBackPressed = actionSheetViewModel::onBackPressed,
         )
@@ -178,6 +194,7 @@ private fun AccountsScreenPreview(
 @Composable
 private fun AccountActionSheet(
     accountDetails: ViewAccountDetails,
+    mode: ViewAccountActionSheetMode,
     onBalanceClicked: () -> Unit,
     onBackPressed: () -> Unit,
 ) = Column(
@@ -228,21 +245,103 @@ private fun AccountActionSheet(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    Row(
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        BasicText(
-            text = "Balance",
-            modifier = Modifier
-                .then(clickableBalanceModifier)
-                .border(
-                    width = 1.dp,
-                    color = Color.DarkGray,
-                    shape = RoundedCornerShape(12.dp)
+    when (mode) {
+        ViewAccountActionSheetMode.Actions -> {
+            Row {
+                BasicText(
+                    text = "Balance",
+                    modifier = Modifier
+                        .then(clickableBalanceModifier)
+                        .border(
+                            width = 1.dp,
+                            color = Color.DarkGray,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(12.dp)
                 )
-                .padding(12.dp)
-        )
+            }
+        }
+
+        ViewAccountActionSheetMode.Balance -> {
+            Row {
+                val locale = LocalConfiguration.current.locales.get(0)
+                val cleanUpOrDrop = remember {
+                    val dfs = DecimalFormatSymbols.getInstance(locale)
+
+                    fun String.(): String? = this
+                        .replace(',', dfs.decimalSeparator)
+                        .replace('.', dfs.decimalSeparator)
+                        .replace("\\s|\\+".toRegex(), "")
+                        .takeUnless { it.split(dfs.decimalSeparator).size > 2 }
+                        ?.takeUnless { it.lastIndexOf(dfs.minusSign) > 0 }
+                }
+                var amountInputValue by remember {
+                    val initialValue = accountDetails.balance
+                        .format(
+                            locale = locale,
+                            withCurrencySymbol = false,
+                        )
+                        .text
+                        .cleanUpOrDrop() ?: ""
+
+                    mutableStateOf(
+                        TextFieldValue(
+                            text = initialValue,
+                            selection = TextRange(initialValue.length),
+                        )
+                    )
+                }
+                val focusRequester = remember {
+                    FocusRequester()
+                }
+
+                BasicTextField(
+                    value = amountInputValue,
+                    onValueChange = { newValue ->
+                        val newValueText = newValue.text.cleanUpOrDrop()
+                        if (newValueText != null) {
+                            amountInputValue = newValue.copy(
+                                text = newValueText,
+                            )
+                        }
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Done,
+                    ),
+                    keyboardActions = KeyboardActions {
+                        println("OOLEG here")
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .border(
+                            width = 1.dp,
+                            color = Color.DarkGray,
+                        )
+                        .padding(12.dp)
+                        .focusRequester(focusRequester)
+                )
+
+                LaunchedEffect(mode) {
+                    focusRequester.requestFocus()
+                }
+
+                Spacer(modifier = Modifier.width(24.dp))
+
+                BasicText(
+                    text = "Save",
+                    modifier = Modifier
+                        .then(clickableBalanceModifier)
+                        .border(
+                            width = 1.dp,
+                            color = Color.DarkGray,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(12.dp)
+                )
+            }
+        }
     }
 }
 
@@ -251,11 +350,21 @@ private fun AccountActionSheet(
 private fun AccountActionSheetPreview(
     @PreviewParameter(ViewAmountPreviewParameterProvider::class, limit = 1)
     amount: ViewAmount,
-) = AccountActionSheet(
-    accountDetails = ViewAccountDetails(
-        title = "Account #1",
-        balance = amount,
-    ),
-    onBalanceClicked = {},
-    onBackPressed = {},
-)
+) = LazyColumn {
+    items(
+        listOf(
+            ViewAccountActionSheetMode.Actions,
+            ViewAccountActionSheetMode.Balance,
+        )
+    ) { mode ->
+        AccountActionSheet(
+            accountDetails = ViewAccountDetails(
+                title = "Account #1",
+                balance = amount,
+            ),
+            mode = mode,
+            onBalanceClicked = {},
+            onBackPressed = {},
+        )
+    }
+}

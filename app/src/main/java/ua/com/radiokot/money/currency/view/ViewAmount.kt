@@ -47,7 +47,10 @@ class ViewAmount(
         currency = ViewCurrency(currency),
     )
 
-    fun format(locale: Locale): AnnotatedString = buildAnnotatedString {
+    fun format(
+        locale: Locale,
+        withCurrencySymbol: Boolean = true,
+    ): AnnotatedString = buildAnnotatedString {
         val precision = currency.precision.toInt()
         val (integerPart, decimalPart) = value.divideAndRemainder(BigInteger.TEN.pow(precision))
 
@@ -77,7 +80,9 @@ class ViewAmount(
             ),
         )
 
-        append(" ${currency.symbol}")
+        if (withCurrencySymbol) {
+            append(" ${currency.symbol}")
+        }
     }
 
     override fun toString(): String =

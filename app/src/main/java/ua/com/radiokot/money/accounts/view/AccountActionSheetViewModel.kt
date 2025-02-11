@@ -39,6 +39,9 @@ class AccountActionSheetViewModel(
     val accountDetails = _accountDetails
     private val _isOpened: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isOpened = _isOpened.asStateFlow()
+    private val _mode: MutableStateFlow<ViewAccountActionSheetMode> = MutableStateFlow(
+        ViewAccountActionSheetMode.Actions)
+    val mode = _mode.asStateFlow()
     private var accountSubscriptionJob: Job? = null
 
     fun open(account: Account) {
@@ -56,13 +59,16 @@ class AccountActionSheetViewModel(
                 .collect(_accountDetails)
         }
 
+        _mode.tryEmit(ViewAccountActionSheetMode.Actions)
         _isOpened.tryEmit(true)
     }
 
     fun onBalanceClicked() {
         log.debug {
-            "onBalanceClicked(): switching to balance editing"
+            "onBalanceClicked(): switching mode to balance editing"
         }
+
+        _mode.tryEmit(ViewAccountActionSheetMode.Balance)
     }
 
     fun onBackPressed() {
@@ -85,4 +91,5 @@ class AccountActionSheetViewModel(
         accountSubscriptionJob?.cancel()
         _isOpened.tryEmit(false)
     }
+
 }
