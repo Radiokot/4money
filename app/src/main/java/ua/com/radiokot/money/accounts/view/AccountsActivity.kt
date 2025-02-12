@@ -30,6 +30,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,11 +41,13 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -203,6 +206,7 @@ private fun AccountActionSheet(
         .shadow(8.dp)
         .safeDrawingPadding()
         .fillMaxWidth()
+        .verticalScroll(rememberScrollState())
         .background(Color(0xFFF9FBE7))
         .padding(
             horizontal = 16.dp,
@@ -344,13 +348,11 @@ private fun AccountActionSheet(
 private fun AccountActionSheetPreview(
     @PreviewParameter(ViewAmountPreviewParameterProvider::class, limit = 1)
     amount: ViewAmount,
-) = LazyColumn {
-    items(
-        listOf(
-            ViewAccountActionSheetMode.Actions,
-            ViewAccountActionSheetMode.Balance,
-        )
-    ) { mode ->
+) = Column {
+    listOf(
+        ViewAccountActionSheetMode.Actions,
+        ViewAccountActionSheetMode.Balance,
+    ).forEach { mode ->
         AccountActionSheet(
             accountDetails = ViewAccountDetails(
                 title = "Account #1",
