@@ -24,14 +24,16 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
+import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
 import ua.com.radiokot.money.lazyLogger
+import java.math.BigInteger
 
 class AccountActionSheetViewModel(
     private val accountRepository: AccountRepository,
+    private val updateAccountBalanceUseCase: UpdateAccountBalanceUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("AccountActionSheetVM")
@@ -40,9 +42,14 @@ class AccountActionSheetViewModel(
     private val _isOpened: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isOpened = _isOpened.asStateFlow()
     private val _mode: MutableStateFlow<ViewAccountActionSheetMode> = MutableStateFlow(
-        ViewAccountActionSheetMode.Actions)
+        ViewAccountActionSheetMode.Actions
+    )
     val mode = _mode.asStateFlow()
+    private val _balanceInputValue: MutableStateFlow<BigInteger> =
+        MutableStateFlow(BigInteger.ZERO)
+    val balanceInputValue = _balanceInputValue.asStateFlow()
     private var accountSubscriptionJob: Job? = null
+    private lateinit var currentAccount: Account
 
     fun open(account: Account) {
         log.debug {
@@ -53,10 +60,13 @@ class AccountActionSheetViewModel(
         accountSubscriptionJob?.cancel()
         accountSubscriptionJob = viewModelScope.launch {
             _accountDetails.emit(ViewAccountDetails(account))
+            currentAccount = account
             accountRepository
                 .getAccountByIdFlow(account.id)
-                .map(::ViewAccountDetails)
-                .collect(_accountDetails)
+                .collect { freshAccount ->
+                    currentAccount = freshAccount
+                    _accountDetails.emit(ViewAccountDetails(freshAccount))
+                }
         }
 
         _mode.tryEmit(ViewAccountActionSheetMode.Actions)
@@ -64,11 +74,19 @@ class AccountActionSheetViewModel(
     }
 
     fun onBalanceClicked() {
+        if (mode.value != ViewAccountActionSheetMode.Actions) {
+            log.debug {
+                "onBalanceClicked(): ignoring as not in actions mode"
+            }
+            return
+        }
+
         log.debug {
             "onBalanceClicked(): switching mode to balance editing"
         }
 
         _mode.tryEmit(ViewAccountActionSheetMode.Balance)
+        _balanceInputValue.tryEmit(currentAccount.balance)
     }
 
     fun onBackPressed() {
@@ -81,6 +99,51 @@ class AccountActionSheetViewModel(
         }
 
         close()
+    }
+
+    fun onBalanceInputValueUpdated(newValue: BigInteger) {
+        log.debug {
+            "onBalanceInputAmountUpdated(): updating balance input value: " +
+                    "\nnewValue=$newValue"
+        }
+
+        _balanceInputValue.tryEmit(newValue)
+    }
+
+    fun onBalanceInputSubmit() {
+        updateAccountBalance()
+    }
+
+    private var balanceUpdateJob: Job? = null
+    private fun updateAccountBalance() {
+        val accountId = currentAccount.id
+        val newValue = _balanceInputValue.value
+
+        balanceUpdateJob?.cancel()
+        balanceUpdateJob = viewModelScope.launch {
+            log.debug {
+                "updateAccountBalance(): updating:" +
+                        "\naccountId=$accountId," +
+                        "\nnewValue=$newValue"
+            }
+
+            updateAccountBalanceUseCase(
+                accountId = accountId,
+                newValue = newValue,
+            )
+                .onFailure { error ->
+                    log.error(error) {
+                        "updateAccountBalance(): failed to update balance"
+                    }
+                }
+                .onSuccess {
+                    log.debug {
+                        "updateAccountBalance(): balance updated, closing"
+                    }
+
+                    _isOpened.emit(false)
+                }
+        }
     }
 
     private fun close() {

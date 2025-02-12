@@ -109,6 +109,7 @@ class ViewAmountFormat(
                     .toString()
                     .trimStart(decimalFormatSymbols.minusSign)
                     .padStart(currency.precision, '0')
+                    .trimEnd('0')
             )
         }
     }

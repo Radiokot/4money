@@ -64,6 +64,17 @@ class PowerSyncAccountRepository(
             )
             .mapNotNull(List<Account>::firstOrNull)
 
+    override suspend fun updateBalance(accountId: String, newValue: BigInteger) {
+        database
+            .execute(
+                sql = "UPDATE accounts SET balance = ? WHERE id = ?",
+                parameters = listOf(
+                    newValue.toString(),
+                    accountId,
+                )
+            )
+    }
+
     private fun toAccount(sqlCursor: SqlCursor): Account = sqlCursor.run {
         var column = 0
 

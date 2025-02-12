@@ -17,23 +17,21 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.accounts.data
+package ua.com.radiokot.money.accounts.logic
 
-import kotlinx.coroutines.flow.Flow
+import ua.com.radiokot.money.accounts.data.AccountRepository
 import java.math.BigInteger
 
-interface AccountRepository {
-
-    suspend fun getAccounts(): List<Account>
-
-    fun getAccountsFlow(): Flow<List<Account>>
-
-    suspend fun getAccountById(id: String): Account?
-
-    fun getAccountByIdFlow(id: String): Flow<Account>
-
-    suspend fun updateBalance(
+class UpdateAccountBalanceUseCase(
+    private val accountRepository: AccountRepository,
+) {
+    suspend operator fun invoke(
         accountId: String,
         newValue: BigInteger,
-    )
+    ): Result<Unit> = runCatching {
+        accountRepository.updateBalance(
+            accountId = accountId,
+            newValue = newValue,
+        )
+    }
 }

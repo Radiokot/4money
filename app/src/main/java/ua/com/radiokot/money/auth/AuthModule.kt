@@ -64,7 +64,7 @@ val authModule = module {
         )
     } bind UserSessionHolder::class
 
-    single {
+    factory {
         AuthenticateUseCase(
             supabaseClient = get(),
             userSessionHolder = get(),

@@ -45,7 +45,7 @@ class ViewAmountFormatTest {
         )
 
         Assert.assertEquals(
-            "-0.00000050",
+            "-0.0000005",
             format.formatForInput(
                 value = BigInteger("-50"),
                 currency = btc,

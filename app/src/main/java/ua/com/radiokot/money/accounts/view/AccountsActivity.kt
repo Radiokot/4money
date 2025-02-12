@@ -30,7 +30,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,8 +38,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -84,6 +81,7 @@ import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.uikit.AccountList
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
+import java.math.BigInteger
 
 class AccountsActivity : UserSessionScopeActivity() {
 
@@ -152,8 +150,11 @@ private fun AccountsScreenRoot(
             accountDetails = accountDetailsState.value
                 ?: return@AnimatedVisibility,
             mode = modeState.value,
+            balanceInputValueFlow = actionSheetViewModel.balanceInputValue,
             onBalanceClicked = actionSheetViewModel::onBalanceClicked,
             onBackPressed = actionSheetViewModel::onBackPressed,
+            onBalanceInputValueUpdated = actionSheetViewModel::onBalanceInputValueUpdated,
+            onBalanceInputSubmit = actionSheetViewModel::onBalanceInputSubmit,
         )
     }
 }
@@ -198,8 +199,11 @@ private fun AccountsScreenPreview(
 private fun AccountActionSheet(
     accountDetails: ViewAccountDetails,
     mode: ViewAccountActionSheetMode,
+    balanceInputValueFlow: StateFlow<BigInteger>,
     onBalanceClicked: () -> Unit,
     onBackPressed: () -> Unit,
+    onBalanceInputValueUpdated: (BigInteger) -> Unit,
+    onBalanceInputSubmit: () -> Unit,
 ) = Column(
     horizontalAlignment = Alignment.CenterHorizontally,
     modifier = Modifier
@@ -271,9 +275,14 @@ private fun AccountActionSheet(
 
         ViewAccountActionSheetMode.Balance -> {
             Row {
-                var amountInputValue by remember {
+                val balanceInputCurrency = accountDetails.balance.currency
+                var balanceInputTextFieldValue by remember {
                     val initialValue = amountFormat
-                        .formatForInput(accountDetails.balance)
+                        .formatForInput(
+                            value = balanceInputValueFlow.value,
+                            currency = balanceInputCurrency,
+                        )
+
                     mutableStateOf(
                         TextFieldValue(
                             text = initialValue,
@@ -286,19 +295,19 @@ private fun AccountActionSheet(
                 }
 
                 BasicTextField(
-                    value = amountInputValue,
+                    value = balanceInputTextFieldValue,
                     onValueChange = { newValue ->
                         val cleanedUpText = amountFormat.unifyDecimalSeparators(newValue.text)
                         val parsedValue =
                             amountFormat.parseInput(
                                 input = cleanedUpText,
-                                currency = accountDetails.balance.currency,
+                                currency = balanceInputCurrency,
                             )
 
-                        println("OOLEG ${newValue.text} = $parsedValue")
-
                         if (parsedValue != null) {
-                            amountInputValue = newValue.copy(
+                            onBalanceInputValueUpdated(parsedValue)
+
+                            balanceInputTextFieldValue = newValue.copy(
                                 text = cleanedUpText,
                             )
                         }
@@ -309,7 +318,7 @@ private fun AccountActionSheet(
                         imeAction = ImeAction.Done,
                     ),
                     keyboardActions = KeyboardActions {
-                        println("OOLEG here")
+                        onBalanceInputSubmit()
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -327,10 +336,14 @@ private fun AccountActionSheet(
 
                 Spacer(modifier = Modifier.width(24.dp))
 
+                val clickableBalanceSaveModifier = remember {
+                    Modifier.clickable { onBalanceInputSubmit() }
+                }
+
                 BasicText(
                     text = "Save",
                     modifier = Modifier
-                        .then(clickableBalanceModifier)
+                        .then(clickableBalanceSaveModifier)
                         .border(
                             width = 1.dp,
                             color = Color.DarkGray,
@@ -359,8 +372,11 @@ private fun AccountActionSheetPreview(
                 balance = amount,
             ),
             mode = mode,
+            balanceInputValueFlow = MutableStateFlow(BigInteger("9856")),
             onBalanceClicked = {},
             onBackPressed = {},
+            onBalanceInputValueUpdated = {},
+            onBalanceInputSubmit = {},
         )
     }
 }
