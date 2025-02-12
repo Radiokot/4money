@@ -78,9 +78,9 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.currency.view.ViewAmount
+import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.uikit.AccountList
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
-import java.text.DecimalFormatSymbols
 
 class AccountsActivity : UserSessionScopeActivity() {
 
@@ -228,10 +228,13 @@ private fun AccountActionSheet(
         Modifier.clickable { onBalanceClicked() }
     }
 
+    val locale = LocalConfiguration.current.locales[0]
+    val amountFormat = remember(locale) {
+        ViewAmountFormat(locale)
+    }
+
     BasicText(
-        text = accountDetails.balance.format(
-            locale = LocalConfiguration.current.locales[0],
-        ),
+        text = amountFormat(accountDetails.balance),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         style = TextStyle(
@@ -264,26 +267,9 @@ private fun AccountActionSheet(
 
         ViewAccountActionSheetMode.Balance -> {
             Row {
-                val locale = LocalConfiguration.current.locales.get(0)
-                val cleanUpOrDrop = remember {
-                    val dfs = DecimalFormatSymbols.getInstance(locale)
-
-                    fun String.(): String? = this
-                        .replace(',', dfs.decimalSeparator)
-                        .replace('.', dfs.decimalSeparator)
-                        .replace("\\s|\\+".toRegex(), "")
-                        .takeUnless { it.split(dfs.decimalSeparator).size > 2 }
-                        ?.takeUnless { it.lastIndexOf(dfs.minusSign) > 0 }
-                }
                 var amountInputValue by remember {
-                    val initialValue = accountDetails.balance
-                        .format(
-                            locale = locale,
-                            withCurrencySymbol = false,
-                        )
-                        .text
-                        .cleanUpOrDrop() ?: ""
-
+                    val initialValue = amountFormat
+                        .formatForInput(accountDetails.balance)
                     mutableStateOf(
                         TextFieldValue(
                             text = initialValue,
@@ -298,10 +284,18 @@ private fun AccountActionSheet(
                 BasicTextField(
                     value = amountInputValue,
                     onValueChange = { newValue ->
-                        val newValueText = newValue.text.cleanUpOrDrop()
-                        if (newValueText != null) {
+                        val cleanedUpText = amountFormat.unifyDecimalSeparators(newValue.text)
+                        val parsedValue =
+                            amountFormat.parseInput(
+                                input = cleanedUpText,
+                                currency = accountDetails.balance.currency,
+                            )
+
+                        println("OOLEG ${newValue.text} = $parsedValue")
+
+                        if (parsedValue != null) {
                             amountInputValue = newValue.copy(
-                                text = newValueText,
+                                text = cleanedUpText,
                             )
                         }
                     },

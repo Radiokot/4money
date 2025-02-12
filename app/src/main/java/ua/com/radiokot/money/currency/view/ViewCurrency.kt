@@ -25,7 +25,7 @@ import ua.com.radiokot.money.currency.data.Currency
 @Immutable
 class ViewCurrency(
     val symbol: String,
-    val precision: Short,
+    val precision: Int,
 ) {
     constructor(currency: Currency) : this(
         symbol = currency.symbol,

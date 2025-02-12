@@ -71,7 +71,7 @@ class PowerSyncAccountRepository(
             id = getString(column)!!,
             code = getString(++column)!!.trim(),
             symbol = getString(++column)!!.trim(),
-            precision = getLong(++column)!!.toShort(),
+            precision = getLong(++column)!!.toInt(),
         )
 
         Account(

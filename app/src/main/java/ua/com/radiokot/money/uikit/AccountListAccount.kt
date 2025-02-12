@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
@@ -33,6 +34,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ua.com.radiokot.money.currency.view.ViewAmount
+import ua.com.radiokot.money.currency.view.ViewAmountFormat
 
 @Composable
 fun AccountListItem(
@@ -54,10 +56,13 @@ fun AccountListItem(
 
         Spacer(modifier = Modifier.height(4.dp))
 
+        val locale = LocalConfiguration.current.locales[0]
+        val amountFormat = remember(locale) {
+            ViewAmountFormat(locale)
+        }
+
         BasicText(
-            text = balance.format(
-                locale = LocalConfiguration.current.locales[0],
-            ),
+            text = amountFormat(balance),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             style = TextStyle(

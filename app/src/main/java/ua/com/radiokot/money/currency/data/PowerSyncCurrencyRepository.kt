@@ -43,7 +43,7 @@ class PowerSyncCurrencyRepository(
         Currency(
             code = getString(0)!!.trim(),
             symbol = getString(1)!!.trim(),
-            precision = getLong(2)!!.toShort(),
+            precision = getLong(2)!!.toInt(),
             id = getString(3)!!,
         )
     }

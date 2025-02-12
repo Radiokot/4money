@@ -37,7 +37,7 @@ class Currency(
      * Non-negative number of digits after the decimal point,
      * not greater than 18.
      */
-    val precision: Short,
+    val precision: Int,
 
     /**
      * A unique identifier of the record.
