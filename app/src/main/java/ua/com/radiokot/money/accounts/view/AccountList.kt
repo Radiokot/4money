@@ -17,25 +17,40 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.uikit
+package ua.com.radiokot.money.accounts.view
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import ua.com.radiokot.money.accounts.view.ViewAccountListItem
 import ua.com.radiokot.money.currency.view.ViewAmount
+import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
+import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 import java.math.BigInteger
 
 @Composable
@@ -58,7 +73,7 @@ fun AccountList(
         ) { item ->
             when (item) {
                 is ViewAccountListItem.Header -> {
-                    AccountListHeader(
+                    HeaderItem(
                         title = item.title,
                         amount = item.amount,
                         modifier = Modifier
@@ -70,7 +85,7 @@ fun AccountList(
                 }
 
                 is ViewAccountListItem.Account -> {
-                    AccountListItem(
+                    AccountItem(
                         title = item.title,
                         balance = item.balance,
                         modifier = Modifier
@@ -152,5 +167,106 @@ private fun AccountListPreview() {
                 key = "acc3",
             ),
         ).let(::MutableStateFlow)
+    )
+}
+
+@Composable
+private fun HeaderItem(
+    title: String,
+    amount: ViewAmount,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        BasicText(
+            text = title,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = TextStyle(
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            modifier = Modifier
+                .weight(1f),
+        )
+
+        val locale = LocalConfiguration.current.locales[0]
+        val amountFormat = remember(locale) {
+            ViewAmountFormat(locale)
+        }
+
+        BasicText(
+            text = amountFormat(amount),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = TextStyle(
+                fontSize = 16.sp,
+            ),
+        )
+    }
+}
+
+@Composable
+@Preview(
+    widthDp = 140,
+)
+private fun HeaderItemPreview(
+    @PreviewParameter(ViewAmountPreviewParameterProvider::class) amount: ViewAmount,
+) {
+    HeaderItem(
+        title = "Savings",
+        amount = amount,
+    )
+}
+
+@Composable
+private fun AccountItem(
+    title: String,
+    balance: ViewAmount,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+    ) {
+        BasicText(
+            text = title,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = TextStyle(
+                fontSize = 14.sp,
+            )
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        val locale = LocalConfiguration.current.locales[0]
+        val amountFormat = remember(locale) {
+            ViewAmountFormat(locale)
+        }
+
+        BasicText(
+            text = amountFormat(balance),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = TextStyle(
+                fontSize = 16.sp,
+            ),
+        )
+    }
+}
+
+@Composable
+@Preview(
+    widthDp = 200,
+)
+private fun AccountItemPreview(
+    @PreviewParameter(ViewAmountPreviewParameterProvider::class) balance: ViewAmount,
+) {
+    AccountItem(
+        title = "Melting cube bank – Visa 4422",
+        balance = balance,
     )
 }

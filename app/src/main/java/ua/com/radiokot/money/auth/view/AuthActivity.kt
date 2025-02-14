@@ -25,24 +25,21 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ua.com.radiokot.money.accounts.view.AccountsActivity
+import ua.com.radiokot.money.uikit.TextButton
 
 class AuthActivity : ComponentActivity() {
     private val viewModel: AuthViewModel by viewModel()
@@ -103,16 +100,10 @@ private fun AuthScreen(
         .padding(16.dp)
         .fillMaxSize()
 ) {
-    BasicText(
+    TextButton(
         text = "Authenticate",
         modifier = Modifier
             .clickable { onAuthenticateClicked() }
-            .border(
-                width = 1.dp,
-                color = Color.DarkGray,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(12.dp)
     )
 }
 
