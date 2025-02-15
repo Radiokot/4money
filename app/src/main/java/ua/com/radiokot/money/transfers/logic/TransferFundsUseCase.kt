@@ -17,25 +17,25 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.currency
+package ua.com.radiokot.money.transfers.logic
 
-import org.koin.dsl.bind
-import org.koin.dsl.module
-import ua.com.radiokot.money.auth.logic.sessionScope
-import ua.com.radiokot.money.currency.data.CurrencyRepository
-import ua.com.radiokot.money.currency.data.PowerSyncCurrencyRepository
-import ua.com.radiokot.money.powersync.powerSyncModule
+import ua.com.radiokot.money.accounts.data.AccountRepository
+import java.math.BigInteger
 
-val currencyModule = module {
-    includes(
-        powerSyncModule,
-    )
-
-    sessionScope {
-        scoped {
-            PowerSyncCurrencyRepository(
-                database = get(),
-            )
-        } bind CurrencyRepository::class
+class TransferFundsUseCase(
+    private val accountRepository: AccountRepository,
+) {
+    suspend operator fun invoke(
+        sourceAccountId: String,
+        sourceAmount: BigInteger,
+        destinationAccountId: String,
+        destinationAmount: BigInteger,
+    ): Result<Unit> = runCatching {
+        accountRepository.transfer(
+            sourceAccountId = sourceAccountId,
+            sourceAmount = sourceAmount,
+            destinationAccountId = destinationAccountId,
+            destinationAmount = destinationAmount,
+        )
     }
 }

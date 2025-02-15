@@ -20,7 +20,11 @@
 package ua.com.radiokot.money.transfers.view
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -35,14 +39,20 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -61,16 +71,56 @@ import ua.com.radiokot.money.uikit.TextButton
 import java.math.BigInteger
 
 @Composable
-fun TransferSheet(
+fun TransferSheetRoot(
+    modifier: Modifier = Modifier,
+    viewModel: TransferSheetViewModel,
+) {
+    val isSheetOpened by viewModel.isOpened.collectAsState()
+    AnimatedVisibility(
+        visible = isSheetOpened,
+        enter = slideInVertically(
+            initialOffsetY = Int::unaryPlus,
+        ),
+        exit = slideOutVertically(
+            targetOffsetY = Int::unaryPlus,
+        ),
+        modifier = modifier
+            .widthIn(
+                max = 400.dp,
+            )
+    ) {
+        val source = viewModel.source.collectAsState().value
+        val destination = viewModel.destination.collectAsState().value
+
+        TransferSheet(
+            onBackPressed = viewModel::onBackPressed,
+            isSourceInputShown = viewModel.isSourceInputShown.collectAsState().value,
+            source = source
+                ?: return@AnimatedVisibility,
+            sourceAmountValueFlow = viewModel.sourceAmountValue,
+            onNewSourceAmountValueParsed = viewModel::onNewSourceAmountValueParsed,
+            destination = destination
+                ?: return@AnimatedVisibility,
+            destinationAmountValueFlow = viewModel.destinationAmountValue,
+            onNewDestinationAmountValueParsed = viewModel::onNewDestinationAmountValueParsed,
+            isSaveEnabled = viewModel.isSaveEnabled.collectAsState().value,
+            onSaveClicked = viewModel::onSaveClicked,
+        )
+    }
+}
+
+@Composable
+private fun TransferSheet(
     onBackPressed: () -> Unit,
     isSourceInputShown: Boolean,
+    source: ViewTransferCounterparty,
     sourceAmountValueFlow: StateFlow<BigInteger>,
-    sourceAmountCurrency: ViewCurrency,
     onNewSourceAmountValueParsed: (BigInteger) -> Unit,
-    destAmountValueFlow: StateFlow<BigInteger>,
-    destAmountCurrency: ViewCurrency,
-    onNewDestAmountValueParsed: (BigInteger) -> Unit,
+    destination: ViewTransferCounterparty,
+    destinationAmountValueFlow: StateFlow<BigInteger>,
+    onNewDestinationAmountValueParsed: (BigInteger) -> Unit,
     isSaveEnabled: Boolean,
+    onSaveClicked: () -> Unit,
 ) = BoxWithConstraints {
 
     val maxSheetHeightDp =
@@ -103,7 +153,7 @@ fun TransferSheet(
                 .height(IntrinsicSize.Max)
         ) {
             BasicText(
-                text = "Source",
+                text = source.title,
                 style = TextStyle(
                     textAlign = TextAlign.Center,
                     fontSize = 20.sp,
@@ -125,7 +175,7 @@ fun TransferSheet(
             )
 
             BasicText(
-                text = "Destination",
+                text = destination.title,
                 style = TextStyle(
                     textAlign = TextAlign.Center,
                     fontSize = 20.sp,
@@ -158,6 +208,12 @@ fun TransferSheet(
                 )
         ) {
             val softKeyboard = LocalSoftwareKeyboardController.current
+            val sourceAmountFocusRequester = remember {
+                FocusRequester()
+            }
+            val destinationAmountFocusRequester = remember {
+                FocusRequester()
+            }
 
             if (isSourceInputShown) {
                 Column(
@@ -177,14 +233,15 @@ fun TransferSheet(
 
                     AmountInputField(
                         valueFlow = sourceAmountValueFlow,
-                        currency = sourceAmountCurrency,
+                        currency = source.currency,
                         amountFormat = amountFormat,
                         onNewValueParsed = onNewSourceAmountValueParsed,
                         onKeyboardSubmit = {
-                            softKeyboard?.hide()
+                            destinationAmountFocusRequester.requestFocus()
                         },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .focusRequester(sourceAmountFocusRequester)
                     )
                 }
             }
@@ -205,25 +262,39 @@ fun TransferSheet(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 AmountInputField(
-                    valueFlow = destAmountValueFlow,
-                    currency = destAmountCurrency,
+                    valueFlow = destinationAmountValueFlow,
+                    currency = destination.currency,
                     amountFormat = amountFormat,
-                    onNewValueParsed = onNewDestAmountValueParsed,
+                    onNewValueParsed = onNewDestinationAmountValueParsed,
                     onKeyboardSubmit = {
                         softKeyboard?.hide()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
+                        .focusRequester(destinationAmountFocusRequester)
                 )
+            }
+
+            LaunchedEffect(isSourceInputShown) {
+                if (isSourceInputShown) {
+                    sourceAmountFocusRequester.requestFocus()
+                } else {
+                    destinationAmountFocusRequester.requestFocus()
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        val clickableSaveModifier = remember {
+            Modifier.clickable { onSaveClicked() }
+        }
+
         TextButton(
             text = "Save",
             isEnabled = isSaveEnabled,
             modifier = Modifier
+                .then(clickableSaveModifier)
                 .fillMaxWidth()
                 .padding(
                     horizontal = 16.dp,
@@ -235,51 +306,45 @@ fun TransferSheet(
 }
 
 @Composable
-@Preview
+@Preview(
+    heightDp = 2000,
+)
 private fun TransferSheetPreview(
 ) = Column {
+    val isSourceInputShownOptions = listOf(true, false)
+    val isSaveEnabledOptions = listOf(true, false)
 
-    BasicText(
-        text = "With source input:",
-        modifier = Modifier.padding(vertical = 16.dp)
-    )
-    TransferSheet(
-        onBackPressed = {},
-        isSourceInputShown = true,
-        sourceAmountValueFlow = MutableStateFlow(BigInteger("133")),
-        sourceAmountCurrency = ViewCurrency(
-            symbol = "A",
-            precision = 2,
-        ),
-        onNewSourceAmountValueParsed = {},
-        destAmountValueFlow = MutableStateFlow(BigInteger("331")),
-        destAmountCurrency = ViewCurrency(
-            symbol = "B",
-            precision = 2,
-        ),
-        onNewDestAmountValueParsed = {},
-        isSaveEnabled = true,
-    )
-
-    BasicText(
-        text = "Without source input:",
-        modifier = Modifier.padding(vertical = 16.dp)
-    )
-    TransferSheet(
-        onBackPressed = {},
-        isSourceInputShown = false,
-        sourceAmountValueFlow = MutableStateFlow(BigInteger("133")),
-        sourceAmountCurrency = ViewCurrency(
-            symbol = "A",
-            precision = 2,
-        ),
-        onNewSourceAmountValueParsed = {},
-        destAmountValueFlow = MutableStateFlow(BigInteger("331")),
-        destAmountCurrency = ViewCurrency(
-            symbol = "B",
-            precision = 2,
-        ),
-        onNewDestAmountValueParsed = {},
-        isSaveEnabled = true,
-    )
+    isSourceInputShownOptions.forEach { isSourceInputShown ->
+        isSaveEnabledOptions.forEach { isSaveEnabled ->
+            BasicText(
+                text = "Source input shown: $isSourceInputShown," +
+                        "\nSave enabled: $isSaveEnabled",
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+            TransferSheet(
+                onBackPressed = {},
+                isSourceInputShown = isSourceInputShown,
+                source = ViewTransferCounterparty(
+                    title = "Source",
+                    currency = ViewCurrency(
+                        symbol = "A",
+                        precision = 2,
+                    )
+                ),
+                sourceAmountValueFlow = MutableStateFlow(BigInteger("133")),
+                onNewSourceAmountValueParsed = {},
+                destination = ViewTransferCounterparty(
+                    title = "Destination",
+                    currency = ViewCurrency(
+                        symbol = "B",
+                        precision = 2,
+                    )
+                ),
+                destinationAmountValueFlow = MutableStateFlow(BigInteger("331")),
+                onNewDestinationAmountValueParsed = {},
+                isSaveEnabled = isSaveEnabled,
+                onSaveClicked = {},
+            )
+        }
+    }
 }

@@ -25,8 +25,10 @@ import org.koin.android.ext.android.getKoin
 import org.koin.androidx.scope.createActivityScope
 import org.koin.androidx.scope.createFragmentScope
 import org.koin.core.Koin
+import org.koin.core.module.Module
 import org.koin.core.qualifier._q
 import org.koin.core.scope.Scope
+import org.koin.dsl.ScopeDSL
 import ua.com.radiokot.money.auth.data.UserSession
 
 private const val DI_SCOPE_SESSION = "user-session"
@@ -74,3 +76,6 @@ fun Fragment.createFragmentScopeWithSession(): Scope =
     getKoin().getScopeOrNull(DI_SCOPE_SESSION)
         ?.apply { linkTo(createFragmentScope()) }
         ?: createFragmentScope()
+
+fun Module.sessionScope(scopeSet: ScopeDSL.() -> Unit): Unit =
+    scope<UserSession>(scopeSet)

@@ -28,6 +28,7 @@ import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
 import ua.com.radiokot.money.accounts.view.AccountActionSheetViewModel
 import ua.com.radiokot.money.accounts.view.AccountsViewModel
 import ua.com.radiokot.money.auth.data.UserSession
+import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.currency.currencyModule
 
 val accountsModule = module {
@@ -35,7 +36,7 @@ val accountsModule = module {
         currencyModule,
     )
 
-    scope<UserSession> {
+    sessionScope {
         scoped {
             PowerSyncAccountRepository(
                 database = get(),

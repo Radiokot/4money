@@ -20,6 +20,9 @@
 package ua.com.radiokot.money.accounts.view
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,11 +36,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,7 +72,45 @@ import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 import java.math.BigInteger
 
 @Composable
-fun AccountActionSheet(
+fun AccountActionSheetRoot(
+    modifier: Modifier=Modifier,
+    viewModel: AccountActionSheetViewModel,
+) {
+    val isSheetOpened by viewModel.isOpened.collectAsState()
+    AnimatedVisibility(
+        visible = isSheetOpened,
+        enter = slideInVertically(
+            initialOffsetY = Int::unaryPlus,
+        ),
+        exit = slideOutVertically(
+            targetOffsetY = Int::unaryPlus,
+        ),
+        modifier = modifier
+            .widthIn(
+                max = 400.dp,
+            )
+    ) {
+        val accountDetailsState = viewModel.accountDetails.collectAsState()
+        val modeState = viewModel.mode.collectAsState()
+
+        AccountActionSheet(
+            accountDetails = accountDetailsState.value
+                ?: return@AnimatedVisibility,
+            mode = modeState.value,
+            balanceInputValueFlow = viewModel.balanceInputValue,
+            onBalanceClicked = viewModel::onBalanceClicked,
+            onBackPressed = viewModel::onBackPressed,
+            onNewBalanceInputValueParsed = viewModel::onNewBalanceInputValueParsed,
+            onBalanceInputSubmit = viewModel::onBalanceInputSubmit,
+            onTransferClicked = viewModel::onTransferClicked,
+            transferDestinationListItemsFlow = viewModel.destinationAccountListItems,
+            onTransferDestinationAccountItemClicked = viewModel::onTransferDestinationAccountItemClicked,
+        )
+    }
+}
+
+@Composable
+private fun AccountActionSheet(
     accountDetails: ViewAccountDetails,
     mode: ViewAccountActionSheetMode,
     balanceInputValueFlow: StateFlow<BigInteger>,

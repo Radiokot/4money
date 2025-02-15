@@ -21,18 +21,12 @@ package ua.com.radiokot.money.accounts.view
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,12 +39,15 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.currency.view.ViewAmount
+import ua.com.radiokot.money.transfers.view.TransferSheetRoot
+import ua.com.radiokot.money.transfers.view.TransferSheetViewModel
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 
 class AccountsActivity : UserSessionScopeActivity() {
 
     private val viewModel: AccountsViewModel by viewModel()
     private val actionSheetViewModel: AccountActionSheetViewModel by viewModel()
+    private val transferSheetViewModel: TransferSheetViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,11 +60,15 @@ class AccountsActivity : UserSessionScopeActivity() {
             AccountsScreenRoot(
                 viewModel = viewModel,
                 actionSheetViewModel = actionSheetViewModel,
+                transferSheetViewModel = transferSheetViewModel,
             )
         }
 
         lifecycleScope.launch {
             subscribeToEvents()
+        }
+        lifecycleScope.launch {
+            subscribeToActionSheetEvents()
         }
     }
 
@@ -79,12 +80,25 @@ class AccountsActivity : UserSessionScopeActivity() {
                 )
         }
     }
+
+    private suspend fun subscribeToActionSheetEvents(
+    ): Unit = actionSheetViewModel.events.collect { event ->
+        when (event) {
+            is AccountActionSheetViewModel.Event.OpenTransfer -> {
+                transferSheetViewModel.open(
+                    sourceAccount = event.sourceAccount,
+                    destinationAccount = event.destinationAccount,
+                )
+            }
+        }
+    }
 }
 
 @Composable
 private fun AccountsScreenRoot(
     viewModel: AccountsViewModel,
     actionSheetViewModel: AccountActionSheetViewModel,
+    transferSheetViewModel: TransferSheetViewModel,
 ) = Box(
     modifier = Modifier
         .fillMaxSize()
@@ -95,38 +109,17 @@ private fun AccountsScreenRoot(
         onAccountItemClicked = viewModel::onAccountItemClicked,
     )
 
-    val isSheetOpened by actionSheetViewModel.isOpened.collectAsState()
-    AnimatedVisibility(
-        visible = isSheetOpened,
-        enter = slideInVertically(
-            initialOffsetY = Int::unaryPlus,
-        ),
-        exit = slideOutVertically(
-            targetOffsetY = Int::unaryPlus,
-        ),
+    AccountActionSheetRoot(
+        viewModel = actionSheetViewModel,
         modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .widthIn(
-                max = 400.dp,
-            )
-    ) {
-        val accountDetailsState = actionSheetViewModel.accountDetails.collectAsState()
-        val modeState = actionSheetViewModel.mode.collectAsState()
+            .align(Alignment.BottomCenter),
+    )
 
-        AccountActionSheet(
-            accountDetails = accountDetailsState.value
-                ?: return@AnimatedVisibility,
-            mode = modeState.value,
-            balanceInputValueFlow = actionSheetViewModel.balanceInputValue,
-            onBalanceClicked = actionSheetViewModel::onBalanceClicked,
-            onBackPressed = actionSheetViewModel::onBackPressed,
-            onNewBalanceInputValueParsed = actionSheetViewModel::onNewBalanceInputValueParsed,
-            onBalanceInputSubmit = actionSheetViewModel::onBalanceInputSubmit,
-            onTransferClicked = actionSheetViewModel::onTransferClicked,
-            transferDestinationListItemsFlow = actionSheetViewModel.destinationAccountListItems,
-            onTransferDestinationAccountItemClicked = actionSheetViewModel::onTransferDestinationAccountItemClicked,
-        )
-    }
+    TransferSheetRoot(
+        viewModel = transferSheetViewModel,
+        modifier = Modifier
+            .align(Alignment.BottomCenter),
+    )
 }
 
 @Composable

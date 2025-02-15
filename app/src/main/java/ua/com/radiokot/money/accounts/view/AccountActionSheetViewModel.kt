@@ -22,6 +22,7 @@ package ua.com.radiokot.money.accounts.view
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
@@ -30,6 +31,7 @@ import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
+import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 import java.math.BigInteger
 
@@ -52,8 +54,10 @@ class AccountActionSheetViewModel(
     private val _destinationAccountListItems: MutableStateFlow<List<ViewAccountListItem>> =
         MutableStateFlow(emptyList())
     val destinationAccountListItems = _destinationAccountListItems.asStateFlow()
+    private val _events: MutableSharedFlow<Event> = eventSharedFlow()
+    val events = _events
     private var accountSubscriptionJob: Job? = null
-    private lateinit var currentAccount: Account
+    private lateinit var account: Account
 
     fun open(account: Account) {
         log.debug {
@@ -63,15 +67,13 @@ class AccountActionSheetViewModel(
 
         accountSubscriptionJob?.cancel()
         accountSubscriptionJob = viewModelScope.launch {
-            currentAccount = account
-
             // Subscribe to fresh account details.
             launch {
                 accountRepository
                     .getAccountByIdFlow(account.id)
                     .onStart { emit(account) }
                     .collect { freshAccount ->
-                        currentAccount = freshAccount
+                        this@AccountActionSheetViewModel.account = freshAccount
                         _accountDetails.emit(ViewAccountDetails(freshAccount))
                     }
             }
@@ -83,7 +85,7 @@ class AccountActionSheetViewModel(
                     .onStart { emit(emptyList()) }
                     .map { accounts ->
                         accounts
-                            .filter { it != currentAccount }
+                            .filter { it != this@AccountActionSheetViewModel.account }
                             .map(ViewAccountListItem::Account)
                     }
                     .collect(_destinationAccountListItems)
@@ -107,7 +109,7 @@ class AccountActionSheetViewModel(
         }
 
         _mode.tryEmit(ViewAccountActionSheetMode.Balance)
-        _balanceInputValue.tryEmit(currentAccount.balance)
+        _balanceInputValue.tryEmit(account.balance)
     }
 
     fun onTransferClicked() {
@@ -136,9 +138,18 @@ class AccountActionSheetViewModel(
 
         log.debug {
             "onTransferDestinationAccountItemClicked(): opening transfer:" +
-                    "\ncurrentAccount=$currentAccount" +
+                    "\ncurrentAccount=$account" +
                     "\ndestinationAccount=$clickedAccount"
         }
+
+        _events.tryEmit(
+            Event.OpenTransfer(
+                sourceAccount = account,
+                destinationAccount = clickedAccount,
+            )
+        )
+
+        close()
     }
 
     fun onBackPressed() {
@@ -168,7 +179,7 @@ class AccountActionSheetViewModel(
 
     private var balanceUpdateJob: Job? = null
     private fun updateAccountBalance() {
-        val accountId = currentAccount.id
+        val accountId = account.id
         val newValue = _balanceInputValue.value
 
         balanceUpdateJob?.cancel()
@@ -207,4 +218,10 @@ class AccountActionSheetViewModel(
         _isOpened.tryEmit(false)
     }
 
+    sealed interface Event {
+        class OpenTransfer(
+            val sourceAccount: Account,
+            val destinationAccount: Account,
+        ) : Event
+    }
 }

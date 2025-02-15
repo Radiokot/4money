@@ -17,25 +17,33 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.currency
+package ua.com.radiokot.money.transfers
 
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import ua.com.radiokot.money.accounts.accountsModule
 import ua.com.radiokot.money.auth.logic.sessionScope
-import ua.com.radiokot.money.currency.data.CurrencyRepository
-import ua.com.radiokot.money.currency.data.PowerSyncCurrencyRepository
-import ua.com.radiokot.money.powersync.powerSyncModule
+import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
+import ua.com.radiokot.money.transfers.view.TransferSheetViewModel
 
-val currencyModule = module {
+val transfersModule = module {
     includes(
-        powerSyncModule,
+        accountsModule,
     )
 
     sessionScope {
-        scoped {
-            PowerSyncCurrencyRepository(
-                database = get(),
+        factory {
+            TransferFundsUseCase(
+                accountRepository = get(),
             )
-        } bind CurrencyRepository::class
+        } bind TransferFundsUseCase::class
+
+        viewModel {
+            TransferSheetViewModel(
+                accountRepository = get(),
+                transferFundsUseCase = get(),
+            )
+        } bind TransferSheetViewModel::class
     }
 }
