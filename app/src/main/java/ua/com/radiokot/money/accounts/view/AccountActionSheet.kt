@@ -21,7 +21,6 @@ package ua.com.radiokot.money.accounts.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -36,16 +35,10 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -55,12 +48,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -71,6 +60,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
+import ua.com.radiokot.money.uikit.AmountInputField
 import ua.com.radiokot.money.uikit.TextButton
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 import java.math.BigInteger
@@ -82,7 +72,7 @@ fun AccountActionSheet(
     balanceInputValueFlow: StateFlow<BigInteger>,
     onBalanceClicked: () -> Unit,
     onBackPressed: () -> Unit,
-    onBalanceInputValueUpdated: (BigInteger) -> Unit,
+    onNewBalanceInputValueParsed: (BigInteger) -> Unit,
     onBalanceInputSubmit: () -> Unit,
     onTransferClicked: () -> Unit,
     transferDestinationListItemsFlow: StateFlow<List<ViewAccountListItem>>,
@@ -170,7 +160,7 @@ fun AccountActionSheet(
                     accountDetails = accountDetails,
                     balanceInputValueFlow = balanceInputValueFlow,
                     amountFormat = amountFormat,
-                    onBalanceInputValueUpdated = onBalanceInputValueUpdated,
+                    onNewBalanceInputValueParsed = onNewBalanceInputValueParsed,
                     onBalanceInputSubmit = onBalanceInputSubmit,
                 )
 
@@ -201,6 +191,11 @@ private fun AccountActionSheetPreview(
     amount: ViewAmount,
 ) = Column {
     ViewAccountActionSheetMode.entries.forEach { mode ->
+        BasicText(
+            text = mode.name + ": ",
+            modifier = Modifier.padding(vertical = 12.dp)
+        )
+
         AccountActionSheet(
             accountDetails = ViewAccountDetails(
                 title = "Account #1",
@@ -210,7 +205,7 @@ private fun AccountActionSheetPreview(
             balanceInputValueFlow = MutableStateFlow(BigInteger("9856")),
             onBalanceClicked = {},
             onBackPressed = {},
-            onBalanceInputValueUpdated = {},
+            onNewBalanceInputValueParsed = {},
             onBalanceInputSubmit = {},
             onTransferClicked = {},
             transferDestinationListItemsFlow = MutableStateFlow(
@@ -300,7 +295,7 @@ private fun BalanceModeContent(
     accountDetails: ViewAccountDetails,
     balanceInputValueFlow: StateFlow<BigInteger>,
     amountFormat: ViewAmountFormat,
-    onBalanceInputValueUpdated: (BigInteger) -> Unit,
+    onNewBalanceInputValueParsed: (BigInteger) -> Unit,
     onBalanceInputSubmit: () -> Unit,
 ) = Row(
     modifier = Modifier
@@ -309,57 +304,18 @@ private fun BalanceModeContent(
         )
 ) {
     val balanceInputCurrency = accountDetails.balance.currency
-    var balanceInputTextFieldValue by remember {
-        val initialValue = amountFormat
-            .formatForInput(
-                value = balanceInputValueFlow.value,
-                currency = balanceInputCurrency,
-            )
-
-        mutableStateOf(
-            TextFieldValue(
-                text = initialValue,
-                selection = TextRange(initialValue.length),
-            )
-        )
-    }
     val focusRequester = remember {
         FocusRequester()
     }
 
-    BasicTextField(
-        value = balanceInputTextFieldValue,
-        onValueChange = { newValue ->
-            val cleanedUpText = amountFormat.unifyDecimalSeparators(newValue.text)
-            val parsedValue =
-                amountFormat.parseInput(
-                    input = cleanedUpText,
-                    currency = balanceInputCurrency,
-                )
-
-            if (parsedValue != null) {
-                onBalanceInputValueUpdated(parsedValue)
-
-                balanceInputTextFieldValue = newValue.copy(
-                    text = cleanedUpText,
-                )
-            }
-        },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Decimal,
-            imeAction = ImeAction.Done,
-        ),
-        keyboardActions = KeyboardActions {
-            onBalanceInputSubmit()
-        },
+    AmountInputField(
+        valueFlow = balanceInputValueFlow,
+        currency = balanceInputCurrency,
+        amountFormat = amountFormat,
+        onParsedNewValue = onNewBalanceInputValueParsed,
+        onKeyboardSubmit = onBalanceInputSubmit,
         modifier = Modifier
             .weight(1f)
-            .border(
-                width = 1.dp,
-                color = Color.DarkGray,
-            )
-            .padding(12.dp)
             .focusRequester(focusRequester)
     )
 

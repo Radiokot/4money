@@ -153,9 +153,9 @@ class AccountActionSheetViewModel(
         close()
     }
 
-    fun onBalanceInputValueUpdated(newValue: BigInteger) {
+    fun onNewBalanceInputValueParsed(newValue: BigInteger) {
         log.debug {
-            "onBalanceInputAmountUpdated(): updating balance input value: " +
+            "onNewBalanceInputValueParsed(): updating balance input value: " +
                     "\nnewValue=$newValue"
         }
 

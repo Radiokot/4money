@@ -120,7 +120,7 @@ private fun AccountsScreenRoot(
             balanceInputValueFlow = actionSheetViewModel.balanceInputValue,
             onBalanceClicked = actionSheetViewModel::onBalanceClicked,
             onBackPressed = actionSheetViewModel::onBackPressed,
-            onBalanceInputValueUpdated = actionSheetViewModel::onBalanceInputValueUpdated,
+            onNewBalanceInputValueParsed = actionSheetViewModel::onNewBalanceInputValueParsed,
             onBalanceInputSubmit = actionSheetViewModel::onBalanceInputSubmit,
             onTransferClicked = actionSheetViewModel::onTransferClicked,
             transferDestinationListItemsFlow = actionSheetViewModel.destinationAccountListItems,
