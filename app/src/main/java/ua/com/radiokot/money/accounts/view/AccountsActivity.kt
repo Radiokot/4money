@@ -122,6 +122,9 @@ private fun AccountsScreenRoot(
             onBackPressed = actionSheetViewModel::onBackPressed,
             onBalanceInputValueUpdated = actionSheetViewModel::onBalanceInputValueUpdated,
             onBalanceInputSubmit = actionSheetViewModel::onBalanceInputSubmit,
+            onTransferClicked = actionSheetViewModel::onTransferClicked,
+            transferDestinationListItemsFlow = actionSheetViewModel.destinationAccountListItems,
+            onTransferDestinationAccountItemClicked = actionSheetViewModel::onTransferDestinationAccountItemClicked,
         )
     }
 }

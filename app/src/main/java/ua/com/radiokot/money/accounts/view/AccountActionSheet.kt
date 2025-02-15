@@ -24,11 +24,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
@@ -50,6 +52,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
@@ -80,72 +84,113 @@ fun AccountActionSheet(
     onBackPressed: () -> Unit,
     onBalanceInputValueUpdated: (BigInteger) -> Unit,
     onBalanceInputSubmit: () -> Unit,
-) = Column(
-    horizontalAlignment = Alignment.CenterHorizontally,
-    modifier = Modifier
-        .shadow(8.dp)
-        .safeDrawingPadding()
-        .fillMaxWidth()
-        .verticalScroll(rememberScrollState())
-        .background(Color(0xFFF9FBE7))
-        .padding(
-            horizontal = 16.dp,
-            vertical = 32.dp,
-        )
-) {
-    BackHandler(onBack = onBackPressed)
+    onTransferClicked: () -> Unit,
+    transferDestinationListItemsFlow: StateFlow<List<ViewAccountListItem>>,
+    onTransferDestinationAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
+) = BoxWithConstraints {
 
-    BasicText(
-        text = accountDetails.title,
-        style = TextStyle(
-            textAlign = TextAlign.Center,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-        ),
+    val maxSheetHeightDp =
+        if (maxHeight < 400.dp)
+            maxHeight
+        else
+            maxHeight * 0.8f
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
+            .shadow(8.dp)
+            .safeDrawingPadding()
             .fillMaxWidth()
-    )
+            .heightIn(
+                max = maxSheetHeightDp,
+            )
+            .verticalScroll(rememberScrollState())
+            .background(Color(0xFFF9FBE7))
+            .padding(
+                horizontal = 16.dp,
+            )
+    ) {
+        BackHandler(onBack = onBackPressed)
 
-    Spacer(modifier = Modifier.height(16.dp))
+        val clickableBalanceModifier = remember {
+            Modifier.clickable { onBalanceClicked() }
+        }
 
-    val clickableBalanceModifier = remember {
-        Modifier.clickable { onBalanceClicked() }
-    }
+        val locale = LocalConfiguration.current.locales[0]
+        val amountFormat = remember(locale) {
+            ViewAmountFormat(locale)
+        }
 
-    val locale = LocalConfiguration.current.locales[0]
-    val amountFormat = remember(locale) {
-        ViewAmountFormat(locale)
-    }
+        var headerHeight = 0
 
-    BasicText(
-        text = amountFormat(accountDetails.balance),
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        style = TextStyle(
-            textAlign = TextAlign.Center,
-            fontSize = 24.sp,
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(clickableBalanceModifier)
-    )
+        Column(
+            modifier = Modifier
+                .onSizeChanged { headerHeight = it.height }
+        ) {
+            Spacer(modifier = Modifier.height(32.dp))
 
-    Spacer(modifier = Modifier.height(24.dp))
-
-    when (mode) {
-        ViewAccountActionSheetMode.Actions ->
-            ActionsModeContent(
-                onBalanceClicked = onBalanceClicked,
+            BasicText(
+                text = accountDetails.title,
+                style = TextStyle(
+                    textAlign = TextAlign.Center,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
             )
 
-        ViewAccountActionSheetMode.Balance ->
-            BalanceModeContent(
-                accountDetails = accountDetails,
-                balanceInputValueFlow = balanceInputValueFlow,
-                amountFormat = amountFormat,
-                onBalanceInputValueUpdated = onBalanceInputValueUpdated,
-                onBalanceInputSubmit = onBalanceInputSubmit,
+            Spacer(modifier = Modifier.height(16.dp))
+
+            BasicText(
+                text = amountFormat(accountDetails.balance),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = TextStyle(
+                    textAlign = TextAlign.Center,
+                    fontSize = 24.sp,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(clickableBalanceModifier)
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        when (mode) {
+            ViewAccountActionSheetMode.Actions ->
+                ActionsModeContent(
+                    onBalanceClicked = onBalanceClicked,
+                    onTransferClicked = onTransferClicked,
+                )
+
+            ViewAccountActionSheetMode.Balance ->
+                BalanceModeContent(
+                    accountDetails = accountDetails,
+                    balanceInputValueFlow = balanceInputValueFlow,
+                    amountFormat = amountFormat,
+                    onBalanceInputValueUpdated = onBalanceInputValueUpdated,
+                    onBalanceInputSubmit = onBalanceInputSubmit,
+                )
+
+            ViewAccountActionSheetMode.TransferDestination ->
+                TransferDestinationContent(
+                    listItemsFlow = transferDestinationListItemsFlow,
+                    onAccountItemClicked = onTransferDestinationAccountItemClicked,
+                    modifier = Modifier
+                        .layout { measurable, constraints ->
+                            val placeable = measurable.measure(
+                                constraints.copy(
+                                    maxHeight = (maxSheetHeightDp.roundToPx() - headerHeight),
+                                )
+                            )
+                            layout(placeable.width, placeable.height) {
+                                placeable.place(0, 0)
+                            }
+                        }
+                )
+        }
     }
 }
 
@@ -155,10 +200,7 @@ private fun AccountActionSheetPreview(
     @PreviewParameter(ViewAmountPreviewParameterProvider::class, limit = 1)
     amount: ViewAmount,
 ) = Column {
-    listOf(
-        ViewAccountActionSheetMode.Actions,
-        ViewAccountActionSheetMode.Balance,
-    ).forEach { mode ->
+    ViewAccountActionSheetMode.entries.forEach { mode ->
         AccountActionSheet(
             accountDetails = ViewAccountDetails(
                 title = "Account #1",
@@ -170,6 +212,16 @@ private fun AccountActionSheetPreview(
             onBackPressed = {},
             onBalanceInputValueUpdated = {},
             onBalanceInputSubmit = {},
+            onTransferClicked = {},
+            transferDestinationListItemsFlow = MutableStateFlow(
+                listOf(
+                    ViewAccountListItem.Account(
+                        title = "Dest account",
+                        balance = amount,
+                    )
+                )
+            ),
+            onTransferDestinationAccountItemClicked = {},
         )
     }
 }
@@ -177,13 +229,10 @@ private fun AccountActionSheetPreview(
 @Composable
 private fun ActionsModeContent(
     onBalanceClicked: () -> Unit,
+    onTransferClicked: () -> Unit,
 ) = Column(
     verticalArrangement = Arrangement.spacedBy(16.dp),
 ) {
-    val clickableBalanceModifier = remember {
-        Modifier.clickable { onBalanceClicked() }
-    }
-
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -197,7 +246,11 @@ private fun ActionsModeContent(
         TextButton(
             text = "Balance",
             modifier = Modifier
-                .then(clickableBalanceModifier)
+                .then(
+                    remember {
+                        Modifier.clickable { onBalanceClicked() }
+                    }
+                )
                 .weight(1f)
         )
 
@@ -230,9 +283,16 @@ private fun ActionsModeContent(
             text = "Transfer",
             isEnabled = true,
             modifier = Modifier
+                .then(
+                    remember {
+                        Modifier.clickable { onTransferClicked() }
+                    }
+                )
                 .weight(1f)
         )
     }
+
+    Spacer(modifier = Modifier.height(24.dp))
 }
 
 @Composable
@@ -242,78 +302,105 @@ private fun BalanceModeContent(
     amountFormat: ViewAmountFormat,
     onBalanceInputValueUpdated: (BigInteger) -> Unit,
     onBalanceInputSubmit: () -> Unit,
+) = Row(
+    modifier = Modifier
+        .padding(
+            bottom = 24.dp,
+        )
 ) {
-    Row {
-        val balanceInputCurrency = accountDetails.balance.currency
-        var balanceInputTextFieldValue by remember {
-            val initialValue = amountFormat
-                .formatForInput(
-                    value = balanceInputValueFlow.value,
+    val balanceInputCurrency = accountDetails.balance.currency
+    var balanceInputTextFieldValue by remember {
+        val initialValue = amountFormat
+            .formatForInput(
+                value = balanceInputValueFlow.value,
+                currency = balanceInputCurrency,
+            )
+
+        mutableStateOf(
+            TextFieldValue(
+                text = initialValue,
+                selection = TextRange(initialValue.length),
+            )
+        )
+    }
+    val focusRequester = remember {
+        FocusRequester()
+    }
+
+    BasicTextField(
+        value = balanceInputTextFieldValue,
+        onValueChange = { newValue ->
+            val cleanedUpText = amountFormat.unifyDecimalSeparators(newValue.text)
+            val parsedValue =
+                amountFormat.parseInput(
+                    input = cleanedUpText,
                     currency = balanceInputCurrency,
                 )
 
-            mutableStateOf(
-                TextFieldValue(
-                    text = initialValue,
-                    selection = TextRange(initialValue.length),
+            if (parsedValue != null) {
+                onBalanceInputValueUpdated(parsedValue)
+
+                balanceInputTextFieldValue = newValue.copy(
+                    text = cleanedUpText,
                 )
+            }
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Decimal,
+            imeAction = ImeAction.Done,
+        ),
+        keyboardActions = KeyboardActions {
+            onBalanceInputSubmit()
+        },
+        modifier = Modifier
+            .weight(1f)
+            .border(
+                width = 1.dp,
+                color = Color.DarkGray,
             )
-        }
-        val focusRequester = remember {
-            FocusRequester()
-        }
+            .padding(12.dp)
+            .focusRequester(focusRequester)
+    )
 
-        BasicTextField(
-            value = balanceInputTextFieldValue,
-            onValueChange = { newValue ->
-                val cleanedUpText = amountFormat.unifyDecimalSeparators(newValue.text)
-                val parsedValue =
-                    amountFormat.parseInput(
-                        input = cleanedUpText,
-                        currency = balanceInputCurrency,
-                    )
-
-                if (parsedValue != null) {
-                    onBalanceInputValueUpdated(parsedValue)
-
-                    balanceInputTextFieldValue = newValue.copy(
-                        text = cleanedUpText,
-                    )
-                }
-            },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Decimal,
-                imeAction = ImeAction.Done,
-            ),
-            keyboardActions = KeyboardActions {
-                onBalanceInputSubmit()
-            },
-            modifier = Modifier
-                .weight(1f)
-                .border(
-                    width = 1.dp,
-                    color = Color.DarkGray,
-                )
-                .padding(12.dp)
-                .focusRequester(focusRequester)
-        )
-
-        LaunchedEffect(focusRequester) {
-            focusRequester.requestFocus()
-        }
-
-        Spacer(modifier = Modifier.width(24.dp))
-
-        val clickableBalanceSaveModifier = remember {
-            Modifier.clickable { onBalanceInputSubmit() }
-        }
-
-        TextButton(
-            text = "Save",
-            modifier = Modifier
-                .then(clickableBalanceSaveModifier)
-        )
+    LaunchedEffect(focusRequester) {
+        focusRequester.requestFocus()
     }
 
+    Spacer(modifier = Modifier.width(24.dp))
+
+    val clickableBalanceSaveModifier = remember {
+        Modifier.clickable { onBalanceInputSubmit() }
+    }
+
+    TextButton(
+        text = "Save",
+        modifier = Modifier
+            .then(clickableBalanceSaveModifier)
+    )
+}
+
+@Composable
+private fun TransferDestinationContent(
+    modifier: Modifier = Modifier,
+    listItemsFlow: StateFlow<List<ViewAccountListItem>>,
+    onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
+) = Column(
+    modifier = modifier
+) {
+    BasicText(
+        text = "To account",
+        style = TextStyle(
+            textAlign = TextAlign.Center,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(12.dp))
+
+    AccountList(
+        itemListFlow = listItemsFlow,
+        onAccountItemClicked = onAccountItemClicked,
+    )
 }

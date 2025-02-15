@@ -58,7 +58,7 @@ class AccountsViewModel(
     }
 
     fun onAccountItemClicked(item: ViewAccountListItem.Account) {
-        val account = item.source as? Account
+        val account = item.source
         if (account == null) {
             log.warn {
                 "onAccountItemClicked(): missing account source"
