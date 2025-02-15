@@ -39,6 +39,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -55,7 +56,7 @@ fun AmountInputField(
     valueFlow: StateFlow<BigInteger>,
     currency: ViewCurrency,
     amountFormat: ViewAmountFormat,
-    onParsedNewValue: (BigInteger) -> Unit,
+    onNewValueParsed: (BigInteger) -> Unit,
     onKeyboardSubmit: () -> Unit,
 ) {
     var lastEnteredTextFieldValue by remember {
@@ -106,7 +107,7 @@ fun AmountInputField(
                 lastEnteredTextFieldValue = newValue.copy(
                     text = cleanedUpText,
                 )
-                onParsedNewValue(parsedValue)
+                onNewValueParsed(parsedValue)
             }
         },
         singleLine = true,
@@ -145,7 +146,7 @@ private fun AmountInputFieldPreview(
         amountFormat = ViewAmountFormat(
             locale = LocalConfiguration.current.locales.get(0),
         ),
-        onParsedNewValue = {},
+        onNewValueParsed = {},
         onKeyboardSubmit = {}
     )
 }

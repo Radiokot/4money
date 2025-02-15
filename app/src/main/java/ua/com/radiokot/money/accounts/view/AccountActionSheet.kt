@@ -312,7 +312,7 @@ private fun BalanceModeContent(
         valueFlow = balanceInputValueFlow,
         currency = balanceInputCurrency,
         amountFormat = amountFormat,
-        onParsedNewValue = onNewBalanceInputValueParsed,
+        onNewValueParsed = onNewBalanceInputValueParsed,
         onKeyboardSubmit = onBalanceInputSubmit,
         modifier = Modifier
             .weight(1f)

@@ -57,8 +57,9 @@ fun TextButton(
             textAlign = TextAlign.Center,
             color = color,
         ),
-        modifier = modifier
+        modifier = Modifier
             .clip(shape)
+            .then(modifier)
             .border(
                 width = 1.dp,
                 color = color,
