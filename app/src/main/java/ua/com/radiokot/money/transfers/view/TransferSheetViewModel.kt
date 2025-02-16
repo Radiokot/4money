@@ -95,7 +95,7 @@ class TransferSheetViewModel(
         accountSubscriptionJob = viewModelScope.launch {
             launch {
                 accountRepository
-                    .getAccountByIdFlow(sourceAccount.id)
+                    .getAccountFlow(sourceAccount.id)
                     .onStart { emit(sourceAccount) }
                     .collect { freshSourceAccount ->
                         this@TransferSheetViewModel.sourceAccount = freshSourceAccount
@@ -105,7 +105,7 @@ class TransferSheetViewModel(
 
             launch {
                 accountRepository
-                    .getAccountByIdFlow(destinationAccount.id)
+                    .getAccountFlow(destinationAccount.id)
                     .onStart { emit(destinationAccount) }
                     .collect { freshDestAccount ->
                         this@TransferSheetViewModel.destinationAccount = freshDestAccount

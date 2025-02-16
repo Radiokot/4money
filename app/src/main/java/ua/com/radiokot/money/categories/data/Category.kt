@@ -17,21 +17,19 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.accounts.data
+package ua.com.radiokot.money.categories.data
 
 import ua.com.radiokot.money.currency.data.Currency
-import java.math.BigInteger
 import java.util.UUID
 
-class Account(
+class Category(
     val title: String,
-    val balance: BigInteger,
     val currency: Currency,
     val id: String = UUID.randomUUID().toString(),
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Account) return false
+        if (other !is Category) return false
 
         if (id != other.id) return false
 
@@ -43,6 +41,6 @@ class Account(
     }
 
     override fun toString(): String {
-        return "Account(title='$title', id='$id')"
+        return "Category(title='$title')"
     }
 }

@@ -27,13 +27,16 @@ import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
 import ua.com.radiokot.money.accounts.view.AccountActionSheetViewModel
 import ua.com.radiokot.money.accounts.view.AccountsViewModel
-import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.auth.logic.sessionScope
+import ua.com.radiokot.money.categories.categoriesModule
 import ua.com.radiokot.money.currency.currencyModule
+import ua.com.radiokot.money.powersync.powerSyncModule
 
 val accountsModule = module {
     includes(
+        powerSyncModule,
         currencyModule,
+        categoriesModule,
     )
 
     sessionScope {

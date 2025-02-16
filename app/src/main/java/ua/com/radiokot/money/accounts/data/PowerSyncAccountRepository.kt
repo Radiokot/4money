@@ -47,19 +47,19 @@ class PowerSyncAccountRepository(
             )
             .map { it.sortedBy(Account::title) }
 
-    override suspend fun getAccountById(id: String): Account? =
+    override suspend fun getAccount(accountId: String): Account? =
         database
             .getOptional(
                 sql = SELECT_BY_ID,
-                parameters = listOf(id),
+                parameters = listOf(accountId),
                 mapper = ::toAccount,
             )
 
-    override fun getAccountByIdFlow(id: String): Flow<Account> =
+    override fun getAccountFlow(accountId: String): Flow<Account> =
         database
             .watch(
                 sql = SELECT_BY_ID,
-                parameters = listOf(id),
+                parameters = listOf(accountId),
                 mapper = ::toAccount,
             )
             .mapNotNull(List<Account>::firstOrNull)

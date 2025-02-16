@@ -70,7 +70,7 @@ class AccountActionSheetViewModel(
             // Subscribe to fresh account details.
             launch {
                 accountRepository
-                    .getAccountByIdFlow(account.id)
+                    .getAccountFlow(account.id)
                     .onStart { emit(account) }
                     .collect { freshAccount ->
                         this@AccountActionSheetViewModel.account = freshAccount

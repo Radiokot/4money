@@ -28,9 +28,9 @@ interface AccountRepository {
 
     fun getAccountsFlow(): Flow<List<Account>>
 
-    suspend fun getAccountById(id: String): Account?
+    suspend fun getAccount(accountId: String): Account?
 
-    fun getAccountByIdFlow(id: String): Flow<Account>
+    fun getAccountFlow(accountId: String): Flow<Account>
 
     suspend fun updateBalance(
         accountId: String,
