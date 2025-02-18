@@ -172,16 +172,29 @@ class AccountActionSheetViewModel(
             return
         }
 
+        val mode = mode.value
+        val sourceAccount =
+            if (mode == ViewAccountActionSheetMode.IncomeSource)
+                clickedAccount
+            else
+                account
+        val destinationAccount =
+            if (mode == ViewAccountActionSheetMode.IncomeSource)
+                account
+            else
+                clickedAccount
+
         log.debug {
             "onTransferCounterpartyAccountItemClicked(): opening transfer:" +
-                    "\ncurrentAccount=$account" +
-                    "\ndestinationAccount=$clickedAccount"
+                    "\nsourceAccount=$sourceAccount," +
+                    "\ndestinationAccount=$destinationAccount," +
+                    "\nmode=$mode"
         }
 
         _events.tryEmit(
             Event.OpenTransfer(
-                sourceAccount = account,
-                destinationAccount = clickedAccount,
+                sourceAccount = sourceAccount,
+                destinationAccount = destinationAccount,
             )
         )
 
