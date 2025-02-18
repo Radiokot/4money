@@ -61,6 +61,7 @@ val accountsModule = module {
         viewModel {
             AccountActionSheetViewModel(
                 accountRepository = get(),
+                categoryRepository = get(),
                 updateAccountBalanceUseCase = get(),
             )
         } bind AccountActionSheetViewModel::class

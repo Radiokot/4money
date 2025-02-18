@@ -44,6 +44,7 @@ val transfersModule = module {
         viewModel {
             TransferSheetViewModel(
                 accountRepository = get(),
+                categoriesRepository = get(),
                 transferFundsUseCase = get(),
             )
         } bind TransferSheetViewModel::class

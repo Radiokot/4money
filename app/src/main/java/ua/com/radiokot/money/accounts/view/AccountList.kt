@@ -70,6 +70,7 @@ fun AccountList(
         items(
             items = itemList,
             key = ViewAccountListItem::hashCode,
+            contentType = ViewAccountListItem::type,
         ) { item ->
             when (item) {
                 is ViewAccountListItem.Header -> {

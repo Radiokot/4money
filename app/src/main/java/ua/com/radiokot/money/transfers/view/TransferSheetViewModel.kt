@@ -29,12 +29,14 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
+import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
 import java.math.BigInteger
 
 class TransferSheetViewModel(
     private val accountRepository: AccountRepository,
+    private val categoriesRepository: CategoryRepository,
     private val transferFundsUseCase: TransferFundsUseCase,
 ) : ViewModel() {
 

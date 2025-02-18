@@ -25,6 +25,7 @@ import java.util.UUID
 class Category(
     val title: String,
     val currency: Currency,
+    val isIncome: Boolean,
     val id: String = UUID.randomUUID().toString(),
 ) {
     override fun equals(other: Any?): Boolean {

@@ -7,5 +7,7 @@ enum class ViewAccountActionSheetMode {
     Actions,
     Balance,
     TransferDestination,
+    IncomeSource,
+    ExpenseDestination,
     ;
 }

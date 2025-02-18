@@ -52,7 +52,9 @@ class AccountsViewModel(
         accountRepository.getAccountsFlow()
             .flowOn(Dispatchers.Default)
             .map { accounts ->
-                accounts.map(ViewAccountListItem::Account)
+                accounts
+                    .sortedBy(Account::title)
+                    .map(ViewAccountListItem::Account)
             }
             .collect(_accountListItems)
     }

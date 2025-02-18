@@ -26,13 +26,16 @@ import kotlin.random.Random
 @Immutable
 sealed interface ViewAccountListItem {
 
+    val type: String
     val key: Any
 
     class Header(
         val title: String,
         val amount: ViewAmount,
         override val key: Any,
-    ) : ViewAccountListItem
+    ) : ViewAccountListItem {
+        override val type = "header"
+    }
 
     class Account(
         val title: String,
@@ -40,6 +43,8 @@ sealed interface ViewAccountListItem {
         val source: ua.com.radiokot.money.accounts.data.Account? = null,
         override val key: Any = source?.hashCode() ?: Random.nextInt(),
     ) : ViewAccountListItem {
+
+        override val type = "account"
 
         constructor(account: ua.com.radiokot.money.accounts.data.Account) : this(
             title = account.title,

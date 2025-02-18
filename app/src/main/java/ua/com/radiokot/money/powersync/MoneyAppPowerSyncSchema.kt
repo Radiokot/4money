@@ -47,6 +47,7 @@ fun moneyAppPowerSyncSchema() = Schema(
                 Column.text("title"),
                 Column.text("currency_id"),
                 Column.text("parent_category_id"),
+                Column.integer("is_income"),
             )
         ),
     )

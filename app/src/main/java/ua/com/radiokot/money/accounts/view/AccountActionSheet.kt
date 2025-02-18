@@ -37,6 +37,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
@@ -45,6 +47,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -57,14 +60,17 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import ua.com.radiokot.money.currency.view.ViewAmount
+import kotlinx.coroutines.launch
+import ua.com.radiokot.money.categories.view.CategoryGrid
+import ua.com.radiokot.money.categories.view.ViewCategoryListItem
+import ua.com.radiokot.money.categories.view.ViewCategoryListItemPreviewParameterProvider
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.uikit.AmountInputField
 import ua.com.radiokot.money.uikit.TextButton
@@ -73,7 +79,7 @@ import java.math.BigInteger
 
 @Composable
 fun AccountActionSheetRoot(
-    modifier: Modifier=Modifier,
+    modifier: Modifier = Modifier,
     viewModel: AccountActionSheetViewModel,
 ) {
     val isSheetOpened by viewModel.isOpened.collectAsState()
@@ -103,8 +109,13 @@ fun AccountActionSheetRoot(
             onNewBalanceInputValueParsed = viewModel::onNewBalanceInputValueParsed,
             onBalanceInputSubmit = viewModel::onBalanceInputSubmit,
             onTransferClicked = viewModel::onTransferClicked,
-            transferDestinationListItemsFlow = viewModel.destinationAccountListItems,
-            onTransferDestinationAccountItemClicked = viewModel::onTransferDestinationAccountItemClicked,
+            onIncomeClicked = viewModel::onIncomeClicked,
+            onExpenseClicked = viewModel::onExpenseClicked,
+            transferCounterpartyAccountItemListFlow = viewModel.otherAccountListItems,
+            onTransferCounterpartyAccountItemClicked = viewModel::onTransferCounterpartyAccountItemClicked,
+            transferCounterpartyIncomeCategoryItemListFlow = viewModel.incomeCategoryListItems,
+            transferCounterpartyExpenseCategoryItemListFlow = viewModel.expenseCategoryListItems,
+            onTransferCounterpartyCategoryItemClicked = viewModel::onTransferCounterpartyCategoryItemClicked,
         )
     }
 }
@@ -119,8 +130,13 @@ private fun AccountActionSheet(
     onNewBalanceInputValueParsed: (BigInteger) -> Unit,
     onBalanceInputSubmit: () -> Unit,
     onTransferClicked: () -> Unit,
-    transferDestinationListItemsFlow: StateFlow<List<ViewAccountListItem>>,
-    onTransferDestinationAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
+    onIncomeClicked: () -> Unit,
+    onExpenseClicked: () -> Unit,
+    transferCounterpartyAccountItemListFlow: StateFlow<List<ViewAccountListItem>>,
+    onTransferCounterpartyAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
+    transferCounterpartyIncomeCategoryItemListFlow: StateFlow<List<ViewCategoryListItem>>,
+    transferCounterpartyExpenseCategoryItemListFlow: StateFlow<List<ViewCategoryListItem>>,
+    onTransferCounterpartyCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = BoxWithConstraints {
 
     val maxSheetHeightDp =
@@ -197,6 +213,8 @@ private fun AccountActionSheet(
                 ActionsModeContent(
                     onBalanceClicked = onBalanceClicked,
                     onTransferClicked = onTransferClicked,
+                    onIncomeClicked = onIncomeClicked,
+                    onExpenseClicked = onExpenseClicked,
                 )
 
             ViewAccountActionSheetMode.Balance ->
@@ -208,10 +226,16 @@ private fun AccountActionSheet(
                     onBalanceInputSubmit = onBalanceInputSubmit,
                 )
 
-            ViewAccountActionSheetMode.TransferDestination ->
-                TransferDestinationContent(
-                    listItemsFlow = transferDestinationListItemsFlow,
-                    onAccountItemClicked = onTransferDestinationAccountItemClicked,
+            else ->
+                TransferCounterpartyContent(
+                    accountItemListFlow = transferCounterpartyAccountItemListFlow,
+                    onAccountItemClicked = onTransferCounterpartyAccountItemClicked,
+                    incomeCategoryItemListFlow = transferCounterpartyIncomeCategoryItemListFlow,
+                    expenseCategoryItemListFlow = transferCounterpartyExpenseCategoryItemListFlow,
+                    onCategoryItemClicked = onTransferCounterpartyCategoryItemClicked,
+                    isIncome = mode == ViewAccountActionSheetMode.IncomeSource,
+                    showCategories = mode == ViewAccountActionSheetMode.IncomeSource ||
+                            mode == ViewAccountActionSheetMode.ExpenseDestination,
                     modifier = Modifier
                         .layout { measurable, constraints ->
                             val placeable = measurable.measure(
@@ -229,11 +253,14 @@ private fun AccountActionSheet(
 }
 
 @Composable
-@Preview
+@Preview(
+    heightDp = 2000,
+)
 private fun AccountActionSheetPreview(
-    @PreviewParameter(ViewAmountPreviewParameterProvider::class, limit = 1)
-    amount: ViewAmount,
 ) = Column {
+    val amount = ViewAmountPreviewParameterProvider().values.first()
+    val categories = ViewCategoryListItemPreviewParameterProvider().values.toList()
+
     ViewAccountActionSheetMode.entries.forEach { mode ->
         BasicText(
             text = mode.name + ": ",
@@ -252,7 +279,9 @@ private fun AccountActionSheetPreview(
             onNewBalanceInputValueParsed = {},
             onBalanceInputSubmit = {},
             onTransferClicked = {},
-            transferDestinationListItemsFlow = MutableStateFlow(
+            onIncomeClicked = {},
+            onExpenseClicked = {},
+            transferCounterpartyAccountItemListFlow = MutableStateFlow(
                 listOf(
                     ViewAccountListItem.Account(
                         title = "Dest account",
@@ -260,7 +289,10 @@ private fun AccountActionSheetPreview(
                     )
                 )
             ),
-            onTransferDestinationAccountItemClicked = {},
+            transferCounterpartyExpenseCategoryItemListFlow = MutableStateFlow(categories),
+            transferCounterpartyIncomeCategoryItemListFlow = MutableStateFlow(categories),
+            onTransferCounterpartyAccountItemClicked = {},
+            onTransferCounterpartyCategoryItemClicked = {},
         )
     }
 }
@@ -269,6 +301,8 @@ private fun AccountActionSheetPreview(
 private fun ActionsModeContent(
     onBalanceClicked: () -> Unit,
     onTransferClicked: () -> Unit,
+    onIncomeClicked: () -> Unit,
+    onExpenseClicked: () -> Unit,
 ) = Column(
     verticalArrangement = Arrangement.spacedBy(16.dp),
 ) {
@@ -305,21 +339,29 @@ private fun ActionsModeContent(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         TextButton(
-            text = "Top up",
-            isEnabled = false,
+            text = "📩 Income",
             modifier = Modifier
                 .weight(1f)
+                .then(
+                    remember {
+                        Modifier.clickable { onIncomeClicked() }
+                    }
+                )
         )
 
         TextButton(
-            text = "Deduct",
-            isEnabled = false,
+            text = "📨 Expense",
             modifier = Modifier
                 .weight(1f)
+                .then(
+                    remember {
+                        Modifier.clickable { onExpenseClicked() }
+                    }
+                )
         )
 
         TextButton(
-            text = "Transfer",
+            text = "↔️ Transfer",
             isEnabled = true,
             modifier = Modifier
                 .then(
@@ -381,26 +423,102 @@ private fun BalanceModeContent(
 }
 
 @Composable
-private fun TransferDestinationContent(
+private fun TransferCounterpartyContent(
     modifier: Modifier = Modifier,
-    listItemsFlow: StateFlow<List<ViewAccountListItem>>,
+    isIncome: Boolean,
+    showCategories: Boolean,
+    accountItemListFlow: StateFlow<List<ViewAccountListItem>>,
+    incomeCategoryItemListFlow: StateFlow<List<ViewCategoryListItem>>,
+    expenseCategoryItemListFlow: StateFlow<List<ViewCategoryListItem>>,
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
+    onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = Column(
     modifier = modifier
 ) {
-    BasicText(
-        text = "To account",
-        style = TextStyle(
-            textAlign = TextAlign.Center,
-        ),
+    val pageCount = if (showCategories) 2 else 1
+    val pagerState = rememberPagerState(
+        pageCount = pageCount::unaryPlus,
+    )
+    val coroutineScope = rememberCoroutineScope()
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
         modifier = Modifier
             .fillMaxWidth()
-    )
+    ) {
+        if (showCategories) {
+            BasicText(
+                text = if (isIncome) "Income" else "Expense",
+                style = TextStyle(
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    textDecoration =
+                    if (pagerState.currentPage == 0)
+                        TextDecoration.Underline
+                    else
+                        null,
+                ),
+                modifier = Modifier
+                    .clickable {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(
+                                page = 0,
+                            )
+                        }
+                    }
+            )
+        }
+
+        BasicText(
+            text = if (isIncome) "From account" else "To account",
+            style = TextStyle(
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                textDecoration =
+                if (pagerState.currentPage == 1 || !showCategories)
+                    TextDecoration.Underline
+                else
+                    null,
+            ),
+            modifier = Modifier
+                .clickable {
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(
+                            page = pageCount,
+                        )
+                    }
+                }
+        )
+    }
 
     Spacer(modifier = Modifier.height(12.dp))
 
-    AccountList(
-        itemListFlow = listItemsFlow,
-        onAccountItemClicked = onAccountItemClicked,
-    )
+    HorizontalPager(
+        state = pagerState,
+        beyondViewportPageCount = 1,
+        verticalAlignment = Alignment.Top,
+        modifier = Modifier
+            .fillMaxWidth()
+    ) { page ->
+        when {
+            page == 0 && showCategories -> {
+                CategoryGrid(
+                    itemListFlow =
+                    if (isIncome)
+                        incomeCategoryItemListFlow
+                    else
+                        expenseCategoryItemListFlow,
+                    onItemClicked = onCategoryItemClicked,
+                )
+            }
+
+            else -> {
+                AccountList(
+                    itemListFlow = accountItemListFlow,
+                    onAccountItemClicked = onAccountItemClicked,
+                )
+            }
+        }
+    }
 }
+

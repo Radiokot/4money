@@ -31,12 +31,16 @@ import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
+import ua.com.radiokot.money.categories.data.Category
+import ua.com.radiokot.money.categories.data.CategoryRepository
+import ua.com.radiokot.money.categories.view.ViewCategoryListItem
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 import java.math.BigInteger
 
 class AccountActionSheetViewModel(
     private val accountRepository: AccountRepository,
+    private val categoryRepository: CategoryRepository,
     private val updateAccountBalanceUseCase: UpdateAccountBalanceUseCase,
 ) : ViewModel() {
 
@@ -51,13 +55,45 @@ class AccountActionSheetViewModel(
     private val _balanceInputValue: MutableStateFlow<BigInteger> =
         MutableStateFlow(BigInteger.ZERO)
     val balanceInputValue = _balanceInputValue.asStateFlow()
-    private val _destinationAccountListItems: MutableStateFlow<List<ViewAccountListItem>> =
+    private val _otherAccountListItems: MutableStateFlow<List<ViewAccountListItem>> =
         MutableStateFlow(emptyList())
-    val destinationAccountListItems = _destinationAccountListItems.asStateFlow()
+    val otherAccountListItems = _otherAccountListItems.asStateFlow()
+    private val _incomeCategoryListItems: MutableStateFlow<List<ViewCategoryListItem>> =
+        MutableStateFlow(emptyList())
+    val incomeCategoryListItems = _incomeCategoryListItems.asStateFlow()
+    private val _expenseCategoryListItems: MutableStateFlow<List<ViewCategoryListItem>> =
+        MutableStateFlow(emptyList())
+    val expenseCategoryListItems = _expenseCategoryListItems.asStateFlow()
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events
     private var accountSubscriptionJob: Job? = null
     private lateinit var account: Account
+
+    init {
+        viewModelScope.launch {
+            subscribeToCategories()
+        }
+    }
+
+    private suspend fun subscribeToCategories() {
+        categoryRepository
+            .getCategoriesFlow()
+            .map { categories ->
+                categories.sortedBy(Category::title)
+            }
+            .collect { categories ->
+                _incomeCategoryListItems.tryEmit(
+                    categories
+                        .filter(Category::isIncome)
+                        .map(::ViewCategoryListItem)
+                )
+                _expenseCategoryListItems.tryEmit(
+                    categories
+                        .filterNot(Category::isIncome)
+                        .map(::ViewCategoryListItem)
+                )
+            }
+    }
 
     fun open(account: Account) {
         log.debug {
@@ -82,13 +118,13 @@ class AccountActionSheetViewModel(
             launch {
                 accountRepository
                     .getAccountsFlow()
-                    .onStart { emit(emptyList()) }
                     .map { accounts ->
                         accounts
                             .filter { it != this@AccountActionSheetViewModel.account }
+                            .sortedBy(Account::title)
                             .map(ViewAccountListItem::Account)
                     }
-                    .collect(_destinationAccountListItems)
+                    .collect(_otherAccountListItems)
             }
         }
 
@@ -127,17 +163,17 @@ class AccountActionSheetViewModel(
         _mode.tryEmit(ViewAccountActionSheetMode.TransferDestination)
     }
 
-    fun onTransferDestinationAccountItemClicked(item: ViewAccountListItem.Account) {
+    fun onTransferCounterpartyAccountItemClicked(item: ViewAccountListItem.Account) {
         val clickedAccount = item.source
         if (clickedAccount == null) {
             log.warn {
-                "onTransferDestinationAccountItemClicked(): ignoring as account is null"
+                "onTransferCounterpartyAccountItemClicked(): ignoring as account is null"
             }
             return
         }
 
         log.debug {
-            "onTransferDestinationAccountItemClicked(): opening transfer:" +
+            "onTransferCounterpartyAccountItemClicked(): opening transfer:" +
                     "\ncurrentAccount=$account" +
                     "\ndestinationAccount=$clickedAccount"
         }
@@ -150,6 +186,47 @@ class AccountActionSheetViewModel(
         )
 
         close()
+    }
+
+    fun onIncomeClicked() {
+        if (mode.value != ViewAccountActionSheetMode.Actions) {
+            log.debug {
+                "onIncomeClicked(): ignoring as not in actions mode"
+            }
+            return
+        }
+
+        log.debug {
+            "onIncomeSourceClicked(): switching mode to income source selection"
+        }
+
+        _mode.tryEmit(ViewAccountActionSheetMode.IncomeSource)
+    }
+
+    fun onExpenseClicked() {
+        if (mode.value != ViewAccountActionSheetMode.Actions) {
+            log.debug {
+                "onExpenseClicked(): ignoring as not in actions mode"
+            }
+            return
+        }
+
+        log.debug {
+            "onExpenseDestinationClicked(): switching mode to expense destination selection"
+        }
+
+        _mode.tryEmit(ViewAccountActionSheetMode.ExpenseDestination)
+    }
+
+    fun onTransferCounterpartyCategoryItemClicked(item: ViewCategoryListItem) {
+        val clickedCategory = item.source
+        if (clickedCategory == null) {
+            log.warn {
+                "onTransferCounterpartyCategoryItemClicked(): ignoring as category is null"
+            }
+            return
+        }
+
     }
 
     fun onBackPressed() {

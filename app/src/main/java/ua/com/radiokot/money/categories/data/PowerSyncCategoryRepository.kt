@@ -64,6 +64,7 @@ class PowerSyncCategoryRepository(
         Category(
             id = getString(++column)!!,
             title = getString(++column)!!.trim(),
+            isIncome = getBoolean(++column) == true,
             currency = currency,
         )
     }
@@ -79,10 +80,10 @@ class PowerSyncCategoryRepository(
 }
 
 private const val SELECT_CATEGORIES =
-    "SELECT currencies.id, currencies.code, currencies.symbol, currencies.precision" +
-            "categories.id, categories.title " +
+    "SELECT currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
+            "categories.id, categories.title, categories.is_income " +
             "FROM categories, currencies " +
-            "WHERE category.parent_category_id = NULL AND category.currency_id = currencies.id"
+            "WHERE categories.parent_category_id IS NULL AND categories.currency_id = currencies.id"
 
 private const val SELECT_SUBCATEGORIES_BY_PARENT_ID =
     "SELECT categories.id, categories.title " +
