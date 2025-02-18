@@ -329,7 +329,8 @@ private fun TransferSheetPreview(
                     currency = ViewCurrency(
                         symbol = "A",
                         precision = 2,
-                    )
+                    ),
+                    type = ViewTransferCounterparty.Type.Account,
                 ),
                 sourceAmountValueFlow = MutableStateFlow(BigInteger("133")),
                 onNewSourceAmountValueParsed = {},
@@ -338,7 +339,8 @@ private fun TransferSheetPreview(
                     currency = ViewCurrency(
                         symbol = "B",
                         precision = 2,
-                    )
+                    ),
+                    type = ViewTransferCounterparty.Type.Account,
                 ),
                 destinationAmountValueFlow = MutableStateFlow(BigInteger("331")),
                 onNewDestinationAmountValueParsed = {},

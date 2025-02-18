@@ -86,8 +86,8 @@ class AccountsActivity : UserSessionScopeActivity() {
         when (event) {
             is AccountActionSheetViewModel.Event.OpenTransfer -> {
                 transferSheetViewModel.open(
-                    sourceAccount = event.sourceAccount,
-                    destinationAccount = event.destinationAccount,
+                    source = event.source,
+                    destination = event.destination,
                 )
             }
         }

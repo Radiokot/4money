@@ -22,6 +22,7 @@ package ua.com.radiokot.money.categories.data
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.mapNotNull
 import ua.com.radiokot.money.currency.data.Currency
 
 class PowerSyncCategoryRepository(
@@ -50,6 +51,17 @@ class PowerSyncCategoryRepository(
                 ),
                 mapper = ::toSubcategory,
             )
+
+    override fun getCategoryFlow(categoryId: String): Flow<Category> =
+        database
+            .watch(
+                sql = SELECT_CATEGORY_BY_ID,
+                parameters = listOf(
+                    categoryId,
+                ),
+                mapper = ::toCategory
+            )
+            .mapNotNull(List<Category>::firstOrNull)
 
     private fun toCategory(sqlCursor: SqlCursor): Category = sqlCursor.run {
         var column = 0
@@ -84,6 +96,12 @@ private const val SELECT_CATEGORIES =
             "categories.id, categories.title, categories.is_income " +
             "FROM categories, currencies " +
             "WHERE categories.parent_category_id IS NULL AND categories.currency_id = currencies.id"
+
+private const val SELECT_CATEGORY_BY_ID =
+    "SELECT currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
+            "categories.id, categories.title, categories.is_income " +
+            "FROM categories, currencies " +
+            "WHERE categories.id = ? AND categories.currency_id = currencies.id"
 
 private const val SELECT_SUBCATEGORIES_BY_PARENT_ID =
     "SELECT categories.id, categories.title " +

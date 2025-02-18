@@ -17,17 +17,24 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.categories.data
+package ua.com.radiokot.money.transfers.data
 
-import kotlinx.coroutines.flow.Flow
+sealed interface TransferCounterparty {
+    class Account(
+        val account: ua.com.radiokot.money.accounts.data.Account,
+    ) : TransferCounterparty {
 
-interface CategoryRepository {
+        override fun toString(): String {
+            return "Account(account=$account)"
+        }
+    }
 
-    suspend fun getCategories(): List<Category>
+    class Category(
+        val category: ua.com.radiokot.money.categories.data.Category,
+    ) : TransferCounterparty {
 
-    fun getCategoriesFlow(): Flow<List<Category>>
-
-    suspend fun getSubcategories(categoryId: String): List<Subcategory>
-
-    fun getCategoryFlow(categoryId: String): Flow<Category>
+        override fun toString(): String {
+            return "Category(category=$category)"
+        }
+    }
 }

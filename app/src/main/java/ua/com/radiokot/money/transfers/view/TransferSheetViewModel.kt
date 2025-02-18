@@ -22,15 +22,20 @@ package ua.com.radiokot.money.transfers.view
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
 import java.math.BigInteger
 
@@ -41,11 +46,12 @@ class TransferSheetViewModel(
 ) : ViewModel() {
 
     private val log by lazyLogger("TransferSheetVM")
-    private var accountSubscriptionJob: Job? = null
+    private var counterpartySubscriptionJob: Job? = null
     private val _isOpened: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isOpened = _isOpened.asStateFlow()
-    private val _isSourceInputShown: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isSourceInputShown = _isSourceInputShown.asStateFlow()
+
+    //    private val _isSourceInputShown: MutableStateFlow<Boolean> = MutableStateFlow(false)
+//    val isSourceInputShown = _isSourceInputShown.asStateFlow()
     private val _source: MutableStateFlow<ViewTransferCounterparty?> = MutableStateFlow(null)
     val source = _source.asStateFlow()
     private val _sourceAmountValue: MutableStateFlow<BigInteger> = MutableStateFlow(BigInteger.ZERO)
@@ -55,70 +61,121 @@ class TransferSheetViewModel(
     private val _destinationAmountValue: MutableStateFlow<BigInteger> =
         MutableStateFlow(BigInteger.ZERO)
     val destinationAmountValue = _destinationAmountValue.asStateFlow()
-    private val _isSaveEnabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isSaveEnabled = _isSaveEnabled.asStateFlow()
-    private lateinit var sourceAccount: Account
-    private lateinit var destinationAccount: Account
+    private lateinit var sourceCounterparty: TransferCounterparty
+    private lateinit var destinationCounterparty: TransferCounterparty
 
-    init {
+    val isSourceInputShown: StateFlow<Boolean> =
         // Only require source input if currencies are different.
-        viewModelScope.launch {
-            source.combine(destination, ::Pair)
-                .collect { (source, destination) ->
-                    _isSourceInputShown.emit(source?.currency != destination?.currency)
-                }
-        }
+        source.combine(destination, ::Pair)
+            .map { (source, destination) ->
+                source?.currency != destination?.currency
+            }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    val isSaveEnabled: StateFlow<Boolean> =
         // Only enable save if the input is valid.
-        viewModelScope.launch {
-            val amountValues = sourceAmountValue.combine(destinationAmountValue, ::Pair)
-            amountValues.combine(isSourceInputShown, ::Pair)
-                .collect { (amounts, isSourceInputRequired) ->
-                    val (sourceAmountValue, destAmountValue) = amounts
-                    _isSaveEnabled.emit(
-                        (!isSourceInputRequired || sourceAmountValue.signum() > 0)
-                                && destAmountValue.signum() > 0
-                    )
-                }
-        }
-    }
+        sourceAmountValue.combine(destinationAmountValue, ::Pair)
+            .combine(isSourceInputShown, ::Pair)
+            .map { (amounts, isSourceInputRequired) ->
+                val (sourceAmountValue, destAmountValue) = amounts
+                (!isSourceInputRequired || sourceAmountValue.signum() > 0)
+                        && destAmountValue.signum() > 0
+            }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun open(
-        sourceAccount: Account,
-        destinationAccount: Account,
+        source: TransferCounterparty,
+        destination: TransferCounterparty,
     ) {
         log.debug {
             "open(): opening: " +
-                    "\nsourceAccount=$sourceAccount," +
-                    "\ndestinationAccount=$destinationAccount"
+                    "\nsource=$source," +
+                    "\ndestination=$destination"
         }
 
-        accountSubscriptionJob?.cancel()
-        accountSubscriptionJob = viewModelScope.launch {
-            launch {
-                accountRepository
-                    .getAccountFlow(sourceAccount.id)
-                    .onStart { emit(sourceAccount) }
-                    .collect { freshSourceAccount ->
-                        this@TransferSheetViewModel.sourceAccount = freshSourceAccount
-                        _source.emit(ViewTransferCounterparty(freshSourceAccount))
-                    }
-            }
-
-            launch {
-                accountRepository
-                    .getAccountFlow(destinationAccount.id)
-                    .onStart { emit(destinationAccount) }
-                    .collect { freshDestAccount ->
-                        this@TransferSheetViewModel.destinationAccount = freshDestAccount
-                        _destination.emit(ViewTransferCounterparty(freshDestAccount))
-                    }
-            }
-        }
+        counterpartySubscriptionJob?.cancel()
+        counterpartySubscriptionJob = subscribeToFreshCounterparties(
+            source = source,
+            destination = destination,
+        )
 
         _sourceAmountValue.tryEmit(BigInteger.ZERO)
         _destinationAmountValue.tryEmit(BigInteger.ZERO)
         _isOpened.tryEmit(true)
+    }
+
+    private fun subscribeToFreshCounterparties(
+        source: TransferCounterparty,
+        destination: TransferCounterparty,
+    ) = viewModelScope.launch {
+
+        suspend fun subscribeToAccountCounterparty(
+            current: TransferCounterparty.Account,
+            collector: FlowCollector<TransferCounterparty>,
+        ) = launch {
+            accountRepository
+                .getAccountFlow(current.account.id)
+                .map(TransferCounterparty::Account)
+                .onStart { emit(current) }
+                .collect(collector)
+        }
+
+        suspend fun subscribeToCategoryCounterparty(
+            current: TransferCounterparty.Category,
+            collector: FlowCollector<TransferCounterparty>,
+        ) = launch {
+            categoriesRepository
+                .getCategoryFlow(current.category.id)
+                .map(TransferCounterparty::Category)
+                .onStart { emit(current) }
+                .collect(collector)
+        }
+
+        val sourceCollector =
+            FlowCollector<TransferCounterparty> { freshSourceCounterparty ->
+                this@TransferSheetViewModel.sourceCounterparty = freshSourceCounterparty
+                _source.emit(
+                    ViewTransferCounterparty.fromCounterparty(
+                        freshSourceCounterparty
+                    )
+                )
+            }
+
+        val destinationCollector =
+            FlowCollector<TransferCounterparty> { freshDestinationCounterparty ->
+                this@TransferSheetViewModel.destinationCounterparty = freshDestinationCounterparty
+                _destination.emit(
+                    ViewTransferCounterparty.fromCounterparty(freshDestinationCounterparty)
+                )
+            }
+
+        when (source) {
+            is TransferCounterparty.Account ->
+                subscribeToAccountCounterparty(
+                    current = source,
+                    collector = sourceCollector,
+                )
+
+            is TransferCounterparty.Category ->
+                subscribeToCategoryCounterparty(
+                    current = source,
+                    collector = sourceCollector,
+                )
+        }
+
+        when (destination) {
+            is TransferCounterparty.Account ->
+                subscribeToAccountCounterparty(
+                    current = destination,
+                    collector = destinationCollector,
+                )
+
+            is TransferCounterparty.Category ->
+                subscribeToCategoryCounterparty(
+                    current = destination,
+                    collector = destinationCollector,
+                )
+        }
     }
 
     fun onBackPressed() {
@@ -138,7 +195,7 @@ class TransferSheetViewModel(
             "close(): closing"
         }
 
-        accountSubscriptionJob?.cancel()
+        counterpartySubscriptionJob?.cancel()
         _isOpened.tryEmit(false)
     }
 
@@ -173,9 +230,13 @@ class TransferSheetViewModel(
 
     private var transferJob: Job? = null
     private fun transferFunds() {
-        val destinationAccountId = destinationAccount.id
+        val destinationAccountId =
+            (destinationCounterparty as? TransferCounterparty.Account)?.account?.id
+                ?: TODO("Only account2account transfers are implemented at this moment")
         val destinationAmount = destinationAmountValue.value
-        val sourceAccountId = sourceAccount.id
+        val sourceAccountId =
+            (sourceCounterparty as? TransferCounterparty.Account)?.account?.id
+                ?: TODO("Only account2account transfers are implemented at this moment")
         val sourceAmount =
             if (isSourceInputShown.value)
                 sourceAmountValue.value

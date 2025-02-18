@@ -21,16 +21,26 @@ package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.runtime.Immutable
 import ua.com.radiokot.money.accounts.data.Account
+import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.currency.view.ViewCurrency
+import ua.com.radiokot.money.transfers.data.TransferCounterparty
 
 @Immutable
 class ViewTransferCounterparty(
     val title: String,
     val currency: ViewCurrency,
+    val type: Type,
 ) {
     constructor(account: Account) : this(
         title = account.title,
         currency = ViewCurrency(account.currency),
+        type = Type.Account,
+    )
+
+    constructor(category: Category) : this(
+        title = category.title,
+        currency = ViewCurrency(category.currency),
+        type = Type.Category,
     )
 
     override fun equals(other: Any?): Boolean {
@@ -39,6 +49,7 @@ class ViewTransferCounterparty(
 
         if (title != other.title) return false
         if (currency != other.currency) return false
+        if (type != other.type) return false
 
         return true
     }
@@ -46,6 +57,23 @@ class ViewTransferCounterparty(
     override fun hashCode(): Int {
         var result = title.hashCode()
         result = 31 * result + currency.hashCode()
+        result = 31 * result + type.hashCode()
         return result
+    }
+
+    enum class Type {
+        Account, Category,
+    }
+
+    companion object {
+        fun fromCounterparty(
+            counterparty: TransferCounterparty,
+        ): ViewTransferCounterparty = when (counterparty) {
+            is TransferCounterparty.Account ->
+                ViewTransferCounterparty(counterparty.account)
+
+            is TransferCounterparty.Category ->
+                ViewTransferCounterparty(counterparty.category)
+        }
     }
 }
