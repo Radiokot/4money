@@ -25,19 +25,22 @@ import org.koin.dsl.module
 import ua.com.radiokot.money.accounts.accountsModule
 import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.categoriesModule
+import ua.com.radiokot.money.powersync.powerSyncModule
+import ua.com.radiokot.money.transfers.logic.PowerSyncTransferFundsUseCase
 import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
 import ua.com.radiokot.money.transfers.view.TransferSheetViewModel
 
 val transfersModule = module {
     includes(
+        powerSyncModule,
         accountsModule,
         categoriesModule,
     )
 
     sessionScope {
         factory {
-            TransferFundsUseCase(
-                accountRepository = get(),
+            PowerSyncTransferFundsUseCase(
+                database = get(),
             )
         } bind TransferFundsUseCase::class
 

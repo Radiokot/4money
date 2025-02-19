@@ -217,7 +217,10 @@ class AccountActionSheetViewModel(
         }
 
         openTransfer(
-            clickedCounterparty = TransferCounterparty.Category(clickedCategory),
+            clickedCounterparty = TransferCounterparty.Category(
+                category = clickedCategory,
+                subcategory = null,
+            ),
         )
 
         close()

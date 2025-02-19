@@ -72,42 +72,6 @@ class PowerSyncAccountRepository(
             )
     }
 
-    override suspend fun transfer(
-        sourceAccountId: String,
-        sourceAmount: BigInteger,
-        destinationAccountId: String,
-        destinationAmount: BigInteger,
-    ) {
-        database.writeTransaction { transaction ->
-            fun getBalance(accountId: String): BigInteger =
-                transaction.get(
-                    sql = "SELECT balance FROM accounts WHERE id = ?",
-                    parameters = listOf(
-                        accountId
-                    ),
-                    mapper = { cursor ->
-                        BigInteger(cursor.getString(0)!!.trim())
-                    }
-                )
-
-            transaction.execute(
-                sql = "UPDATE accounts SET balance = ? WHERE id = ?",
-                parameters = listOf(
-                    (getBalance(sourceAccountId) - sourceAmount).toString(),
-                    sourceAccountId,
-                )
-            )
-
-            transaction.execute(
-                sql = "UPDATE accounts SET balance = ? WHERE id = ?",
-                parameters = listOf(
-                    (getBalance(destinationAccountId) + destinationAmount).toString(),
-                    destinationAccountId,
-                )
-            )
-        }
-    }
-
     private fun toAccount(sqlCursor: SqlCursor): Account = sqlCursor.run {
         var column = 0
 

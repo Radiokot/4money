@@ -19,23 +19,21 @@
 
 package ua.com.radiokot.money.transfers.logic
 
-import ua.com.radiokot.money.accounts.data.AccountRepository
+import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import java.math.BigInteger
 
-class TransferFundsUseCase(
-    private val accountRepository: AccountRepository,
-) {
+fun interface TransferFundsUseCase {
+
+    /**
+     * @param source source of the funds
+     * @param sourceAmount what amount is consumed with this transfer from the source
+     * @param destination destination of the funds
+     * @param destinationAmount what amount is produced with this transfer for the destination
+     */
     suspend operator fun invoke(
-        sourceAccountId: String,
+        source: TransferCounterparty,
         sourceAmount: BigInteger,
-        destinationAccountId: String,
+        destination: TransferCounterparty,
         destinationAmount: BigInteger,
-    ): Result<Unit> = runCatching {
-        accountRepository.transfer(
-            sourceAccountId = sourceAccountId,
-            sourceAmount = sourceAmount,
-            destinationAccountId = destinationAccountId,
-            destinationAmount = destinationAmount,
-        )
-    }
+    ): Result<Unit>
 }

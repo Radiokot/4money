@@ -230,13 +230,9 @@ class TransferSheetViewModel(
 
     private var transferJob: Job? = null
     private fun transferFunds() {
-        val destinationAccountId =
-            (destinationCounterparty as? TransferCounterparty.Account)?.account?.id
-                ?: TODO("Only account2account transfers are implemented at this moment")
+        val source = sourceCounterparty
+        val destination = destinationCounterparty
         val destinationAmount = destinationAmountValue.value
-        val sourceAccountId =
-            (sourceCounterparty as? TransferCounterparty.Account)?.account?.id
-                ?: TODO("Only account2account transfers are implemented at this moment")
         val sourceAmount =
             if (isSourceInputShown.value)
                 sourceAmountValue.value
@@ -247,16 +243,16 @@ class TransferSheetViewModel(
         transferJob = viewModelScope.launch {
             log.debug {
                 "transferFunds(): transferring:" +
-                        "\nsourceAccountId=$sourceAccountId," +
+                        "\nsource=$sourceCounterparty," +
                         "\nsourceAmount=$sourceAmount," +
-                        "\ndestinationAccountId=$destinationAccountId," +
+                        "\ndestination=$destinationCounterparty," +
                         "\ndestinationAmount=$destinationAmount"
             }
 
             transferFundsUseCase(
-                sourceAccountId = sourceAccountId,
+                source = source,
                 sourceAmount = sourceAmount,
-                destinationAccountId = destinationAccountId,
+                destination = destination,
                 destinationAmount = destinationAmount,
             )
                 .onFailure { error ->

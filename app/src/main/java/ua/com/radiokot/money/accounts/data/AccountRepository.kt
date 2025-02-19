@@ -36,11 +36,4 @@ interface AccountRepository {
         accountId: String,
         newValue: BigInteger,
     )
-
-    suspend fun transfer(
-        sourceAccountId: String,
-        sourceAmount: BigInteger,
-        destinationAccountId: String,
-        destinationAmount: BigInteger,
-    )
 }
