@@ -17,19 +17,21 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.categories.data
+package ua.com.radiokot.money.categories.view
 
-import kotlinx.coroutines.flow.Flow
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 
-interface CategoryRepository {
-
-    suspend fun getCategories(): List<Category>
-
-    fun getCategoriesFlow(): Flow<List<Category>>
-
-    suspend fun getSubcategories(categoryId: String): List<Subcategory>
-
-    fun getCategoryFlow(categoryId: String): Flow<Category>
-
-    fun getSubcategoriesFlow(categoryId: String): Flow<List<Subcategory>>
+class ViewSelectableSubcategoryListItemPreviewParameterProvider :
+    PreviewParameterProvider<ViewSelectableSubcategoryListItem> {
+    override val values: Sequence<ViewSelectableSubcategoryListItem>
+        get() = sequenceOf(
+            ViewSelectableSubcategoryListItem(
+                title = "🦷 Стоматология",
+                isSelected = false,
+            ),
+            ViewSelectableSubcategoryListItem(
+                title = "🧪 Lab",
+                isSelected = true,
+            ),
+        )
 }

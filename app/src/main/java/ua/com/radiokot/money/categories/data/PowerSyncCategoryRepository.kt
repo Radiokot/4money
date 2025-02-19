@@ -63,6 +63,16 @@ class PowerSyncCategoryRepository(
             )
             .mapNotNull(List<Category>::firstOrNull)
 
+    override fun getSubcategoriesFlow(categoryId: String): Flow<List<Subcategory>> =
+        database
+            .watch(
+                sql = SELECT_SUBCATEGORIES_BY_PARENT_ID,
+                parameters = listOf(
+                    categoryId,
+                ),
+                mapper = ::toSubcategory,
+            )
+
     private fun toCategory(sqlCursor: SqlCursor): Category = sqlCursor.run {
         var column = 0
 
@@ -85,7 +95,7 @@ class PowerSyncCategoryRepository(
         var column = 0
 
         Subcategory(
-            id = getString(++column)!!,
+            id = getString(column)!!,
             title = getString(++column)!!.trim(),
         )
     }
@@ -106,4 +116,4 @@ private const val SELECT_CATEGORY_BY_ID =
 private const val SELECT_SUBCATEGORIES_BY_PARENT_ID =
     "SELECT categories.id, categories.title " +
             "FROM categories " +
-            "WHERE category.parent_category_id = ?"
+            "WHERE categories.parent_category_id = ?"

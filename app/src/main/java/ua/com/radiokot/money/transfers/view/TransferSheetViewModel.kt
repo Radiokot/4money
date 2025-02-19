@@ -28,12 +28,15 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
+import ua.com.radiokot.money.categories.data.Subcategory
+import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
@@ -49,20 +52,31 @@ class TransferSheetViewModel(
     private var counterpartySubscriptionJob: Job? = null
     private val _isOpened: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isOpened = _isOpened.asStateFlow()
-
-    //    private val _isSourceInputShown: MutableStateFlow<Boolean> = MutableStateFlow(false)
-//    val isSourceInputShown = _isSourceInputShown.asStateFlow()
-    private val _source: MutableStateFlow<ViewTransferCounterparty?> = MutableStateFlow(null)
-    val source = _source.asStateFlow()
     private val _sourceAmountValue: MutableStateFlow<BigInteger> = MutableStateFlow(BigInteger.ZERO)
     val sourceAmountValue = _sourceAmountValue.asStateFlow()
-    private val _destination: MutableStateFlow<ViewTransferCounterparty?> = MutableStateFlow(null)
-    val destination = _destination.asStateFlow()
     private val _destinationAmountValue: MutableStateFlow<BigInteger> =
         MutableStateFlow(BigInteger.ZERO)
     val destinationAmountValue = _destinationAmountValue.asStateFlow()
-    private lateinit var sourceCounterparty: TransferCounterparty
-    private lateinit var destinationCounterparty: TransferCounterparty
+    private val selectedSubcategory: MutableStateFlow<Subcategory?> = MutableStateFlow(null)
+    private val _subcategoryItemList: MutableStateFlow<List<ViewSelectableSubcategoryListItem>> =
+        MutableStateFlow(emptyList())
+    val subcategoryItemList = _subcategoryItemList.asStateFlow()
+    private val sourceCounterparty: MutableStateFlow<TransferCounterparty?> =
+        MutableStateFlow(null)
+    private val destinationCounterparty: MutableStateFlow<TransferCounterparty?> =
+        MutableStateFlow(null)
+
+    val source: StateFlow<ViewTransferCounterparty?> =
+        sourceCounterparty
+            .filterNotNull()
+            .map(ViewTransferCounterparty::fromCounterparty)
+            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    val destination: StateFlow<ViewTransferCounterparty?> =
+        destinationCounterparty
+            .filterNotNull()
+            .map(ViewTransferCounterparty::fromCounterparty)
+            .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     val isSourceInputShown: StateFlow<Boolean> =
         // Only require source input if currencies are different.
@@ -70,7 +84,7 @@ class TransferSheetViewModel(
             .map { (source, destination) ->
                 source?.currency != destination?.currency
             }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+            .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     val isSaveEnabled: StateFlow<Boolean> =
         // Only enable save if the input is valid.
@@ -81,7 +95,7 @@ class TransferSheetViewModel(
                 (!isSourceInputRequired || sourceAmountValue.signum() > 0)
                         && destAmountValue.signum() > 0
             }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+            .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     fun open(
         source: TransferCounterparty,
@@ -123,43 +137,50 @@ class TransferSheetViewModel(
         suspend fun subscribeToCategoryCounterparty(
             current: TransferCounterparty.Category,
             collector: FlowCollector<TransferCounterparty>,
-        ) = launch {
-            categoriesRepository
-                .getCategoryFlow(current.category.id)
-                .map(TransferCounterparty::Category)
-                .onStart { emit(current) }
-                .collect(collector)
+        ) {
+            selectedSubcategory.emit(current.subcategory)
+
+            launch {
+                categoriesRepository
+                    .getCategoryFlow(current.category.id)
+                    .combine(selectedSubcategory, ::Pair)
+                    .map { (category, selectedSubcategory) ->
+                        TransferCounterparty.Category(
+                            category = category,
+                            subcategory = selectedSubcategory,
+                        )
+                    }
+                    .onStart { emit(current) }
+                    .collect(collector)
+            }
+
+            launch {
+                categoriesRepository
+                    .getSubcategoriesFlow(current.category.id)
+                    .combine(selectedSubcategory, ::Pair)
+                    .map { (subcategories, selectedSubcategory) ->
+                        subcategories.map { subcategory ->
+                            ViewSelectableSubcategoryListItem(
+                                subcategory = subcategory,
+                                isSelected = subcategory == selectedSubcategory,
+                            )
+                        }
+                    }
+                    .collect(_subcategoryItemList)
+            }
         }
-
-        val sourceCollector =
-            FlowCollector<TransferCounterparty> { freshSourceCounterparty ->
-                this@TransferSheetViewModel.sourceCounterparty = freshSourceCounterparty
-                _source.emit(
-                    ViewTransferCounterparty.fromCounterparty(
-                        freshSourceCounterparty
-                    )
-                )
-            }
-
-        val destinationCollector =
-            FlowCollector<TransferCounterparty> { freshDestinationCounterparty ->
-                this@TransferSheetViewModel.destinationCounterparty = freshDestinationCounterparty
-                _destination.emit(
-                    ViewTransferCounterparty.fromCounterparty(freshDestinationCounterparty)
-                )
-            }
 
         when (source) {
             is TransferCounterparty.Account ->
                 subscribeToAccountCounterparty(
                     current = source,
-                    collector = sourceCollector,
+                    collector = sourceCounterparty,
                 )
 
             is TransferCounterparty.Category ->
                 subscribeToCategoryCounterparty(
                     current = source,
-                    collector = sourceCollector,
+                    collector = sourceCounterparty,
                 )
         }
 
@@ -167,13 +188,13 @@ class TransferSheetViewModel(
             is TransferCounterparty.Account ->
                 subscribeToAccountCounterparty(
                     current = destination,
-                    collector = destinationCollector,
+                    collector = destinationCounterparty,
                 )
 
             is TransferCounterparty.Category ->
                 subscribeToCategoryCounterparty(
                     current = destination,
-                    collector = destinationCollector,
+                    collector = destinationCounterparty,
                 )
         }
     }
@@ -217,6 +238,32 @@ class TransferSheetViewModel(
         _destinationAmountValue.tryEmit(value)
     }
 
+    fun onSubcategoryItemClicked(item: ViewSelectableSubcategoryListItem) {
+        val clickedSubcategory = item.source
+        if (clickedSubcategory == null) {
+            log.warn {
+                "onSubcategoryItemClicked(): ignoring as subcategory is null"
+            }
+            return
+        }
+
+        val currentSelectedSubcategory = selectedSubcategory.value
+        if (currentSelectedSubcategory != clickedSubcategory) {
+            log.debug {
+                "onSubcategoryItemClicked(): selecting subcategory:" +
+                        "\nselected=$clickedSubcategory"
+            }
+
+            selectedSubcategory.tryEmit(clickedSubcategory)
+        } else {
+            log.debug {
+                "onSubcategoryItemClicked(): unselecting subcategory"
+            }
+
+            selectedSubcategory.tryEmit(null)
+        }
+    }
+
     fun onSaveClicked() {
         if (!isSaveEnabled.value) {
             log.warn {
@@ -230,8 +277,10 @@ class TransferSheetViewModel(
 
     private var transferJob: Job? = null
     private fun transferFunds() {
-        val source = sourceCounterparty
-        val destination = destinationCounterparty
+        val source = sourceCounterparty.value
+            ?: error("Source counterparty must be set at this point")
+        val destination = destinationCounterparty.value
+            ?: error("Destination counterparty must be set at this point")
         val destinationAmount = destinationAmountValue.value
         val sourceAmount =
             if (isSourceInputShown.value)

@@ -64,6 +64,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import ua.com.radiokot.money.categories.view.SelectableSubcategoryRow
+import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
+import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItemPreviewParameterProvider
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.uikit.AmountInputField
@@ -103,6 +106,8 @@ fun TransferSheetRoot(
                 ?: return@AnimatedVisibility,
             destinationAmountValueFlow = viewModel.destinationAmountValue,
             onNewDestinationAmountValueParsed = viewModel::onNewDestinationAmountValueParsed,
+            subcategoryItemListFlow = viewModel.subcategoryItemList,
+            onSubcategoryItemClicked = viewModel::onSubcategoryItemClicked,
             isSaveEnabled = viewModel.isSaveEnabled.collectAsState().value,
             onSaveClicked = viewModel::onSaveClicked,
         )
@@ -119,6 +124,8 @@ private fun TransferSheet(
     destination: ViewTransferCounterparty,
     destinationAmountValueFlow: StateFlow<BigInteger>,
     onNewDestinationAmountValueParsed: (BigInteger) -> Unit,
+    subcategoryItemListFlow: StateFlow<List<ViewSelectableSubcategoryListItem>>,
+    onSubcategoryItemClicked: (ViewSelectableSubcategoryListItem) -> Unit,
     isSaveEnabled: Boolean,
     onSaveClicked: () -> Unit,
 ) = BoxWithConstraints {
@@ -197,7 +204,20 @@ private fun TransferSheet(
                 .background(Color.Gray)
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+
+        val subcategoryItemListState = subcategoryItemListFlow.collectAsState()
+        if (subcategoryItemListState.value.isNotEmpty()) {
+            SelectableSubcategoryRow(
+                itemListFlow = subcategoryItemListFlow,
+                onItemClicked = onSubcategoryItemClicked,
+                modifier = Modifier
+                    .padding(
+                        vertical = 12.dp,
+                    )
+            )
+        } else {
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -344,6 +364,10 @@ private fun TransferSheetPreview(
                 ),
                 destinationAmountValueFlow = MutableStateFlow(BigInteger("331")),
                 onNewDestinationAmountValueParsed = {},
+                subcategoryItemListFlow = MutableStateFlow(
+                    ViewSelectableSubcategoryListItemPreviewParameterProvider().values.toList()
+                ),
+                onSubcategoryItemClicked = {},
                 isSaveEnabled = isSaveEnabled,
                 onSaveClicked = {},
             )
