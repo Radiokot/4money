@@ -159,12 +159,14 @@ class TransferSheetViewModel(
                     .getSubcategoriesFlow(current.category.id)
                     .combine(selectedSubcategory, ::Pair)
                     .map { (subcategories, selectedSubcategory) ->
-                        subcategories.map { subcategory ->
-                            ViewSelectableSubcategoryListItem(
-                                subcategory = subcategory,
-                                isSelected = subcategory == selectedSubcategory,
-                            )
-                        }
+                        subcategories
+                            .sortedBy(Subcategory::title)
+                            .map { subcategory ->
+                                ViewSelectableSubcategoryListItem(
+                                    subcategory = subcategory,
+                                    isSelected = subcategory == selectedSubcategory,
+                                )
+                            }
                     }
                     .collect(_subcategoryItemList)
             }

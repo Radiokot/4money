@@ -26,7 +26,31 @@ import java.math.BigInteger
 
 class ViewCategoryListItemPreviewParameterProvider :
     PreviewParameterProvider<ViewCategoryListItem> {
-    override val values: Sequence<ViewCategoryListItem>
+    val income: Sequence<ViewCategoryListItem>
+        get() = sequenceOf(
+            ViewCategoryListItem(
+                title = "Sales",
+                amount = ViewAmount(
+                    value = BigInteger.ZERO,
+                    currency = ViewCurrency(
+                        symbol = "$",
+                        precision = 2,
+                    )
+                )
+            ),
+            ViewCategoryListItem(
+                title = "Gifts",
+                amount = ViewAmount(
+                    value = BigInteger.ZERO,
+                    currency = ViewCurrency(
+                        symbol = "$",
+                        precision = 2,
+                    )
+                )
+            ),
+        )
+
+    val expense: Sequence<ViewCategoryListItem>
         get() = sequenceOf(
             ViewCategoryListItem(
                 title = "Food",
@@ -59,4 +83,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                 )
             )
         )
+
+    override val values: Sequence<ViewCategoryListItem>
+        get() = income + expense
 }

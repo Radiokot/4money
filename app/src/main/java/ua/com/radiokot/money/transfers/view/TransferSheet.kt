@@ -45,8 +45,10 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,8 +64,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import ua.com.radiokot.money.categories.view.SelectableSubcategoryRow
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItemPreviewParameterProvider
@@ -100,15 +100,15 @@ fun TransferSheetRoot(
             isSourceInputShown = viewModel.isSourceInputShown.collectAsState().value,
             source = source
                 ?: return@AnimatedVisibility,
-            sourceAmountValueFlow = viewModel.sourceAmountValue,
+            sourceAmountValue = viewModel.sourceAmountValue.collectAsState(),
             onNewSourceAmountValueParsed = viewModel::onNewSourceAmountValueParsed,
             destination = destination
                 ?: return@AnimatedVisibility,
-            destinationAmountValueFlow = viewModel.destinationAmountValue,
+            destinationAmountValue = viewModel.destinationAmountValue.collectAsState(),
             onNewDestinationAmountValueParsed = viewModel::onNewDestinationAmountValueParsed,
-            subcategoryItemListFlow = viewModel.subcategoryItemList,
+            subcategoryItemList = viewModel.subcategoryItemList.collectAsState(),
             onSubcategoryItemClicked = viewModel::onSubcategoryItemClicked,
-            isSaveEnabled = viewModel.isSaveEnabled.collectAsState().value,
+            isSaveEnabled = viewModel.isSaveEnabled.collectAsState(),
             onSaveClicked = viewModel::onSaveClicked,
         )
     }
@@ -119,14 +119,14 @@ private fun TransferSheet(
     onBackPressed: () -> Unit,
     isSourceInputShown: Boolean,
     source: ViewTransferCounterparty,
-    sourceAmountValueFlow: StateFlow<BigInteger>,
+    sourceAmountValue: State<BigInteger>,
     onNewSourceAmountValueParsed: (BigInteger) -> Unit,
     destination: ViewTransferCounterparty,
-    destinationAmountValueFlow: StateFlow<BigInteger>,
+    destinationAmountValue: State<BigInteger>,
     onNewDestinationAmountValueParsed: (BigInteger) -> Unit,
-    subcategoryItemListFlow: StateFlow<List<ViewSelectableSubcategoryListItem>>,
+    subcategoryItemList: State<List<ViewSelectableSubcategoryListItem>>,
     onSubcategoryItemClicked: (ViewSelectableSubcategoryListItem) -> Unit,
-    isSaveEnabled: Boolean,
+    isSaveEnabled: State<Boolean>,
     onSaveClicked: () -> Unit,
 ) = BoxWithConstraints {
 
@@ -205,10 +205,9 @@ private fun TransferSheet(
         )
 
 
-        val subcategoryItemListState = subcategoryItemListFlow.collectAsState()
-        if (subcategoryItemListState.value.isNotEmpty()) {
+        if (subcategoryItemList.value.isNotEmpty()) {
             SelectableSubcategoryRow(
-                itemListFlow = subcategoryItemListFlow,
+                itemList = subcategoryItemList,
                 onItemClicked = onSubcategoryItemClicked,
                 modifier = Modifier
                     .padding(
@@ -252,7 +251,7 @@ private fun TransferSheet(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     AmountInputField(
-                        valueFlow = sourceAmountValueFlow,
+                        value = sourceAmountValue,
                         currency = source.currency,
                         amountFormat = amountFormat,
                         onNewValueParsed = onNewSourceAmountValueParsed,
@@ -282,7 +281,7 @@ private fun TransferSheet(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 AmountInputField(
-                    valueFlow = destinationAmountValueFlow,
+                    value = destinationAmountValue,
                     currency = destination.currency,
                     amountFormat = amountFormat,
                     onNewValueParsed = onNewDestinationAmountValueParsed,
@@ -312,7 +311,7 @@ private fun TransferSheet(
 
         TextButton(
             text = "Save",
-            isEnabled = isSaveEnabled,
+            isEnabled = isSaveEnabled.value,
             modifier = Modifier
                 .then(clickableSaveModifier)
                 .fillMaxWidth()
@@ -352,7 +351,7 @@ private fun TransferSheetPreview(
                     ),
                     type = ViewTransferCounterparty.Type.Account,
                 ),
-                sourceAmountValueFlow = MutableStateFlow(BigInteger("133")),
+                sourceAmountValue = BigInteger("133").let(::mutableStateOf),
                 onNewSourceAmountValueParsed = {},
                 destination = ViewTransferCounterparty(
                     title = "Destination",
@@ -362,13 +361,15 @@ private fun TransferSheetPreview(
                     ),
                     type = ViewTransferCounterparty.Type.Account,
                 ),
-                destinationAmountValueFlow = MutableStateFlow(BigInteger("331")),
+                destinationAmountValue = BigInteger("331").let(::mutableStateOf),
                 onNewDestinationAmountValueParsed = {},
-                subcategoryItemListFlow = MutableStateFlow(
-                    ViewSelectableSubcategoryListItemPreviewParameterProvider().values.toList()
-                ),
+                subcategoryItemList =
+                ViewSelectableSubcategoryListItemPreviewParameterProvider()
+                    .values
+                    .toList()
+                    .let(::mutableStateOf),
                 onSubcategoryItemClicked = {},
-                isSaveEnabled = isSaveEnabled,
+                isSaveEnabled = isSaveEnabled.let(::mutableStateOf),
                 onSaveClicked = {},
             )
         }

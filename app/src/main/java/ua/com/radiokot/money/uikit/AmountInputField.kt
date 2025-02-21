@@ -27,6 +27,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,12 +40,9 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
@@ -53,7 +51,7 @@ import java.math.BigInteger
 @Composable
 fun AmountInputField(
     modifier: Modifier = Modifier,
-    valueFlow: StateFlow<BigInteger>,
+    value: State<BigInteger>,
     currency: ViewCurrency,
     amountFormat: ViewAmountFormat,
     onNewValueParsed: (BigInteger) -> Unit,
@@ -69,17 +67,17 @@ fun AmountInputField(
 
     val textFieldValue by remember {
         derivedStateOf {
-            val value = valueFlow.value
+            val outerValue = value.value
 
             // Discard user's input if the new value
             // doesn't match what they entered.
             // Otherwise, use the last entered value
             // which may be something like "0." or "-",
             // so it is technically 0 but actually not.
-            if (value != lastParsedValue) {
+            if (outerValue != lastParsedValue) {
                 val text = amountFormat
                     .formatForInput(
-                        value = value,
+                        value = outerValue,
                         currency = currency,
                     )
                 TextFieldValue(
@@ -141,7 +139,7 @@ private fun AmountInputFieldPreview(
             .padding(vertical = 12.dp)
     )
     AmountInputField(
-        valueFlow = MutableStateFlow(amount.value),
+        value = amount.value.let(::mutableStateOf),
         currency = amount.currency,
         amountFormat = ViewAmountFormat(
             locale = LocalConfiguration.current.locales.get(0),

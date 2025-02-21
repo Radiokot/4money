@@ -44,8 +44,10 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -65,8 +67,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.categories.view.CategoryGrid
 import ua.com.radiokot.money.categories.view.ViewCategoryListItem
@@ -103,7 +103,7 @@ fun AccountActionSheetRoot(
             accountDetails = accountDetailsState.value
                 ?: return@AnimatedVisibility,
             mode = modeState.value,
-            balanceInputValueFlow = viewModel.balanceInputValue,
+            balanceInputValue = viewModel.balanceInputValue.collectAsState(),
             onBalanceClicked = viewModel::onBalanceClicked,
             onBackPressed = viewModel::onBackPressed,
             onNewBalanceInputValueParsed = viewModel::onNewBalanceInputValueParsed,
@@ -111,10 +111,10 @@ fun AccountActionSheetRoot(
             onTransferClicked = viewModel::onTransferClicked,
             onIncomeClicked = viewModel::onIncomeClicked,
             onExpenseClicked = viewModel::onExpenseClicked,
-            transferCounterpartyAccountItemListFlow = viewModel.otherAccountListItems,
+            transferCounterpartyAccountItemList = viewModel.otherAccountListItems.collectAsState(),
             onTransferCounterpartyAccountItemClicked = viewModel::onTransferCounterpartyAccountItemClicked,
-            transferCounterpartyIncomeCategoryItemListFlow = viewModel.incomeCategoryListItems,
-            transferCounterpartyExpenseCategoryItemListFlow = viewModel.expenseCategoryListItems,
+            transferCounterpartyIncomeCategoryItemList = viewModel.incomeCategoryListItems.collectAsState(),
+            transferCounterpartyExpenseCategoryItemList = viewModel.expenseCategoryListItems.collectAsState(),
             onTransferCounterpartyCategoryItemClicked = viewModel::onTransferCounterpartyCategoryItemClicked,
         )
     }
@@ -124,7 +124,7 @@ fun AccountActionSheetRoot(
 private fun AccountActionSheet(
     accountDetails: ViewAccountDetails,
     mode: ViewAccountActionSheetMode,
-    balanceInputValueFlow: StateFlow<BigInteger>,
+    balanceInputValue: State<BigInteger>,
     onBalanceClicked: () -> Unit,
     onBackPressed: () -> Unit,
     onNewBalanceInputValueParsed: (BigInteger) -> Unit,
@@ -132,10 +132,10 @@ private fun AccountActionSheet(
     onTransferClicked: () -> Unit,
     onIncomeClicked: () -> Unit,
     onExpenseClicked: () -> Unit,
-    transferCounterpartyAccountItemListFlow: StateFlow<List<ViewAccountListItem>>,
+    transferCounterpartyAccountItemList: State<List<ViewAccountListItem>>,
     onTransferCounterpartyAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
-    transferCounterpartyIncomeCategoryItemListFlow: StateFlow<List<ViewCategoryListItem>>,
-    transferCounterpartyExpenseCategoryItemListFlow: StateFlow<List<ViewCategoryListItem>>,
+    transferCounterpartyIncomeCategoryItemList: State<List<ViewCategoryListItem>>,
+    transferCounterpartyExpenseCategoryItemList: State<List<ViewCategoryListItem>>,
     onTransferCounterpartyCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = BoxWithConstraints {
 
@@ -220,7 +220,7 @@ private fun AccountActionSheet(
             ViewAccountActionSheetMode.Balance ->
                 BalanceModeContent(
                     accountDetails = accountDetails,
-                    balanceInputValueFlow = balanceInputValueFlow,
+                    balanceInputValue = balanceInputValue,
                     amountFormat = amountFormat,
                     onNewBalanceInputValueParsed = onNewBalanceInputValueParsed,
                     onBalanceInputSubmit = onBalanceInputSubmit,
@@ -228,10 +228,10 @@ private fun AccountActionSheet(
 
             else ->
                 TransferCounterpartyContent(
-                    accountItemListFlow = transferCounterpartyAccountItemListFlow,
+                    accountItemList = transferCounterpartyAccountItemList,
                     onAccountItemClicked = onTransferCounterpartyAccountItemClicked,
-                    incomeCategoryItemListFlow = transferCounterpartyIncomeCategoryItemListFlow,
-                    expenseCategoryItemListFlow = transferCounterpartyExpenseCategoryItemListFlow,
+                    incomeCategoryItemList = transferCounterpartyIncomeCategoryItemList,
+                    expenseCategoryItemList = transferCounterpartyExpenseCategoryItemList,
                     onCategoryItemClicked = onTransferCounterpartyCategoryItemClicked,
                     isIncome = mode == ViewAccountActionSheetMode.IncomeSource,
                     showCategories = mode == ViewAccountActionSheetMode.IncomeSource ||
@@ -273,7 +273,7 @@ private fun AccountActionSheetPreview(
                 balance = amount,
             ),
             mode = mode,
-            balanceInputValueFlow = MutableStateFlow(BigInteger("9856")),
+            balanceInputValue = BigInteger("9856").let(::mutableStateOf),
             onBalanceClicked = {},
             onBackPressed = {},
             onNewBalanceInputValueParsed = {},
@@ -281,7 +281,7 @@ private fun AccountActionSheetPreview(
             onTransferClicked = {},
             onIncomeClicked = {},
             onExpenseClicked = {},
-            transferCounterpartyAccountItemListFlow = MutableStateFlow(
+            transferCounterpartyAccountItemList = mutableStateOf(
                 listOf(
                     ViewAccountListItem.Account(
                         title = "Dest account",
@@ -289,8 +289,8 @@ private fun AccountActionSheetPreview(
                     )
                 )
             ),
-            transferCounterpartyExpenseCategoryItemListFlow = MutableStateFlow(categories),
-            transferCounterpartyIncomeCategoryItemListFlow = MutableStateFlow(categories),
+            transferCounterpartyExpenseCategoryItemList = categories.let(::mutableStateOf),
+            transferCounterpartyIncomeCategoryItemList = categories.let(::mutableStateOf),
             onTransferCounterpartyAccountItemClicked = {},
             onTransferCounterpartyCategoryItemClicked = {},
         )
@@ -379,7 +379,7 @@ private fun ActionsModeContent(
 @Composable
 private fun BalanceModeContent(
     accountDetails: ViewAccountDetails,
-    balanceInputValueFlow: StateFlow<BigInteger>,
+    balanceInputValue: State<BigInteger>,
     amountFormat: ViewAmountFormat,
     onNewBalanceInputValueParsed: (BigInteger) -> Unit,
     onBalanceInputSubmit: () -> Unit,
@@ -395,7 +395,7 @@ private fun BalanceModeContent(
     }
 
     AmountInputField(
-        valueFlow = balanceInputValueFlow,
+        value = balanceInputValue,
         currency = balanceInputCurrency,
         amountFormat = amountFormat,
         onNewValueParsed = onNewBalanceInputValueParsed,
@@ -427,9 +427,9 @@ private fun TransferCounterpartyContent(
     modifier: Modifier = Modifier,
     isIncome: Boolean,
     showCategories: Boolean,
-    accountItemListFlow: StateFlow<List<ViewAccountListItem>>,
-    incomeCategoryItemListFlow: StateFlow<List<ViewCategoryListItem>>,
-    expenseCategoryItemListFlow: StateFlow<List<ViewCategoryListItem>>,
+    accountItemList: State<List<ViewAccountListItem>>,
+    incomeCategoryItemList: State<List<ViewCategoryListItem>>,
+    expenseCategoryItemList: State<List<ViewCategoryListItem>>,
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
     onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = Column(
@@ -440,6 +440,24 @@ private fun TransferCounterpartyContent(
         pageCount = pageCount::unaryPlus,
     )
     val coroutineScope = rememberCoroutineScope()
+    val scrollToFirstPageOnClickModifier = remember {
+        Modifier.clickable {
+            coroutineScope.launch {
+                pagerState.animateScrollToPage(
+                    page = 0,
+                )
+            }
+        }
+    }
+    val scrollToLastPageOnClickModifier = remember(pageCount) {
+        Modifier.clickable {
+            coroutineScope.launch {
+                pagerState.animateScrollToPage(
+                    page = pageCount,
+                )
+            }
+        }
+    }
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
@@ -459,13 +477,7 @@ private fun TransferCounterpartyContent(
                         null,
                 ),
                 modifier = Modifier
-                    .clickable {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(
-                                page = 0,
-                            )
-                        }
-                    }
+                    .then(scrollToFirstPageOnClickModifier)
             )
         }
 
@@ -481,13 +493,7 @@ private fun TransferCounterpartyContent(
                     null,
             ),
             modifier = Modifier
-                .clickable {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(
-                            page = pageCount,
-                        )
-                    }
-                }
+                .then(scrollToLastPageOnClickModifier)
         )
     }
 
@@ -503,18 +509,18 @@ private fun TransferCounterpartyContent(
         when {
             page == 0 && showCategories -> {
                 CategoryGrid(
-                    itemListFlow =
+                    itemList =
                     if (isIncome)
-                        incomeCategoryItemListFlow
+                        incomeCategoryItemList
                     else
-                        expenseCategoryItemListFlow,
+                        expenseCategoryItemList,
                     onItemClicked = onCategoryItemClicked,
                 )
             }
 
             else -> {
                 AccountList(
-                    itemListFlow = accountItemListFlow,
+                    itemList = accountItemList,
                     onAccountItemClicked = onAccountItemClicked,
                 )
             }

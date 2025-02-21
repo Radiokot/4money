@@ -17,7 +17,8 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,17 +32,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 
 @Composable
 fun CategoryGrid(
     modifier: Modifier = Modifier,
-    itemListFlow: StateFlow<List<ViewCategoryListItem>>,
+    itemList: State<List<ViewCategoryListItem>>,
     onItemClicked: (ViewCategoryListItem) -> Unit,
 ) {
-    val itemListState = itemListFlow.collectAsState()
     val gridState = rememberLazyGridState()
     val space = 12.dp
 
@@ -57,7 +55,7 @@ fun CategoryGrid(
         modifier = modifier
     ) {
         items(
-            items = itemListState.value,
+            items = itemList.value,
             key = ViewCategoryListItem::key,
         ) { item ->
             val clickableItemModifier = remember(item.key) {
@@ -78,10 +76,11 @@ fun CategoryGrid(
 )
 private fun CategoryGridPreview(
 ) {
-    val items = ViewCategoryListItemPreviewParameterProvider().values.toList()
-
     CategoryGrid(
-        itemListFlow = MutableStateFlow(items),
+        itemList = ViewCategoryListItemPreviewParameterProvider()
+            .values
+            .toList()
+            .let(::mutableStateOf),
         onItemClicked = {},
         modifier = Modifier
             .fillMaxWidth()

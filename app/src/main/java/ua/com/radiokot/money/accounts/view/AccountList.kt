@@ -32,8 +32,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,8 +45,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
@@ -55,50 +53,46 @@ import java.math.BigInteger
 
 @Composable
 fun AccountList(
-    itemListFlow: StateFlow<List<ViewAccountListItem>>,
     modifier: Modifier = Modifier,
-    onAccountItemClicked: (ViewAccountListItem.Account) -> Unit = {},
+    itemList: State<List<ViewAccountListItem>>,
+    onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
+) = LazyColumn(
+    contentPadding = PaddingValues(
+        vertical = 8.dp,
+    ),
+    modifier = modifier,
 ) {
-    val itemList by itemListFlow.collectAsState()
+    items(
+        items = itemList.value,
+        key = ViewAccountListItem::hashCode,
+        contentType = ViewAccountListItem::type,
+    ) { item ->
+        when (item) {
+            is ViewAccountListItem.Header -> {
+                HeaderItem(
+                    title = item.title,
+                    amount = item.amount,
+                    modifier = Modifier
+                        .padding(
+                            vertical = 8.dp,
+                        )
+                        .fillMaxWidth()
+                )
+            }
 
-    LazyColumn(
-        contentPadding = PaddingValues(
-            vertical = 8.dp,
-        ),
-        modifier = modifier,
-    ) {
-        items(
-            items = itemList,
-            key = ViewAccountListItem::hashCode,
-            contentType = ViewAccountListItem::type,
-        ) { item ->
-            when (item) {
-                is ViewAccountListItem.Header -> {
-                    HeaderItem(
-                        title = item.title,
-                        amount = item.amount,
-                        modifier = Modifier
-                            .padding(
-                                vertical = 8.dp,
-                            )
-                            .fillMaxWidth()
-                    )
-                }
-
-                is ViewAccountListItem.Account -> {
-                    AccountItem(
-                        title = item.title,
-                        balance = item.balance,
-                        modifier = Modifier
-                            .clickable {
-                                onAccountItemClicked(item)
-                            }
-                            .padding(
-                                vertical = 8.dp,
-                            )
-                            .fillMaxWidth()
-                    )
-                }
+            is ViewAccountListItem.Account -> {
+                AccountItem(
+                    title = item.title,
+                    balance = item.balance,
+                    modifier = Modifier
+                        .clickable {
+                            onAccountItemClicked(item)
+                        }
+                        .padding(
+                            vertical = 8.dp,
+                        )
+                        .fillMaxWidth()
+                )
             }
         }
     }
@@ -111,7 +105,7 @@ fun AccountList(
 )
 private fun AccountListPreview() {
     AccountList(
-        itemListFlow = listOf(
+        itemList = listOf(
             ViewAccountListItem.Header(
                 title = "Accounts",
                 amount = ViewAmount(
@@ -167,15 +161,16 @@ private fun AccountListPreview() {
                 ),
                 key = "acc3",
             ),
-        ).let(::MutableStateFlow)
+        ).let(::mutableStateOf),
+        onAccountItemClicked = {},
     )
 }
 
 @Composable
 private fun HeaderItem(
+    modifier: Modifier = Modifier,
     title: String,
     amount: ViewAmount,
-    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier,
@@ -225,9 +220,9 @@ private fun HeaderItemPreview(
 
 @Composable
 private fun AccountItem(
+    modifier: Modifier = Modifier,
     title: String,
     balance: ViewAmount,
-    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier,

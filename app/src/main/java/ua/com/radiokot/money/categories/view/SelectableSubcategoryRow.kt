@@ -31,26 +31,23 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun SelectableSubcategoryRow(
     modifier: Modifier = Modifier,
-    itemListFlow: StateFlow<List<ViewSelectableSubcategoryListItem>>,
+    itemList: State<List<ViewSelectableSubcategoryListItem>>,
     onItemClicked: (ViewSelectableSubcategoryListItem) -> Unit,
 ) {
-    val itemListState = itemListFlow.collectAsState()
     val rowState = rememberLazyListState()
     val space = 12.dp
 
@@ -64,7 +61,7 @@ fun SelectableSubcategoryRow(
     ) {
 
         items(
-            items = itemListState.value,
+            items = itemList.value,
             key = ViewSelectableSubcategoryListItem::key,
         ) { item ->
 
@@ -88,7 +85,7 @@ private fun SelectableSubcategoryRowPreview() {
     val items = ViewSelectableSubcategoryListItemPreviewParameterProvider().values.toList()
 
     SelectableSubcategoryRow(
-        itemListFlow = MutableStateFlow(items),
+        itemList = items.let(::mutableStateOf),
         onItemClicked = {},
     )
 }

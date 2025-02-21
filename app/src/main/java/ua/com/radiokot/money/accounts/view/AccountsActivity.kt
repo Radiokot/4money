@@ -27,14 +27,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
@@ -105,7 +106,7 @@ private fun AccountsScreenRoot(
         .safeDrawingPadding()
 ) {
     AccountsScreen(
-        listItemsFlow = viewModel.accountListItems,
+        accountItemList = viewModel.accountListItems.collectAsState(),
         onAccountItemClicked = viewModel::onAccountItemClicked,
     )
 
@@ -124,7 +125,7 @@ private fun AccountsScreenRoot(
 
 @Composable
 private fun AccountsScreen(
-    listItemsFlow: StateFlow<List<ViewAccountListItem>>,
+    accountItemList: State<List<ViewAccountListItem>>,
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
 ) = Box(
     modifier = Modifier
@@ -132,7 +133,7 @@ private fun AccountsScreen(
         .padding(16.dp)
 ) {
     AccountList(
-        itemListFlow = listItemsFlow,
+        itemList = accountItemList,
         onAccountItemClicked = onAccountItemClicked,
         modifier = Modifier.fillMaxWidth(),
     )
@@ -145,15 +146,13 @@ private fun AccountsScreenPreview(
     amount: ViewAmount,
 ) {
     AccountsScreen(
-        listItemsFlow = MutableStateFlow(
-            listOf(
-                ViewAccountListItem.Account(
-                    title = "Account #1",
-                    balance = amount,
-                    key = "1",
-                )
+        accountItemList = listOf(
+            ViewAccountListItem.Account(
+                title = "Account #1",
+                balance = amount,
+                key = "1",
             )
-        ),
+        ).let(::mutableStateOf),
         onAccountItemClicked = {},
     )
 }
