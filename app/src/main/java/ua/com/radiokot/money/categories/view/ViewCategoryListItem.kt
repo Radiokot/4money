@@ -33,10 +33,13 @@ class ViewCategoryListItem(
     val key: Any = source?.hashCode() ?: Random.nextInt(),
 ) {
 
-    constructor(category: Category) : this(
+    constructor(
+        category: Category,
+        amount: BigInteger,
+    ) : this(
         title = category.title,
         amount = ViewAmount(
-            value = BigInteger.ZERO,
+            value = amount,
             currency = category.currency,
         ),
         source = category,

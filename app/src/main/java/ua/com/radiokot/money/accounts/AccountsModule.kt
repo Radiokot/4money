@@ -31,12 +31,14 @@ import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.categoriesModule
 import ua.com.radiokot.money.currency.currencyModule
 import ua.com.radiokot.money.powersync.powerSyncModule
+import ua.com.radiokot.money.transfers.history.transfersHistoryModule
 
 val accountsModule = module {
     includes(
         powerSyncModule,
         currencyModule,
         categoriesModule,
+        transfersHistoryModule,
     )
 
     sessionScope {
@@ -62,6 +64,7 @@ val accountsModule = module {
             AccountActionSheetViewModel(
                 accountRepository = get(),
                 categoryRepository = get(),
+                historyStatsRepository = get(),
                 updateAccountBalanceUseCase = get(),
             )
         } bind AccountActionSheetViewModel::class

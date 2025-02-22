@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -40,11 +41,14 @@ import ua.com.radiokot.money.categories.view.ViewCategoryListItem
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
+import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
+import ua.com.radiokot.money.transfers.history.data.HistoryStatsRepository
 import java.math.BigInteger
 
 class AccountActionSheetViewModel(
     private val accountRepository: AccountRepository,
     categoryRepository: CategoryRepository,
+    private val historyStatsRepository: HistoryStatsRepository,
     private val updateAccountBalanceUseCase: UpdateAccountBalanceUseCase,
 ) : ViewModel() {
 
@@ -70,22 +74,48 @@ class AccountActionSheetViewModel(
     val incomeCategoryListItems: StateFlow<List<ViewCategoryListItem>> =
         categoryRepository
             .getCategoriesFlow()
-            .map { categories ->
-                categories
+            .combine(
+                historyStatsRepository.getCategoryStatsFlow(
+                    isIncome = true,
+                    period = HistoryPeriod.Month(),
+                ),
+                ::Pair,
+            )
+            .map { (categories, amountByCategoryId) ->
+                val filteredCategories = categories
                     .sortedBy(Category::title)
                     .filter(Category::isIncome)
-                    .map(::ViewCategoryListItem)
+
+                filteredCategories.map { category ->
+                    ViewCategoryListItem(
+                        category = category,
+                        amount = amountByCategoryId[category.id] ?: BigInteger.ZERO,
+                    )
+                }
             }
             .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val expenseCategoryListItems: StateFlow<List<ViewCategoryListItem>> =
         categoryRepository
             .getCategoriesFlow()
-            .map { categories ->
-                categories
+            .combine(
+                historyStatsRepository.getCategoryStatsFlow(
+                    isIncome = false,
+                    period = HistoryPeriod.Month(),
+                ),
+                ::Pair,
+            )
+            .map { (categories, amountByCategoryId) ->
+                val filteredCategories = categories
                     .sortedBy(Category::title)
                     .filterNot(Category::isIncome)
-                    .map(::ViewCategoryListItem)
+
+                filteredCategories.map { category ->
+                    ViewCategoryListItem(
+                        category = category,
+                        amount = amountByCategoryId[category.id] ?: BigInteger.ZERO,
+                    )
+                }
             }
             .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 

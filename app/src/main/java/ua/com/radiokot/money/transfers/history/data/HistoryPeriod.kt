@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.transfers.history.data
 
+import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -26,6 +27,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 
 sealed interface HistoryPeriod {
 
@@ -36,8 +38,8 @@ sealed interface HistoryPeriod {
         time >= startTimeInclusive && time < endTimeExclusive
 
     class Day(
-        localDay: LocalDate,
         timeZone: TimeZone = TimeZone.currentSystemDefault(),
+        localDay: LocalDate = Clock.System.now().toLocalDateTime(timeZone).date,
     ) : HistoryPeriod {
 
         override val startTimeInclusive: Instant =
@@ -51,8 +53,8 @@ sealed interface HistoryPeriod {
     }
 
     class Month(
-        localMonth: LocalDate,
         timeZone: TimeZone = TimeZone.currentSystemDefault(),
+        localMonth: LocalDate = Clock.System.now().toLocalDateTime(timeZone).date,
     ) : HistoryPeriod {
 
         override val startTimeInclusive: Instant =

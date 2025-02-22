@@ -17,41 +17,25 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.transfers
+package ua.com.radiokot.money.transfers.history
 
-import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import ua.com.radiokot.money.accounts.accountsModule
 import ua.com.radiokot.money.auth.logic.sessionScope
-import ua.com.radiokot.money.categories.categoriesModule
 import ua.com.radiokot.money.powersync.powerSyncModule
-import ua.com.radiokot.money.transfers.history.transfersHistoryModule
-import ua.com.radiokot.money.transfers.logic.PowerSyncTransferFundsUseCase
-import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
-import ua.com.radiokot.money.transfers.view.TransferSheetViewModel
+import ua.com.radiokot.money.transfers.history.data.HistoryStatsRepository
+import ua.com.radiokot.money.transfers.history.data.PowerSyncHistoryStatsRepository
 
-val transfersModule = module {
+val transfersHistoryModule = module {
     includes(
         powerSyncModule,
-        accountsModule,
-        categoriesModule,
-        transfersHistoryModule,
     )
 
     sessionScope {
-        factory {
-            PowerSyncTransferFundsUseCase(
+        scoped {
+            PowerSyncHistoryStatsRepository(
                 database = get(),
             )
-        } bind TransferFundsUseCase::class
-
-        viewModel {
-            TransferSheetViewModel(
-                accountRepository = get(),
-                categoriesRepository = get(),
-                transferFundsUseCase = get(),
-            )
-        } bind TransferSheetViewModel::class
+        } bind HistoryStatsRepository::class
     }
 }
