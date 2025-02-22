@@ -310,14 +310,14 @@ private fun ActionsModeContent(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         TextButton(
-            text = "Edit",
+            text = "✏️ Edit",
             isEnabled = false,
             modifier = Modifier
                 .weight(1f)
         )
 
         TextButton(
-            text = "Balance",
+            text = "⚖️ Balance",
             modifier = Modifier
                 .then(
                     remember {
@@ -328,7 +328,7 @@ private fun ActionsModeContent(
         )
 
         TextButton(
-            text = "Activity",
+            text = "📃 Activity",
             isEnabled = false,
             modifier = Modifier
                 .weight(1f)
