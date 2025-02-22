@@ -42,6 +42,6 @@ class Category(
     }
 
     override fun toString(): String {
-        return "Category(title='$title')"
+        return "Category(title='$title', id='$id')"
     }
 }

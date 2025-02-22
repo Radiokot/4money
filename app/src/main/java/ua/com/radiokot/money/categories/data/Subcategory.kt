@@ -39,6 +39,6 @@ class Subcategory(
     }
 
     override fun toString(): String {
-        return "Subcategory(title='$title')"
+        return "Subcategory(title='$title', id='$id')"
     }
 }

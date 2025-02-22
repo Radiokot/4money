@@ -294,9 +294,9 @@ class TransferSheetViewModel(
         transferJob = viewModelScope.launch {
             log.debug {
                 "transferFunds(): transferring:" +
-                        "\nsource=$sourceCounterparty," +
+                        "\nsource=$source," +
                         "\nsourceAmount=$sourceAmount," +
-                        "\ndestination=$destinationCounterparty," +
+                        "\ndestination=$destination," +
                         "\ndestinationAmount=$destinationAmount"
             }
 

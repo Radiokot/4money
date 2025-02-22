@@ -19,21 +19,25 @@
 
 package ua.com.radiokot.money.transfers.logic
 
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import java.math.BigInteger
 
-fun interface TransferFundsUseCase {
+interface TransferFundsUseCase {
 
     /**
      * @param source source of the funds
      * @param sourceAmount what amount is consumed with this transfer from the source
      * @param destination destination of the funds
      * @param destinationAmount what amount is produced with this transfer for the destination
+     * @param time time to log the transfer at
      */
     suspend operator fun invoke(
         source: TransferCounterparty,
         sourceAmount: BigInteger,
         destination: TransferCounterparty,
         destinationAmount: BigInteger,
+        time: Instant = Clock.System.now(),
     ): Result<Unit>
 }

@@ -50,5 +50,15 @@ fun moneyAppPowerSyncSchema() = Schema(
                 Column.integer("is_income"),
             )
         ),
+        Table(
+            name = "transfers",
+            columns = listOf(
+                Column.text("time"),
+                Column.text("source_id"),
+                Column.text("source_amount"),
+                Column.text("destination_id"),
+                Column.text("destination_amount"),
+            )
+        )
     )
 )

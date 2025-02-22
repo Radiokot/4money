@@ -21,12 +21,15 @@ package ua.com.radiokot.money.transfers.logic
 
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.internal.PowerSyncTransaction
+import kotlinx.datetime.Instant
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import java.math.BigInteger
+import java.util.UUID
 
 /**
  * A transfer implementation utilizing PowerSync database transactions.
+ * Saves time with second precision.
  */
 class PowerSyncTransferFundsUseCase(
     private val database: PowerSyncDatabase,
@@ -39,90 +42,31 @@ class PowerSyncTransferFundsUseCase(
         sourceAmount: BigInteger,
         destination: TransferCounterparty,
         destinationAmount: BigInteger,
+        time: Instant,
     ): Result<Unit> = runCatching {
-        when {
-            source is TransferCounterparty.Account
-                    && destination is TransferCounterparty.Account ->
-                transferBetweenAccounts(
-                    source = source,
-                    sourceAmount = sourceAmount,
-                    destination = destination,
-                    destinationAmount = destinationAmount,
+        database.writeTransaction { transaction ->
+            if (source is TransferCounterparty.Account) {
+                transaction.updateAccountBalanceBy(
+                    accountId = source.account.id,
+                    delta = -sourceAmount,
                 )
+            }
 
-            source is TransferCounterparty.Category
-                    && source.category.isIncome
-                    && destination is TransferCounterparty.Account ->
-                transferFromCategory(
-                    source = source,
-                    sourceAmount = sourceAmount,
-                    destination = destination,
-                    destinationAmount = destinationAmount,
+            if (destination is TransferCounterparty.Account) {
+                transaction.updateAccountBalanceBy(
+                    accountId = destination.account.id,
+                    delta = destinationAmount,
                 )
+            }
 
-            source is TransferCounterparty.Account
-                    && destination is TransferCounterparty.Category
-                    && !destination.category.isIncome ->
-                transferToCategory(
-                    source = source,
-                    sourceAmount = sourceAmount,
-                    destination = destination,
-                    destinationAmount = destinationAmount,
-                )
-
-            else ->
-                error("There's no strategy to transfer from $source to $destination")
+            transaction.logTransfer(
+                sourceId = source.id,
+                sourceAmount = sourceAmount,
+                destinationId = destination.id,
+                destinationAmount = destinationAmount,
+                time = time,
+            )
         }
-    }
-
-    private suspend fun transferBetweenAccounts(
-        source: TransferCounterparty.Account,
-        sourceAmount: BigInteger,
-        destination: TransferCounterparty.Account,
-        destinationAmount: BigInteger,
-    ) = database.writeTransaction { transaction ->
-
-        transaction.updateAccountBalanceBy(
-            accountId = source.account.id,
-            delta = -sourceAmount,
-        )
-
-        transaction.updateAccountBalanceBy(
-            accountId = destination.account.id,
-            delta = destinationAmount,
-        )
-
-        // TODO Log the transfer.
-    }
-
-    private suspend fun transferToCategory(
-        source: TransferCounterparty.Account,
-        sourceAmount: BigInteger,
-        destination: TransferCounterparty.Category,
-        destinationAmount: BigInteger,
-    ) = database.writeTransaction { transaction ->
-
-        transaction.updateAccountBalanceBy(
-            accountId = source.account.id,
-            delta = -sourceAmount,
-        )
-
-        // TODO Log the transfer.
-    }
-
-    private suspend fun transferFromCategory(
-        source: TransferCounterparty.Category,
-        sourceAmount: BigInteger,
-        destination: TransferCounterparty.Account,
-        destinationAmount: BigInteger,
-    ) = database.writeTransaction { transaction ->
-
-        transaction.updateAccountBalanceBy(
-            accountId = destination.account.id,
-            delta = destinationAmount,
-        )
-
-        // TODO Log the transfer.
     }
 
     private fun PowerSyncTransaction.updateAccountBalanceBy(
@@ -153,6 +97,45 @@ class PowerSyncTransferFundsUseCase(
             parameters = listOf(
                 newBalance,
                 accountId,
+            )
+        )
+    }
+
+    private fun PowerSyncTransaction.logTransfer(
+        sourceId: String,
+        sourceAmount: BigInteger,
+        destinationId: String,
+        destinationAmount: BigInteger,
+        time: Instant,
+    ) {
+        val id = UUID.randomUUID().toString()
+
+        // ISO-8601 datetime with T, without millis,
+        // with explicitly specified UTC timezone (Z).
+        // For example, 2025-02-22T08:37:23Z
+        val timeString = Instant.fromEpochSeconds(time.epochSeconds).toString()
+
+        log.debug {
+            "logTransfer(): logging transfer:" +
+                    "\nid=$id," +
+                    "\ntime=$timeString," +
+                    "\nsourceId=$sourceId," +
+                    "\nsourceAmount=$sourceAmount," +
+                    "\ndestinationId=$destinationId," +
+                    "\ndestinationAmount=$destinationAmount"
+        }
+
+        execute(
+            sql = "INSERT INTO transfers " +
+                    "(id, time, source_id, source_amount, destination_id, destination_amount) " +
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+            parameters = listOf(
+                id,
+                timeString,
+                sourceId,
+                sourceAmount.toString(),
+                destinationId,
+                destinationAmount.toString(),
             )
         )
     }
