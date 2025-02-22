@@ -172,6 +172,9 @@ class TransferSheetViewModel(
             }
         }
 
+        // Reset subcategories first.
+        _subcategoryItemList.emit(emptyList())
+
         when (source) {
             is TransferCounterparty.Account ->
                 subscribeToAccountCounterparty(
