@@ -17,18 +17,23 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.categories.data
+package ua.com.radiokot.money.transfers.data
 
+import kotlinx.datetime.Instant
+import java.math.BigInteger
 import java.util.UUID
 
-class Subcategory(
-    val title: String,
-    val categoryId: String,
+class Transfer(
+    val source: TransferCounterparty,
+    val sourceAmount: BigInteger,
+    val destination: TransferCounterparty,
+    val destinationAmount: BigInteger,
+    val time: Instant,
     val id: String = UUID.randomUUID().toString(),
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Subcategory) return false
+        if (other !is Transfer) return false
 
         if (id != other.id) return false
 
@@ -40,6 +45,6 @@ class Subcategory(
     }
 
     override fun toString(): String {
-        return "Subcategory(title='$title', id='$id')"
+        return "Transfer(id='$id')"
     }
 }

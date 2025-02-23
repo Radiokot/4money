@@ -19,7 +19,7 @@
 
 package ua.com.radiokot.money.transfers.history.data
 
-import com.powersync.PowerSyncDatabase
+import com.powersync.db.Queries
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.map
 import java.math.BigInteger
 
 class PowerSyncHistoryStatsRepository(
-    private val database: PowerSyncDatabase,
+    private val database: Queries,
 ) : HistoryStatsRepository {
 
     override fun getCategoryStatsFlow(
@@ -67,10 +67,10 @@ class PowerSyncHistoryStatsRepository(
 }
 
 private const val PARSED_TIME =
-    "datetime(transfers.time, 'subsecond') AS parsed_time"
+    "datetime(transfers.time) AS parsed_time"
 
 private const val PARSED_TIME_IN_PERIOD =
-    "parsed_time >= datetime(?, 'subsecond') AND parsed_time < datetime(?, 'subsecond')"
+    "parsed_time >= datetime(?) AND parsed_time < datetime(?)"
 
 private const val SELECT_FOR_INCOME_CATEGORIES =
     "SELECT transfers.source_id, transfers.source_amount, " +

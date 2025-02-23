@@ -21,7 +21,10 @@ package ua.com.radiokot.money.categories.data
 
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import ua.com.radiokot.money.currency.data.Currency
 
@@ -40,16 +43,6 @@ class PowerSyncCategoryRepository(
             .watch(
                 sql = SELECT_CATEGORIES,
                 mapper = ::toCategory,
-            )
-
-    override suspend fun getSubcategories(categoryId: String): List<Subcategory> =
-        database
-            .getAll(
-                sql = SELECT_SUBCATEGORIES_BY_PARENT_ID,
-                parameters = listOf(
-                    categoryId,
-                ),
-                mapper = ::toSubcategory,
             )
 
     override fun getCategoryFlow(categoryId: String): Flow<Category> =
@@ -72,6 +65,38 @@ class PowerSyncCategoryRepository(
                 ),
                 mapper = ::toSubcategory,
             )
+
+    override fun getSubcategoriesByCategoriesFlow(): Flow<Map<Category, List<Subcategory>>> =
+        database
+            .watch(
+                sql = SELECT_CATEGORIES_THEN_SUBCATEGORIES,
+                mapper = { sqlCursor ->
+                    val parentCategoryId = sqlCursor.getString(7)
+                    if (parentCategoryId == null)
+                        toCategory(sqlCursor)
+                    else
+                        Subcategory(
+                            id = sqlCursor.getString(4)!!, // Hell.
+                            title = sqlCursor.getString(5)!!.trim(),
+                            categoryId = parentCategoryId,
+                        )
+                }
+            )
+            .map { categoriesAndSubcategories ->
+                buildMap<Category, MutableList<Subcategory>> {
+                    val categoriesById = mutableMapOf<String, Category>()
+                    categoriesAndSubcategories.forEach { categoryOrSubcategory ->
+                        if (categoryOrSubcategory is Category) {
+                            categoriesById[categoryOrSubcategory.id] = categoryOrSubcategory
+                            put(categoryOrSubcategory, mutableListOf())
+                        } else if (categoryOrSubcategory is Subcategory) {
+                            getValue(categoriesById.getValue(categoryOrSubcategory.categoryId))
+                                .add(categoryOrSubcategory)
+                        }
+                    }
+                }
+            }
+            .flowOn(Dispatchers.Default)
 
     private fun toCategory(sqlCursor: SqlCursor): Category = sqlCursor.run {
         var column = 0
@@ -97,23 +122,40 @@ class PowerSyncCategoryRepository(
         Subcategory(
             id = getString(column)!!,
             title = getString(++column)!!.trim(),
+            categoryId = getString(++column)!!,
         )
     }
 }
 
+private const val CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES =
+    "currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
+            "categories.id, categories.title, categories.is_income, categories.parent_category_id " +
+            "FROM categories, currencies"
+
+private const val SUBCATEGORY_FIELDS_FROM_CATEGORIES =
+    "categories.id, categories.title, categories.parent_category_id " +
+            "FROM categories"
+
 private const val SELECT_CATEGORIES =
-    "SELECT currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
-            "categories.id, categories.title, categories.is_income " +
-            "FROM categories, currencies " +
+    "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
             "WHERE categories.parent_category_id IS NULL AND categories.currency_id = currencies.id"
 
+/**
+ * Params:
+ * 1. Category ID
+ */
 private const val SELECT_CATEGORY_BY_ID =
-    "SELECT currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
-            "categories.id, categories.title, categories.is_income " +
-            "FROM categories, currencies " +
+    "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
             "WHERE categories.id = ? AND categories.currency_id = currencies.id"
 
+/**
+ * Params:
+ * 1. Parent category ID
+ */
 private const val SELECT_SUBCATEGORIES_BY_PARENT_ID =
-    "SELECT categories.id, categories.title " +
-            "FROM categories " +
+    "SELECT $SUBCATEGORY_FIELDS_FROM_CATEGORIES " +
             "WHERE categories.parent_category_id = ?"
+
+private const val SELECT_CATEGORIES_THEN_SUBCATEGORIES =
+    "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
+            "ORDER BY categories.parent_category_id ASC"

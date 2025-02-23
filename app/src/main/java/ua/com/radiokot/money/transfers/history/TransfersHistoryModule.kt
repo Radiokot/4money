@@ -19,12 +19,16 @@
 
 package ua.com.radiokot.money.transfers.history
 
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.powersync.powerSyncModule
 import ua.com.radiokot.money.transfers.history.data.HistoryStatsRepository
 import ua.com.radiokot.money.transfers.history.data.PowerSyncHistoryStatsRepository
+import ua.com.radiokot.money.transfers.history.data.PowerSyncTransferHistoryRepository
+import ua.com.radiokot.money.transfers.history.data.TransferHistoryRepository
+import ua.com.radiokot.money.transfers.history.view.ActivityViewModel
 
 val transfersHistoryModule = module {
     includes(
@@ -37,5 +41,19 @@ val transfersHistoryModule = module {
                 database = get(),
             )
         } bind HistoryStatsRepository::class
+
+        scoped {
+            PowerSyncTransferHistoryRepository(
+                database = get(),
+                accountRepository = get(),
+                categoryRepository = get(),
+            )
+        } bind TransferHistoryRepository::class
+
+        viewModel {
+            ActivityViewModel(
+                transferHistoryRepository = get(),
+            )
+        } bind ActivityViewModel::class
     }
 }

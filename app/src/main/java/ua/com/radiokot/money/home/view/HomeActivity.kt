@@ -43,6 +43,7 @@ import ua.com.radiokot.money.R
 import ua.com.radiokot.money.accounts.view.AccountsFragment
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.categories.view.CategoriesFragment
+import ua.com.radiokot.money.transfers.history.view.ActivityFragment
 import ua.com.radiokot.money.uikit.TextButton
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
@@ -84,6 +85,7 @@ class HomeActivity : UserSessionScopeActivity() {
                 BottomNavigation(
                     onAccountsClicked = { show(AccountsFragment::class) },
                     onCategoriesClicked = { show(CategoriesFragment::class) },
+                    onActivityClicked = { show(ActivityFragment::class) },
                 )
             }
             layoutParams = LinearLayout.LayoutParams(
@@ -113,6 +115,7 @@ class HomeActivity : UserSessionScopeActivity() {
 private fun BottomNavigation(
     onAccountsClicked: () -> Unit,
     onCategoriesClicked: () -> Unit,
+    onActivityClicked: () -> Unit,
 ) = Row(
     horizontalArrangement = Arrangement.spacedBy(
         16.dp,
@@ -143,5 +146,15 @@ private fun BottomNavigation(
         text = "📊 Categories",
         modifier = Modifier
             .then(clickableCategoriesModifier)
+    )
+
+    val clickableActivityModifier = remember {
+        Modifier.clickable { onActivityClicked() }
+    }
+
+    TextButton(
+        text = "📃 Activity",
+        modifier = Modifier
+            .then(clickableActivityModifier)
     )
 }

@@ -27,9 +27,9 @@ interface CategoryRepository {
 
     fun getCategoriesFlow(): Flow<List<Category>>
 
-    suspend fun getSubcategories(categoryId: String): List<Subcategory>
-
     fun getCategoryFlow(categoryId: String): Flow<Category>
 
     fun getSubcategoriesFlow(categoryId: String): Flow<List<Subcategory>>
+
+    fun getSubcategoriesByCategoriesFlow(): Flow<Map<Category, List<Subcategory>>>
 }

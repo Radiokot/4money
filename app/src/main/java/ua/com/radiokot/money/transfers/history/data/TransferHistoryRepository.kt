@@ -17,29 +17,24 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.categories.data
+package ua.com.radiokot.money.transfers.history.data
 
-import java.util.UUID
+import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Instant
+import ua.com.radiokot.money.transfers.data.Transfer
+import ua.com.radiokot.money.transfers.data.TransferCounterparty
 
-class Subcategory(
-    val title: String,
-    val categoryId: String,
-    val id: String = UUID.randomUUID().toString(),
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Subcategory) return false
+interface TransferHistoryRepository {
 
-        if (id != other.id) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return id.hashCode()
-    }
-
-    override fun toString(): String {
-        return "Subcategory(title='$title', id='$id')"
-    }
+    /**
+     * @return list of records within the period in reverse chronological order,
+     * additionally limited by [offsetExclusive] (newest time) and [limit] (max number of records to return).
+     */
+    fun getTransferHistoryPageFlow(
+        offsetExclusive: Instant?,
+        limit: Int,
+        period: HistoryPeriod,
+        source: TransferCounterparty?,
+        destination: TransferCounterparty?,
+    ): Flow<List<Transfer>>
 }
