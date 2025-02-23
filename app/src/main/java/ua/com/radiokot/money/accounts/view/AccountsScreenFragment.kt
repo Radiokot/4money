@@ -20,43 +20,43 @@
 package ua.com.radiokot.money.accounts.view
 
 import android.os.Bundle
-import androidx.activity.compose.setContent
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
+import ua.com.radiokot.money.auth.view.UserSessionScopeFragment
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.transfers.view.TransferSheetRoot
 import ua.com.radiokot.money.transfers.view.TransferSheetViewModel
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 
-class AccountsActivity : UserSessionScopeActivity() {
+class AccountsScreenFragment : UserSessionScopeFragment() {
 
     private val viewModel: AccountsViewModel by viewModel()
     private val actionSheetViewModel: AccountActionSheetViewModel by viewModel()
     private val transferSheetViewModel: TransferSheetViewModel by viewModel()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        if (goToAuthIfNoSession()) {
-            return
-        }
-
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View = ComposeView(requireContext()).apply {
         setContent {
             AccountsScreenRoot(
                 viewModel = viewModel,
@@ -64,7 +64,10 @@ class AccountsActivity : UserSessionScopeActivity() {
                 transferSheetViewModel = transferSheetViewModel,
             )
         }
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         lifecycleScope.launch {
             subscribeToEvents()
         }
@@ -103,7 +106,6 @@ private fun AccountsScreenRoot(
 ) = Box(
     modifier = Modifier
         .fillMaxSize()
-        .safeDrawingPadding()
 ) {
     AccountsScreen(
         accountItemList = viewModel.accountListItems.collectAsState(),
@@ -129,7 +131,6 @@ private fun AccountsScreen(
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
 ) = Box(
     modifier = Modifier
-        .safeDrawingPadding()
         .padding(16.dp)
 ) {
     AccountList(

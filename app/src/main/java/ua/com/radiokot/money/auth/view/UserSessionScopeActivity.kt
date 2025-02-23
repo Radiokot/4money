@@ -20,7 +20,7 @@
 package ua.com.radiokot.money.auth.view
 
 import android.content.Intent
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import org.koin.android.scope.AndroidScopeComponent
 import org.koin.core.scope.Scope
 import ua.com.radiokot.money.auth.data.UserSession
@@ -28,7 +28,7 @@ import ua.com.radiokot.money.auth.logic.createActivityScopeWithSession
 import ua.com.radiokot.money.lazyLogger
 
 abstract class UserSessionScopeActivity :
-    ComponentActivity(),
+    AppCompatActivity(),
     AndroidScopeComponent {
 
     override val scope: Scope = createActivityScopeWithSession()

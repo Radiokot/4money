@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import ua.com.radiokot.money.accounts.view.AccountsActivity
+import ua.com.radiokot.money.home.view.HomeActivity
 import ua.com.radiokot.money.uikit.TextButton
 
 class AuthActivity : ComponentActivity() {
@@ -62,7 +62,7 @@ class AuthActivity : ComponentActivity() {
     ): Nothing = viewModel.events.collect { event ->
         when (event) {
             AuthViewModel.Event.GoToMainScreen -> {
-                startActivity(Intent(this, AccountsActivity::class.java))
+                startActivity(Intent(this, HomeActivity::class.java))
                 finish()
             }
 
