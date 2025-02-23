@@ -113,8 +113,8 @@ fun AccountActionSheetRoot(
             onExpenseClicked = viewModel::onExpenseClicked,
             transferCounterpartyAccountItemList = viewModel.otherAccountListItems.collectAsState(),
             onTransferCounterpartyAccountItemClicked = viewModel::onTransferCounterpartyAccountItemClicked,
-            transferCounterpartyIncomeCategoryItemList = viewModel.incomeCategoryListItems.collectAsState(),
-            transferCounterpartyExpenseCategoryItemList = viewModel.expenseCategoryListItems.collectAsState(),
+            transferCounterpartyIncomeCategoryItemList = viewModel.incomeCategoryItemList.collectAsState(),
+            transferCounterpartyExpenseCategoryItemList = viewModel.expenseCategoryItemList.collectAsState(),
             onTransferCounterpartyCategoryItemClicked = viewModel::onTransferCounterpartyCategoryItemClicked,
         )
     }

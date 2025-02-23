@@ -40,9 +40,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
 import io.ktor.util.reflect.instanceOf
 import ua.com.radiokot.money.R
-import ua.com.radiokot.money.accounts.view.AccountsScreenFragment
+import ua.com.radiokot.money.accounts.view.AccountsFragment
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
-import ua.com.radiokot.money.categories.view.CategoriesScreenFragment
+import ua.com.radiokot.money.categories.view.CategoriesFragment
 import ua.com.radiokot.money.uikit.TextButton
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
@@ -82,8 +82,8 @@ class HomeActivity : UserSessionScopeActivity() {
         val bottomNavigation = ComposeView(this).apply {
             setContent {
                 BottomNavigation(
-                    onAccountsClicked = { show(AccountsScreenFragment::class) },
-                    onCategoriesClicked = { show(CategoriesScreenFragment::class) },
+                    onAccountsClicked = { show(AccountsFragment::class) },
+                    onCategoriesClicked = { show(CategoriesFragment::class) },
                 )
             }
             layoutParams = LinearLayout.LayoutParams(
@@ -104,7 +104,7 @@ class HomeActivity : UserSessionScopeActivity() {
         })
 
         if (savedInstanceState == null) {
-            show(AccountsScreenFragment::class)
+            show(AccountsFragment::class)
         }
     }
 }

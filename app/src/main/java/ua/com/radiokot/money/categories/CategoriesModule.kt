@@ -19,11 +19,13 @@
 
 package ua.com.radiokot.money.categories
 
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
+import ua.com.radiokot.money.categories.view.CategoriesViewModel
 import ua.com.radiokot.money.powersync.powerSyncModule
 
 val categoriesModule = module {
@@ -37,5 +39,12 @@ val categoriesModule = module {
                 database = get(),
             )
         } bind CategoryRepository::class
+
+        viewModel {
+            CategoriesViewModel(
+                categoryRepository = get(),
+                historyStatsRepository = get(),
+            )
+        } bind CategoriesViewModel::class
     }
 }

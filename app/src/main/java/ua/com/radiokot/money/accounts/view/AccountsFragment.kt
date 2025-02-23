@@ -46,7 +46,7 @@ import ua.com.radiokot.money.transfers.view.TransferSheetRoot
 import ua.com.radiokot.money.transfers.view.TransferSheetViewModel
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 
-class AccountsScreenFragment : UserSessionScopeFragment() {
+class AccountsFragment : UserSessionScopeFragment() {
 
     private val viewModel: AccountsViewModel by viewModel()
     private val actionSheetViewModel: AccountActionSheetViewModel by viewModel()
