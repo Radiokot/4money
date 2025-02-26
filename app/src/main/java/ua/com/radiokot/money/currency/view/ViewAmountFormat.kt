@@ -47,16 +47,19 @@ class ViewAmountFormat(
                 || it == decimalFormatSymbols.decimalSeparator
     }
 
-    operator fun invoke(amount: ViewAmount): AnnotatedString = buildAnnotatedString {
+    operator fun invoke(
+        amount: ViewAmount,
+        customColor: Color? = null,
+    ): AnnotatedString = buildAnnotatedString {
         val (integerPart, decimalPart) = amount.value
             .divideAndRemainder(BigInteger.TEN.pow(amount.currency.precision))
 
         pushStyle(
             style = SpanStyle(
-                color = when (amount.value.signum()) {
-                    1 -> Color.Black
-                    -1 -> Color.Red
-                    else -> Color.LightGray
+                color = customColor ?: when (amount.value.signum()) {
+                    1 -> Color(0xff50af99)
+                    -1 -> Color(0xffd85e8c)
+                    else -> Color(0xff757575)
                 }
             )
         )

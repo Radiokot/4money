@@ -21,20 +21,25 @@ package ua.com.radiokot.money.transfers.history.view
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import ua.com.radiokot.money.currency.view.ViewAmount
+import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.data.TransferHistoryRepository
+import ua.com.radiokot.money.transfers.view.ViewTransferListItem
+import java.math.BigInteger
 
 class ActivityViewModel(
     private val transferHistoryRepository: TransferHistoryRepository,
 ) : ViewModel() {
 
-    val itemList: StateFlow<List<Any>> =
+    val itemList: StateFlow<List<ViewTransferListItem>> =
         transferHistoryRepository
             .getTransferHistoryPageFlow(
                 offsetExclusive = null,
@@ -43,12 +48,29 @@ class ActivityViewModel(
                 source = null,
                 destination = null,
             )
-            .map { records ->
-                records.map {
-                    "${it.source} (${it.sourceAmount}) => ${it.destination} (${it.destinationAmount})\n" +
-                            "${it.time.toLocalDateTime(TimeZone.currentSystemDefault())}"
+            .map { transfers ->
+                buildList {
+                    transfers.forEachIndexed { i, transfer ->
+                        if (i == 0) {
+                            add(
+                                ViewTransferListItem.Header.fromTransferTime(
+                                    time = transfer.time,
+                                    localTimeZone = TimeZone.currentSystemDefault(),
+                                    amount = ViewAmount(
+                                        value = BigInteger.ZERO,
+                                        currency = ViewCurrency(
+                                            symbol = "$",
+                                            precision = 2,
+                                        )
+                                    ),
+                                )
+                            )
+                        }
+                        add(ViewTransferListItem.Transfer.fromTransfer(transfer))
+                    }
                 }
             }
+            .flowOn(Dispatchers.Default)
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),

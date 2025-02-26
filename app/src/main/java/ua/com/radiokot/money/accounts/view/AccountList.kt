@@ -64,7 +64,7 @@ fun AccountList(
 ) {
     items(
         items = itemList.value,
-        key = ViewAccountListItem::hashCode,
+        key = ViewAccountListItem::key,
         contentType = ViewAccountListItem::type,
     ) { item ->
         when (item) {

@@ -22,12 +22,8 @@ package ua.com.radiokot.money.transfers.history.view
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
@@ -36,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ua.com.radiokot.money.auth.view.UserSessionScopeFragment
+import ua.com.radiokot.money.transfers.view.TransferList
+import ua.com.radiokot.money.transfers.view.ViewTransferListItem
 
 class ActivityFragment : UserSessionScopeFragment() {
 
@@ -63,17 +61,13 @@ private fun ActivityScreenRoot(
 
 @Composable
 private fun ActivityScreen(
-    itemList: State<List<Any>>,
-) = LazyColumn(
-    contentPadding = PaddingValues(16.dp),
-    verticalArrangement = Arrangement.spacedBy(12.dp),
+    itemList: State<List<ViewTransferListItem>>,
+) = TransferList(
+    itemList = itemList,
+    onTransferItemClicked = {},
     modifier = Modifier
         .fillMaxWidth()
-) {
-    items(
-        items = itemList.value,
-        key = { it.toString() },
-    ) { item ->
-        BasicText(text = item.toString())
-    }
-}
+        .padding(
+            horizontal = 16.dp,
+        )
+)

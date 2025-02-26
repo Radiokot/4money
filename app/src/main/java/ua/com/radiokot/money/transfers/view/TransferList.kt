@@ -19,12 +19,253 @@
 
 package ua.com.radiokot.money.transfers.view
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.LastBaseline
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.format.DateTimeFormat
+import kotlinx.datetime.format.DayOfWeekNames
+import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.char
+import ua.com.radiokot.money.currency.view.ViewAmount
+import ua.com.radiokot.money.currency.view.ViewAmountFormat
 
 @Composable
 fun TransferList(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
+    itemList: State<List<ViewTransferListItem>>,
+    onTransferItemClicked: (ViewTransferListItem.Transfer) -> Unit,
 ) {
+    val locale = LocalConfiguration.current.locales.get(0)
+    val amountFormat = remember(locale) {
+        ViewAmountFormat(locale)
+    }
+    val dayFormat = remember(locale) {
+        LocalDate.Format {
+            dayOfWeek(DayOfWeekNames.ENGLISH_FULL)
+        }
+    }
+    val monthYearFormat = remember(locale) {
+        LocalDate.Format {
+            monthName(MonthNames.ENGLISH_FULL)
+            char(' ')
+            year()
+        }
+    }
 
+    LazyColumn(
+        contentPadding = PaddingValues(
+            vertical = 16.dp,
+        ),
+        modifier = modifier,
+    ) {
+        items(
+            items = itemList.value,
+            key = ViewTransferListItem::key,
+            contentType = ViewTransferListItem::itemType,
+        ) { item ->
+            when (item) {
+                is ViewTransferListItem.Header -> {
+                    HeaderItem(
+                        item = item,
+                        dayFormat = dayFormat,
+                        monthYearFormat = monthYearFormat,
+                        modifier = Modifier
+                            .padding(
+                                bottom = 16.dp,
+                            )
+                    )
+                }
+
+                is ViewTransferListItem.Transfer -> {
+                    val clickableItemModifier = remember(item.key) {
+                        Modifier.clickable { onTransferItemClicked(item) }
+                    }
+
+                    TransferItem(
+                        item = item,
+                        amountFormat = amountFormat,
+                        modifier = Modifier
+                            .padding(
+                                bottom = 16.dp
+                            )
+                            .then(clickableItemModifier),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+@Preview(
+    widthDp = 180,
+)
+private fun TransferListPreview(
+    @PreviewParameter(ViewTransferItemListPreviewParameterProvider::class) itemList: List<ViewTransferListItem>,
+) = TransferList(
+    itemList = itemList.let(::mutableStateOf),
+    onTransferItemClicked = {},
+)
+
+@Composable
+private fun HeaderItem(
+    modifier: Modifier = Modifier,
+    item: ViewTransferListItem.Header,
+    dayFormat: DateTimeFormat<LocalDate>,
+    monthYearFormat: DateTimeFormat<LocalDate>,
+) = Row(
+    verticalAlignment = Alignment.Bottom,
+    modifier = modifier
+        .fillMaxWidth(),
+) {
+    BasicText(
+        text = item.localDate.dayOfMonth.toString(),
+        style = TextStyle(
+            fontSize = 30.sp,
+            fontWeight = FontWeight(300),
+        ),
+        modifier = Modifier.alignByBaseline()
+    )
+
+    Spacer(modifier = Modifier.width(4.dp))
+
+    Column(
+        modifier = Modifier
+            .alignBy(LastBaseline),
+    ) {
+        BasicText(
+            text =
+            when (item.dayType) {
+                ViewTransferListItem.Header.DayType.Today ->
+                    "Today"
+
+                ViewTransferListItem.Header.DayType.Yesterday ->
+                    "Yesterday"
+
+                ViewTransferListItem.Header.DayType.DayOfWeek ->
+                    dayFormat.format(item.localDate)
+            },
+            style = TextStyle(
+                fontSize = 12.sp,
+                fontWeight = FontWeight(200)
+            ),
+        )
+        BasicText(
+            text = monthYearFormat.format(item.localDate),
+            style = TextStyle(
+                fontSize = 14.sp,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun TransferItem(
+    modifier: Modifier = Modifier,
+    item: ViewTransferListItem.Transfer,
+    amountFormat: ViewAmountFormat,
+) = Column(
+    modifier = modifier
+        .fillMaxWidth(),
+) {
+    val amountColor = remember {
+        when (item.type) {
+            ViewTransferListItem.Transfer.Type.Income ->
+                Color(0xff50af99)
+
+            ViewTransferListItem.Transfer.Type.Expense ->
+                Color(0xffd85e8c)
+
+            ViewTransferListItem.Transfer.Type.Other ->
+                Color(0xff757575)
+        }
+    }
+
+    Row(
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        BasicText(
+            text = item.primaryCounterparty.title,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
+            style = TextStyle(
+                fontSize = 16.sp,
+            ),
+            modifier = Modifier
+                .weight(1f)
+                .alignByBaseline(),
+        )
+
+        BasicText(
+            text = amountFormat(
+                amount = ViewAmount(
+                    value = item.primaryAmount,
+                    currency = item.primaryCounterparty.currency,
+                ),
+                customColor = amountColor,
+            ),
+            style = TextStyle(
+                fontSize = 18.sp,
+            ),
+            modifier = Modifier
+                .alignBy(LastBaseline),
+        )
+    }
+
+    Spacer(modifier = Modifier.height(2.dp))
+
+    Row(
+        verticalAlignment = Alignment.Top,
+    ) {
+        BasicText(
+            text = item.secondaryCounterparty.title,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
+            style = TextStyle(
+                fontSize = 14.sp,
+            ),
+            modifier = Modifier.weight(1f),
+        )
+
+        if (item.primaryCounterparty.currency != item.secondaryCounterparty.currency) {
+            BasicText(
+                text = amountFormat(
+                    amount = ViewAmount(
+                        value = item.secondaryAmount,
+                        currency = item.secondaryCounterparty.currency,
+                    ),
+                    customColor = amountColor,
+                ),
+                style = TextStyle(
+                    fontSize = 14.sp,
+                )
+            )
+        }
+    }
 }
