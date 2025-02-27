@@ -19,10 +19,6 @@
 
 package ua.com.radiokot.money.transfers.view
 
-import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,7 +35,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
@@ -47,12 +42,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -78,45 +71,30 @@ fun TransferSheetRoot(
     modifier: Modifier = Modifier,
     viewModel: TransferSheetViewModel,
 ) {
-    val isSheetOpened by viewModel.isOpened.collectAsState()
-    AnimatedVisibility(
-        visible = isSheetOpened,
-        enter = slideInVertically(
-            initialOffsetY = Int::unaryPlus,
-        ),
-        exit = slideOutVertically(
-            targetOffsetY = Int::unaryPlus,
-        ),
-        modifier = modifier
-            .widthIn(
-                max = 400.dp,
-            )
-    ) {
-        val source = viewModel.source.collectAsState().value
-        val destination = viewModel.destination.collectAsState().value
+    val source = viewModel.source.collectAsState().value
+    val destination = viewModel.destination.collectAsState().value
 
-        TransferSheet(
-            onBackPressed = viewModel::onBackPressed,
-            isSourceInputShown = viewModel.isSourceInputShown.collectAsState().value,
-            source = source
-                ?: return@AnimatedVisibility,
-            sourceAmountValue = viewModel.sourceAmountValue.collectAsState(),
-            onNewSourceAmountValueParsed = viewModel::onNewSourceAmountValueParsed,
-            destination = destination
-                ?: return@AnimatedVisibility,
-            destinationAmountValue = viewModel.destinationAmountValue.collectAsState(),
-            onNewDestinationAmountValueParsed = viewModel::onNewDestinationAmountValueParsed,
-            subcategoryItemList = viewModel.subcategoryItemList.collectAsState(),
-            onSubcategoryItemClicked = viewModel::onSubcategoryItemClicked,
-            isSaveEnabled = viewModel.isSaveEnabled.collectAsState(),
-            onSaveClicked = viewModel::onSaveClicked,
-        )
-    }
+    TransferSheet(
+        isSourceInputShown = viewModel.isSourceInputShown.collectAsState().value,
+        source = source
+            ?: return,
+        sourceAmountValue = viewModel.sourceAmountValue.collectAsState(),
+        onNewSourceAmountValueParsed = viewModel::onNewSourceAmountValueParsed,
+        destination = destination
+            ?: return,
+        destinationAmountValue = viewModel.destinationAmountValue.collectAsState(),
+        onNewDestinationAmountValueParsed = viewModel::onNewDestinationAmountValueParsed,
+        subcategoryItemList = viewModel.subcategoryItemList.collectAsState(),
+        onSubcategoryItemClicked = viewModel::onSubcategoryItemClicked,
+        isSaveEnabled = viewModel.isSaveEnabled.collectAsState(),
+        onSaveClicked = viewModel::onSaveClicked,
+        modifier = modifier,
+    )
 }
 
 @Composable
 private fun TransferSheet(
-    onBackPressed: () -> Unit,
+    modifier: Modifier = Modifier,
     isSourceInputShown: Boolean,
     source: ViewTransferCounterparty,
     sourceAmountValue: State<BigInteger>,
@@ -144,7 +122,6 @@ private fun TransferSheet(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .shadow(8.dp)
             .safeDrawingPadding()
             .fillMaxWidth()
             .heightIn(
@@ -153,8 +130,6 @@ private fun TransferSheet(
             .verticalScroll(rememberScrollState())
             .background(Color(0xfff0f4f8))
     ) {
-        BackHandler(onBack = onBackPressed)
-
         Row(
             modifier = Modifier
                 .height(IntrinsicSize.Max)
@@ -341,7 +316,6 @@ private fun TransferSheetPreview(
                 modifier = Modifier.padding(vertical = 16.dp)
             )
             TransferSheet(
-                onBackPressed = {},
                 isSourceInputShown = isSourceInputShown,
                 source = ViewTransferCounterparty(
                     title = "Source",

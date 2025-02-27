@@ -55,19 +55,19 @@ class PowerSyncTransferHistoryRepository(
                     buildMap {
                         subcategoriesByCategories.forEach { (category, subcategories) ->
                             val categoryCounterparty = TransferCounterparty.Category(category)
-                            put(categoryCounterparty.id, categoryCounterparty)
+                            put(categoryCounterparty.id.toString(), categoryCounterparty)
 
                             subcategories.forEach { subcategory ->
                                 val subcategoryCounterparty = TransferCounterparty.Category(
                                     category = category,
                                     subcategory = subcategory,
                                 )
-                                put(subcategoryCounterparty.id, subcategoryCounterparty)
+                                put(subcategoryCounterparty.id.toString(), subcategoryCounterparty)
                             }
                         }
                         accounts.forEach { account ->
                             val accountCounterparty = TransferCounterparty.Account(account)
-                            put(accountCounterparty.id, accountCounterparty)
+                            put(accountCounterparty.id.toString(), accountCounterparty)
                         }
                     }
                 }

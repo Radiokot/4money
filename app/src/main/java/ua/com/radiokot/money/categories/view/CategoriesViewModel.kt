@@ -35,6 +35,15 @@ class CategoriesViewModel(
     private val historyStatsRepository: HistoryStatsRepository,
 ) : ViewModel() {
 
+    init {
+        println("OOLEG im created ${hashCode()}")
+    }
+
+    override fun onCleared() {
+        println("OOLEG im dead ${hashCode()}")
+        super.onCleared()
+    }
+
     private val log by lazyLogger("CategoriesVM")
     private val _isIncome: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isIncome: StateFlow<Boolean> = _isIncome

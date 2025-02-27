@@ -22,14 +22,14 @@ package ua.com.radiokot.money.transfers.data
 import ua.com.radiokot.money.categories.data.Subcategory
 
 sealed interface TransferCounterparty {
-    val id: String
+    val id: TransferCounterpartyId
 
     class Account(
         val account: ua.com.radiokot.money.accounts.data.Account,
     ) : TransferCounterparty {
 
-        override val id: String
-            get() = account.id
+        override val id: TransferCounterpartyId.Account
+            get() = TransferCounterpartyId.Account(account.id)
 
         override fun toString(): String {
             return "Account(account=$account)"
@@ -41,8 +41,11 @@ sealed interface TransferCounterparty {
         val subcategory: Subcategory? = null,
     ) : TransferCounterparty {
 
-        override val id: String
-            get() = subcategory?.id ?: category.id
+        override val id: TransferCounterpartyId.Category
+            get() = TransferCounterpartyId.Category(
+                categoryId = category.id,
+                subcategoryId = subcategory?.id,
+            )
 
         override fun toString(): String {
             return "Category(category=$category, subcategory=$subcategory)"

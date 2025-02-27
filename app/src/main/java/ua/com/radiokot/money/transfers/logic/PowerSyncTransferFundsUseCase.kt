@@ -24,6 +24,7 @@ import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.datetime.Instant
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
+import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import java.math.BigInteger
 import java.util.UUID
 
@@ -102,9 +103,9 @@ class PowerSyncTransferFundsUseCase(
     }
 
     private fun PowerSyncTransaction.logTransfer(
-        sourceId: String,
+        sourceId: TransferCounterpartyId,
         sourceAmount: BigInteger,
-        destinationId: String,
+        destinationId: TransferCounterpartyId,
         destinationAmount: BigInteger,
         time: Instant,
     ) {
@@ -132,9 +133,9 @@ class PowerSyncTransferFundsUseCase(
             parameters = listOf(
                 id,
                 timeString,
-                sourceId,
+                sourceId.toString(),
                 sourceAmount.toString(),
-                destinationId,
+                destinationId.toString(),
                 destinationAmount.toString(),
             )
         )

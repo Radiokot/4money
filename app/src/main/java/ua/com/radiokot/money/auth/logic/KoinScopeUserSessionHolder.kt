@@ -20,11 +20,16 @@
 package ua.com.radiokot.money.auth.logic
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.fragment.app.Fragment
 import org.koin.android.ext.android.getKoin
 import org.koin.androidx.scope.createActivityScope
 import org.koin.androidx.scope.createFragmentScope
+import org.koin.compose.LocalKoinScope
+import org.koin.compose.getKoin
 import org.koin.core.Koin
+import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.module.Module
 import org.koin.core.qualifier._q
 import org.koin.core.scope.Scope
@@ -79,3 +84,20 @@ fun Fragment.createFragmentScopeWithSession(): Scope =
 
 fun Module.sessionScope(scopeSet: ScopeDSL.() -> Unit): Unit =
     scope<UserSession>(scopeSet)
+
+/**
+ * Runs the [content] in the [UserSession] scope, if it exists.
+ */
+@OptIn(KoinInternalApi::class)
+@Composable
+fun UserSessionScope(
+    content: @Composable () -> Unit,
+) {
+    CompositionLocalProvider(
+        LocalKoinScope.provides(
+            getKoin().getScopeOrNull(DI_SCOPE_SESSION)
+                ?: getKoin().scopeRegistry.rootScope
+        ),
+        content,
+    )
+}

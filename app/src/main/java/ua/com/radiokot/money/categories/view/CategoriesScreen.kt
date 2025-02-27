@@ -43,41 +43,27 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ua.com.radiokot.money.auth.view.UserSessionScopeFragment
 
-class CategoriesFragment : UserSessionScopeFragment() {
-
-    private val viewModel: CategoriesViewModel by viewModel()
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View = ComposeView(requireContext()).apply {
-        setContent {
-            CategoriesScreenRoot(
-                viewModel = viewModel,
-            )
-        }
-    }
-}
-
 @Composable
-private fun CategoriesScreenRoot(
+fun CategoriesScreenRoot(
+    modifier: Modifier = Modifier,
     viewModel: CategoriesViewModel,
 ) = CategoriesScreen(
     isIncome = viewModel.isIncome.collectAsStateWithLifecycle(),
     incomeCategoryItemList = viewModel.incomeCategoryItemList.collectAsStateWithLifecycle(),
     expenseCategoryItemList = viewModel.expenseCategoryItemList.collectAsStateWithLifecycle(),
     onTitleClicked = viewModel::onTitleClicked,
+    modifier = modifier,
 )
 
 @Composable
 private fun CategoriesScreen(
+    modifier: Modifier = Modifier,
     isIncome: State<Boolean>,
     incomeCategoryItemList: State<List<ViewCategoryListItem>>,
     expenseCategoryItemList: State<List<ViewCategoryListItem>>,
     onTitleClicked: () -> Unit,
 ) = Column(
-    modifier = Modifier
+    modifier = modifier
         .padding(
             vertical = 16.dp,
         )

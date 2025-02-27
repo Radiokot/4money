@@ -19,10 +19,6 @@
 
 package ua.com.radiokot.money.accounts.view
 
-import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +32,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -46,13 +41,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -82,51 +75,35 @@ fun AccountActionSheetRoot(
     modifier: Modifier = Modifier,
     viewModel: AccountActionSheetViewModel,
 ) {
-    val isSheetOpened by viewModel.isOpened.collectAsState()
-    AnimatedVisibility(
-        visible = isSheetOpened,
-        enter = slideInVertically(
-            initialOffsetY = Int::unaryPlus,
-        ),
-        exit = slideOutVertically(
-            targetOffsetY = Int::unaryPlus,
-        ),
-        modifier = modifier
-            .widthIn(
-                max = 400.dp,
-            )
-    ) {
-        val accountDetailsState = viewModel.accountDetails.collectAsState()
-        val modeState = viewModel.mode.collectAsState()
+    val accountDetailsState = viewModel.accountDetails.collectAsState()
+    val modeState = viewModel.mode.collectAsState()
 
-        AccountActionSheet(
-            accountDetails = accountDetailsState.value
-                ?: return@AnimatedVisibility,
-            mode = modeState.value,
-            balanceInputValue = viewModel.balanceInputValue.collectAsState(),
-            onBalanceClicked = viewModel::onBalanceClicked,
-            onBackPressed = viewModel::onBackPressed,
-            onNewBalanceInputValueParsed = viewModel::onNewBalanceInputValueParsed,
-            onBalanceInputSubmit = viewModel::onBalanceInputSubmit,
-            onTransferClicked = viewModel::onTransferClicked,
-            onIncomeClicked = viewModel::onIncomeClicked,
-            onExpenseClicked = viewModel::onExpenseClicked,
-            transferCounterpartyAccountItemList = viewModel.otherAccountListItems.collectAsState(),
-            onTransferCounterpartyAccountItemClicked = viewModel::onTransferCounterpartyAccountItemClicked,
-            transferCounterpartyIncomeCategoryItemList = viewModel.incomeCategoryItemList.collectAsState(),
-            transferCounterpartyExpenseCategoryItemList = viewModel.expenseCategoryItemList.collectAsState(),
-            onTransferCounterpartyCategoryItemClicked = viewModel::onTransferCounterpartyCategoryItemClicked,
-        )
-    }
+    AccountActionSheet(
+        accountDetails = accountDetailsState.value ?: return,
+        mode = modeState.value,
+        balanceInputValue = viewModel.balanceInputValue.collectAsState(),
+        onBalanceClicked = viewModel::onBalanceClicked,
+        onNewBalanceInputValueParsed = viewModel::onNewBalanceInputValueParsed,
+        onBalanceInputSubmit = viewModel::onBalanceInputSubmit,
+        onTransferClicked = viewModel::onTransferClicked,
+        onIncomeClicked = viewModel::onIncomeClicked,
+        onExpenseClicked = viewModel::onExpenseClicked,
+        transferCounterpartyAccountItemList = viewModel.otherAccountListItems.collectAsState(),
+        onTransferCounterpartyAccountItemClicked = viewModel::onTransferCounterpartyAccountItemClicked,
+        transferCounterpartyIncomeCategoryItemList = viewModel.incomeCategoryItemList.collectAsState(),
+        transferCounterpartyExpenseCategoryItemList = viewModel.expenseCategoryItemList.collectAsState(),
+        onTransferCounterpartyCategoryItemClicked = viewModel::onTransferCounterpartyCategoryItemClicked,
+        modifier = modifier,
+    )
 }
 
 @Composable
 private fun AccountActionSheet(
+    modifier: Modifier = Modifier,
     accountDetails: ViewAccountDetails,
     mode: ViewAccountActionSheetMode,
     balanceInputValue: State<BigInteger>,
     onBalanceClicked: () -> Unit,
-    onBackPressed: () -> Unit,
     onNewBalanceInputValueParsed: (BigInteger) -> Unit,
     onBalanceInputSubmit: () -> Unit,
     onTransferClicked: () -> Unit,
@@ -137,7 +114,9 @@ private fun AccountActionSheet(
     transferCounterpartyIncomeCategoryItemList: State<List<ViewCategoryListItem>>,
     transferCounterpartyExpenseCategoryItemList: State<List<ViewCategoryListItem>>,
     onTransferCounterpartyCategoryItemClicked: (ViewCategoryListItem) -> Unit,
-) = BoxWithConstraints {
+) = BoxWithConstraints(
+    modifier = modifier,
+) {
 
     val maxSheetHeightDp =
         if (maxHeight < 400.dp)
@@ -148,7 +127,6 @@ private fun AccountActionSheet(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .shadow(8.dp)
             .safeDrawingPadding()
             .fillMaxWidth()
             .heightIn(
@@ -160,8 +138,6 @@ private fun AccountActionSheet(
                 horizontal = 16.dp,
             )
     ) {
-        BackHandler(onBack = onBackPressed)
-
         val clickableBalanceModifier = remember {
             Modifier.clickable { onBalanceClicked() }
         }
@@ -275,7 +251,6 @@ private fun AccountActionSheetPreview(
             mode = mode,
             balanceInputValue = BigInteger("9856").let(::mutableStateOf),
             onBalanceClicked = {},
-            onBackPressed = {},
             onNewBalanceInputValueParsed = {},
             onBalanceInputSubmit = {},
             onTransferClicked = {},

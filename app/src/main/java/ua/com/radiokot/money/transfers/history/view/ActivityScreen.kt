@@ -22,7 +22,6 @@ package ua.com.radiokot.money.transfers.history.view
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -53,20 +52,22 @@ class ActivityFragment : UserSessionScopeFragment() {
 }
 
 @Composable
-private fun ActivityScreenRoot(
+fun ActivityScreenRoot(
+    modifier: Modifier = Modifier,
     viewModel: ActivityViewModel,
 ) = ActivityScreen(
     itemList = viewModel.itemList.collectAsStateWithLifecycle(),
+    modifier = modifier,
 )
 
 @Composable
 private fun ActivityScreen(
+    modifier: Modifier = Modifier,
     itemList: State<List<ViewTransferListItem>>,
 ) = TransferList(
     itemList = itemList,
     onTransferItemClicked = {},
-    modifier = Modifier
-        .fillMaxWidth()
+    modifier = modifier
         .padding(
             horizontal = 16.dp,
         )

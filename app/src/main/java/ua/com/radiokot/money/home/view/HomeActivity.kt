@@ -20,36 +20,47 @@
 package ua.com.radiokot.money.home.view
 
 import android.os.Bundle
-import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.LinearLayout
+import androidx.activity.compose.setContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.commitNow
-import io.ktor.util.reflect.instanceOf
-import ua.com.radiokot.money.R
-import ua.com.radiokot.money.accounts.view.AccountsFragment
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import org.koin.compose.viewmodel.koinViewModel
+import ua.com.radiokot.money.accounts.view.AccountActionSheetRoot
+import ua.com.radiokot.money.accounts.view.AccountActionSheetViewModel
+import ua.com.radiokot.money.accounts.view.AccountsScreenRoot
+import ua.com.radiokot.money.accounts.view.AccountsViewModel
+import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
-import ua.com.radiokot.money.categories.view.CategoriesFragment
-import ua.com.radiokot.money.transfers.history.view.ActivityFragment
+import ua.com.radiokot.money.categories.view.CategoriesScreenRoot
+import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
+import ua.com.radiokot.money.transfers.history.view.ActivityScreenRoot
+import ua.com.radiokot.money.transfers.view.TransferSheetRoot
+import ua.com.radiokot.money.transfers.view.TransferSheetViewModel
 import ua.com.radiokot.money.uikit.TextButton
-import kotlin.reflect.KClass
-import kotlin.reflect.full.createInstance
 
 class HomeActivity : UserSessionScopeActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -57,58 +68,220 @@ class HomeActivity : UserSessionScopeActivity() {
             return
         }
 
-        val fragmentContainer = FrameLayout(this).apply {
-            id = R.id.fragmentContainer
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                0,
-            ).apply {
-                weight = 1f
+        setContent {
+            val navController = rememberNavController()
+
+            UserSessionScope {
+                Column {
+                    NavHost(
+                        navController = navController,
+                        startDestination = AccountsScreenDestination,
+                        enterTransition = { fadeIn(tween(150)) },
+                        exitTransition = { fadeOut(tween(150)) },
+                        modifier = Modifier
+                            .weight(1f),
+                    ) {
+                        composable<AccountsScreenDestination> {
+                            val viewModel: AccountsViewModel = koinViewModel()
+
+                            LaunchedEffect(Unit) {
+                                viewModel.events.collect { event ->
+                                    when (event) {
+                                        is AccountsViewModel.Event.OpenAccountActions -> {
+                                            navController.navigate(
+                                                route = AccountActionSheetDestination(
+                                                    accountId = event.account.id,
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            AccountsScreenRoot(
+                                viewModel = viewModel,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                            )
+                        }
+
+                        composable<CategoriesScreenDestination> {
+                            CategoriesScreenRoot(
+                                viewModel = koinViewModel(),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                            )
+                        }
+
+                        composable<ActivityScreenDestination> {
+                            ActivityScreenRoot(
+                                viewModel = koinViewModel(),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                            )
+                        }
+
+                        dialog<AccountActionSheetDestination> { entry ->
+                            val accountId = entry.toRoute<AccountActionSheetDestination>()
+                                .accountId
+                            val viewModel: AccountActionSheetViewModel = koinViewModel()
+
+                            LaunchedEffect(accountId) {
+                                viewModel.setAccount(
+                                    accountId = accountId,
+                                )
+
+                                launch {
+                                    viewModel.events.collect { event ->
+                                        when (event) {
+                                            AccountActionSheetViewModel.Event.Close -> {
+                                                navController.popBackStack<AccountActionSheetDestination>(
+                                                    inclusive = true,
+                                                )
+                                            }
+
+                                            is AccountActionSheetViewModel.Event.GoToTransfer -> {
+                                                navController.popBackStack<AccountActionSheetDestination>(
+                                                    inclusive = true,
+                                                )
+                                                navController.navigate(
+                                                    route = TransferSheetDestination(
+                                                        sourceId = event.source.id,
+                                                        destinationId = event.destination.id,
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            AccountActionSheetRoot(
+                                viewModel = viewModel,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                            )
+                        }
+
+                        dialog<TransferSheetDestination> { entry ->
+                            val arguments = entry.toRoute<TransferSheetDestination>()
+                            val viewModel = koinViewModel<TransferSheetViewModel>()
+
+                            LaunchedEffect(arguments) {
+                                viewModel.setSourceAndDestination(
+                                    sourceId = arguments.sourceId,
+                                    destinationId = arguments.destinationId,
+                                )
+
+                                launch {
+                                    viewModel.events.collect { event ->
+                                        when (event) {
+                                            TransferSheetViewModel.Event.Close -> {
+                                                navController.popBackStack<TransferSheetDestination>(
+                                                    inclusive = true,
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            TransferSheetRoot(
+                                viewModel = viewModel,
+                            )
+                        }
+                    }
+
+                    BottomNavigation(
+                        onAccountsClicked = {
+                            navController.popBackStack()
+                            navController.navigate(
+                                route = AccountsScreenDestination,
+                            )
+                        },
+                        onCategoriesClicked = {
+                            navController.popBackStack()
+                            navController.navigate(
+                                route = CategoriesScreenDestination,
+                            )
+                        },
+                        onActivityClicked = {
+                            navController.popBackStack()
+                            navController.navigate(
+                                route = ActivityScreenDestination,
+                            )
+                        },
+                    )
+                }
             }
-        }
-
-        fun show(fragment: KClass<out Fragment>) {
-            if (supportFragmentManager.findFragmentById(fragmentContainer.id)
-                    ?.instanceOf(fragment) == true
-            ) {
-                return
-            }
-
-            supportFragmentManager.commitNow {
-                disallowAddToBackStack()
-                replace(fragmentContainer.id, fragment.createInstance())
-            }
-        }
-
-        val bottomNavigation = ComposeView(this).apply {
-            setContent {
-                BottomNavigation(
-                    onAccountsClicked = { show(AccountsFragment::class) },
-                    onCategoriesClicked = { show(CategoriesFragment::class) },
-                    onActivityClicked = { show(ActivityFragment::class) },
-                )
-            }
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-            )
-        }
-
-        setContentView(LinearLayout(this).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-            )
-            orientation = LinearLayout.VERTICAL
-
-            addView(fragmentContainer)
-            addView(bottomNavigation)
-        })
-
-        if (savedInstanceState == null) {
-            show(AccountsFragment::class)
         }
     }
+}
+
+@Serializable
+private object AccountsScreenDestination
+
+@Serializable
+private object CategoriesScreenDestination
+
+@Serializable
+private object ActivityScreenDestination
+
+@Serializable
+private data class AccountActionSheetDestination(
+    val accountId: String,
+)
+
+@Serializable
+private data class TransferSheetDestination(
+    val sourceAccountId: String? = null,
+    val sourceCategoryId: String? = null,
+    val sourceSubcategoryId: String? = null,
+    val destinationAccountId: String? = null,
+    val destinationCategoryId: String? = null,
+    val destinationSubcategoryId: String? = null,
+) {
+    constructor(
+        sourceId: TransferCounterpartyId,
+        destinationId: TransferCounterpartyId,
+    ) : this(
+        sourceAccountId = (sourceId as? TransferCounterpartyId.Account)?.accountId,
+        sourceCategoryId = (sourceId as? TransferCounterpartyId.Category)?.categoryId,
+        sourceSubcategoryId = (sourceId as? TransferCounterpartyId.Category)?.subcategoryId,
+        destinationAccountId = (destinationId as? TransferCounterpartyId.Account)?.accountId,
+        destinationCategoryId = (destinationId as? TransferCounterpartyId.Category)?.categoryId,
+        destinationSubcategoryId = (destinationId as? TransferCounterpartyId.Category)?.subcategoryId,
+    )
+
+    val sourceId: TransferCounterpartyId
+        get() = when {
+            sourceAccountId != null ->
+                TransferCounterpartyId.Account(sourceAccountId)
+
+            sourceCategoryId != null ->
+                TransferCounterpartyId.Category(
+                    categoryId = sourceCategoryId,
+                    subcategoryId = sourceSubcategoryId,
+                )
+
+            else ->
+                error("All the source IDs are missing")
+        }
+
+    val destinationId: TransferCounterpartyId
+        get() = when {
+            destinationAccountId != null ->
+                TransferCounterpartyId.Account(destinationAccountId)
+
+            destinationCategoryId != null ->
+                TransferCounterpartyId.Category(
+                    categoryId = destinationCategoryId,
+                    subcategoryId = destinationSubcategoryId,
+                )
+
+            else ->
+                error("All the destination IDs are missing")
+        }
 }
 
 @Composable
@@ -158,3 +331,4 @@ private fun BottomNavigation(
             .then(clickableActivityModifier)
     )
 }
+

@@ -27,6 +27,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
  */
 fun <T> eventSharedFlow() =
     MutableSharedFlow<T>(
-        extraBufferCapacity = 1,
+        extraBufferCapacity = 10,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )

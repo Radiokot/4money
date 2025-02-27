@@ -27,8 +27,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
@@ -47,28 +48,21 @@ import java.math.BigInteger
 class AccountActionSheetViewModel(
     private val accountRepository: AccountRepository,
     categoryRepository: CategoryRepository,
-    private val historyStatsRepository: HistoryStatsRepository,
+    historyStatsRepository: HistoryStatsRepository,
     private val updateAccountBalanceUseCase: UpdateAccountBalanceUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("AccountActionSheetVM")
-    private val _accountDetails: MutableStateFlow<ViewAccountDetails?> = MutableStateFlow(null)
-    val accountDetails = _accountDetails
-    private val _isOpened: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isOpened = _isOpened.asStateFlow()
     private val _mode: MutableStateFlow<ViewAccountActionSheetMode> =
         MutableStateFlow(ViewAccountActionSheetMode.Actions)
     val mode = _mode.asStateFlow()
     private val _balanceInputValue: MutableStateFlow<BigInteger> =
         MutableStateFlow(BigInteger.ZERO)
     val balanceInputValue = _balanceInputValue.asStateFlow()
-    private val _otherAccountListItems: MutableStateFlow<List<ViewAccountListItem>> =
-        MutableStateFlow(emptyList())
-    val otherAccountListItems = _otherAccountListItems.asStateFlow()
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events
     private var accountSubscriptionJob: Job? = null
-    private lateinit var account: Account
+    private val account: MutableStateFlow<Account?> = MutableStateFlow(null)
 
     val incomeCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
         viewCategoryItemListFlow(
@@ -86,44 +80,51 @@ class AccountActionSheetViewModel(
             historyStatsRepository = historyStatsRepository,
         ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    fun open(account: Account) {
+    val accountDetails: StateFlow<ViewAccountDetails?> =
+        account
+            .filterNotNull()
+            .map(::ViewAccountDetails)
+            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    val otherAccountListItems: StateFlow<List<ViewAccountListItem>> =
+        accountRepository
+            .getAccountsFlow()
+            .combine(account, ::Pair)
+            .map { (accounts, currentAccount) ->
+                accounts
+                    .filter { it != currentAccount }
+                    .sortedBy(Account::title)
+                    .map(ViewAccountListItem::Account)
+            }
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    fun setAccount(accountId: String) {
+        if (accountId == account.value?.id) {
+            log.debug {
+                "setAccount(): already set"
+            }
+            return
+        }
+
         log.debug {
-            "open(): opening: " +
-                    "\naccount=$account"
+            "setAccount(): subscribing: " +
+                    "\naccountId=$accountId"
         }
 
         accountSubscriptionJob?.cancel()
         accountSubscriptionJob = subscribeToFreshAccounts(
-            account = account,
+            accountId = accountId,
         )
 
         _mode.tryEmit(ViewAccountActionSheetMode.Actions)
-        _isOpened.tryEmit(true)
     }
 
-    private fun subscribeToFreshAccounts(account: Account) = viewModelScope.launch {
+    private fun subscribeToFreshAccounts(accountId: String) = viewModelScope.launch {
         // Subscribe to fresh account details.
         launch {
             accountRepository
-                .getAccountFlow(account.id)
-                .onStart { emit(account) }
-                .collect { freshAccount ->
-                    this@AccountActionSheetViewModel.account = freshAccount
-                    _accountDetails.emit(ViewAccountDetails(freshAccount))
-                }
-        }
-
-        // Subscribe to fresh destinations (all accounts except the current one).
-        launch {
-            accountRepository
-                .getAccountsFlow()
-                .map { accounts ->
-                    accounts
-                        .filter { it != this@AccountActionSheetViewModel.account }
-                        .sortedBy(Account::title)
-                        .map(ViewAccountListItem::Account)
-                }
-                .collect(_otherAccountListItems)
+                .getAccountFlow(accountId)
+                .collect(account)
         }
     }
 
@@ -140,7 +141,7 @@ class AccountActionSheetViewModel(
         }
 
         _mode.tryEmit(ViewAccountActionSheetMode.Balance)
-        _balanceInputValue.tryEmit(account.balance)
+        _balanceInputValue.tryEmit(account.value!!.balance)
     }
 
     fun onTransferClicked() {
@@ -167,11 +168,9 @@ class AccountActionSheetViewModel(
             return
         }
 
-        openTransfer(
+        goToTransfer(
             clickedCounterparty = TransferCounterparty.Account(clickedAccount)
         )
-
-        close()
     }
 
     fun onIncomeClicked() {
@@ -204,65 +203,54 @@ class AccountActionSheetViewModel(
         _mode.tryEmit(ViewAccountActionSheetMode.ExpenseDestination)
     }
 
-    fun onTransferCounterpartyCategoryItemClicked(item: ViewCategoryListItem) {
+    fun onTransferCounterpartyCategoryItemClicked(
+        item: ViewCategoryListItem,
+    ) = viewModelScope.launch {
+
         val clickedCategory = item.source
         if (clickedCategory == null) {
             log.warn {
                 "onTransferCounterpartyCategoryItemClicked(): ignoring as category is null"
             }
-            return
+            return@launch
         }
 
-        openTransfer(
+        goToTransfer(
             clickedCounterparty = TransferCounterparty.Category(
                 category = clickedCategory,
                 subcategory = null,
             ),
         )
-
-        close()
     }
 
-    private fun openTransfer(clickedCounterparty: TransferCounterparty) {
+    private fun goToTransfer(clickedCounterparty: TransferCounterparty) {
         val mode = mode.value
 
         val source: TransferCounterparty =
             if (mode == ViewAccountActionSheetMode.IncomeSource)
                 clickedCounterparty
             else
-                TransferCounterparty.Account(account)
+                TransferCounterparty.Account(account.value!!)
 
         val destination: TransferCounterparty =
             if (mode == ViewAccountActionSheetMode.IncomeSource)
-                TransferCounterparty.Account(account)
+                TransferCounterparty.Account(account.value!!)
             else
                 clickedCounterparty
 
         log.debug {
-            "openTransfer(): opening:" +
+            "goToTransfer(): going:" +
                     "\nmode=$mode," +
                     "\nsource=$source," +
                     "\ndestination=$destination"
         }
 
         _events.tryEmit(
-            Event.OpenTransfer(
+            Event.GoToTransfer(
                 source = source,
                 destination = destination,
             )
         )
-    }
-
-    fun onBackPressed() {
-        val isOpened = _isOpened.value
-        if (!isOpened) {
-            log.warn {
-                "onBackPressed(): ignoring back press as the sheet is already closed"
-            }
-            return
-        }
-
-        close()
     }
 
     fun onNewBalanceInputValueParsed(newValue: BigInteger) {
@@ -280,7 +268,7 @@ class AccountActionSheetViewModel(
 
     private var balanceUpdateJob: Job? = null
     private fun updateAccountBalance() {
-        val accountId = account.id
+        val accountId = account.value!!.id
         val newValue = _balanceInputValue.value
 
         balanceUpdateJob?.cancel()
@@ -305,7 +293,7 @@ class AccountActionSheetViewModel(
                         "updateAccountBalance(): balance updated, closing"
                     }
 
-                    _isOpened.emit(false)
+                    close()
                 }
         }
     }
@@ -316,13 +304,15 @@ class AccountActionSheetViewModel(
         }
 
         accountSubscriptionJob?.cancel()
-        _isOpened.tryEmit(false)
+        _events.tryEmit(Event.Close)
     }
 
     sealed interface Event {
-        class OpenTransfer(
+        class GoToTransfer(
             val source: TransferCounterparty,
             val destination: TransferCounterparty,
         ) : Event
+
+        object Close : Event
     }
 }
