@@ -98,7 +98,6 @@ fun AccountList(
     }
 }
 
-
 @Composable
 @Preview(
     widthDp = 200

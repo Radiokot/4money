@@ -20,11 +20,7 @@
 package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.runtime.Immutable
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import java.math.BigInteger
@@ -50,35 +46,6 @@ sealed interface ViewTransferListItem {
             Yesterday,
             DayOfWeek,
             ;
-        }
-
-        companion object {
-            fun fromTransferTime(
-                time: Instant,
-                localTimeZone: TimeZone,
-                amount: ViewAmount,
-            ): Header {
-                val now = Clock.System.now().toLocalDateTime(localTimeZone)
-                val localDate = time.toLocalDateTime(localTimeZone).date
-                val dayType = when {
-                    localDate.year == now.year
-                            && localDate.dayOfYear == now.dayOfYear ->
-                        DayType.Today
-
-                    localDate.year == now.year
-                            && localDate.dayOfYear == now.dayOfYear - 1 ->
-                        DayType.Yesterday
-
-                    else ->
-                        DayType.DayOfWeek
-                }
-
-                return Header(
-                    localDate = localDate,
-                    dayType = dayType,
-                    amount = amount,
-                )
-            }
         }
     }
 

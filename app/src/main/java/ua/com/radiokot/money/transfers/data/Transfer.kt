@@ -20,6 +20,9 @@
 package ua.com.radiokot.money.transfers.data
 
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import java.math.BigInteger
 import java.util.UUID
 
@@ -31,6 +34,9 @@ class Transfer(
     val time: Instant,
     val id: String = UUID.randomUUID().toString(),
 ) {
+    fun getLocalDateAt(timeZone: TimeZone): LocalDate =
+        time.toLocalDateTime(timeZone).date
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Transfer) return false

@@ -27,9 +27,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewCurrency
+import ua.com.radiokot.money.isSameDayAs
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.data.TransferHistoryRepository
 import ua.com.radiokot.money.transfers.view.ViewTransferListItem
@@ -38,6 +43,7 @@ import java.math.BigInteger
 class ActivityViewModel(
     private val transferHistoryRepository: TransferHistoryRepository,
 ) : ViewModel() {
+    private val localTimeZone = TimeZone.currentSystemDefault()
 
     val itemList: StateFlow<List<ViewTransferListItem>> =
         transferHistoryRepository
@@ -49,13 +55,22 @@ class ActivityViewModel(
                 destination = null,
             )
             .map { transfers ->
+                val today = Clock.System.now().toLocalDateTime(localTimeZone).date
+                val yesterday = today.minus(1, DateTimeUnit.DAY)
+
                 buildList {
                     transfers.forEachIndexed { i, transfer ->
-                        if (i == 0) {
+                        val transferLocalDate = transfer.getLocalDateAt(localTimeZone)
+
+                        if (i == 0 || !transferLocalDate.isSameDayAs(
+                                transfers[i - 1].getLocalDateAt(
+                                    localTimeZone
+                                )
+                            )
+                        ) {
                             add(
-                                ViewTransferListItem.Header.fromTransferTime(
-                                    time = transfer.time,
-                                    localTimeZone = TimeZone.currentSystemDefault(),
+                                ViewTransferListItem.Header(
+                                    localDate = transferLocalDate,
                                     amount = ViewAmount(
                                         value = BigInteger.ZERO,
                                         currency = ViewCurrency(
@@ -63,9 +78,20 @@ class ActivityViewModel(
                                             precision = 2,
                                         )
                                     ),
+                                    dayType = when {
+                                        transferLocalDate.isSameDayAs(today) ->
+                                            ViewTransferListItem.Header.DayType.Today
+
+                                        transferLocalDate.isSameDayAs(yesterday) ->
+                                            ViewTransferListItem.Header.DayType.Yesterday
+
+                                        else ->
+                                            ViewTransferListItem.Header.DayType.DayOfWeek
+                                    }
                                 )
                             )
                         }
+
                         add(ViewTransferListItem.Transfer.fromTransfer(transfer))
                     }
                 }
