@@ -24,11 +24,11 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.PagingData
+import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ua.com.radiokot.money.auth.view.UserSessionScopeFragment
 import ua.com.radiokot.money.transfers.view.TransferList
@@ -56,16 +56,16 @@ fun ActivityScreenRoot(
     modifier: Modifier = Modifier,
     viewModel: ActivityViewModel,
 ) = ActivityScreen(
-    itemList = viewModel.itemList.collectAsStateWithLifecycle(),
+    itemPagingFlow = viewModel.transferItemPagingFlow,
     modifier = modifier,
 )
 
 @Composable
 private fun ActivityScreen(
     modifier: Modifier = Modifier,
-    itemList: State<List<ViewTransferListItem>>,
+    itemPagingFlow: Flow<PagingData<ViewTransferListItem>>,
 ) = TransferList(
-    itemList = itemList,
+    itemPagingFlow = itemPagingFlow,
     onTransferItemClicked = {},
     modifier = modifier
         .padding(

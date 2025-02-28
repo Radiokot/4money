@@ -31,18 +31,9 @@ import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.data.HistoryStatsRepository
 
 class CategoriesViewModel(
-    private val categoryRepository: CategoryRepository,
-    private val historyStatsRepository: HistoryStatsRepository,
+    categoryRepository: CategoryRepository,
+    historyStatsRepository: HistoryStatsRepository,
 ) : ViewModel() {
-
-    init {
-        println("OOLEG im created ${hashCode()}")
-    }
-
-    override fun onCleared() {
-        println("OOLEG im dead ${hashCode()}")
-        super.onCleared()
-    }
 
     private val log by lazyLogger("CategoriesVM")
     private val _isIncome: MutableStateFlow<Boolean> = MutableStateFlow(false)

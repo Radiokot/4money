@@ -21,7 +21,6 @@ package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import kotlinx.datetime.LocalDate
-import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import java.math.BigInteger
 
@@ -33,13 +32,6 @@ class ViewTransferItemListPreviewParameterProvider :
                 ViewTransferListItem.Header(
                     localDate = LocalDate(2025, 2, 26),
                     dayType = ViewTransferListItem.Header.DayType.Today,
-                    amount = ViewAmount(
-                        value = BigInteger("-15000"),
-                        currency = ViewCurrency(
-                            symbol = "$",
-                            precision = 2,
-                        )
-                    )
                 ),
                 ViewTransferListItem.Transfer(
                     primaryCounterparty = ViewTransferCounterparty(

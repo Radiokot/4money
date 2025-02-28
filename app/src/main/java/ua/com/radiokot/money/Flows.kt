@@ -27,6 +27,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
  */
 fun <T> eventSharedFlow() =
     MutableSharedFlow<T>(
-        extraBufferCapacity = 10,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        // Controls the number of buffered (therefore delivered) events fired rapidly.
+        // For example, when you fire ShowToast and then immediately Close,
+        // you want both of them delivered and processed.
+        // Yet, rapidly firing too many events is probably a bug.
+        extraBufferCapacity = 5,
+        onBufferOverflow = BufferOverflow.SUSPEND,
     )

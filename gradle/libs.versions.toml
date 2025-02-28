@@ -8,6 +8,7 @@ espressoCore = "3.6.1"
 appcompat = "1.7.0"
 composeBom = "2025.02.00"
 navigation = "2.8.8"
+paging = "3.3.6"
 activity = "1.10.1"
 koin-bom = "4.0.2"
 powersync = "1.0.0-BETA25"
@@ -31,6 +32,7 @@ androidx-compose-foundation-layout = { group = "androidx.compose.foundation", na
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
+androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koin-bom" }
 koin-android = { group = "io.insert-koin", name = "koin-android" }
 koin-core = { group = "io.insert-koin", name = "koin-core" }

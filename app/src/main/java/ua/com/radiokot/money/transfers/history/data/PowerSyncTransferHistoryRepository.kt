@@ -19,13 +19,13 @@
 
 package ua.com.radiokot.money.transfers.history.data
 
+import androidx.paging.PagingSource
+import androidx.paging.PagingState
 import com.powersync.db.Queries
 import com.powersync.db.SqlCursor
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
 import kotlinx.datetime.format.DateTimeComponents
 import ua.com.radiokot.money.accounts.data.AccountRepository
@@ -40,38 +40,37 @@ class PowerSyncTransferHistoryRepository(
     private val categoryRepository: CategoryRepository,
 ) : TransferHistoryRepository {
 
-    override fun getTransferHistoryPageFlow(
+    override suspend fun getTransferHistoryPage(
         offsetExclusive: Instant?,
         limit: Int,
         period: HistoryPeriod,
         source: TransferCounterparty?,
         destination: TransferCounterparty?,
-    ): Flow<List<Transfer>> {
+    ): List<Transfer> = withContext(Dispatchers.IO) {
 
-        val counterpartyByIdFlow: Flow<Map<String, TransferCounterparty>> =
-            categoryRepository.getSubcategoriesByCategoriesFlow()
-                .combine(accountRepository.getAccountsFlow(), ::Pair)
-                .map { (subcategoriesByCategories, accounts) ->
-                    buildMap {
-                        subcategoriesByCategories.forEach { (category, subcategories) ->
-                            val categoryCounterparty = TransferCounterparty.Category(category)
-                            put(categoryCounterparty.id.toString(), categoryCounterparty)
+        val subcategoriesByCategories = categoryRepository
+            .getSubcategoriesByCategoriesFlow()
+            .first()
+        val accounts = accountRepository.getAccounts()
 
-                            subcategories.forEach { subcategory ->
-                                val subcategoryCounterparty = TransferCounterparty.Category(
-                                    category = category,
-                                    subcategory = subcategory,
-                                )
-                                put(subcategoryCounterparty.id.toString(), subcategoryCounterparty)
-                            }
-                        }
-                        accounts.forEach { account ->
-                            val accountCounterparty = TransferCounterparty.Account(account)
-                            put(accountCounterparty.id.toString(), accountCounterparty)
-                        }
-                    }
+        val counterpartyById: Map<String, TransferCounterparty> = buildMap {
+            subcategoriesByCategories.forEach { (category, subcategories) ->
+                val categoryCounterparty = TransferCounterparty.Category(category)
+                put(categoryCounterparty.id.toString(), categoryCounterparty)
+
+                subcategories.forEach { subcategory ->
+                    val subcategoryCounterparty = TransferCounterparty.Category(
+                        category = category,
+                        subcategory = subcategory,
+                    )
+                    put(subcategoryCounterparty.id.toString(), subcategoryCounterparty)
                 }
-                .flowOn(Dispatchers.Default)
+            }
+            accounts.forEach { account ->
+                val accountCounterparty = TransferCounterparty.Account(account)
+                put(accountCounterparty.id.toString(), accountCounterparty)
+            }
+        }
 
         val endTimeExclusive =
             if (offsetExclusive == null)
@@ -79,9 +78,9 @@ class PowerSyncTransferHistoryRepository(
             else
                 minOf(offsetExclusive, period.endTimeExclusive)
 
-        val recordFlow: Flow<List<TransferHistoryRecord>> = when {
+        val records: List<TransferHistoryRecord> = when {
             source == null && destination == null ->
-                database.watch(
+                database.getAll(
                     sql = SELECT_FOR_ALL_SOURCES_AND_DESTINATIONS,
                     parameters = listOf(
                         period.startTimeInclusive.toString(),
@@ -92,7 +91,7 @@ class PowerSyncTransferHistoryRepository(
                 )
 
             source != null && destination == null ->
-                database.watch(
+                database.getAll(
                     sql = SELECT_FOR_SOURCE,
                     parameters = listOf(
                         period.startTimeInclusive.toString(),
@@ -105,7 +104,7 @@ class PowerSyncTransferHistoryRepository(
                 )
 
             source == null && destination != null ->
-                database.watch(
+                database.getAll(
                     sql = SELECT_FOR_DESTINATION,
                     parameters = listOf(
                         period.startTimeInclusive.toString(),
@@ -121,16 +120,41 @@ class PowerSyncTransferHistoryRepository(
                 throw IllegalArgumentException("Can only filter by either source or destination")
         }
 
-        return counterpartyByIdFlow.combine(recordFlow, ::Pair)
-            .map { (counterpartyById, records) ->
-                records.map { record ->
-                    toTransfer(
-                        record = record,
-                        counterpartyById = counterpartyById,
-                    )
-                }
-            }
-            .flowOn(Dispatchers.Default)
+        return@withContext records.map { record ->
+            toTransfer(
+                record = record,
+                counterpartyById = counterpartyById,
+            )
+        }
+    }
+
+    override fun getTransferHistoryPagingSource(
+        period: HistoryPeriod,
+        source: TransferCounterparty?,
+        destination: TransferCounterparty?,
+    ) = object : PagingSource<Instant, Transfer>() {
+
+        override fun getRefreshKey(state: PagingState<Instant, Transfer>): Instant? {
+            TODO("Invalidating is not yet supported")
+        }
+
+        override suspend fun load(params: LoadParams<Instant>): LoadResult<Instant, Transfer> {
+            val offset: Instant? = params.key
+
+            val transfers = getTransferHistoryPage(
+                offsetExclusive = params.key,
+                limit = params.loadSize,
+                period = period,
+                source = source,
+                destination = destination,
+            )
+
+            return LoadResult.Page(
+                data = transfers,
+                prevKey = offset,
+                nextKey = transfers.lastOrNull()?.time,
+            )
+        }
     }
 
     private fun toTransferHistoryRecord(sqlCursor: SqlCursor) = with(sqlCursor) {

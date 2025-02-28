@@ -29,11 +29,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +44,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.paging.PagingData
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.DateTimeFormat
 import kotlinx.datetime.format.DayOfWeekNames
@@ -58,7 +61,7 @@ import ua.com.radiokot.money.currency.view.ViewAmountFormat
 @Composable
 fun TransferList(
     modifier: Modifier = Modifier,
-    itemList: State<List<ViewTransferListItem>>,
+    itemPagingFlow: Flow<PagingData<ViewTransferListItem>>,
     onTransferItemClicked: (ViewTransferListItem.Transfer) -> Unit,
 ) {
     val locale = LocalConfiguration.current.locales.get(0)
@@ -77,6 +80,7 @@ fun TransferList(
             year()
         }
     }
+    val lazyPagingItems = itemPagingFlow.collectAsLazyPagingItems()
 
     LazyColumn(
         contentPadding = PaddingValues(
@@ -85,11 +89,11 @@ fun TransferList(
         modifier = modifier,
     ) {
         items(
-            items = itemList.value,
-            key = ViewTransferListItem::key,
-            contentType = ViewTransferListItem::itemType,
-        ) { item ->
-            when (item) {
+            lazyPagingItems.itemCount,
+            key = lazyPagingItems.itemKey(ViewTransferListItem::key),
+            contentType = lazyPagingItems.itemContentType(ViewTransferListItem::itemType),
+        ) { itemIndex ->
+            when (val item = lazyPagingItems[itemIndex]) {
                 is ViewTransferListItem.Header -> {
                     HeaderItem(
                         item = item,
@@ -117,6 +121,9 @@ fun TransferList(
                             .then(clickableItemModifier),
                     )
                 }
+
+                null ->
+                    BasicText(text = "Loading $itemIndex")
             }
         }
     }
@@ -129,7 +136,7 @@ fun TransferList(
 private fun TransferListPreview(
     @PreviewParameter(ViewTransferItemListPreviewParameterProvider::class) itemList: List<ViewTransferListItem>,
 ) = TransferList(
-    itemList = itemList.let(::mutableStateOf),
+    itemPagingFlow = flowOf(PagingData.from(itemList)),
     onTransferItemClicked = {},
 )
 

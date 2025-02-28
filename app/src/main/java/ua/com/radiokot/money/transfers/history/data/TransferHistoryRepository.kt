@@ -19,7 +19,7 @@
 
 package ua.com.radiokot.money.transfers.history.data
 
-import kotlinx.coroutines.flow.Flow
+import androidx.paging.PagingSource
 import kotlinx.datetime.Instant
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
@@ -30,11 +30,17 @@ interface TransferHistoryRepository {
      * @return list of records within the period in reverse chronological order,
      * additionally limited by [offsetExclusive] (newest time) and [limit] (max number of records to return).
      */
-    fun getTransferHistoryPageFlow(
+    suspend fun getTransferHistoryPage(
         offsetExclusive: Instant?,
         limit: Int,
         period: HistoryPeriod,
         source: TransferCounterparty?,
         destination: TransferCounterparty?,
-    ): Flow<List<Transfer>>
+    ): List<Transfer>
+
+    fun getTransferHistoryPagingSource(
+        period: HistoryPeriod,
+        source: TransferCounterparty?,
+        destination: TransferCounterparty?,
+    ): PagingSource<Instant, Transfer>
 }

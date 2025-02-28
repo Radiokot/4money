@@ -35,7 +35,6 @@ sealed interface ViewTransferListItem {
     class Header(
         val localDate: LocalDate,
         val dayType: DayType,
-        val amount: ViewAmount,
         override val key: Any = localDate.toString(),
     ) : ViewTransferListItem {
 
