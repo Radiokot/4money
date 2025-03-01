@@ -24,7 +24,7 @@ import java.util.UUID
 class Currency(
     /**
      * An [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217#Active_codes_(list_one)) code,
-     * or a custom one code.
+     * or a custom one.
      */
     val code: String,
 
