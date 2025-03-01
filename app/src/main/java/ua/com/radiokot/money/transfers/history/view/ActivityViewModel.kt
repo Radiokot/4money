@@ -56,7 +56,7 @@ class ActivityViewModel(
             transferHistoryRepository.getTransferHistoryPagingSource(
                 source = null,
                 destination = null,
-                period = HistoryPeriod.Month(),
+                period = HistoryPeriod.Since70th,
             )
         },
     )

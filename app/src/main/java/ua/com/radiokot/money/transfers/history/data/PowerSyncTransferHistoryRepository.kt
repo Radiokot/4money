@@ -41,8 +41,8 @@ class PowerSyncTransferHistoryRepository(
 ) : TransferHistoryRepository {
 
     override suspend fun getTransferHistoryPage(
-        offsetExclusive: Instant?,
-        limit: Int,
+        pageBefore: Instant?,
+        pageLimit: Int,
         period: HistoryPeriod,
         source: TransferCounterparty?,
         destination: TransferCounterparty?,
@@ -73,19 +73,19 @@ class PowerSyncTransferHistoryRepository(
         }
 
         val endTimeExclusive =
-            if (offsetExclusive == null)
+            if (pageBefore == null)
                 period.endTimeExclusive
             else
-                minOf(offsetExclusive, period.endTimeExclusive)
+                minOf(pageBefore, period.endTimeExclusive)
 
         val records: List<TransferHistoryRecord> = when {
             source == null && destination == null ->
                 database.getAll(
                     sql = SELECT_FOR_ALL_SOURCES_AND_DESTINATIONS,
                     parameters = listOf(
-                        period.startTimeInclusive.toString(),
-                        endTimeExclusive.toString(),
-                        limit.toString(),
+                        period.startTimeInclusive.epochSeconds,
+                        endTimeExclusive.epochSeconds,
+                        pageLimit.toLong(),
                     ),
                     mapper = ::toTransferHistoryRecord,
                 )
@@ -94,11 +94,11 @@ class PowerSyncTransferHistoryRepository(
                 database.getAll(
                     sql = SELECT_FOR_SOURCE,
                     parameters = listOf(
-                        period.startTimeInclusive.toString(),
-                        endTimeExclusive.toString(),
+                        period.startTimeInclusive.epochSeconds,
+                        endTimeExclusive.epochSeconds,
                         source.id,
                         source.id,
-                        limit.toString(),
+                        pageLimit.toLong(),
                     ),
                     mapper = ::toTransferHistoryRecord,
                 )
@@ -107,11 +107,11 @@ class PowerSyncTransferHistoryRepository(
                 database.getAll(
                     sql = SELECT_FOR_DESTINATION,
                     parameters = listOf(
-                        period.startTimeInclusive.toString(),
-                        endTimeExclusive.toString(),
+                        period.startTimeInclusive.epochSeconds,
+                        endTimeExclusive.epochSeconds,
                         destination.id,
                         destination.id,
-                        limit.toString(),
+                        pageLimit.toLong(),
                     ),
                     mapper = ::toTransferHistoryRecord,
                 )
@@ -138,23 +138,23 @@ class PowerSyncTransferHistoryRepository(
             TODO("Invalidating is not yet supported")
         }
 
-        override suspend fun load(params: LoadParams<Instant>): LoadResult<Instant, Transfer> {
-            val offset: Instant? = params.key
-
-            val transfers = getTransferHistoryPage(
-                offsetExclusive = params.key,
-                limit = params.loadSize,
+        override suspend fun load(params: LoadParams<Instant>): LoadResult<Instant, Transfer> =
+            getTransferHistoryPage(
+                pageBefore = params.key,
+                pageLimit = params.loadSize,
                 period = period,
                 source = source,
                 destination = destination,
-            )
-
-            return LoadResult.Page(
-                data = transfers,
-                prevKey = offset,
-                nextKey = transfers.lastOrNull()?.time,
-            )
-        }
+            ).let { transfers ->
+                LoadResult.Page(
+                    data = transfers,
+                    prevKey = null,
+                    nextKey = transfers
+                        .lastOrNull()
+                        ?.time
+                        ?.takeUnless { transfers.size < params.loadSize },
+                )
+            }
     }
 
     private fun toTransferHistoryRecord(sqlCursor: SqlCursor) = with(sqlCursor) {
@@ -195,41 +195,41 @@ private const val FIELDS_FROM_TRANSFERS =
     "transfers.id, transfers.time, " +
             "transfers.source_id, transfers.source_amount, " +
             "transfers.destination_id, transfers.destination_amount, " +
-            "datetime(transfers.time) AS parsed_time " +
+            "unixepoch(transfers.time) AS unix_time " +
             "FROM transfers"
 
-private const val PARSED_TIME_IN_PERIOD =
-    "parsed_time >= datetime(?) AND parsed_time < datetime(?)"
+private const val UNIX_TIME_IN_PERIOD =
+    "unix_time >= ? AND unix_time < ?"
 
 private const val ORDER =
-    "ORDER BY parsed_time DESC, transfers.id ASC"
+    "ORDER BY unix_time DESC, transfers.id ASC"
 
 private const val SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY =
     "SELECT categories.id FROM categories WHERE categories.parent_id = ?"
 
 /**
  * Params:
- * 1. Period start time inclusive
- * 2. Period end time exclusive
+ * 1. Period start time seconds inclusive
+ * 2. Period end time seconds exclusive
  * 3. Limit
  */
 private const val SELECT_FOR_ALL_SOURCES_AND_DESTINATIONS =
     "SELECT $FIELDS_FROM_TRANSFERS " +
-            "WHERE $PARSED_TIME_IN_PERIOD " +
+            "WHERE $UNIX_TIME_IN_PERIOD " +
             "$ORDER " +
             "LIMIT ?"
 
 /**
  * Params:
- * 1. Period start time inclusive
- * 2. Period end time exclusive
+ * 1. Period start time seconds inclusive
+ * 2. Period end time seconds exclusive
  * 3. Source ID
  * 4. Source ID once again
  * 5. Limit
  */
 private const val SELECT_FOR_SOURCE =
     "SELECT $FIELDS_FROM_TRANSFERS " +
-            "WHERE $PARSED_TIME_IN_PERIOD " +
+            "WHERE $UNIX_TIME_IN_PERIOD " +
             "AND (transfers.source_id = ? OR transfers.source_id in " +
             "($SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY)) " +
             "$ORDER " +
@@ -237,15 +237,15 @@ private const val SELECT_FOR_SOURCE =
 
 /**
  * Params:
- * 1. Period start time inclusive
- * 2. Period end time exclusive
+ * 1. Period start time seconds inclusive
+ * 2. Period end time seconds exclusive
  * 3. Destination ID
  * 4. Destination ID once again
  * 5. Limit
  */
 private const val SELECT_FOR_DESTINATION =
     "SELECT $FIELDS_FROM_TRANSFERS " +
-            "WHERE $PARSED_TIME_IN_PERIOD " +
+            "WHERE $UNIX_TIME_IN_PERIOD " +
             "AND (transfers.destination_id = ? OR transfers.destination_id in " +
             "($SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY)) " +
             "$ORDER " +

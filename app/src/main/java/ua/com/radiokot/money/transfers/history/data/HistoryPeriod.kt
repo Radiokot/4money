@@ -68,4 +68,12 @@ sealed interface HistoryPeriod {
                 .plus(1, DateTimeUnit.MONTH)
                 .atStartOfDayIn(timeZone)
     }
+
+    object Since70th : HistoryPeriod {
+        override val startTimeInclusive: Instant =
+            Instant.fromEpochMilliseconds(0)
+
+        override val endTimeExclusive: Instant =
+            Instant.DISTANT_FUTURE
+    }
 }

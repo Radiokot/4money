@@ -28,11 +28,12 @@ interface TransferHistoryRepository {
 
     /**
      * @return list of records within the period in reverse chronological order,
-     * additionally limited by [offsetExclusive] (newest time) and [limit] (max number of records to return).
+     * additionally limited by [pageBefore] (so all the records are older than it)
+     * and [pageLimit] (so no more records than the limit are returned).
      */
     suspend fun getTransferHistoryPage(
-        offsetExclusive: Instant?,
-        limit: Int,
+        pageBefore: Instant?,
+        pageLimit: Int,
         period: HistoryPeriod,
         source: TransferCounterparty?,
         destination: TransferCounterparty?,
