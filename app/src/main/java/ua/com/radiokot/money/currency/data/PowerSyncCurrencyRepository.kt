@@ -22,6 +22,8 @@ package ua.com.radiokot.money.currency.data
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import java.math.BigDecimal
 
 class PowerSyncCurrencyRepository(
     private val database: PowerSyncDatabase,
@@ -29,15 +31,29 @@ class PowerSyncCurrencyRepository(
 
     override suspend fun getCurrencies(): List<Currency> =
         database.getAll(
-            sql = SELECT_QUERY,
+            sql = SELECT_CURRENCIES,
             mapper = ::toCurrency,
         )
 
     override fun getCurrenciesFlow(): Flow<List<Currency>> =
         database.watch(
-            sql = SELECT_QUERY,
+            sql = SELECT_CURRENCIES,
             mapper = ::toCurrency,
         )
+
+    override fun getCurrencyPairMapFlow(): Flow<CurrencyPairMap> =
+        database
+            .watch(
+                sql = SELECT_PAIRS,
+                mapper = ::toPricePair,
+            )
+            .map { pairs ->
+                // Synced pairs have USD quote.
+                CurrencyPairMap(
+                    quoteCode = "USD",
+                    decimalPriceByBaseCode = pairs.toMap(),
+                )
+            }
 
     private fun toCurrency(sqlCursor: SqlCursor) = sqlCursor.run {
         Currency(
@@ -47,6 +63,12 @@ class PowerSyncCurrencyRepository(
             id = getString(3)!!,
         )
     }
+
+    private fun toPricePair(sqlCursor: SqlCursor): Pair<String, BigDecimal> = sqlCursor.run {
+        getString(0)!! to BigDecimal(getString(1)!!.trim())
+    }
 }
 
-private const val SELECT_QUERY = "SELECT code, symbol, precision, id FROM currencies"
+private const val SELECT_CURRENCIES = "SELECT code, symbol, precision, id FROM currencies"
+
+private const val SELECT_PAIRS = "SELECT id, price FROM pairs"

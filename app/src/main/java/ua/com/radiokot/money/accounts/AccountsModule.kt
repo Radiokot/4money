@@ -57,6 +57,7 @@ val accountsModule = module {
         viewModel {
             AccountsViewModel(
                 accountRepository = get(),
+                currencyRepository = get(),
             )
         } bind AccountsViewModel::class
 

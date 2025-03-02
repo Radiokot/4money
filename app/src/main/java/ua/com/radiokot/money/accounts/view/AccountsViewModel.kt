@@ -23,41 +23,70 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.stateIn
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
+import ua.com.radiokot.money.currency.data.CurrencyRepository
+import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
+import java.math.BigInteger
 
 class AccountsViewModel(
     private val accountRepository: AccountRepository,
+    private val currencyRepository: CurrencyRepository,
 ) : ViewModel() {
 
     private val log by lazyLogger("AccountsVM")
-    private val _accountListItems = MutableStateFlow<List<ViewAccountListItem>>(emptyList())
-    val accountListItems = _accountListItems.asStateFlow()
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
-    init {
-        subscribeToAccounts()
-    }
-
-    private fun subscribeToAccounts() = viewModelScope.launch {
+    val accountListItems: StateFlow<List<ViewAccountListItem>> =
         accountRepository.getAccountsFlow()
-            .flowOn(Dispatchers.Default)
-            .map { accounts ->
-                accounts
-                    .sortedBy(Account::title)
-                    .map(ViewAccountListItem::Account)
+            .combine(currencyRepository.getCurrencyPairMapFlow(), ::Pair)
+            .map { (accounts, currencyPairMap) ->
+                val mainCurrency = currencyRepository.getCurrencies()
+                    .first { it.code == "USD" }
+
+                val totalInMainCurrency = accounts.fold(BigInteger.ZERO) { sum, account ->
+                    sum + (
+                            currencyPairMap
+                                .get(
+                                    base = account.currency,
+                                    quote = mainCurrency,
+                                )
+                                ?.baseToQuote(account.balance)
+                                ?: BigInteger.ZERO
+                            )
+                }
+
+                buildList {
+                    add(
+                        ViewAccountListItem.Header(
+                            title = "Accounts",
+                            amount = ViewAmount(
+                                value = totalInMainCurrency,
+                                currency = mainCurrency,
+                            ),
+                            key = "total",
+                        )
+                    )
+
+                    accounts
+                        .sortedBy(Account::title)
+                        .forEach { account ->
+                            add(ViewAccountListItem.Account(account))
+                        }
+                }
             }
-            .collect(_accountListItems)
-    }
+            .flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun onAccountItemClicked(item: ViewAccountListItem.Account) {
         val account = item.source

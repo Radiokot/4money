@@ -181,8 +181,8 @@ private fun HeaderItem(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             style = TextStyle(
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 16.sp,
+                fontWeight = FontWeight(500)
             ),
             modifier = Modifier
                 .weight(1f),
@@ -198,7 +198,7 @@ private fun HeaderItem(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             style = TextStyle(
-                fontSize = 16.sp,
+                fontSize = 18.sp,
             ),
         )
     }

@@ -26,4 +26,6 @@ interface CurrencyRepository {
     suspend fun getCurrencies(): List<Currency>
 
     fun getCurrenciesFlow(): Flow<List<Currency>>
+
+    fun getCurrencyPairMapFlow(): Flow<CurrencyPairMap>
 }

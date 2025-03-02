@@ -24,6 +24,7 @@ import com.powersync.db.schema.Schema
 import com.powersync.db.schema.Table
 
 fun moneyAppPowerSyncSchema() = Schema(
+    // All the tables have 'id' column by default.
     listOf(
         Table(
             name = "currencies",
@@ -58,6 +59,14 @@ fun moneyAppPowerSyncSchema() = Schema(
                 Column.text("source_amount"),
                 Column.text("destination_id"),
                 Column.text("destination_amount"),
+            )
+        ),
+        Table(
+            // In this table, base_currency_code is the id
+            // and all the prices are in USD.
+            name = "pairs",
+            columns = listOf(
+                Column.text("price")
             )
         )
     )
