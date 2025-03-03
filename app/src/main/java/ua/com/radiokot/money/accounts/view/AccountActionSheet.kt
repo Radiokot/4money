@@ -32,8 +32,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
@@ -43,7 +41,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -55,16 +52,14 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch
-import ua.com.radiokot.money.categories.view.CategoryGrid
 import ua.com.radiokot.money.categories.view.ViewCategoryListItem
 import ua.com.radiokot.money.categories.view.ViewCategoryListItemPreviewParameterProvider
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
+import ua.com.radiokot.money.transfers.view.TransferCounterpartySelector
 import ua.com.radiokot.money.uikit.AmountInputField
 import ua.com.radiokot.money.uikit.TextButton
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
@@ -407,99 +402,20 @@ private fun TransferCounterpartyContent(
     expenseCategoryItemList: State<List<ViewCategoryListItem>>,
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
     onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
-) = Column(
-    modifier = modifier
-) {
-    val pageCount = if (showCategories) 2 else 1
-    val pagerState = rememberPagerState(
-        pageCount = pageCount::unaryPlus,
-    )
-    val coroutineScope = rememberCoroutineScope()
-    val scrollToFirstPageOnClickModifier = remember {
-        Modifier.clickable {
-            coroutineScope.launch {
-                pagerState.animateScrollToPage(
-                    page = 0,
-                )
-            }
-        }
-    }
-    val scrollToLastPageOnClickModifier = remember(pageCount) {
-        Modifier.clickable {
-            coroutineScope.launch {
-                pagerState.animateScrollToPage(
-                    page = pageCount,
-                )
-            }
-        }
-    }
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        if (showCategories) {
-            BasicText(
-                text = if (isIncome) "Income" else "Expense",
-                style = TextStyle(
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    textDecoration =
-                    if (pagerState.currentPage == 0)
-                        TextDecoration.Underline
-                    else
-                        null,
-                ),
-                modifier = Modifier
-                    .then(scrollToFirstPageOnClickModifier)
-            )
-        }
-
-        BasicText(
-            text = if (isIncome) "From account" else "To account",
-            style = TextStyle(
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold,
-                textDecoration =
-                if (pagerState.currentPage == 1 || !showCategories)
-                    TextDecoration.Underline
-                else
-                    null,
-            ),
-            modifier = Modifier
-                .then(scrollToLastPageOnClickModifier)
-        )
-    }
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    HorizontalPager(
-        state = pagerState,
-        beyondViewportPageCount = 1,
-        verticalAlignment = Alignment.Top,
-        modifier = Modifier
-            .fillMaxWidth()
-    ) { page ->
-        when {
-            page == 0 && showCategories -> {
-                CategoryGrid(
-                    itemList =
-                    if (isIncome)
-                        incomeCategoryItemList
-                    else
-                        expenseCategoryItemList,
-                    onItemClicked = onCategoryItemClicked,
-                )
-            }
-
-            else -> {
-                AccountList(
-                    itemList = accountItemList,
-                    onAccountItemClicked = onAccountItemClicked,
-                )
-            }
-        }
-    }
-}
+) = TransferCounterpartySelector(
+    isIncome = isIncome,
+    accountItemList = accountItemList,
+    categoryItemList =
+    if (showCategories) {
+        if (isIncome)
+            incomeCategoryItemList
+        else
+            expenseCategoryItemList
+    } else {
+        null
+    },
+    onAccountItemClicked = onAccountItemClicked,
+    onCategoryItemClicked = onCategoryItemClicked,
+    modifier = modifier,
+)
 
