@@ -211,15 +211,6 @@ class TransferSheetViewModel(
         }
     }
 
-    private fun close() {
-        log.debug {
-            "close(): closing"
-        }
-
-        counterpartySubscriptionJob?.cancel()
-        _events.tryEmit(Event.Close)
-    }
-
     fun onNewSourceAmountValueParsed(value: BigInteger) {
         log.debug {
             "onNewSourceAmountValueParsed(): updating source amount:" +
@@ -311,15 +302,15 @@ class TransferSheetViewModel(
                 }
                 .onSuccess {
                     log.debug {
-                        "transferFunds(): funds transferred, closing"
+                        "transferFunds(): funds transferred"
                     }
 
-                    close()
+                    _events.emit(Event.TransferDone)
                 }
         }
     }
 
     sealed interface Event {
-        object Close : Event
+        object TransferDone : Event
     }
 }

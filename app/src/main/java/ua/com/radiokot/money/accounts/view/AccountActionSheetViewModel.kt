@@ -168,7 +168,7 @@ class AccountActionSheetViewModel(
             return
         }
 
-        goToTransfer(
+        selectClickedCounterpartyForTransfer(
             clickedCounterparty = TransferCounterparty.Account(clickedAccount)
         )
     }
@@ -215,7 +215,7 @@ class AccountActionSheetViewModel(
             return@launch
         }
 
-        goToTransfer(
+        selectClickedCounterpartyForTransfer(
             clickedCounterparty = TransferCounterparty.Category(
                 category = clickedCategory,
                 subcategory = null,
@@ -223,7 +223,7 @@ class AccountActionSheetViewModel(
         )
     }
 
-    private fun goToTransfer(clickedCounterparty: TransferCounterparty) {
+    private fun selectClickedCounterpartyForTransfer(clickedCounterparty: TransferCounterparty) {
         val mode = mode.value
 
         val source: TransferCounterparty =
@@ -239,14 +239,14 @@ class AccountActionSheetViewModel(
                 clickedCounterparty
 
         log.debug {
-            "goToTransfer(): going:" +
+            "selectClickedCounterpartyForTransfer(): posting selection:" +
                     "\nmode=$mode," +
                     "\nsource=$source," +
                     "\ndestination=$destination"
         }
 
         _events.tryEmit(
-            Event.GoToTransfer(
+            Event.TransferCounterpartiesSelected(
                 source = source,
                 destination = destination,
             )
@@ -308,7 +308,7 @@ class AccountActionSheetViewModel(
     }
 
     sealed interface Event {
-        class GoToTransfer(
+        class TransferCounterpartiesSelected(
             val source: TransferCounterparty,
             val destination: TransferCounterparty,
         ) : Event

@@ -20,10 +20,6 @@
 package ua.com.radiokot.money.categories.view
 
 import android.annotation.SuppressLint
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,14 +30,11 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import ua.com.radiokot.money.auth.view.UserSessionScopeFragment
 
 @Composable
 fun CategoriesScreenRoot(
@@ -52,6 +45,7 @@ fun CategoriesScreenRoot(
     incomeCategoryItemList = viewModel.incomeCategoryItemList.collectAsStateWithLifecycle(),
     expenseCategoryItemList = viewModel.expenseCategoryItemList.collectAsStateWithLifecycle(),
     onTitleClicked = viewModel::onTitleClicked,
+    onCategoryItemClicked = viewModel::onCategoryItemClicked,
     modifier = modifier,
 )
 
@@ -62,6 +56,7 @@ private fun CategoriesScreen(
     incomeCategoryItemList: State<List<ViewCategoryListItem>>,
     expenseCategoryItemList: State<List<ViewCategoryListItem>>,
     onTitleClicked: () -> Unit,
+    onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = Column(
     modifier = modifier
         .padding(
@@ -92,7 +87,7 @@ private fun CategoriesScreen(
             incomeCategoryItemList
         else
             expenseCategoryItemList,
-        onItemClicked = { },
+        onItemClicked = onCategoryItemClicked,
         modifier = Modifier
             .fillMaxWidth()
             .weight(1f)
@@ -112,5 +107,6 @@ private fun CategoriesScreenPreview(
         incomeCategoryItemList = mutableStateOf(categories),
         expenseCategoryItemList = mutableStateOf(categories),
         onTitleClicked = {},
+        onCategoryItemClicked = {},
     )
 }

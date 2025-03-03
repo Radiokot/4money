@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.transfers.data
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -39,12 +40,20 @@ sealed class TransferCounterpartyId {
         return toString().hashCode()
     }
 
-    class Account(val accountId: String) : TransferCounterpartyId() {
+    @Serializable
+    @SerialName("account")
+    class Account(
+        @SerialName("id")
+        val accountId: String,
+    ) : TransferCounterpartyId() {
 
         override fun toString(): String = accountId
     }
 
+    @Serializable
+    @SerialName("category")
     class Category(
+        @SerialName("id")
         val categoryId: String,
         val subcategoryId: String?,
     ) : TransferCounterpartyId() {
