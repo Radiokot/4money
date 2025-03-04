@@ -22,6 +22,7 @@ package ua.com.radiokot.money.transfers.view
 import androidx.compose.runtime.Immutable
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.categories.data.Category
+import ua.com.radiokot.money.categories.data.Subcategory
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 
@@ -37,8 +38,15 @@ class ViewTransferCounterparty(
         type = Type.Account,
     )
 
-    constructor(category: Category) : this(
-        title = category.title,
+    constructor(
+        category: Category,
+        subcategory: Subcategory?,
+    ) : this(
+        title =
+        if (subcategory == null)
+            category.title
+        else
+            "${category.title} (${subcategory.title})",
         currency = ViewCurrency(category.currency),
         type = Type.Category,
     )
@@ -73,7 +81,10 @@ class ViewTransferCounterparty(
                 ViewTransferCounterparty(counterparty.account)
 
             is TransferCounterparty.Category ->
-                ViewTransferCounterparty(counterparty.category)
+                ViewTransferCounterparty(
+                    category = counterparty.category,
+                    subcategory = counterparty.subcategory,
+                )
         }
     }
 }
