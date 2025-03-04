@@ -136,9 +136,12 @@ private const val SUBCATEGORY_FIELDS_FROM_CATEGORIES =
     "categories.id, categories.title, categories.parent_category_id " +
             "FROM categories"
 
+private const val CURRENCY_MATCHES_CATEGORY =
+    "categories.currency_id = currencies.id"
+
 private const val SELECT_CATEGORIES =
     "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
-            "WHERE categories.parent_category_id IS NULL AND categories.currency_id = currencies.id"
+            "WHERE categories.parent_category_id IS NULL AND $CURRENCY_MATCHES_CATEGORY"
 
 /**
  * Params:
@@ -146,7 +149,7 @@ private const val SELECT_CATEGORIES =
  */
 private const val SELECT_CATEGORY_BY_ID =
     "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
-            "WHERE categories.id = ? AND categories.currency_id = currencies.id"
+            "WHERE categories.id = ? AND $CURRENCY_MATCHES_CATEGORY"
 
 /**
  * Params:
@@ -158,4 +161,5 @@ private const val SELECT_SUBCATEGORIES_BY_PARENT_ID =
 
 private const val SELECT_CATEGORIES_THEN_SUBCATEGORIES =
     "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
+            "WHERE $CURRENCY_MATCHES_CATEGORY " +
             "ORDER BY categories.parent_category_id ASC"
