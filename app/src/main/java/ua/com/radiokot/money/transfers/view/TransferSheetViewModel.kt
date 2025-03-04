@@ -26,6 +26,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -35,7 +36,9 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.AccountRepository
@@ -70,34 +73,38 @@ class TransferSheetViewModel(
     private val requestedDestinationCounterpartyId: MutableStateFlow<TransferCounterpartyId?> =
         MutableStateFlow(null)
 
-    private val sourceCounterparty: StateFlow<TransferCounterparty?> =
+    private var sourceCounterparty: TransferCounterparty? = null
+    private val sourceCounterpartySharedFlow: SharedFlow<TransferCounterparty> =
         requestedSourceCounterpartyId
             .filterNotNull()
             .flatMapLatestToCounterparty()
-            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+            .onEach(::sourceCounterparty::set)
+            .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
-    private val destinationCounterparty: StateFlow<TransferCounterparty?> =
+    private var destinationCounterparty: TransferCounterparty? = null
+    private val destinationCounterpartySharedFlow: SharedFlow<TransferCounterparty> =
         requestedDestinationCounterpartyId
             .filterNotNull()
             .flatMapLatestToCounterparty()
-            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+            .onEach(::destinationCounterparty::set)
+            .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
     val source: StateFlow<ViewTransferCounterparty?> =
-        sourceCounterparty
+        sourceCounterpartySharedFlow
             .filterNotNull()
             .map(ViewTransferCounterparty::fromCounterparty)
             .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     val destination: StateFlow<ViewTransferCounterparty?> =
-        destinationCounterparty
+        destinationCounterpartySharedFlow
             .filterNotNull()
             .map(ViewTransferCounterparty::fromCounterparty)
             .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     val subcategoryItemList: StateFlow<List<ViewSelectableSubcategoryListItem>> =
         combine(
-            sourceCounterparty,
-            destinationCounterparty,
+            sourceCounterpartySharedFlow,
+            destinationCounterpartySharedFlow,
             transform = ::Pair
         )
             .flatMapLatest { (source, destination) ->
@@ -153,8 +160,6 @@ class TransferSheetViewModel(
 
         sourceId?.let(requestedSourceCounterpartyId::tryEmit)
         destinationId?.let(requestedDestinationCounterpartyId::tryEmit)
-        _sourceAmountValue.tryEmit(BigInteger.ZERO)
-        _destinationAmountValue.tryEmit(BigInteger.ZERO)
     }
 
     fun onNewSourceAmountValueParsed(value: BigInteger) {
@@ -185,8 +190,8 @@ class TransferSheetViewModel(
         }
 
         val currentSelectedSubcategory =
-            ((sourceCounterparty.value as? TransferCounterparty.Category)?.subcategory)
-                ?: ((destinationCounterparty.value as? TransferCounterparty.Category)?.subcategory)
+            ((sourceCounterparty as? TransferCounterparty.Category)?.subcategory)
+                ?: ((destinationCounterparty as? TransferCounterparty.Category)?.subcategory)
 
         if (currentSelectedSubcategory != clickedSubcategory) {
             log.debug {
@@ -217,9 +222,9 @@ class TransferSheetViewModel(
 
     private var transferJob: Job? = null
     private fun transferFunds() {
-        val source = sourceCounterparty.value
+        val source = sourceCounterparty
             ?: error("Source counterparty must be set at this point")
-        val destination = destinationCounterparty.value
+        val destination = destinationCounterparty
             ?: error("Destination counterparty must be set at this point")
         val destinationAmount = destinationAmountValue.value
         val sourceAmount =

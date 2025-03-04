@@ -21,12 +21,26 @@ package ua.com.radiokot.money.transfers.data
 
 import ua.com.radiokot.money.categories.data.Subcategory
 
-sealed interface TransferCounterparty {
-    val id: TransferCounterpartyId
+sealed class TransferCounterparty {
+
+    abstract val id: TransferCounterpartyId
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TransferCounterparty) return false
+
+        if (id != other.id) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return id.hashCode()
+    }
 
     class Account(
         val account: ua.com.radiokot.money.accounts.data.Account,
-    ) : TransferCounterparty {
+    ) : TransferCounterparty() {
 
         override val id: TransferCounterpartyId.Account
             get() = TransferCounterpartyId.Account(account.id)
@@ -39,7 +53,7 @@ sealed interface TransferCounterparty {
     class Category(
         val category: ua.com.radiokot.money.categories.data.Category,
         val subcategory: Subcategory? = null,
-    ) : TransferCounterparty {
+    ) : TransferCounterparty() {
 
         override val id: TransferCounterpartyId.Category
             get() = TransferCounterpartyId.Category(

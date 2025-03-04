@@ -21,15 +21,20 @@ package ua.com.radiokot.money.accounts.view
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
@@ -45,6 +50,7 @@ import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.data.HistoryStatsRepository
 import java.math.BigInteger
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AccountActionSheetViewModel(
     private val accountRepository: AccountRepository,
     categoryRepository: CategoryRepository,
@@ -61,8 +67,21 @@ class AccountActionSheetViewModel(
     val balanceInputValue = _balanceInputValue.asStateFlow()
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events
-    private var accountSubscriptionJob: Job? = null
-    private val account: MutableStateFlow<Account?> = MutableStateFlow(null)
+    private val requestedAccountId: MutableStateFlow<String?> = MutableStateFlow(null)
+
+    private lateinit var account: Account
+    private val accountSharedFlow: SharedFlow<Account> =
+        requestedAccountId
+            .filterNotNull()
+            .flatMapLatest { accountId ->
+                accountRepository
+                    .getAccountFlow(accountId)
+            }
+            .onEach { freshAccount ->
+                account = freshAccount
+                _balanceInputValue.emit(freshAccount.balance)
+            }
+            .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
     val incomeCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
         viewCategoryItemListFlow(
@@ -81,7 +100,7 @@ class AccountActionSheetViewModel(
         ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val accountDetails: StateFlow<ViewAccountDetails?> =
-        account
+        accountSharedFlow
             .filterNotNull()
             .map(::ViewAccountDetails)
             .stateIn(viewModelScope, SharingStarted.Lazily, null)
@@ -89,7 +108,7 @@ class AccountActionSheetViewModel(
     val otherAccountListItems: StateFlow<List<ViewAccountListItem>> =
         accountRepository
             .getAccountsFlow()
-            .combine(account, ::Pair)
+            .combine(accountSharedFlow, ::Pair)
             .map { (accounts, currentAccount) ->
                 accounts
                     .filter { it != currentAccount }
@@ -99,33 +118,12 @@ class AccountActionSheetViewModel(
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun setAccount(accountId: String) {
-        if (accountId == account.value?.id) {
-            log.debug {
-                "setAccount(): already set"
-            }
-            return
-        }
-
         log.debug {
-            "setAccount(): subscribing: " +
+            "setAccount(): setting: " +
                     "\naccountId=$accountId"
         }
 
-        accountSubscriptionJob?.cancel()
-        accountSubscriptionJob = subscribeToFreshAccounts(
-            accountId = accountId,
-        )
-
-        _mode.tryEmit(ViewAccountActionSheetMode.Actions)
-    }
-
-    private fun subscribeToFreshAccounts(accountId: String) = viewModelScope.launch {
-        // Subscribe to fresh account details.
-        launch {
-            accountRepository
-                .getAccountFlow(accountId)
-                .collect(account)
-        }
+        requestedAccountId.tryEmit(accountId)
     }
 
     fun onBalanceClicked() {
@@ -141,7 +139,7 @@ class AccountActionSheetViewModel(
         }
 
         _mode.tryEmit(ViewAccountActionSheetMode.Balance)
-        _balanceInputValue.tryEmit(account.value!!.balance)
+        _balanceInputValue.tryEmit(account.balance)
     }
 
     fun onTransferClicked() {
@@ -230,11 +228,11 @@ class AccountActionSheetViewModel(
             if (mode == ViewAccountActionSheetMode.IncomeSource)
                 clickedCounterparty
             else
-                TransferCounterparty.Account(account.value!!)
+                TransferCounterparty.Account(account)
 
         val destination: TransferCounterparty =
             if (mode == ViewAccountActionSheetMode.IncomeSource)
-                TransferCounterparty.Account(account.value!!)
+                TransferCounterparty.Account(account)
             else
                 clickedCounterparty
 
@@ -268,7 +266,7 @@ class AccountActionSheetViewModel(
 
     private var balanceUpdateJob: Job? = null
     private fun updateAccountBalance() {
-        val accountId = account.value!!.id
+        val accountId = account.id
         val newValue = _balanceInputValue.value
 
         balanceUpdateJob?.cancel()
@@ -303,7 +301,6 @@ class AccountActionSheetViewModel(
             "close(): closing"
         }
 
-        accountSubscriptionJob?.cancel()
         _events.tryEmit(Event.Close)
     }
 
