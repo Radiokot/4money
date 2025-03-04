@@ -1,8 +1,8 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
-    alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.kotlin.serialization)
+    id "com.android.application"
+    id "org.jetbrains.kotlin.android"
+    id "org.jetbrains.kotlin.plugin.compose"
+    id "org.jetbrains.kotlin.plugin.serialization"
 }
 
 def localProperties = new Properties()
@@ -58,43 +58,60 @@ android {
     }
 }
 
+ext {
+    coreKtxVersion = "1.15.0"
+    junitVersion = "4.13.2"
+    junitExtVersion = "1.2.1"
+    espressoCoreVersion = "3.6.1"
+    appcompatVersion = "1.7.0"
+    composeBomVersion = "2025.02.00"
+    navigationVersion = "2.8.8"
+    pagingVersion = "3.3.6"
+    activityVersion = "1.10.1"
+    koinBomVersion = "4.0.2"
+    powersyncVersion = "1.0.0-BETA25"
+    supabaseVersion = "3.0.3"
+    kotlinLoggingVersion = "7.0.3"
+    slf4jApiVersion = "2.0.16"
+    slf4jHandroidVersion = "2.0.13"
+    kotlinSerializationJsonVersion = "1.8.0"
+}
+
 dependencies {
-    Provider composeBom = platform(libs.androidx.compose.bom)
-    implementation composeBom
+    implementation "androidx.core:core-ktx:$coreKtxVersion"
+    implementation "androidx.appcompat:appcompat:$appcompatVersion"
+    //noinspection KtxExtensionAvailable
+    implementation "androidx.activity:activity:$activityVersion"
+    implementation "androidx.activity:activity-compose:$activityVersion"
+    implementation "androidx.navigation:navigation-compose:$navigationVersion"
+    implementation "androidx.paging:paging-compose:$pagingVersion"
 
-    implementation libs.androidx.core.ktx
-    implementation libs.androidx.appcompat
-    implementation libs.androidx.activity
-    implementation libs.androidx.activity.compose
-    implementation libs.androidx.paging.compose
-    implementation libs.androidx.compose.navigation
-    implementation libs.androidx.compose.foundation
-    implementation libs.androidx.compose.foundation.layout
-    implementation libs.androidx.compose.ui.tooling.preview
-    debugImplementation libs.androidx.compose.ui.tooling
+    implementation platform("androidx.compose:compose-bom:$composeBomVersion")
+    implementation "androidx.compose.foundation:foundation"
+    implementation "androidx.compose.foundation:foundation-layout"
+    debugImplementation "androidx.compose.ui:ui-tooling"
+    implementation "androidx.compose.ui:ui-tooling-preview"
 
-    Provider koinBom = platform(libs.koin.bom)
-    implementation koinBom
-    implementation libs.koin.android
-    implementation libs.koin.core
-    implementation libs.koin.core.viewmodel
-    implementation libs.koin.compose.viewmodel.navigation
+    implementation platform("io.insert-koin:koin-bom:$koinBomVersion")
+    implementation "io.insert-koin:koin-android"
+    implementation "io.insert-koin:koin-core"
+    implementation "io.insert-koin:koin-core-viewmodel"
+    implementation "io.insert-koin:koin-compose-viewmodel-navigation"
 
-    implementation libs.powersync.core
-    implementation libs.powersync.connector.supabase
-    implementation libs.supabase.postgrest
+    implementation "com.powersync:core:$powersyncVersion"
+    implementation "com.powersync:connector-supabase:$powersyncVersion"
 
-    implementation libs.kotlin.logging
-    implementation libs.slf4j.api
-    implementation(libs.slf4j.handroid) {
-        exclude group: 'org.slf4j', module: 'slf4j-api'
+    implementation "io.github.jan-tennert.supabase:postgrest-kt:$supabaseVersion"
+
+    implementation "io.github.oshai:kotlin-logging-jvm:$kotlinLoggingVersion"
+    implementation "com.gitlab.mvysny.slf4j:slf4j-handroid:$slf4jHandroidVersion"
+    implementation("org.slf4j:slf4j-api:$slf4jApiVersion"){
+        exclude group: "org.slf4j", module: "slf4j-api"
     }
 
-    implementation libs.kotlin.serialization.json
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinSerializationJsonVersion"
 
-    testImplementation libs.junit
-
-    androidTestImplementation composeBom
-    androidTestImplementation libs.androidx.junit
-    androidTestImplementation libs.androidx.espresso.core
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$junitExtVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espressoCoreVersion"
 }
