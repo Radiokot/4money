@@ -21,8 +21,9 @@ package ua.com.radiokot.money.transfers.view
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,7 +32,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.AccountRepository
@@ -45,6 +49,7 @@ import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
 import java.math.BigInteger
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TransferSheetViewModel(
     private val accountRepository: AccountRepository,
     private val categoriesRepository: CategoryRepository,
@@ -52,22 +57,30 @@ class TransferSheetViewModel(
 ) : ViewModel() {
 
     private val log by lazyLogger("TransferSheetVM")
-    private var counterpartySubscriptionJob: Job? = null
     private val _sourceAmountValue: MutableStateFlow<BigInteger> = MutableStateFlow(BigInteger.ZERO)
     val sourceAmountValue = _sourceAmountValue.asStateFlow()
     private val _destinationAmountValue: MutableStateFlow<BigInteger> =
         MutableStateFlow(BigInteger.ZERO)
     val destinationAmountValue = _destinationAmountValue.asStateFlow()
-    private val selectedSubcategory: MutableStateFlow<Subcategory?> = MutableStateFlow(null)
-    private val _subcategoryItemList: MutableStateFlow<List<ViewSelectableSubcategoryListItem>> =
-        MutableStateFlow(emptyList())
-    val subcategoryItemList = _subcategoryItemList.asStateFlow()
-    private val sourceCounterparty: MutableStateFlow<TransferCounterparty?> =
-        MutableStateFlow(null)
-    private val destinationCounterparty: MutableStateFlow<TransferCounterparty?> =
-        MutableStateFlow(null)
+    private val subcategoryToSelect: MutableStateFlow<Subcategory?> = MutableStateFlow(null)
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
+    private val requestedSourceCounterpartyId: MutableStateFlow<TransferCounterpartyId?> =
+        MutableStateFlow(null)
+    private val requestedDestinationCounterpartyId: MutableStateFlow<TransferCounterpartyId?> =
+        MutableStateFlow(null)
+
+    private val sourceCounterparty: StateFlow<TransferCounterparty?> =
+        requestedSourceCounterpartyId
+            .filterNotNull()
+            .flatMapLatestToCounterparty()
+            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    private val destinationCounterparty: StateFlow<TransferCounterparty?> =
+        requestedDestinationCounterpartyId
+            .filterNotNull()
+            .flatMapLatestToCounterparty()
+            .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     val source: StateFlow<ViewTransferCounterparty?> =
         sourceCounterparty
@@ -80,6 +93,34 @@ class TransferSheetViewModel(
             .filterNotNull()
             .map(ViewTransferCounterparty::fromCounterparty)
             .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    val subcategoryItemList: StateFlow<List<ViewSelectableSubcategoryListItem>> =
+        combine(
+            sourceCounterparty,
+            destinationCounterparty,
+            transform = ::Pair
+        )
+            .flatMapLatest { (source, destination) ->
+                val categoryCounterparty =
+                    (source as? TransferCounterparty.Category)
+                        ?: (destination as? TransferCounterparty.Category)
+                        ?: return@flatMapLatest flowOf(emptyList())
+
+                categoriesRepository
+                    .getSubcategoriesFlow(categoryCounterparty.category.id)
+                    .map { subcategories ->
+                        subcategories
+                            .sortedBy(Subcategory::title)
+                            .map { subcategory ->
+                                ViewSelectableSubcategoryListItem(
+                                    subcategory = subcategory,
+                                    isSelected = subcategory == categoryCounterparty.subcategory,
+                                )
+                            }
+                    }
+
+            }
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val isSourceInputShown: StateFlow<Boolean> =
         // Only require source input if currencies are different.
@@ -101,114 +142,19 @@ class TransferSheetViewModel(
             .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     fun setSourceAndDestination(
-        sourceId: TransferCounterpartyId,
-        destinationId: TransferCounterpartyId,
+        sourceId: TransferCounterpartyId?,
+        destinationId: TransferCounterpartyId?,
     ) {
-        if (sourceCounterparty.value != null && destinationCounterparty.value != null) {
-            log.debug {
-                "setSourceAndDestination(): already set"
-            }
-            return
-        }
-
         log.debug {
             "setSourceAndDestination(): setting: " +
                     "\nsourceId=$sourceId," +
                     "\ndestinationId=$destinationId"
         }
 
-        counterpartySubscriptionJob?.cancel()
-        counterpartySubscriptionJob = subscribeToFreshCounterparties(
-            sourceId = sourceId,
-            destinationId = destinationId,
-        )
-
+        sourceId?.let(requestedSourceCounterpartyId::tryEmit)
+        destinationId?.let(requestedDestinationCounterpartyId::tryEmit)
         _sourceAmountValue.tryEmit(BigInteger.ZERO)
         _destinationAmountValue.tryEmit(BigInteger.ZERO)
-    }
-
-    private fun subscribeToFreshCounterparties(
-        sourceId: TransferCounterpartyId,
-        destinationId: TransferCounterpartyId,
-    ) = viewModelScope.launch {
-
-        suspend fun subscribeToAccountCounterparty(
-            accountId: TransferCounterpartyId.Account,
-            collector: FlowCollector<TransferCounterparty>,
-        ) = launch {
-            accountRepository
-                .getAccountFlow(accountId.toString())
-                .map(TransferCounterparty::Account)
-                .collect(collector)
-        }
-
-        suspend fun subscribeToCategoryCounterparty(
-            categoryId: TransferCounterpartyId.Category,
-            collector: FlowCollector<TransferCounterparty>,
-        ) {
-            selectedSubcategory.emit(null)
-
-            launch {
-                categoriesRepository
-                    .getCategoryFlow(categoryId.categoryId)
-                    .combine(selectedSubcategory, ::Pair)
-                    .map { (category, selectedSubcategory) ->
-                        TransferCounterparty.Category(
-                            category = category,
-                            subcategory = selectedSubcategory,
-                        )
-                    }
-                    .collect(collector)
-            }
-
-            launch {
-                categoriesRepository
-                    .getSubcategoriesFlow(categoryId.categoryId)
-                    .combine(selectedSubcategory, ::Pair)
-                    .map { (subcategories, selectedSubcategory) ->
-                        subcategories
-                            .sortedBy(Subcategory::title)
-                            .map { subcategory ->
-                                ViewSelectableSubcategoryListItem(
-                                    subcategory = subcategory,
-                                    isSelected = subcategory == selectedSubcategory,
-                                )
-                            }
-                    }
-                    .collect(_subcategoryItemList)
-            }
-        }
-
-        // Reset subcategories first.
-        _subcategoryItemList.emit(emptyList())
-
-        when (sourceId) {
-            is TransferCounterpartyId.Account ->
-                subscribeToAccountCounterparty(
-                    accountId = sourceId,
-                    collector = sourceCounterparty,
-                )
-
-            is TransferCounterpartyId.Category ->
-                subscribeToCategoryCounterparty(
-                    categoryId = sourceId,
-                    collector = sourceCounterparty,
-                )
-        }
-
-        when (destinationId) {
-            is TransferCounterpartyId.Account ->
-                subscribeToAccountCounterparty(
-                    accountId = destinationId,
-                    collector = destinationCounterparty,
-                )
-
-            is TransferCounterpartyId.Category ->
-                subscribeToCategoryCounterparty(
-                    categoryId = destinationId,
-                    collector = destinationCounterparty,
-                )
-        }
     }
 
     fun onNewSourceAmountValueParsed(value: BigInteger) {
@@ -238,20 +184,23 @@ class TransferSheetViewModel(
             return
         }
 
-        val currentSelectedSubcategory = selectedSubcategory.value
+        val currentSelectedSubcategory =
+            ((sourceCounterparty.value as? TransferCounterparty.Category)?.subcategory)
+                ?: ((destinationCounterparty.value as? TransferCounterparty.Category)?.subcategory)
+
         if (currentSelectedSubcategory != clickedSubcategory) {
             log.debug {
                 "onSubcategoryItemClicked(): selecting subcategory:" +
                         "\nselected=$clickedSubcategory"
             }
 
-            selectedSubcategory.tryEmit(clickedSubcategory)
+            subcategoryToSelect.tryEmit(clickedSubcategory)
         } else {
             log.debug {
                 "onSubcategoryItemClicked(): unselecting subcategory"
             }
 
-            selectedSubcategory.tryEmit(null)
+            subcategoryToSelect.tryEmit(null)
         }
     }
 
@@ -309,6 +258,29 @@ class TransferSheetViewModel(
                 }
         }
     }
+
+    private fun Flow<TransferCounterpartyId>.flatMapLatestToCounterparty() =
+        flatMapLatest { id ->
+            when (id) {
+                is TransferCounterpartyId.Account ->
+                    accountRepository
+                        .getAccountFlow(id.accountId)
+                        .map(TransferCounterparty::Account)
+
+                is TransferCounterpartyId.Category ->
+                    categoriesRepository
+                        .getCategoryFlow(id.categoryId)
+                        // Reset subcategory to select when the counterparty changes.
+                        .onStart { subcategoryToSelect.emit(null) }
+                        .combine(subcategoryToSelect, ::Pair)
+                        .map { (category, subcategoryToSelect) ->
+                            TransferCounterparty.Category(
+                                category = category,
+                                subcategory = subcategoryToSelect,
+                            )
+                        }
+            }
+        }
 
     sealed interface Event {
         object TransferDone : Event
