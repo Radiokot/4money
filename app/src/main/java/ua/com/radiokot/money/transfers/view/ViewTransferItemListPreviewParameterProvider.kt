@@ -34,44 +34,42 @@ class ViewTransferItemListPreviewParameterProvider :
                     dayType = ViewTransferListItem.Header.DayType.Today,
                 ),
                 ViewTransferListItem.Transfer(
-                    primaryCounterparty = ViewTransferCounterparty(
-                        title = "🍔 Food",
+                    primaryCounterparty = ViewTransferCounterparty.Category(
+                        categoryTitle = "🍔 Food",
+                        subcategoryTitle = null,
                         currency = ViewCurrency(
                             symbol = "$",
                             precision = 2,
                         ),
-                        type = ViewTransferCounterparty.Type.Category,
                     ),
                     primaryAmount = BigInteger("10000"),
-                    secondaryCounterparty = ViewTransferCounterparty(
-                        title = "Card 4455",
+                    secondaryCounterparty = ViewTransferCounterparty.Account(
+                        accountTitle = "Card 4455",
                         currency = ViewCurrency(
                             symbol = "$",
                             precision = 2,
                         ),
-                        type = ViewTransferCounterparty.Type.Account,
                     ),
                     secondaryAmount = BigInteger("10000"),
                     type = ViewTransferListItem.Transfer.Type.Expense,
                     source = null,
                 ),
                 ViewTransferListItem.Transfer(
-                    primaryCounterparty = ViewTransferCounterparty(
-                        title = "🏠 Home",
+                    primaryCounterparty = ViewTransferCounterparty.Category(
+                        categoryTitle = "🏠 Home",
+                        subcategoryTitle = null,
                         currency = ViewCurrency(
                             symbol = "$",
                             precision = 2,
                         ),
-                        type = ViewTransferCounterparty.Type.Category,
                     ),
                     primaryAmount = BigInteger("5000"),
-                    secondaryCounterparty = ViewTransferCounterparty(
-                        title = "Cash",
+                    secondaryCounterparty = ViewTransferCounterparty.Account(
+                        accountTitle = "Cash",
                         currency = ViewCurrency(
                             symbol = "г",
                             precision = 2,
                         ),
-                        type = ViewTransferCounterparty.Type.Account,
                     ),
                     secondaryAmount = BigInteger("217000"),
                     type = ViewTransferListItem.Transfer.Type.Expense,

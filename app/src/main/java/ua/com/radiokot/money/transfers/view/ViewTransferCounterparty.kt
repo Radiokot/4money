@@ -19,58 +19,82 @@
 
 package ua.com.radiokot.money.transfers.view
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import ua.com.radiokot.money.accounts.data.Account
-import ua.com.radiokot.money.categories.data.Category
-import ua.com.radiokot.money.categories.data.Subcategory
+import androidx.compose.ui.res.stringResource
+import ua.com.radiokot.money.R
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 
 @Immutable
-class ViewTransferCounterparty(
-    val title: String,
-    val currency: ViewCurrency,
-    val type: Type,
-) {
-    constructor(account: Account) : this(
-        title = account.title,
-        currency = ViewCurrency(account.currency),
-        type = Type.Account,
-    )
+sealed interface ViewTransferCounterparty {
 
-    constructor(
-        category: Category,
-        subcategory: Subcategory?,
-    ) : this(
-        title =
-        if (subcategory == null)
-            category.title
-        else
-            "${category.title} (${subcategory.title})",
-        currency = ViewCurrency(category.currency),
-        type = Type.Category,
-    )
+    val currency: ViewCurrency
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is ViewTransferCounterparty) return false
+    @get:Composable
+    val title: String
 
-        if (title != other.title) return false
-        if (currency != other.currency) return false
-        if (type != other.type) return false
+    class Account(
+        val accountTitle: String,
+        override val currency: ViewCurrency,
+    ) : ViewTransferCounterparty {
 
-        return true
+        override val title: String
+            @Composable
+            get() = accountTitle
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Account) return false
+
+            if (accountTitle != other.accountTitle) return false
+            if (currency != other.currency) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = accountTitle.hashCode()
+            result = 31 * result + currency.hashCode()
+            return result
+        }
     }
 
-    override fun hashCode(): Int {
-        var result = title.hashCode()
-        result = 31 * result + currency.hashCode()
-        result = 31 * result + type.hashCode()
-        return result
-    }
+    class Category(
+        val categoryTitle: String,
+        val subcategoryTitle: String?,
+        override val currency: ViewCurrency,
+    ) : ViewTransferCounterparty {
 
-    enum class Type {
-        Account, Category,
+        override val title: String
+            @Composable
+            get() =
+                if (subcategoryTitle != null)
+                    stringResource(
+                        id = R.string.template_category_subcategory,
+                        categoryTitle,
+                        subcategoryTitle
+                    )
+                else
+                    categoryTitle
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Category) return false
+
+            if (categoryTitle != other.categoryTitle) return false
+            if (subcategoryTitle != other.subcategoryTitle) return false
+            if (currency != other.currency) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = categoryTitle.hashCode()
+            result = 31 * result + (subcategoryTitle?.hashCode() ?: 0)
+            result = 31 * result + currency.hashCode()
+            return result
+        }
     }
 
     companion object {
@@ -78,12 +102,20 @@ class ViewTransferCounterparty(
             counterparty: TransferCounterparty,
         ): ViewTransferCounterparty = when (counterparty) {
             is TransferCounterparty.Account ->
-                ViewTransferCounterparty(counterparty.account)
+                Account(
+                    accountTitle = counterparty.account.title,
+                    currency = ViewCurrency(
+                        currency = counterparty.account.currency,
+                    ),
+                )
 
             is TransferCounterparty.Category ->
-                ViewTransferCounterparty(
-                    category = counterparty.category,
-                    subcategory = counterparty.subcategory,
+                Category(
+                    categoryTitle = counterparty.category.title,
+                    subcategoryTitle = counterparty.subcategory?.title,
+                    currency = ViewCurrency(
+                        currency = counterparty.category.currency,
+                    ),
                 )
         }
     }

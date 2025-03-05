@@ -106,7 +106,9 @@ private fun TransferSheet(
     onSubcategoryItemClicked: (ViewSelectableSubcategoryListItem) -> Unit,
     isSaveEnabled: State<Boolean>,
     onSaveClicked: () -> Unit,
-) = BoxWithConstraints {
+) = BoxWithConstraints(
+    modifier = modifier
+) {
 
     val maxSheetHeightDp =
         if (maxHeight < 400.dp)
@@ -134,8 +136,15 @@ private fun TransferSheet(
             modifier = Modifier
                 .height(IntrinsicSize.Max)
         ) {
+            val shortSourceTitle: String? = remember(source) {
+                (source as? ViewTransferCounterparty.Category)?.categoryTitle
+            }
+            val shortDestinationTitle: String? = remember(destination) {
+                (destination as? ViewTransferCounterparty.Category)?.categoryTitle
+            }
+
             BasicText(
-                text = source.title,
+                text = shortSourceTitle ?: source.title,
                 style = TextStyle(
                     textAlign = TextAlign.Center,
                     fontSize = 20.sp,
@@ -157,7 +166,7 @@ private fun TransferSheet(
             )
 
             BasicText(
-                text = destination.title,
+                text = shortDestinationTitle ?: destination.title,
                 style = TextStyle(
                     textAlign = TextAlign.Center,
                     fontSize = 20.sp,
@@ -317,23 +326,21 @@ private fun TransferSheetPreview(
             )
             TransferSheet(
                 isSourceInputShown = isSourceInputShown,
-                source = ViewTransferCounterparty(
-                    title = "Source",
+                source = ViewTransferCounterparty.Account(
+                    accountTitle = "Source",
                     currency = ViewCurrency(
                         symbol = "A",
                         precision = 2,
                     ),
-                    type = ViewTransferCounterparty.Type.Account,
                 ),
                 sourceAmountValue = BigInteger("133").let(::mutableStateOf),
                 onNewSourceAmountValueParsed = {},
-                destination = ViewTransferCounterparty(
-                    title = "Destination",
+                destination = ViewTransferCounterparty.Account(
+                    accountTitle = "Destination",
                     currency = ViewCurrency(
                         symbol = "B",
                         precision = 2,
                     ),
-                    type = ViewTransferCounterparty.Type.Account,
                 ),
                 destinationAmountValue = BigInteger("331").let(::mutableStateOf),
                 onNewDestinationAmountValueParsed = {},
