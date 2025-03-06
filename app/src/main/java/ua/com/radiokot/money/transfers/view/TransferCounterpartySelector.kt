@@ -55,7 +55,7 @@ import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 @Composable
 fun TransferCounterpartySelector(
     modifier: Modifier = Modifier,
-    isIncome: Boolean,
+    isForSource: Boolean,
     accountItemList: State<List<ViewAccountListItem>>,
     categoryItemList: State<List<ViewCategoryListItem>>?,
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
@@ -94,7 +94,7 @@ fun TransferCounterpartySelector(
     ) {
         if (showCategories) {
             BasicText(
-                text = if (isIncome) "Income" else "Expense",
+                text = if (isForSource) "Income" else "Expense",
                 style = TextStyle(
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
@@ -110,7 +110,7 @@ fun TransferCounterpartySelector(
         }
 
         BasicText(
-            text = if (isIncome) "From account" else "To account",
+            text = if (isForSource) "From account" else "To account",
             style = TextStyle(
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
@@ -157,7 +157,7 @@ fun TransferCounterpartySelector(
 private fun TransferCounterpartySelectorPreview(
     @PreviewParameter(TransferCounterpartySelectorPreviewParameterProvider::class) parameter: TransferCounterpartySelectorPreviewParameterProvider.Parameter,
 ) = TransferCounterpartySelector(
-    isIncome = parameter.isIncome,
+    isForSource = parameter.isForSource,
     accountItemList = parameter.accounts.let(::mutableStateOf),
     categoryItemList = parameter.categories?.let(::mutableStateOf),
     onAccountItemClicked = {},
@@ -172,7 +172,7 @@ private class TransferCounterpartySelectorPreviewParameterProvider :
 
     override val values: Sequence<Parameter> = sequenceOf(
         Parameter(
-            isIncome = true,
+            isForSource = true,
             accounts = listOf(
                 ViewAccountListItem.Account(
                     title = "Source account",
@@ -182,7 +182,7 @@ private class TransferCounterpartySelectorPreviewParameterProvider :
             categories = null,
         ),
         Parameter(
-            isIncome = false,
+            isForSource = false,
             accounts = listOf(
                 ViewAccountListItem.Account(
                     title = "Dest account",
@@ -192,7 +192,7 @@ private class TransferCounterpartySelectorPreviewParameterProvider :
             categories = null,
         ),
         Parameter(
-            isIncome = false,
+            isForSource = false,
             accounts = listOf(
                 ViewAccountListItem.Account(
                     title = "Dest account",
@@ -202,7 +202,7 @@ private class TransferCounterpartySelectorPreviewParameterProvider :
             categories = categories,
         ),
         Parameter(
-            isIncome = true,
+            isForSource = true,
             accounts = listOf(
                 ViewAccountListItem.Account(
                     title = "Source account",
@@ -214,7 +214,7 @@ private class TransferCounterpartySelectorPreviewParameterProvider :
     )
 
     class Parameter(
-        val isIncome: Boolean,
+        val isForSource: Boolean,
         val accounts: List<ViewAccountListItem>,
         val categories: List<ViewCategoryListItem>?,
     )

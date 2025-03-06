@@ -403,7 +403,7 @@ private fun TransferCounterpartyContent(
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
     onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = TransferCounterpartySelector(
-    isIncome = isIncome,
+    isForSource = isIncome,
     accountItemList = accountItemList,
     categoryItemList =
     if (showCategories) {
