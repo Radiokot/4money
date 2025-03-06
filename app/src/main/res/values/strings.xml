@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">4Money</string>
     <string name="template_category_subcategory">%1$s (%2$s)</string>
+    <string name="log_transfer_shortcut_title">Log transfer</string>
 </resources>

@@ -1,0 +1,17 @@
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/outline_create_24"
+        android:shortcutId="transfer"
+        android:shortcutShortLabel="@string/log_transfer_shortcut_title">
+
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="ua.com.radiokot.money.transfers.view.TransferShortcutActivity"
+            android:targetPackage="ua.com.radiokot.money" />
+        <!-- If your shortcut is associated with multiple intents, include them
+             here. The last intent in the list determines what the user sees when
+             they launch this shortcut. -->
+    </shortcut>
+</shortcuts>
+

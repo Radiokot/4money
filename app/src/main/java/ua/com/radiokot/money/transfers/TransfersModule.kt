@@ -29,6 +29,7 @@ import ua.com.radiokot.money.powersync.powerSyncModule
 import ua.com.radiokot.money.transfers.history.transfersHistoryModule
 import ua.com.radiokot.money.transfers.logic.PowerSyncTransferFundsUseCase
 import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
+import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetViewModel
 import ua.com.radiokot.money.transfers.view.TransferSheetViewModel
 
 val transfersModule = module {
@@ -49,9 +50,17 @@ val transfersModule = module {
         viewModel {
             TransferSheetViewModel(
                 accountRepository = get(),
-                categoriesRepository = get(),
+                categoryRepository = get(),
                 transferFundsUseCase = get(),
             )
         } bind TransferSheetViewModel::class
+
+        viewModel {
+            TransferCounterpartySelectionSheetViewModel(
+                accountRepository = get(),
+                categoryRepository = get(),
+                historyStatsRepository = get(),
+            )
+        } bind TransferCounterpartySelectionSheetViewModel::class
     }
 }

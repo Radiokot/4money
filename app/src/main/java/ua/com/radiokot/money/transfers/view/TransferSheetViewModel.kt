@@ -55,7 +55,7 @@ import java.math.BigInteger
 @OptIn(ExperimentalCoroutinesApi::class)
 class TransferSheetViewModel(
     private val accountRepository: AccountRepository,
-    private val categoriesRepository: CategoryRepository,
+    private val categoryRepository: CategoryRepository,
     private val transferFundsUseCase: TransferFundsUseCase,
 ) : ViewModel() {
 
@@ -113,7 +113,7 @@ class TransferSheetViewModel(
                         ?: (destination as? TransferCounterparty.Category)
                         ?: return@flatMapLatest flowOf(emptyList())
 
-                categoriesRepository
+                categoryRepository
                     .getSubcategoriesFlow(categoryCounterparty.category.id)
                     .map { subcategories ->
                         subcategories
@@ -273,7 +273,7 @@ class TransferSheetViewModel(
                         .map(TransferCounterparty::Account)
 
                 is TransferCounterpartyId.Category ->
-                    categoriesRepository
+                    categoryRepository
                         .getCategoryFlow(id.categoryId)
                         // Reset subcategory to select when the counterparty changes.
                         .onStart { subcategoryToSelect.emit(null) }

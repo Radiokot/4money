@@ -26,6 +26,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
 
         <activity
@@ -44,5 +47,10 @@
                     android:scheme="@string/uri_scheme" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".transfers.view.TransferShortcutActivity"
+            android:exported="true"
+            android:theme="@style/TransparentActivity" />
     </application>
 </manifest>

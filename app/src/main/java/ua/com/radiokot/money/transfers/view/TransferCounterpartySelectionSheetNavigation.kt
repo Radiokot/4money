@@ -25,6 +25,7 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.koin.compose.viewmodel.koinViewModel
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
@@ -33,8 +34,22 @@ import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 data class TransferCounterpartySelectionSheetRoute(
     val isIncognito: Boolean,
     val isForSource: Boolean,
-    val alreadySelectedCounterpartyId: TransferCounterpartyId?,
-)
+    private val alreadySelectedCounterpartyIdJson: String,
+) {
+
+    constructor(
+        isIncognito: Boolean,
+        isForSource: Boolean,
+        alreadySelectedCounterpartyId: TransferCounterpartyId?,
+    ) : this(
+        isIncognito = isIncognito,
+        isForSource = isForSource,
+        alreadySelectedCounterpartyIdJson = Json.encodeToString(alreadySelectedCounterpartyId),
+    )
+
+    val alreadySelectedCounterpartyId: TransferCounterpartyId?
+        get() = Json.decodeFromString(alreadySelectedCounterpartyIdJson)
+}
 
 fun NavGraphBuilder.transferCounterpartySelectionSheet(
     onSelected: (TransferCounterparty) -> Unit,

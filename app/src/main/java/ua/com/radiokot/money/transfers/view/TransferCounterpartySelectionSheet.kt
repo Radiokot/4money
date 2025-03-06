@@ -19,13 +19,16 @@
 
 package ua.com.radiokot.money.transfers.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ua.com.radiokot.money.accounts.view.ViewAccountListItem
@@ -62,6 +65,8 @@ private fun TransferCounterpartySelectionSheet(
             .heightIn(
                 max = maxSheetHeightDp,
             )
+            .background(Color.White)
+            .padding(16.dp)
     )
 }
 
