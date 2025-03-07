@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -44,6 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
@@ -221,10 +223,13 @@ private fun HeaderItemPreview(
 private fun AccountItem(
     modifier: Modifier = Modifier,
     title: String,
-    balance: ViewAmount,
+    balance: ViewAmount?,
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .heightIn(
+                min = 38.dp,
+            ),
     ) {
         BasicText(
             text = title,
@@ -235,21 +240,23 @@ private fun AccountItem(
             )
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        if (balance != null) {
+            Spacer(modifier = Modifier.height(4.dp))
 
-        val locale = LocalConfiguration.current.locales[0]
-        val amountFormat = remember(locale) {
-            ViewAmountFormat(locale)
+            val locale = LocalConfiguration.current.locales[0]
+            val amountFormat = remember(locale) {
+                ViewAmountFormat(locale)
+            }
+
+            BasicText(
+                text = amountFormat(balance),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = TextStyle(
+                    fontSize = 16.sp,
+                ),
+            )
         }
-
-        BasicText(
-            text = amountFormat(balance),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = TextStyle(
-                fontSize = 16.sp,
-            ),
-        )
     }
 }
 

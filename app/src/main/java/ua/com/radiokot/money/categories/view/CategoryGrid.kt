@@ -137,23 +137,25 @@ private fun CategoryListItem(
         )
     }
 
-    val locale = LocalConfiguration.current.locales[0]
-    val amountFormat = remember(locale) {
-        ViewAmountFormat(locale)
+    if (amount != null) {
+        Spacer(modifier = Modifier.height(4.dp))
+
+        val locale = LocalConfiguration.current.locales[0]
+        val amountFormat = remember(locale) {
+            ViewAmountFormat(locale)
+        }
+
+        BasicText(
+            text = amountFormat(amount),
+            style = TextStyle(
+                textAlign = TextAlign.Center,
+            ),
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
+            modifier = Modifier
+                .fillMaxWidth()
+        )
     }
-
-    Spacer(modifier = Modifier.height(4.dp))
-
-    BasicText(
-        text = amountFormat(amount),
-        style = TextStyle(
-            textAlign = TextAlign.Center,
-        ),
-        overflow = TextOverflow.Ellipsis,
-        maxLines = 1,
-        modifier = Modifier
-            .fillMaxWidth()
-    )
 }
 
 @Composable

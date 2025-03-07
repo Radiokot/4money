@@ -59,6 +59,7 @@ fun NavGraphBuilder.transferCounterpartySelectionSheet(
 
     LaunchedEffect(route) {
         viewModel.setParameters(
+            isIncognito = route.isIncognito,
             isForSource = route.isForSource,
             alreadySelectedCounterpartyId = route.alreadySelectedCounterpartyId,
         )

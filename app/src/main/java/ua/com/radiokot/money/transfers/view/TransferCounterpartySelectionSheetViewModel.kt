@@ -52,6 +52,8 @@ class TransferCounterpartySelectionSheetViewModel(
 ) : ViewModel() {
 
     private val log by lazyLogger("TransferCounterpartySelectionSheetVM")
+    private val _isIncognito: MutableSharedFlow<Boolean> =
+        MutableSharedFlow(replay = 1)
     private val _isForSource: MutableSharedFlow<Boolean> =
         MutableSharedFlow(replay = 1)
     val isForSource: StateFlow<Boolean> =
@@ -65,13 +67,19 @@ class TransferCounterpartySelectionSheetViewModel(
         combine(
             accountRepository.getAccountsFlow(),
             alreadySelectedCounterpartyId,
-            transform = ::Pair
+            _isIncognito,
+            transform = ::Triple
         )
-            .map { (accounts, alreadySelectedCounterpartyId) ->
+            .map { (accounts, alreadySelectedCounterpartyId, isIncognito) ->
                 accounts
                     .sortedBy(Account::title)
                     .filterNot { it.id == alreadySelectedCounterpartyId.toString() }
-                    .map(ViewAccountListItem::Account)
+                    .map { account ->
+                        ViewAccountListItem.Account(
+                            account = account,
+                            isIncognito = isIncognito,
+                        )
+                    }
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -86,31 +94,41 @@ class TransferCounterpartySelectionSheetViewModel(
         combine(
             _isForSource,
             areCategoriesVisible,
-            ::Pair
+            _isIncognito,
+            transform = ::Triple
         )
-            .flatMapLatest { (isForSource, areCategoriesVisible) ->
+            .flatMapLatest { (isForSource, areCategoriesVisible, isIncognito) ->
                 if (areCategoriesVisible)
-                    viewCategoryItemListFlow(
-                        isIncome = isForSource,
-                        period = HistoryPeriod.Month(),
-                        categoryRepository = categoryRepository,
-                        historyStatsRepository = historyStatsRepository,
-                    )
+                    if (!isIncognito)
+                        viewCategoryItemListFlow(
+                            isIncome = isForSource,
+                            period = HistoryPeriod.Month(),
+                            categoryRepository = categoryRepository,
+                            historyStatsRepository = historyStatsRepository,
+                        )
+                    else
+                        viewCategoryItemListFlow(
+                            isIncome = isForSource,
+                            categoryRepository = categoryRepository,
+                        )
                 else
                     flowOf(emptyList())
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun setParameters(
+        isIncognito: Boolean,
         isForSource: Boolean,
         alreadySelectedCounterpartyId: TransferCounterpartyId?,
     ) {
         log.debug {
             "setParameters(): setting:" +
+                    "\nisIncognito=$isIncognito" +
                     "\nisForSource=$isForSource" +
                     "\nalreadySelectedCounterpartyId=$alreadySelectedCounterpartyId"
         }
 
+        this._isIncognito.tryEmit(isIncognito)
         this._isForSource.tryEmit(isForSource)
         this.alreadySelectedCounterpartyId.tryEmit(alreadySelectedCounterpartyId)
     }

@@ -54,3 +54,21 @@ fun viewCategoryItemListFlow(
                 )
             }
         }
+
+fun viewCategoryItemListFlow(
+    isIncome: Boolean,
+    categoryRepository: CategoryRepository,
+): Flow<List<ViewCategoryListItem>> =
+    categoryRepository.getCategoriesFlow()
+        .map { categories ->
+            val filteredCategories = categories
+                .sortedBy(Category::title)
+                .filter { it.isIncome == isIncome }
+
+            filteredCategories.map { category ->
+                ViewCategoryListItem(
+                    category = category,
+                    amount = null,
+                )
+            }
+        }
