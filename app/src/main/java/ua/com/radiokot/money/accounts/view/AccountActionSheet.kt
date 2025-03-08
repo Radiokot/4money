@@ -26,12 +26,16 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
@@ -110,7 +114,9 @@ private fun AccountActionSheet(
     transferCounterpartyExpenseCategoryItemList: State<List<ViewCategoryListItem>>,
     onTransferCounterpartyCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = BoxWithConstraints(
-    modifier = modifier,
+    modifier = modifier
+        .background(Color(0xFFF9FBE7))
+        .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
 ) {
 
     val maxSheetHeightDp =
@@ -122,13 +128,11 @@ private fun AccountActionSheet(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .safeDrawingPadding()
             .fillMaxWidth()
             .heightIn(
                 max = maxSheetHeightDp,
             )
             .verticalScroll(rememberScrollState())
-            .background(Color(0xFFF9FBE7))
             .padding(
                 horizontal = 16.dp,
             )

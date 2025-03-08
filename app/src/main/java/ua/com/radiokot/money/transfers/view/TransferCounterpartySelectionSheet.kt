@@ -21,10 +21,14 @@ package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
@@ -45,6 +49,7 @@ private fun TransferCounterpartySelectionSheet(
     onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = BoxWithConstraints(
     modifier = modifier
+        .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
 ) {
     val maxSheetHeightDp =
         if (maxHeight < 400.dp)
@@ -60,7 +65,6 @@ private fun TransferCounterpartySelectionSheet(
         onAccountItemClicked = onAccountItemClicked,
         onCategoryItemClicked = onCategoryItemClicked,
         modifier = Modifier
-            .safeDrawingPadding()
             .fillMaxWidth()
             .heightIn(
                 max = maxSheetHeightDp,

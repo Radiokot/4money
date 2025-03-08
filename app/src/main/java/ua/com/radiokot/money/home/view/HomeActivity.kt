@@ -19,8 +19,10 @@
 
 package ua.com.radiokot.money.home.view
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -29,8 +31,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -38,8 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
+import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.accounts.view.AccountActionSheetRoute
 import ua.com.radiokot.money.accounts.view.AccountsScreenRoute
 import ua.com.radiokot.money.accounts.view.accountActionSheet
@@ -48,6 +54,7 @@ import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.categories.view.CategoriesScreenRoute
 import ua.com.radiokot.money.categories.view.categoriesScreen
+import ua.com.radiokot.money.rememberMoneyAppNavController
 import ua.com.radiokot.money.transfers.history.view.ActivityScreenRoute
 import ua.com.radiokot.money.transfers.history.view.activityScreen
 import ua.com.radiokot.money.transfers.view.TransferSheetRoute
@@ -62,88 +69,103 @@ class HomeActivity : UserSessionScopeActivity() {
             return
         }
 
+        enableEdgeToEdge()
+
         setContent {
-            val navController = rememberNavController()
-
             UserSessionScope {
-                Column {
-                    NavHost(
-                        navController = navController,
-                        startDestination = AccountsScreenRoute(
-                            isIncognito = false,
-                        ),
-                        enterTransition = { fadeIn(tween(150)) },
-                        exitTransition = { fadeOut(tween(150)) },
-                        modifier = Modifier
-                            .weight(1f),
-                    ) {
-
-                        accountsScreen(
-                            onAccountClicked = { account ->
-                                navController.navigate(
-                                    route = AccountActionSheetRoute(
-                                        accountId = account.id,
-                                    )
-                                )
-                            }
-                        )
-
-                        categoriesScreen(
-                            onCategoryClicked = {},
-                        )
-
-                        activityScreen()
-
-                        accountActionSheet(
-                            close = navController::navigateUp,
-                            onTransferCounterpartiesSelected = { source, destination ->
-                                navController.navigate(
-                                    route = TransferSheetRoute(
-                                        sourceId = source.id,
-                                        destinationId = destination.id,
-                                    ),
-                                    navOptions = navOptions {
-                                        popUpTo<AccountActionSheetRoute> {
-                                            inclusive = true
-                                        }
-                                    },
-                                )
-                            }
-                        )
-
-                        transferSheet(
-                            close = navController::navigateUp,
-                        )
-                    }
-
-                    BottomNavigation(
-                        onAccountsClicked = {
-                            navController.popBackStack()
-                            navController.navigate(
-                                route = AccountsScreenRoute(
-                                    isIncognito = false,
-                                ),
-                            )
-                        },
-                        onCategoriesClicked = {
-                            navController.popBackStack()
-                            navController.navigate(
-                                route = CategoriesScreenRoute(
-                                    isIncognito = false,
-                                ),
-                            )
-                        },
-                        onActivityClicked = {
-                            navController.popBackStack()
-                            navController.navigate(
-                                route = ActivityScreenRoute,
-                            )
-                        },
-                    )
-                }
+                HomeScreen()
             }
         }
     }
+}
+
+@SuppressLint("RestrictedApi")
+@Composable
+private fun HomeScreen(
+
+) {
+    val navController = rememberMoneyAppNavController()
+
+    Column {
+        NavHost(
+            navController = navController,
+            startDestination = AccountsScreenRoute(
+                isIncognito = false,
+            ),
+            enterTransition = { fadeIn(tween(150)) },
+            exitTransition = { fadeOut(tween(150)) },
+            modifier = Modifier
+                .weight(1f)
+                .safeDrawingPadding(),
+        ) {
+
+            accountsScreen(
+                onAccountClicked = { account ->
+                    navController.navigate(
+                        route = AccountActionSheetRoute(
+                            accountId = account.id,
+                        )
+                    )
+                }
+            )
+
+            categoriesScreen(
+                onCategoryClicked = {},
+            )
+
+            activityScreen()
+
+            accountActionSheet(
+                onBalanceUpdated = navController::navigateUp,
+                onTransferCounterpartiesSelected = { source, destination ->
+                    navController.navigate(
+                        route = TransferSheetRoute(
+                            sourceId = source.id,
+                            destinationId = destination.id,
+                        ),
+                        navOptions = navOptions {
+                            popUpTo<AccountActionSheetRoute> {
+                                inclusive = true
+                            }
+                        },
+                    )
+                }
+            )
+
+            transferSheet(
+                onTransferDone = navController::navigateUp,
+            )
+        }
+
+        BottomNavigation(
+            onAccountsClicked = {
+                navController.popBackStack()
+                navController.navigate(
+                    route = AccountsScreenRoute(
+                        isIncognito = false,
+                    ),
+                )
+            },
+            onCategoriesClicked = {
+                navController.popBackStack()
+                navController.navigate(
+                    route = CategoriesScreenRoute(
+                        isIncognito = false,
+                    ),
+                )
+            },
+            onActivityClicked = {
+                navController.popBackStack()
+                navController.navigate(
+                    route = ActivityScreenRoute,
+                )
+            },
+        )
+    }
+
+    MoneyAppModalBottomSheetLayout(
+        moneyAppNavController = navController,
+    )
 }
 
 @Composable
@@ -159,6 +181,7 @@ private fun BottomNavigation(
     modifier = Modifier
         .fillMaxWidth()
         .background(Color(0xfff0edf1))
+        .windowInsetsPadding(WindowInsets.navigationBars)
         .padding(
             vertical = 12.dp,
         )

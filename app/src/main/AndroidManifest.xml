@@ -19,7 +19,7 @@
         <activity
             android:name=".home.view.HomeActivity"
             android:exported="true"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustNothing">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -51,6 +51,7 @@
         <activity
             android:name=".transfers.view.TransferShortcutActivity"
             android:exported="true"
+            android:windowSoftInputMode="adjustNothing"
             android:theme="@style/TransparentActivity" />
     </application>
 </manifest>

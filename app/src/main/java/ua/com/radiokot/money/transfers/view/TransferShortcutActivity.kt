@@ -22,20 +22,23 @@ package ua.com.radiokot.money.transfers.view
 import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import kotlinx.coroutines.flow.collectLatest
+import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
+import ua.com.radiokot.money.rememberMoneyAppNavController
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
 class TransferShortcutActivity : UserSessionScopeActivity() {
@@ -45,6 +48,12 @@ class TransferShortcutActivity : UserSessionScopeActivity() {
 
         if (goToAuthIfNoSession()) {
             return
+        }
+
+        enableEdgeToEdge()
+
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = false
         }
 
         setContent {
@@ -62,7 +71,7 @@ class TransferShortcutActivity : UserSessionScopeActivity() {
 private fun TransferShortcutScreen(
     finishActivity: () -> Unit,
 ) {
-    val navController = rememberNavController()
+    val navController = rememberMoneyAppNavController()
 
     LaunchedEffect(navController) {
         navController.currentBackStack.collectLatest { backStack ->
@@ -72,7 +81,7 @@ private fun TransferShortcutScreen(
         }
     }
 
-    var selectedSourceCounterpartyId: TransferCounterpartyId? by rememberSaveable {
+    var selectedSourceCounterpartyId: TransferCounterpartyId? by remember {
         mutableStateOf(null)
     }
 
@@ -121,7 +130,11 @@ private fun TransferShortcutScreen(
         )
 
         transferSheet(
-            close = navController::popBackStack,
+            onTransferDone = navController::popBackStack,
         )
     }
+
+    MoneyAppModalBottomSheetLayout(
+       moneyAppNavController = navController,
+    )
 }

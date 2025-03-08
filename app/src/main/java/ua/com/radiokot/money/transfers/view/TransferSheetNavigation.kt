@@ -19,9 +19,9 @@
 
 package ua.com.radiokot.money.transfers.view
 
+import androidx.compose.material.navigation.bottomSheet
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -81,8 +81,8 @@ data class TransferSheetRoute(
 }
 
 fun NavGraphBuilder.transferSheet(
-    close: () -> Unit,
-) = dialog<TransferSheetRoute> { entry ->
+    onTransferDone: () -> Unit,
+) = bottomSheet<TransferSheetRoute> { entry ->
     val arguments = entry.toRoute<TransferSheetRoute>()
     val viewModel = koinViewModel<TransferSheetViewModel>()
 
@@ -96,7 +96,7 @@ fun NavGraphBuilder.transferSheet(
             viewModel.events.collect { event ->
                 when (event) {
                     TransferSheetViewModel.Event.TransferDone -> {
-                        close()
+                        onTransferDone()
                     }
                 }
             }

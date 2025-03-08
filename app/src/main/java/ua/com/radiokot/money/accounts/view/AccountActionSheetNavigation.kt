@@ -19,11 +19,9 @@
 
 package ua.com.radiokot.money.accounts.view
 
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.navigation.bottomSheet
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -36,12 +34,12 @@ data class AccountActionSheetRoute(
 )
 
 fun NavGraphBuilder.accountActionSheet(
-    close: () -> Unit,
+    onBalanceUpdated: () -> Unit,
     onTransferCounterpartiesSelected: (
         source: TransferCounterparty,
         destination: TransferCounterparty,
     ) -> Unit,
-) = dialog<AccountActionSheetRoute> { entry ->
+) = bottomSheet<AccountActionSheetRoute> { entry ->
 
     val accountId = entry.toRoute<AccountActionSheetRoute>()
         .accountId
@@ -55,8 +53,8 @@ fun NavGraphBuilder.accountActionSheet(
         launch {
             viewModel.events.collect { event ->
                 when (event) {
-                    AccountActionSheetViewModel.Event.Close -> {
-                        close()
+                    AccountActionSheetViewModel.Event.BalanceUpdated -> {
+                        onBalanceUpdated()
                     }
 
                     is AccountActionSheetViewModel.Event.TransferCounterpartiesSelected -> {
@@ -72,7 +70,5 @@ fun NavGraphBuilder.accountActionSheet(
 
     AccountActionSheetRoot(
         viewModel = viewModel,
-        modifier = Modifier
-            .fillMaxWidth()
     )
 }

@@ -4,7 +4,7 @@ Could be a budget tracking app inspired by 1Money.
 
 ## Tech stack
 - Kotlin
-- Compost UI & ViewModel
+- Compost UI & Navigation
 - Flow & coroutines for concurrency
 - Koin for dependency injection
 - Supabase & PowerSync for auth, data storage and synchronization

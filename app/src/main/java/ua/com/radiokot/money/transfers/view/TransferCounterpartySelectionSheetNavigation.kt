@@ -19,9 +19,9 @@
 
 package ua.com.radiokot.money.transfers.view
 
+import androidx.compose.material.navigation.bottomSheet
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -53,7 +53,7 @@ data class TransferCounterpartySelectionSheetRoute(
 
 fun NavGraphBuilder.transferCounterpartySelectionSheet(
     onSelected: (TransferCounterparty) -> Unit,
-) = dialog<TransferCounterpartySelectionSheetRoute> { entry ->
+) = bottomSheet<TransferCounterpartySelectionSheetRoute> { entry ->
     val route = entry.toRoute<TransferCounterpartySelectionSheetRoute>()
     val viewModel = koinViewModel<TransferCounterpartySelectionSheetViewModel>()
 

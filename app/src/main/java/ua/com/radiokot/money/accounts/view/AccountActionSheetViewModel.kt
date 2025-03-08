@@ -288,20 +288,12 @@ class AccountActionSheetViewModel(
                 }
                 .onSuccess {
                     log.debug {
-                        "updateAccountBalance(): balance updated, closing"
+                        "updateAccountBalance(): balance updated, posting event"
                     }
 
-                    close()
+                    _events.tryEmit(Event.BalanceUpdated)
                 }
         }
-    }
-
-    private fun close() {
-        log.debug {
-            "close(): closing"
-        }
-
-        _events.tryEmit(Event.Close)
     }
 
     sealed interface Event {
@@ -310,6 +302,6 @@ class AccountActionSheetViewModel(
             val destination: TransferCounterparty,
         ) : Event
 
-        object Close : Event
+        object BalanceUpdated : Event
     }
 }
