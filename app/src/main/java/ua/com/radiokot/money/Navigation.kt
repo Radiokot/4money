@@ -84,6 +84,7 @@ fun MoneyAppModalBottomSheetLayout(
             topStart = 16.dp,
             topEnd = 16.dp,
         ),
+        sheetGesturesEnabled = false,
         content = {},
         modifier = Modifier
             .fillMaxSize()
