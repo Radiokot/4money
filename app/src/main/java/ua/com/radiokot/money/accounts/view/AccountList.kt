@@ -84,8 +84,7 @@ fun AccountList(
 
             is ViewAccountListItem.Account -> {
                 AccountItem(
-                    title = item.title,
-                    balance = item.balance,
+                    item = item,
                     modifier = Modifier
                         .clickable {
                             onAccountItemClicked(item)
@@ -127,6 +126,7 @@ private fun AccountListPreview() {
                         precision = 2,
                     ),
                 ),
+                isIncognito = false,
                 key = "acc1",
             ),
             ViewAccountListItem.Account(
@@ -138,6 +138,7 @@ private fun AccountListPreview() {
                         precision = 2,
                     ),
                 ),
+                isIncognito = false,
                 key = "acc2",
             ),
             ViewAccountListItem.Header(
@@ -160,6 +161,7 @@ private fun AccountListPreview() {
                         precision = 8,
                     ),
                 ),
+                isIncognito = true,
                 key = "acc3",
             ),
         ).let(::mutableStateOf),
@@ -222,8 +224,7 @@ private fun HeaderItemPreview(
 @Composable
 private fun AccountItem(
     modifier: Modifier = Modifier,
-    title: String,
-    balance: ViewAmount?,
+    item: ViewAccountListItem.Account,
 ) {
     Column(
         modifier = modifier
@@ -232,7 +233,7 @@ private fun AccountItem(
             ),
     ) {
         BasicText(
-            text = title,
+            text = item.title,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             style = TextStyle(
@@ -240,7 +241,7 @@ private fun AccountItem(
             )
         )
 
-        if (balance != null) {
+        if (!item.isIncognito) {
             Spacer(modifier = Modifier.height(4.dp))
 
             val locale = LocalConfiguration.current.locales[0]
@@ -249,7 +250,16 @@ private fun AccountItem(
             }
 
             BasicText(
-                text = amountFormat(balance),
+                text = amountFormat(item.balance),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = TextStyle(
+                    fontSize = 16.sp,
+                ),
+            )
+        } else {
+            BasicText(
+                text = item.balance.currency.symbol,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = TextStyle(
@@ -258,17 +268,4 @@ private fun AccountItem(
             )
         }
     }
-}
-
-@Composable
-@Preview(
-    widthDp = 200,
-)
-private fun AccountItemPreview(
-    @PreviewParameter(ViewAmountPreviewParameterProvider::class) balance: ViewAmount,
-) {
-    AccountItem(
-        title = "Melting cube bank – Visa 4422",
-        balance = balance,
-    )
 }

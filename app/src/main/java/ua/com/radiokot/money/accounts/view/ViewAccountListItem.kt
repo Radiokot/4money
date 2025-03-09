@@ -57,7 +57,8 @@ sealed interface ViewAccountListItem {
 
     class Account(
         val title: String,
-        val balance: ViewAmount?,
+        val balance: ViewAmount,
+        val isIncognito: Boolean,
         val source: ua.com.radiokot.money.accounts.data.Account? = null,
         override val key: Any = source?.hashCode() ?: Random.nextInt(),
     ) : ViewAccountListItem {
@@ -69,14 +70,11 @@ sealed interface ViewAccountListItem {
             isIncognito: Boolean = false,
         ) : this(
             title = account.title,
-            balance =
-            if (!isIncognito)
-                ViewAmount(
-                    value = account.balance,
-                    currency = account.currency,
-                )
-            else
-                null,
+            balance = ViewAmount(
+                value = account.balance,
+                currency = account.currency,
+            ),
+            isIncognito = isIncognito,
             source = account,
         )
 
@@ -86,6 +84,7 @@ sealed interface ViewAccountListItem {
 
             if (title != other.title) return false
             if (balance != other.balance) return false
+            if (isIncognito != other.isIncognito) return false
             if (key != other.key) return false
 
             return true
@@ -93,7 +92,8 @@ sealed interface ViewAccountListItem {
 
         override fun hashCode(): Int {
             var result = title.hashCode()
-            result = 31 * result + (balance?.hashCode() ?: 0)
+            result = 31 * result + balance.hashCode()
+            result = 31 * result + isIncognito.hashCode()
             result = 31 * result + key.hashCode()
             return result
         }

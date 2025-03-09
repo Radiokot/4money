@@ -182,6 +182,7 @@ private class TransferCounterpartySelectorPreviewParameterProvider :
                 ViewAccountListItem.Account(
                     title = "Source account",
                     balance = amount,
+                    isIncognito = false,
                 )
             ),
             categories = null,
@@ -192,6 +193,7 @@ private class TransferCounterpartySelectorPreviewParameterProvider :
                 ViewAccountListItem.Account(
                     title = "Dest account",
                     balance = amount,
+                    isIncognito = false,
                 )
             ),
             categories = null,
@@ -202,6 +204,7 @@ private class TransferCounterpartySelectorPreviewParameterProvider :
                 ViewAccountListItem.Account(
                     title = "Dest account",
                     balance = amount,
+                    isIncognito = false,
                 )
             ),
             categories = categories,
@@ -212,6 +215,7 @@ private class TransferCounterpartySelectorPreviewParameterProvider :
                 ViewAccountListItem.Account(
                     title = "Source account",
                     balance = amount,
+                    isIncognito = false,
                 )
             ),
             categories = categories,

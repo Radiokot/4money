@@ -66,6 +66,7 @@ private fun AccountsScreenPreview(
             ViewAccountListItem.Account(
                 title = "Account #1",
                 balance = amount,
+                isIncognito = false,
                 key = "1",
             )
         ).let(::mutableStateOf),

@@ -263,6 +263,7 @@ private fun AccountActionSheetPreview(
                     ViewAccountListItem.Account(
                         title = "Dest account",
                         balance = amount,
+                        isIncognito = false,
                     )
                 )
             ),
