@@ -45,7 +45,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
@@ -56,12 +55,13 @@ import java.math.BigInteger
 @Composable
 fun AccountList(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(
+        vertical = 8.dp,
+    ),
     itemList: State<List<ViewAccountListItem>>,
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
 ) = LazyColumn(
-    contentPadding = PaddingValues(
-        vertical = 8.dp,
-    ),
+    contentPadding = contentPadding,
     modifier = modifier,
 ) {
     items(

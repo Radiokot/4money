@@ -44,7 +44,7 @@ fun CategoryGrid(
     val space = 12.dp
 
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(56.dp),
+        columns = GridCells.Adaptive(64.dp),
         contentPadding = PaddingValues(
             vertical = space,
             horizontal = space,

@@ -22,6 +22,7 @@ package ua.com.radiokot.money.transfers.view
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -145,6 +146,10 @@ fun TransferCounterpartySelector(
             else -> {
                 AccountList(
                     itemList = accountItemList,
+                    contentPadding = PaddingValues(
+                        vertical = 8.dp,
+                        horizontal = 16.dp,
+                    ),
                     onAccountItemClicked = onAccountItemClicked,
                 )
             }

@@ -48,7 +48,9 @@ private fun AccountsScreen(
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
 ) = AccountList(
     modifier = modifier
-        .padding(16.dp),
+        .padding(
+            horizontal = 16.dp,
+        ),
     itemList = accountItemList,
     onAccountItemClicked = onAccountItemClicked,
 )

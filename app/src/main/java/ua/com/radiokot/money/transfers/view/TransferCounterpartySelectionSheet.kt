@@ -70,7 +70,9 @@ private fun TransferCounterpartySelectionSheet(
                 max = maxSheetHeightDp,
             )
             .background(Color.White)
-            .padding(16.dp)
+            .padding(
+                vertical = 16.dp,
+            )
     )
 }
 

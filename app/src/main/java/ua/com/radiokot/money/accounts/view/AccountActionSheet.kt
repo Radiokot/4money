@@ -133,9 +133,6 @@ private fun AccountActionSheet(
                 max = maxSheetHeightDp,
             )
             .verticalScroll(rememberScrollState())
-            .padding(
-                horizontal = 16.dp,
-            )
     ) {
         val clickableBalanceModifier = remember {
             Modifier.clickable { onBalanceClicked() }
@@ -163,6 +160,9 @@ private fun AccountActionSheet(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(
+                        horizontal = 16.dp,
+                    )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -177,6 +177,9 @@ private fun AccountActionSheet(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(
+                        horizontal = 16.dp,
+                    )
                     .then(clickableBalanceModifier)
             )
 
@@ -279,6 +282,10 @@ private fun ActionsModeContent(
     onExpenseClicked: () -> Unit,
 ) = Column(
     verticalArrangement = Arrangement.spacedBy(16.dp),
+    modifier = Modifier
+        .padding(
+            horizontal = 16.dp,
+        )
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -360,6 +367,8 @@ private fun BalanceModeContent(
 ) = Row(
     modifier = Modifier
         .padding(
+            start = 16.dp,
+            end = 16.dp,
             bottom = 24.dp,
         )
 ) {
