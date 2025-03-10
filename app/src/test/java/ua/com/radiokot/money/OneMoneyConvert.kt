@@ -23,9 +23,11 @@ import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import com.github.doyaaaaaken.kotlincsv.dsl.csvWriter
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.format.char
+import kotlinx.datetime.toInstant
 import kotlinx.io.bytestring.buildByteString
 import java.io.File
 import java.math.BigDecimal
@@ -142,7 +144,7 @@ private data class OneMoneyTransfer(
                 "Расход" -> Expense
                 "Доход" -> Income
                 "Перевод" -> Transfer
-                else -> throw IllegalArgumentException("Uknown transfer type $csvType")
+                else -> throw IllegalArgumentException("Unknown transfer type $csvType")
             }
         }
     }
@@ -345,7 +347,7 @@ private data class MoneyAppTransfer(
             // I fake them to avoid simultaneous transfers.
             val extraSeconds = synchronized(Companion) {
                 EXTRA_SECONDS_BY_DAY
-                    .getOrPut(oneMoneyTransfer.localDate) { 82700 }
+                    .getOrPut(oneMoneyTransfer.localDate) { 86300 }
                     .minus(10)
                     .also { EXTRA_SECONDS_BY_DAY[oneMoneyTransfer.localDate] = it }
             }
@@ -353,9 +355,12 @@ private data class MoneyAppTransfer(
             return MoneyAppTransfer(
                 userId = moneyAppUserId,
                 time = Instant.fromEpochSeconds(
-                    oneMoneyTransfer.localDate
-                        .atStartOfDayIn(TimeZone.UTC)
-                        .epochSeconds + extraSeconds
+                    LocalDateTime(
+                        date = oneMoneyTransfer.localDate,
+                        time = LocalTime.fromSecondOfDay(extraSeconds),
+                    )
+                        .toInstant(TimeZone.currentSystemDefault())
+                        .epochSeconds
                 ),
                 sourceId = sourceId,
                 sourceAmount = sourceAmount,
@@ -371,12 +376,12 @@ fun main() {
     val csvReader = csvReader()
     val csvWriter = csvWriter()
 
-    val oneMoneyCsvString = File("C:\\Users\\spiri\\Desktop\\1Money_09_03_2025.csv")
+    val oneMoneyCsvString = File("C:\\Users\\spiri\\Desktop\\1money-4money\\1Money.csv")
         .readText()
-    val moneyAppCurrenciesCsvString = File("C:\\Users\\spiri\\Desktop\\currencies_rows.csv")
+    val moneyAppCurrenciesCsvString = File("C:\\Users\\spiri\\Desktop\\1money-4money\\currencies_rows.csv")
         .readText()
     val moneyAppUserId = UUID.fromString("0b451d9f-527f-4d06-bd0b-d2ba9acc7719")
-    val moneyAppCsvOutputDir = File("C:\\Users\\spiri\\Desktop\\4money-import")
+    val moneyAppCsvOutputDir = File("C:\\Users\\spiri\\Desktop\\1money-4money")
         .apply(File::mkdirs)
 
     val oneMoneyCsvStringSplit = oneMoneyCsvString.split(",\n,\n")
