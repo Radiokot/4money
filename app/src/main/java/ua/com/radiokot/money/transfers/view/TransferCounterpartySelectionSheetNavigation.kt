@@ -33,13 +33,13 @@ import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 @Serializable
 data class TransferCounterpartySelectionSheetRoute(
     val isIncognito: Boolean,
-    val isForSource: Boolean,
+    val isForSource: Boolean?,
     private val alreadySelectedCounterpartyIdJson: String,
 ) {
 
     constructor(
         isIncognito: Boolean,
-        isForSource: Boolean,
+        isForSource: Boolean?,
         alreadySelectedCounterpartyId: TransferCounterpartyId?,
     ) : this(
         isIncognito = isIncognito,

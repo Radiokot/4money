@@ -39,6 +39,7 @@ import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.rememberMoneyAppNavController
+import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
 class TransferShortcutActivity : UserSessionScopeActivity() {
@@ -84,12 +85,15 @@ private fun TransferShortcutScreen(
     var selectedSourceCounterpartyId: TransferCounterpartyId? by remember {
         mutableStateOf(null)
     }
+    var selectedDestinationCounterpartyId: TransferCounterpartyId? by remember {
+        mutableStateOf(null)
+    }
 
     NavHost(
         navController = navController,
         startDestination = TransferCounterpartySelectionSheetRoute(
             isIncognito = true,
-            isForSource = true,
+            isForSource = null,
             alreadySelectedCounterpartyId = null,
         ),
         modifier = Modifier
@@ -98,33 +102,68 @@ private fun TransferShortcutScreen(
 
         transferCounterpartySelectionSheet(
             onSelected = { counterparty ->
-                if (selectedSourceCounterpartyId == null) {
-                    selectedSourceCounterpartyId = counterparty.id
+                when (counterparty) {
+                    is TransferCounterparty.Account -> {
+                        if (selectedSourceCounterpartyId == null) {
+                            selectedSourceCounterpartyId = counterparty.id
+                        } else {
+                            selectedDestinationCounterpartyId = counterparty.id
+                        }
+                    }
 
-                    navController.navigate(
-                        route = TransferCounterpartySelectionSheetRoute(
-                            isIncognito = true,
-                            isForSource = false,
-                            alreadySelectedCounterpartyId = selectedSourceCounterpartyId!!,
-                        ),
-                        navOptions = navOptions {
-                            popUpTo<TransferCounterpartySelectionSheetRoute> {
-                                inclusive = true
-                            }
-                        },
-                    )
-                } else {
-                    navController.navigate(
-                        route = TransferSheetRoute(
-                            sourceId = selectedSourceCounterpartyId!!,
-                            destinationId = counterparty.id,
-                        ),
-                        navOptions = navOptions {
-                            popUpTo<TransferCounterpartySelectionSheetRoute> {
-                                inclusive = true
-                            }
-                        },
-                    )
+                    is TransferCounterparty.Category -> {
+                        if (counterparty.category.isIncome) {
+                            selectedSourceCounterpartyId = counterparty.id
+                        } else {
+                            selectedDestinationCounterpartyId = counterparty.id
+                        }
+                    }
+                }
+
+                when {
+                    selectedSourceCounterpartyId == null -> {
+                        navController.navigate(
+                            route = TransferCounterpartySelectionSheetRoute(
+                                isIncognito = true,
+                                isForSource = true,
+                                alreadySelectedCounterpartyId = selectedDestinationCounterpartyId,
+                            ),
+                            navOptions = navOptions {
+                                popUpTo<TransferCounterpartySelectionSheetRoute> {
+                                    inclusive = true
+                                }
+                            },
+                        )
+                    }
+
+                    selectedDestinationCounterpartyId == null -> {
+                        navController.navigate(
+                            route = TransferCounterpartySelectionSheetRoute(
+                                isIncognito = true,
+                                isForSource = false,
+                                alreadySelectedCounterpartyId = selectedSourceCounterpartyId,
+                            ),
+                            navOptions = navOptions {
+                                popUpTo<TransferCounterpartySelectionSheetRoute> {
+                                    inclusive = true
+                                }
+                            },
+                        )
+                    }
+
+                    else -> {
+                        navController.navigate(
+                            route = TransferSheetRoute(
+                                sourceId = selectedSourceCounterpartyId!!,
+                                destinationId = selectedDestinationCounterpartyId!!,
+                            ),
+                            navOptions = navOptions {
+                                popUpTo<TransferCounterpartySelectionSheetRoute> {
+                                    inclusive = true
+                                }
+                            },
+                        )
+                    }
                 }
             }
         )
@@ -135,6 +174,6 @@ private fun TransferShortcutScreen(
     }
 
     MoneyAppModalBottomSheetLayout(
-       moneyAppNavController = navController,
+        moneyAppNavController = navController,
     )
 }

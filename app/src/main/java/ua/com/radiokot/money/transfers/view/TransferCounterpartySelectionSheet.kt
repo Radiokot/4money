@@ -41,10 +41,10 @@ import ua.com.radiokot.money.categories.view.ViewCategoryListItem
 @Composable
 private fun TransferCounterpartySelectionSheet(
     modifier: Modifier = Modifier,
-    isForSource: Boolean,
-    areCategoriesVisible: Boolean,
-    accountItemList: State<List<ViewAccountListItem>>,
-    categoryItemList: State<List<ViewCategoryListItem>>,
+    isForSource: Boolean?,
+    accountItemList: State<List<ViewAccountListItem>>?,
+    incomeCategoryItemList: State<List<ViewCategoryListItem>>?,
+    expenseCategoryItemList: State<List<ViewCategoryListItem>>?,
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
     onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = BoxWithConstraints(
@@ -60,8 +60,8 @@ private fun TransferCounterpartySelectionSheet(
     TransferCounterpartySelector(
         isForSource = isForSource,
         accountItemList = accountItemList,
-        categoryItemList = categoryItemList
-            .takeIf { areCategoriesVisible },
+        incomeCategoryItemList = incomeCategoryItemList,
+        expenseCategoryItemList = expenseCategoryItemList,
         onAccountItemClicked = onAccountItemClicked,
         onCategoryItemClicked = onCategoryItemClicked,
         modifier = Modifier
@@ -80,12 +80,31 @@ private fun TransferCounterpartySelectionSheet(
 fun TransferCounterpartySelectionSheetRoot(
     modifier: Modifier = Modifier,
     viewModel: TransferCounterpartySelectionSheetViewModel,
-) = TransferCounterpartySelectionSheet(
-    isForSource = viewModel.isForSource.collectAsStateWithLifecycle().value,
-    accountItemList = viewModel.accountListItems.collectAsStateWithLifecycle(),
-    categoryItemList = viewModel.categoryListItems.collectAsStateWithLifecycle(),
-    areCategoriesVisible = viewModel.areCategoriesVisible.collectAsStateWithLifecycle().value,
-    onAccountItemClicked = viewModel::onAccountItemClicked,
-    onCategoryItemClicked = viewModel::onCategoryItemClicked,
-    modifier = modifier,
-)
+) {
+    val areIncomeCategoriesVisible = viewModel.areIncomeCategoriesVisible
+        .collectAsStateWithLifecycle()
+        .value
+        ?: return
+    val areExpenseCategoriesVisible = viewModel.areExpenseCategoriesVisible
+        .collectAsStateWithLifecycle()
+        .value
+        ?: return
+
+    TransferCounterpartySelectionSheet(
+        isForSource = viewModel.isForSource.collectAsStateWithLifecycle().value,
+        accountItemList = viewModel.accountListItems.collectAsStateWithLifecycle(),
+        incomeCategoryItemList =
+        if (areIncomeCategoriesVisible)
+            viewModel.incomeCategoryListItems.collectAsStateWithLifecycle()
+        else
+            null,
+        expenseCategoryItemList =
+        if (areExpenseCategoriesVisible)
+            viewModel.expenseCategoryListItems.collectAsStateWithLifecycle()
+        else
+            null,
+        onAccountItemClicked = viewModel::onAccountItemClicked,
+        onCategoryItemClicked = viewModel::onCategoryItemClicked,
+        modifier = modifier,
+    )
+}

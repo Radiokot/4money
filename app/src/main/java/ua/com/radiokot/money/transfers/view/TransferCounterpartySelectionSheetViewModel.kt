@@ -23,9 +23,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -52,16 +54,38 @@ class TransferCounterpartySelectionSheetViewModel(
 ) : ViewModel() {
 
     private val log by lazyLogger("TransferCounterpartySelectionSheetVM")
-    private val _isIncognito: MutableSharedFlow<Boolean> =
-        MutableSharedFlow(replay = 1)
-    private val _isForSource: MutableSharedFlow<Boolean> =
-        MutableSharedFlow(replay = 1)
-    val isForSource: StateFlow<Boolean> =
-        _isForSource.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    private val _isIncognito: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isIncognito = _isIncognito.asStateFlow()
+    private val _isForSource: MutableStateFlow<Boolean?> = MutableStateFlow(null)
+    val isForSource = _isForSource.asStateFlow()
     private val alreadySelectedCounterpartyId: MutableSharedFlow<TransferCounterpartyId?> =
         MutableSharedFlow(replay = 1)
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
+
+    val areIncomeCategoriesVisible: StateFlow<Boolean?> =
+        combine(
+            isForSource,
+            alreadySelectedCounterpartyId,
+            transform = ::Pair
+        )
+            .map { (isForSource, alreadySelectedCounterpartyId) ->
+                isForSource == null
+                        || isForSource == true && alreadySelectedCounterpartyId !is TransferCounterpartyId.Category
+            }
+            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    val areExpenseCategoriesVisible: StateFlow<Boolean?> =
+        combine(
+            isForSource,
+            alreadySelectedCounterpartyId,
+            transform = ::Pair
+        )
+            .map { (isForSource, alreadySelectedCounterpartyId) ->
+                isForSource == null
+                        || isForSource == false && alreadySelectedCounterpartyId !is TransferCounterpartyId.Category
+            }
+            .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     val accountListItems: StateFlow<List<ViewAccountListItem>> =
         combine(
@@ -83,32 +107,49 @@ class TransferCounterpartySelectionSheetViewModel(
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val areCategoriesVisible: StateFlow<Boolean> =
-        alreadySelectedCounterpartyId
-            .map { alreadySelectedCounterpartyId ->
-                alreadySelectedCounterpartyId !is TransferCounterpartyId.Category
-            }
-            .stateIn(viewModelScope, SharingStarted.Lazily, false)
-
-    val categoryListItems: StateFlow<List<ViewCategoryListItem>> =
+    val incomeCategoryListItems: StateFlow<List<ViewCategoryListItem>> =
         combine(
-            _isForSource,
-            areCategoriesVisible,
+            areIncomeCategoriesVisible,
             _isIncognito,
-            transform = ::Triple
+            transform = ::Pair
         )
-            .flatMapLatest { (isForSource, areCategoriesVisible, isIncognito) ->
-                if (areCategoriesVisible)
+            .flatMapLatest { (areCategoriesVisible, isIncognito) ->
+                if (areCategoriesVisible == true)
                     if (!isIncognito)
                         viewCategoryItemListFlow(
-                            isIncome = isForSource,
+                            isIncome = true,
                             period = HistoryPeriod.Month(),
                             categoryRepository = categoryRepository,
                             historyStatsRepository = historyStatsRepository,
                         )
                     else
                         viewCategoryItemListFlow(
-                            isIncome = isForSource,
+                            isIncome = true,
+                            categoryRepository = categoryRepository,
+                        )
+                else
+                    flowOf(emptyList())
+            }
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val expenseCategoryListItems: StateFlow<List<ViewCategoryListItem>> =
+        combine(
+            areExpenseCategoriesVisible,
+            _isIncognito,
+            transform = ::Pair
+        )
+            .flatMapLatest { (areCategoriesVisible, isIncognito) ->
+                if (areCategoriesVisible == true)
+                    if (!isIncognito)
+                        viewCategoryItemListFlow(
+                            isIncome = false,
+                            period = HistoryPeriod.Month(),
+                            categoryRepository = categoryRepository,
+                            historyStatsRepository = historyStatsRepository,
+                        )
+                    else
+                        viewCategoryItemListFlow(
+                            isIncome = false,
                             categoryRepository = categoryRepository,
                         )
                 else
@@ -118,7 +159,7 @@ class TransferCounterpartySelectionSheetViewModel(
 
     fun setParameters(
         isIncognito: Boolean,
-        isForSource: Boolean,
+        isForSource: Boolean?,
         alreadySelectedCounterpartyId: TransferCounterpartyId?,
     ) {
         log.debug {

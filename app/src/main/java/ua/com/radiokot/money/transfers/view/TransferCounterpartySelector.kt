@@ -42,110 +42,158 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.view.AccountList
 import ua.com.radiokot.money.accounts.view.ViewAccountListItem
 import ua.com.radiokot.money.categories.view.CategoryGrid
 import ua.com.radiokot.money.categories.view.ViewCategoryListItem
-import ua.com.radiokot.money.categories.view.ViewCategoryListItemPreviewParameterProvider
-import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 
 @Composable
 fun TransferCounterpartySelector(
     modifier: Modifier = Modifier,
-    isForSource: Boolean,
-    accountItemList: State<List<ViewAccountListItem>>,
-    categoryItemList: State<List<ViewCategoryListItem>>?,
+    isForSource: Boolean?,
+    accountItemList: State<List<ViewAccountListItem>>?,
+    incomeCategoryItemList: State<List<ViewCategoryListItem>>?,
+    expenseCategoryItemList: State<List<ViewCategoryListItem>>?,
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
     onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = Column(
     modifier = modifier
 ) {
-    val showCategories = categoryItemList != null
+    val pages: List<Page> = remember(
+        accountItemList,
+        incomeCategoryItemList,
+        expenseCategoryItemList,
+    ) {
+        buildList {
+            if (incomeCategoryItemList != null) {
+                add(Page.Income)
+            }
+            if (expenseCategoryItemList != null) {
+                add(Page.Expense)
+            }
+            if (accountItemList != null) {
+                add(Page.Account)
+            }
+        }
+    }
     val pagerState = rememberPagerState(
-        pageCount = { if (showCategories) 2 else 1 },
+        initialPage = pages.indexOf(Page.Expense).coerceAtLeast(0),
+        pageCount = pages::size,
     )
     val coroutineScope = rememberCoroutineScope()
-    val scrollToFirstPageOnClickModifier = remember {
-        Modifier.clickable {
-            coroutineScope.launch {
-                pagerState.animateScrollToPage(
-                    page = 0,
-                )
-            }
-        }
-    }
-    val scrollToLastPageOnClickModifier = remember {
-        Modifier.clickable {
-            coroutineScope.launch {
-                pagerState.animateScrollToPage(
-                    page = pagerState.pageCount - 1,
-                )
-            }
-        }
-    }
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        if (showCategories) {
+        if (Page.Income in pages) {
+            val pageIndex = pages.indexOf(Page.Income)
             BasicText(
-                text = if (isForSource) "Income" else "Expense",
+                text = "Income",
                 style = TextStyle(
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
                     textDecoration =
-                    if (pagerState.currentPage == 0)
+                    if (pagerState.currentPage == pageIndex)
                         TextDecoration.Underline
                     else
                         null,
                 ),
                 modifier = Modifier
-                    .then(scrollToFirstPageOnClickModifier)
+                    .clickable {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(
+                                page = pageIndex,
+                            )
+                        }
+                    }
             )
         }
 
-        BasicText(
-            text = if (isForSource) "From account" else "To account",
-            style = TextStyle(
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold,
-                textDecoration =
-                if (pagerState.currentPage == 1 || !showCategories)
-                    TextDecoration.Underline
+        if (Page.Expense in pages) {
+            val pageIndex = pages.indexOf(Page.Expense)
+            BasicText(
+                text = "Expense",
+                style = TextStyle(
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    textDecoration =
+                    if (pagerState.currentPage == pageIndex)
+                        TextDecoration.Underline
+                    else
+                        null,
+                ),
+                modifier = Modifier
+                    .clickable {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(
+                                page = pageIndex,
+                            )
+                        }
+                    }
+            )
+        }
+
+        if (Page.Account in pages) {
+            val pageIndex = pages.indexOf(Page.Account)
+            BasicText(
+                text =
+                if (isForSource == false)
+                    "To account"
                 else
-                    null,
-            ),
-            modifier = Modifier
-                .then(scrollToLastPageOnClickModifier)
-        )
+                    "From account",
+                style = TextStyle(
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    textDecoration =
+                    if (pagerState.currentPage == pageIndex)
+                        TextDecoration.Underline
+                    else
+                        null,
+                ),
+                modifier = Modifier
+                    .clickable {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(
+                                page = pageIndex,
+                            )
+                        }
+                    }
+            )
+        }
     }
 
     Spacer(modifier = Modifier.height(12.dp))
 
     HorizontalPager(
         state = pagerState,
-        beyondViewportPageCount = 1,
+        beyondViewportPageCount = pages.size - 1,
         verticalAlignment = Alignment.Top,
+        key = Int::unaryPlus,
         modifier = Modifier
             .fillMaxWidth()
-    ) { page ->
-        when {
-            page == 0 && showCategories -> {
+    ) { pageIndex ->
+        when (pages[pageIndex]) {
+            Page.Income -> {
                 CategoryGrid(
-                    itemList = categoryItemList!!,
+                    itemList = incomeCategoryItemList!!,
                     onItemClicked = onCategoryItemClicked,
                 )
             }
 
-            else -> {
+            Page.Expense -> {
+                CategoryGrid(
+                    itemList = expenseCategoryItemList!!,
+                    onItemClicked = onCategoryItemClicked,
+                )
+            }
+
+            Page.Account -> {
                 AccountList(
-                    itemList = accountItemList,
+                    itemList = accountItemList!!,
                     contentPadding = PaddingValues(
                         vertical = 8.dp,
                         horizontal = 16.dp,
@@ -157,74 +205,20 @@ fun TransferCounterpartySelector(
     }
 }
 
+private enum class Page {
+    Income,
+    Expense,
+    Account,
+}
+
 @Composable
 @Preview
 private fun TransferCounterpartySelectorPreview(
-    @PreviewParameter(TransferCounterpartySelectorPreviewParameterProvider::class) parameter: TransferCounterpartySelectorPreviewParameterProvider.Parameter,
 ) = TransferCounterpartySelector(
-    isForSource = parameter.isForSource,
-    accountItemList = parameter.accounts.let(::mutableStateOf),
-    categoryItemList = parameter.categories?.let(::mutableStateOf),
+    isForSource = null,
+    accountItemList = emptyList<ViewAccountListItem>().let(::mutableStateOf),
+    incomeCategoryItemList = emptyList<ViewCategoryListItem>().let(::mutableStateOf),
+    expenseCategoryItemList = emptyList<ViewCategoryListItem>().let(::mutableStateOf),
     onAccountItemClicked = {},
     onCategoryItemClicked = {},
 )
-
-private class TransferCounterpartySelectorPreviewParameterProvider :
-    PreviewParameterProvider<TransferCounterpartySelectorPreviewParameterProvider.Parameter> {
-
-    val amount = ViewAmountPreviewParameterProvider().values.first()
-    val categories = ViewCategoryListItemPreviewParameterProvider().values.toList()
-
-    override val values: Sequence<Parameter> = sequenceOf(
-        Parameter(
-            isForSource = true,
-            accounts = listOf(
-                ViewAccountListItem.Account(
-                    title = "Source account",
-                    balance = amount,
-                    isIncognito = false,
-                )
-            ),
-            categories = null,
-        ),
-        Parameter(
-            isForSource = false,
-            accounts = listOf(
-                ViewAccountListItem.Account(
-                    title = "Dest account",
-                    balance = amount,
-                    isIncognito = false,
-                )
-            ),
-            categories = null,
-        ),
-        Parameter(
-            isForSource = false,
-            accounts = listOf(
-                ViewAccountListItem.Account(
-                    title = "Dest account",
-                    balance = amount,
-                    isIncognito = false,
-                )
-            ),
-            categories = categories,
-        ),
-        Parameter(
-            isForSource = true,
-            accounts = listOf(
-                ViewAccountListItem.Account(
-                    title = "Source account",
-                    balance = amount,
-                    isIncognito = false,
-                )
-            ),
-            categories = categories,
-        )
-    )
-
-    class Parameter(
-        val isForSource: Boolean,
-        val accounts: List<ViewAccountListItem>,
-        val categories: List<ViewCategoryListItem>?,
-    )
-}

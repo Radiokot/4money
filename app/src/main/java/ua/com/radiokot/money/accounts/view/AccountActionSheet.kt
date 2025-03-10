@@ -207,13 +207,19 @@ private fun AccountActionSheet(
             else ->
                 TransferCounterpartyContent(
                     accountItemList = transferCounterpartyAccountItemList,
-                    onAccountItemClicked = onTransferCounterpartyAccountItemClicked,
-                    incomeCategoryItemList = transferCounterpartyIncomeCategoryItemList,
-                    expenseCategoryItemList = transferCounterpartyExpenseCategoryItemList,
-                    onCategoryItemClicked = onTransferCounterpartyCategoryItemClicked,
                     isIncome = mode == ViewAccountActionSheetMode.IncomeSource,
-                    showCategories = mode == ViewAccountActionSheetMode.IncomeSource ||
-                            mode == ViewAccountActionSheetMode.ExpenseDestination,
+                    incomeCategoryItemList =
+                    if (mode == ViewAccountActionSheetMode.IncomeSource)
+                        transferCounterpartyIncomeCategoryItemList
+                    else
+                        null,
+                    expenseCategoryItemList =
+                    if (mode == ViewAccountActionSheetMode.ExpenseDestination)
+                        transferCounterpartyExpenseCategoryItemList
+                    else
+                        null,
+                    onAccountItemClicked = onTransferCounterpartyAccountItemClicked,
+                    onCategoryItemClicked = onTransferCounterpartyCategoryItemClicked,
                     modifier = Modifier
                         .layout { measurable, constraints ->
                             val placeable = measurable.measure(
@@ -410,24 +416,16 @@ private fun BalanceModeContent(
 private fun TransferCounterpartyContent(
     modifier: Modifier = Modifier,
     isIncome: Boolean,
-    showCategories: Boolean,
     accountItemList: State<List<ViewAccountListItem>>,
-    incomeCategoryItemList: State<List<ViewCategoryListItem>>,
-    expenseCategoryItemList: State<List<ViewCategoryListItem>>,
+    incomeCategoryItemList: State<List<ViewCategoryListItem>>?,
+    expenseCategoryItemList: State<List<ViewCategoryListItem>>?,
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
     onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = TransferCounterpartySelector(
     isForSource = isIncome,
     accountItemList = accountItemList,
-    categoryItemList =
-    if (showCategories) {
-        if (isIncome)
-            incomeCategoryItemList
-        else
-            expenseCategoryItemList
-    } else {
-        null
-    },
+    incomeCategoryItemList = incomeCategoryItemList,
+    expenseCategoryItemList = expenseCategoryItemList,
     onAccountItemClicked = onAccountItemClicked,
     onCategoryItemClicked = onCategoryItemClicked,
     modifier = modifier,
