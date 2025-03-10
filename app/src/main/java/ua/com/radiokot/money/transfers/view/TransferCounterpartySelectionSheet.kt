@@ -89,10 +89,18 @@ fun TransferCounterpartySelectionSheetRoot(
         .collectAsStateWithLifecycle()
         .value
         ?: return
+    val areAccountsVisible = viewModel.areAccountsVisible
+        .collectAsStateWithLifecycle()
+        .value
+        ?: return
 
     TransferCounterpartySelectionSheet(
         isForSource = viewModel.isForSource.collectAsStateWithLifecycle().value,
-        accountItemList = viewModel.accountListItems.collectAsStateWithLifecycle(),
+        accountItemList =
+        if (areAccountsVisible)
+            viewModel.accountListItems.collectAsStateWithLifecycle()
+        else
+            null,
         incomeCategoryItemList =
         if (areIncomeCategoriesVisible)
             viewModel.incomeCategoryListItems.collectAsStateWithLifecycle()

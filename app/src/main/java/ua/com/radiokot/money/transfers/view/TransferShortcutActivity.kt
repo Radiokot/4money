@@ -60,6 +60,16 @@ class TransferShortcutActivity : UserSessionScopeActivity() {
         setContent {
             UserSessionScope {
                 TransferShortcutScreen(
+                    action = when (intent.action) {
+                        "ua.com.radiokot.money.actions.ADD_INCOME" ->
+                            Action.AddIncome
+
+                        "ua.com.radiokot.money.actions.ADD_EXPENSE" ->
+                            Action.AddExpense
+
+                        else ->
+                            Action.AddOperation
+                    },
                     finishActivity = ::finish,
                 )
             }
@@ -67,9 +77,16 @@ class TransferShortcutActivity : UserSessionScopeActivity() {
     }
 }
 
+private enum class Action {
+    AddOperation,
+    AddIncome,
+    AddExpense,
+}
+
 @SuppressLint("RestrictedApi")
 @Composable
 private fun TransferShortcutScreen(
+    action: Action,
     finishActivity: () -> Unit,
 ) {
     val navController = rememberMoneyAppNavController()
@@ -93,7 +110,12 @@ private fun TransferShortcutScreen(
         navController = navController,
         startDestination = TransferCounterpartySelectionSheetRoute(
             isIncognito = true,
-            isForSource = null,
+            isForSource = when (action) {
+                Action.AddOperation -> null
+                Action.AddIncome -> true
+                Action.AddExpense -> false
+            },
+            showAccounts = action == Action.AddOperation,
             alreadySelectedCounterpartyId = null,
         ),
         modifier = Modifier
@@ -126,6 +148,7 @@ private fun TransferShortcutScreen(
                             route = TransferCounterpartySelectionSheetRoute(
                                 isIncognito = true,
                                 isForSource = true,
+                                showAccounts = true,
                                 alreadySelectedCounterpartyId = selectedDestinationCounterpartyId,
                             ),
                             navOptions = navOptions {
@@ -141,6 +164,7 @@ private fun TransferShortcutScreen(
                             route = TransferCounterpartySelectionSheetRoute(
                                 isIncognito = true,
                                 isForSource = false,
+                                showAccounts = true,
                                 alreadySelectedCounterpartyId = selectedSourceCounterpartyId,
                             ),
                             navOptions = navOptions {

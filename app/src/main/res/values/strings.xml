@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">4Money</string>
     <string name="template_category_subcategory">%1$s (%2$s)</string>
-    <string name="log_transfer_shortcut_title">Log transfer</string>
+    <string name="add_operation_shortcut_title">Add operation</string>
+    <string name="add_income_shortcut_title">Add income</string>
+    <string name="add_expense_shortcut_title">Add expense</string>
 </resources>

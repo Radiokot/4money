@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -58,6 +59,8 @@ class TransferCounterpartySelectionSheetViewModel(
     val isIncognito = _isIncognito.asStateFlow()
     private val _isForSource: MutableStateFlow<Boolean?> = MutableStateFlow(null)
     val isForSource = _isForSource.asStateFlow()
+    private val _areAccountsVisible: MutableStateFlow<Boolean?> = MutableStateFlow(null)
+    val areAccountsVisible = _areAccountsVisible.asStateFlow()
     private val alreadySelectedCounterpartyId: MutableSharedFlow<TransferCounterpartyId?> =
         MutableSharedFlow(replay = 1)
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
@@ -88,22 +91,29 @@ class TransferCounterpartySelectionSheetViewModel(
             .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     val accountListItems: StateFlow<List<ViewAccountListItem>> =
-        combine(
-            accountRepository.getAccountsFlow(),
-            alreadySelectedCounterpartyId,
-            _isIncognito,
-            transform = ::Triple
-        )
-            .map { (accounts, alreadySelectedCounterpartyId, isIncognito) ->
-                accounts
-                    .sortedBy(Account::title)
-                    .filterNot { it.id == alreadySelectedCounterpartyId.toString() }
-                    .map { account ->
-                        ViewAccountListItem.Account(
-                            account = account,
-                            isIncognito = isIncognito,
-                        )
-                    }
+        areAccountsVisible
+            .filterNotNull()
+            .flatMapLatest { areAccountsVisible ->
+                if (areAccountsVisible)
+                    combine(
+                        accountRepository.getAccountsFlow(),
+                        alreadySelectedCounterpartyId,
+                        _isIncognito,
+                        transform = ::Triple
+                    )
+                        .map { (accounts, alreadySelectedCounterpartyId, isIncognito) ->
+                            accounts
+                                .sortedBy(Account::title)
+                                .filterNot { it.id == alreadySelectedCounterpartyId.toString() }
+                                .map { account ->
+                                    ViewAccountListItem.Account(
+                                        account = account,
+                                        isIncognito = isIncognito,
+                                    )
+                                }
+                        }
+                else
+                    flowOf(emptyList())
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -160,17 +170,20 @@ class TransferCounterpartySelectionSheetViewModel(
     fun setParameters(
         isIncognito: Boolean,
         isForSource: Boolean?,
+        showAccounts: Boolean,
         alreadySelectedCounterpartyId: TransferCounterpartyId?,
     ) {
         log.debug {
             "setParameters(): setting:" +
                     "\nisIncognito=$isIncognito" +
                     "\nisForSource=$isForSource" +
+                    "\nshowAccounts=$showAccounts" +
                     "\nalreadySelectedCounterpartyId=$alreadySelectedCounterpartyId"
         }
 
         this._isIncognito.tryEmit(isIncognito)
         this._isForSource.tryEmit(isForSource)
+        this._areAccountsVisible.tryEmit(showAccounts)
         this.alreadySelectedCounterpartyId.tryEmit(alreadySelectedCounterpartyId)
     }
 
