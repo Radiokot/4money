@@ -241,9 +241,9 @@ private fun AccountItem(
             )
         )
 
+        Spacer(modifier = Modifier.height(4.dp))
+        
         if (!item.isIncognito) {
-            Spacer(modifier = Modifier.height(4.dp))
-
             val locale = LocalConfiguration.current.locales[0]
             val amountFormat = remember(locale) {
                 ViewAmountFormat(locale)

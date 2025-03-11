@@ -51,6 +51,7 @@ fun viewCategoryItemListFlow(
                 ViewCategoryListItem(
                     category = category,
                     amount = amountByCategoryId[category.id] ?: BigInteger.ZERO,
+                    isIncognito = false,
                 )
             }
         }
@@ -68,7 +69,8 @@ fun viewCategoryItemListFlow(
             filteredCategories.map { category ->
                 ViewCategoryListItem(
                     category = category,
-                    amount = null,
+                    amount = BigInteger.ZERO,
+                    isIncognito = true,
                 )
             }
         }

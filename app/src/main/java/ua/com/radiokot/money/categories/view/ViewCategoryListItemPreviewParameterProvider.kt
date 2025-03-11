@@ -36,7 +36,8 @@ class ViewCategoryListItemPreviewParameterProvider :
                         symbol = "$",
                         precision = 2,
                     )
-                )
+                ),
+                isIncognito = false,
             ),
             ViewCategoryListItem(
                 title = "Gifts",
@@ -46,7 +47,8 @@ class ViewCategoryListItemPreviewParameterProvider :
                         symbol = "$",
                         precision = 2,
                     )
-                )
+                ),
+                isIncognito = true,
             ),
         )
 
@@ -60,7 +62,8 @@ class ViewCategoryListItemPreviewParameterProvider :
                         symbol = "a",
                         precision = 0,
                     )
-                )
+                ),
+                isIncognito = false,
             ),
             ViewCategoryListItem(
                 title = "😽 Грушá",
@@ -70,7 +73,8 @@ class ViewCategoryListItemPreviewParameterProvider :
                         symbol = "c",
                         precision = 0,
                     )
-                )
+                ),
+                isIncognito = false,
             ),
             ViewCategoryListItem(
                 title = "Something long with long name",
@@ -80,7 +84,8 @@ class ViewCategoryListItemPreviewParameterProvider :
                         symbol = "b",
                         precision = 0,
                     )
-                )
+                ),
+                isIncognito = true,
             )
         )
 

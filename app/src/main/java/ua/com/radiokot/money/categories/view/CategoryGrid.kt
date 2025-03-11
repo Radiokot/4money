@@ -137,9 +137,9 @@ private fun CategoryListItem(
         )
     }
 
-    if (amount != null) {
-        Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(4.dp))
 
+    if (!item.isIncognito) {
         val locale = LocalConfiguration.current.locales[0]
         val amountFormat = remember(locale) {
             ViewAmountFormat(locale)
@@ -147,6 +147,17 @@ private fun CategoryListItem(
 
         BasicText(
             text = amountFormat(amount),
+            style = TextStyle(
+                textAlign = TextAlign.Center,
+            ),
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+    } else {
+        BasicText(
+            text = amount.currency.symbol,
             style = TextStyle(
                 textAlign = TextAlign.Center,
             ),

@@ -28,24 +28,23 @@ import kotlin.random.Random
 @Immutable
 class ViewCategoryListItem(
     val title: String,
-    val amount: ViewAmount?,
+    val amount: ViewAmount,
+    val isIncognito: Boolean,
     val source: Category? = null,
     val key: Any = source?.hashCode() ?: Random.nextInt(),
 ) {
 
     constructor(
         category: Category,
-        amount: BigInteger?,
+        amount: BigInteger,
+        isIncognito: Boolean,
     ) : this(
         title = category.title,
-        amount =
-        if (amount != null)
-            ViewAmount(
-                value = amount,
-                currency = category.currency,
-            )
-        else
-            null,
+        amount = ViewAmount(
+            value = amount,
+            currency = category.currency,
+        ),
+        isIncognito = isIncognito,
         source = category,
     )
 
