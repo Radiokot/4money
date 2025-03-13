@@ -30,10 +30,12 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.view.ViewAccountListItem
@@ -196,13 +198,8 @@ class TransferCounterpartySelectionSheetViewModel(
             return
         }
 
-        log.debug {
-            "onAccountItemClicked(): posting selected:" +
-                    "\naccount=$account"
-        }
-
-        _events.tryEmit(
-            Event.CounterpartySelected(TransferCounterparty.Account(account))
+        postResult(
+            selected = TransferCounterparty.Account(account),
         )
     }
 
@@ -215,20 +212,34 @@ class TransferCounterpartySelectionSheetViewModel(
             return
         }
 
+        postResult(
+            selected = TransferCounterparty.Category(category),
+        )
+    }
+
+    private fun postResult(selected: TransferCounterparty) = viewModelScope.launch {
+        val result = TransferCounterpartySelectionResult(
+            otherSelectedCounterpartyId = this@TransferCounterpartySelectionSheetViewModel
+                .alreadySelectedCounterpartyId
+                .first(),
+            isSelectedAsSource = isForSource.value
+                ?: (selected is TransferCounterparty.Account
+                        || selected is TransferCounterparty.Category && selected.category.isIncome),
+            selectedCounterparty = selected,
+        )
+
         log.debug {
-            "onCategoryItemClicked(): posting selected:" +
-                    "\ncategory=$category"
+            "postResult(): posting:" +
+                    "\nresult=$result"
         }
 
-        _events.tryEmit(
-            Event.CounterpartySelected(TransferCounterparty.Category(category))
-        )
+        _events.tryEmit(Event.Selected(result))
     }
 
     sealed interface Event {
 
-        class CounterpartySelected(
-            val counterparty: TransferCounterparty,
+        class Selected(
+            val result: TransferCounterpartySelectionResult,
         ) : Event
     }
 }

@@ -156,10 +156,29 @@ private fun HomeScreen(
             )
 
             transferCounterpartySelectionSheet(
-                onSelected = { counterparty ->
-                    // TODO determine if it is a source or destination and open transfer.
-                    // Perhaps return Selection(source, destination)
-                    // instead of just a single counterparty.
+                onSelected = { (selected, isSelectedAsSource, otherSelectedId) ->
+                    if (otherSelectedId == null) {
+                        return@transferCounterpartySelectionSheet
+                    }
+
+                    navController.navigate(
+                        route =
+                        if (isSelectedAsSource)
+                            TransferSheetRoute(
+                                sourceId = selected.id,
+                                destinationId = otherSelectedId,
+                            )
+                        else
+                            TransferSheetRoute(
+                                sourceId = otherSelectedId,
+                                destinationId = selected.id,
+                            ),
+                        navOptions = navOptions {
+                            popUpTo<TransferCounterpartySelectionSheetRoute> {
+                                inclusive = true
+                            }
+                        },
+                    )
                 }
             )
         }

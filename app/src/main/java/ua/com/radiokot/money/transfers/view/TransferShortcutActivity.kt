@@ -26,10 +26,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
@@ -39,8 +35,6 @@ import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.rememberMoneyAppNavController
-import ua.com.radiokot.money.transfers.data.TransferCounterparty
-import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
 class TransferShortcutActivity : UserSessionScopeActivity() {
 
@@ -99,13 +93,6 @@ private fun TransferShortcutScreen(
         }
     }
 
-    var selectedSourceCounterpartyId: TransferCounterpartyId? by remember {
-        mutableStateOf(null)
-    }
-    var selectedDestinationCounterpartyId: TransferCounterpartyId? by remember {
-        mutableStateOf(null)
-    }
-
     NavHost(
         navController = navController,
         startDestination = TransferCounterpartySelectionSheetRoute(
@@ -121,73 +108,41 @@ private fun TransferShortcutScreen(
         modifier = Modifier
             .fillMaxSize()
     ) {
-
         transferCounterpartySelectionSheet(
-            onSelected = { counterparty ->
-                when (counterparty) {
-                    is TransferCounterparty.Account -> {
-                        if (selectedSourceCounterpartyId == null) {
-                            selectedSourceCounterpartyId = counterparty.id
-                        } else {
-                            selectedDestinationCounterpartyId = counterparty.id
-                        }
-                    }
-
-                    is TransferCounterparty.Category -> {
-                        if (counterparty.category.isIncome) {
-                            selectedSourceCounterpartyId = counterparty.id
-                        } else {
-                            selectedDestinationCounterpartyId = counterparty.id
-                        }
-                    }
-                }
-
-                when {
-                    selectedSourceCounterpartyId == null -> {
-                        navController.navigate(
-                            route = TransferCounterpartySelectionSheetRoute(
-                                isIncognito = true,
-                                isForSource = true,
-                                showAccounts = true,
-                                alreadySelectedCounterpartyId = selectedDestinationCounterpartyId,
+            onSelected = { (selected, isSelectedAsSource, otherSelectedId) ->
+                if (otherSelectedId == null) {
+                    navController.navigate(
+                        route = TransferCounterpartySelectionSheetRoute(
+                            isIncognito = true,
+                            isForSource = !isSelectedAsSource,
+                            showAccounts = true,
+                            alreadySelectedCounterpartyId = selected.id,
+                        ),
+                        navOptions = navOptions {
+                            popUpTo<TransferCounterpartySelectionSheetRoute> {
+                                inclusive = true
+                            }
+                        },
+                    )
+                } else {
+                    navController.navigate(
+                        route =
+                        if (isSelectedAsSource)
+                            TransferSheetRoute(
+                                sourceId = selected.id,
+                                destinationId = otherSelectedId,
+                            )
+                        else
+                            TransferSheetRoute(
+                                sourceId = otherSelectedId,
+                                destinationId = selected.id,
                             ),
-                            navOptions = navOptions {
-                                popUpTo<TransferCounterpartySelectionSheetRoute> {
-                                    inclusive = true
-                                }
-                            },
-                        )
-                    }
-
-                    selectedDestinationCounterpartyId == null -> {
-                        navController.navigate(
-                            route = TransferCounterpartySelectionSheetRoute(
-                                isIncognito = true,
-                                isForSource = false,
-                                showAccounts = true,
-                                alreadySelectedCounterpartyId = selectedSourceCounterpartyId,
-                            ),
-                            navOptions = navOptions {
-                                popUpTo<TransferCounterpartySelectionSheetRoute> {
-                                    inclusive = true
-                                }
-                            },
-                        )
-                    }
-
-                    else -> {
-                        navController.navigate(
-                            route = TransferSheetRoute(
-                                sourceId = selectedSourceCounterpartyId!!,
-                                destinationId = selectedDestinationCounterpartyId!!,
-                            ),
-                            navOptions = navOptions {
-                                popUpTo<TransferCounterpartySelectionSheetRoute> {
-                                    inclusive = true
-                                }
-                            },
-                        )
-                    }
+                        navOptions = navOptions {
+                            popUpTo<TransferCounterpartySelectionSheetRoute> {
+                                inclusive = true
+                            }
+                        },
+                    )
                 }
             }
         )

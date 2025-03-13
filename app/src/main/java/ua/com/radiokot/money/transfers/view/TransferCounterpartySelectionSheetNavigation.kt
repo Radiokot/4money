@@ -54,8 +54,14 @@ data class TransferCounterpartySelectionSheetRoute(
         get() = Json.decodeFromString(alreadySelectedCounterpartyIdJson)
 }
 
+data class TransferCounterpartySelectionResult(
+    val selectedCounterparty: TransferCounterparty,
+    val isSelectedAsSource: Boolean,
+    val otherSelectedCounterpartyId: TransferCounterpartyId?,
+)
+
 fun NavGraphBuilder.transferCounterpartySelectionSheet(
-    onSelected: (TransferCounterparty) -> Unit,
+    onSelected: (TransferCounterpartySelectionResult) -> Unit,
 ) = bottomSheet<TransferCounterpartySelectionSheetRoute> { entry ->
     val route = entry.toRoute<TransferCounterpartySelectionSheetRoute>()
     val viewModel = koinViewModel<TransferCounterpartySelectionSheetViewModel>()
@@ -71,8 +77,8 @@ fun NavGraphBuilder.transferCounterpartySelectionSheet(
         launch {
             viewModel.events.collect { event ->
                 when (event) {
-                    is TransferCounterpartySelectionSheetViewModel.Event.CounterpartySelected -> {
-                        onSelected(event.counterparty)
+                    is TransferCounterpartySelectionSheetViewModel.Event.Selected -> {
+                        onSelected(event.result)
                     }
                 }
             }
