@@ -35,6 +35,7 @@ import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.rememberMoneyAppNavController
+import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
 class TransferShortcutActivity : UserSessionScopeActivity() {
 
@@ -115,8 +116,8 @@ private fun TransferShortcutScreen(
                         route = TransferCounterpartySelectionSheetRoute(
                             isIncognito = true,
                             isForSource = !isSelectedAsSource,
-                            showAccounts = true,
                             alreadySelectedCounterpartyId = selected.id,
+                            showCategories = !(selected.id is TransferCounterpartyId.Account && isSelectedAsSource),
                         ),
                         navOptions = navOptions {
                             popUpTo<TransferCounterpartySelectionSheetRoute> {

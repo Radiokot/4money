@@ -50,7 +50,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
@@ -60,11 +59,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ua.com.radiokot.money.categories.view.ViewCategoryListItem
 import ua.com.radiokot.money.categories.view.ViewCategoryListItemPreviewParameterProvider
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.stableClickable
-import ua.com.radiokot.money.transfers.view.TransferCounterpartySelector
 import ua.com.radiokot.money.uikit.AmountInputField
 import ua.com.radiokot.money.uikit.TextButton
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
@@ -88,11 +85,6 @@ fun AccountActionSheetRoot(
         onTransferClicked = viewModel::onTransferClicked,
         onIncomeClicked = viewModel::onIncomeClicked,
         onExpenseClicked = viewModel::onExpenseClicked,
-        transferCounterpartyAccountItemList = viewModel.otherAccountListItems.collectAsState(),
-        onTransferCounterpartyAccountItemClicked = viewModel::onTransferCounterpartyAccountItemClicked,
-        transferCounterpartyIncomeCategoryItemList = viewModel.incomeCategoryItemList.collectAsState(),
-        transferCounterpartyExpenseCategoryItemList = viewModel.expenseCategoryItemList.collectAsState(),
-        onTransferCounterpartyCategoryItemClicked = viewModel::onTransferCounterpartyCategoryItemClicked,
         modifier = modifier,
     )
 }
@@ -109,11 +101,6 @@ private fun AccountActionSheet(
     onTransferClicked: () -> Unit,
     onIncomeClicked: () -> Unit,
     onExpenseClicked: () -> Unit,
-    transferCounterpartyAccountItemList: State<List<ViewAccountListItem>>,
-    onTransferCounterpartyAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
-    transferCounterpartyIncomeCategoryItemList: State<List<ViewCategoryListItem>>,
-    transferCounterpartyExpenseCategoryItemList: State<List<ViewCategoryListItem>>,
-    onTransferCounterpartyCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = BoxWithConstraints(
     modifier = modifier
         .background(Color(0xFFF9FBE7))
@@ -202,35 +189,6 @@ private fun AccountActionSheet(
                     onNewBalanceInputValueParsed = onNewBalanceInputValueParsed,
                     onBalanceInputSubmit = onBalanceInputSubmit,
                 )
-
-            else ->
-                TransferCounterpartyContent(
-                    accountItemList = transferCounterpartyAccountItemList,
-                    isIncome = mode == ViewAccountActionSheetMode.IncomeSource,
-                    incomeCategoryItemList =
-                    if (mode == ViewAccountActionSheetMode.IncomeSource)
-                        transferCounterpartyIncomeCategoryItemList
-                    else
-                        null,
-                    expenseCategoryItemList =
-                    if (mode == ViewAccountActionSheetMode.ExpenseDestination)
-                        transferCounterpartyExpenseCategoryItemList
-                    else
-                        null,
-                    onAccountItemClicked = onTransferCounterpartyAccountItemClicked,
-                    onCategoryItemClicked = onTransferCounterpartyCategoryItemClicked,
-                    modifier = Modifier
-                        .layout { measurable, constraints ->
-                            val placeable = measurable.measure(
-                                constraints.copy(
-                                    maxHeight = (maxSheetHeightDp.roundToPx() - headerHeight),
-                                )
-                            )
-                            layout(placeable.width, placeable.height) {
-                                placeable.place(0, 0)
-                            }
-                        }
-                )
         }
     }
 }
@@ -263,19 +221,6 @@ private fun AccountActionSheetPreview(
             onTransferClicked = {},
             onIncomeClicked = {},
             onExpenseClicked = {},
-            transferCounterpartyAccountItemList = mutableStateOf(
-                listOf(
-                    ViewAccountListItem.Account(
-                        title = "Dest account",
-                        balance = amount,
-                        isIncognito = false,
-                    )
-                )
-            ),
-            transferCounterpartyExpenseCategoryItemList = categories.let(::mutableStateOf),
-            transferCounterpartyIncomeCategoryItemList = categories.let(::mutableStateOf),
-            onTransferCounterpartyAccountItemClicked = {},
-            onTransferCounterpartyCategoryItemClicked = {},
         )
     }
 }
@@ -408,23 +353,3 @@ private fun BalanceModeContent(
             )
     )
 }
-
-@Composable
-private fun TransferCounterpartyContent(
-    modifier: Modifier = Modifier,
-    isIncome: Boolean,
-    accountItemList: State<List<ViewAccountListItem>>,
-    incomeCategoryItemList: State<List<ViewCategoryListItem>>?,
-    expenseCategoryItemList: State<List<ViewCategoryListItem>>?,
-    onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
-    onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
-) = TransferCounterpartySelector(
-    isForSource = isIncome,
-    accountItemList = accountItemList,
-    incomeCategoryItemList = incomeCategoryItemList,
-    expenseCategoryItemList = expenseCategoryItemList,
-    onAccountItemClicked = onAccountItemClicked,
-    onCategoryItemClicked = onCategoryItemClicked,
-    modifier = modifier,
-)
-

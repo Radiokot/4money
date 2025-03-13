@@ -26,7 +26,7 @@ import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
-import ua.com.radiokot.money.transfers.data.TransferCounterparty
+import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
 @Serializable
 data class AccountActionSheetRoute(
@@ -35,10 +35,9 @@ data class AccountActionSheetRoute(
 
 fun NavGraphBuilder.accountActionSheet(
     onBalanceUpdated: () -> Unit,
-    onTransferCounterpartiesSelected: (
-        source: TransferCounterparty,
-        destination: TransferCounterparty,
-    ) -> Unit,
+    onIncomeClicked: (accountId: TransferCounterpartyId.Account) -> Unit,
+    onExpenseClicked: (accountId: TransferCounterpartyId.Account) -> Unit,
+    onTransferClicked: (accountId: TransferCounterpartyId.Account) -> Unit,
 ) = bottomSheet<AccountActionSheetRoute> { entry ->
 
     val accountId = entry.toRoute<AccountActionSheetRoute>()
@@ -57,11 +56,16 @@ fun NavGraphBuilder.accountActionSheet(
                         onBalanceUpdated()
                     }
 
-                    is AccountActionSheetViewModel.Event.TransferCounterpartiesSelected -> {
-                        onTransferCounterpartiesSelected(
-                            event.source,
-                            event.destination,
-                        )
+                    is AccountActionSheetViewModel.Event.ExpenseClicked -> {
+                        onIncomeClicked(event.accountId)
+                    }
+
+                    is AccountActionSheetViewModel.Event.IncomeClicked -> {
+                        onExpenseClicked(event.accountId)
+                    }
+
+                    is AccountActionSheetViewModel.Event.TransferClicked -> {
+                        onTransferClicked(event.accountId)
                     }
                 }
             }

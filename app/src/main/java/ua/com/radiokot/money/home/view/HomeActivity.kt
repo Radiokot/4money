@@ -123,9 +123,7 @@ private fun HomeScreen(
                 onCategoryClicked = { category ->
                     navController.navigate(
                         route = TransferCounterpartySelectionSheetRoute(
-                            isIncognito = false,
                             isForSource = !category.isIncome,
-                            showAccounts = true,
                             alreadySelectedCounterpartyId = TransferCounterparty.Category(category).id,
                         )
                     )
@@ -136,11 +134,11 @@ private fun HomeScreen(
 
             accountActionSheet(
                 onBalanceUpdated = navController::navigateUp,
-                onTransferCounterpartiesSelected = { source, destination ->
+                onExpenseClicked = { accountId ->
                     navController.navigate(
-                        route = TransferSheetRoute(
-                            sourceId = source.id,
-                            destinationId = destination.id,
+                        route = TransferCounterpartySelectionSheetRoute(
+                            isForSource = true,
+                            alreadySelectedCounterpartyId = accountId,
                         ),
                         navOptions = navOptions {
                             popUpTo<AccountActionSheetRoute> {
@@ -148,7 +146,34 @@ private fun HomeScreen(
                             }
                         },
                     )
-                }
+                },
+                onIncomeClicked = { accountId ->
+                    navController.navigate(
+                        route = TransferCounterpartySelectionSheetRoute(
+                            isForSource = false,
+                            alreadySelectedCounterpartyId = accountId,
+                        ),
+                        navOptions = navOptions {
+                            popUpTo<AccountActionSheetRoute> {
+                                inclusive = true
+                            }
+                        },
+                    )
+                },
+                onTransferClicked = { accountId ->
+                    navController.navigate(
+                        route = TransferCounterpartySelectionSheetRoute(
+                            isForSource = false,
+                            alreadySelectedCounterpartyId = accountId,
+                            showCategories = false,
+                        ),
+                        navOptions = navOptions {
+                            popUpTo<AccountActionSheetRoute> {
+                                inclusive = true
+                            }
+                        },
+                    )
+                },
             )
 
             transferSheet(

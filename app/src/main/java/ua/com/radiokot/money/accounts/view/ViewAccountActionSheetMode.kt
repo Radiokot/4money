@@ -6,8 +6,5 @@ import androidx.compose.runtime.Immutable
 enum class ViewAccountActionSheetMode {
     Actions,
     Balance,
-    TransferDestination,
-    IncomeSource,
-    ExpenseDestination,
     ;
 }

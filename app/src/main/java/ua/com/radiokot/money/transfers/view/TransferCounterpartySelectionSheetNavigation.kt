@@ -31,22 +31,25 @@ import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
 @Serializable
-data class TransferCounterpartySelectionSheetRoute(
+class TransferCounterpartySelectionSheetRoute(
     val isIncognito: Boolean,
     val isForSource: Boolean?,
     val showAccounts: Boolean,
+    val showCategories: Boolean,
     private val alreadySelectedCounterpartyIdJson: String,
 ) {
 
     constructor(
-        isIncognito: Boolean,
         isForSource: Boolean?,
-        showAccounts: Boolean,
         alreadySelectedCounterpartyId: TransferCounterpartyId?,
+        isIncognito: Boolean = false,
+        showAccounts: Boolean = true,
+        showCategories: Boolean = true,
     ) : this(
         isIncognito = isIncognito,
         isForSource = isForSource,
         showAccounts = showAccounts,
+        showCategories = showCategories,
         alreadySelectedCounterpartyIdJson = Json.encodeToString(alreadySelectedCounterpartyId),
     )
 
@@ -71,6 +74,7 @@ fun NavGraphBuilder.transferCounterpartySelectionSheet(
             isIncognito = route.isIncognito,
             isForSource = route.isForSource,
             showAccounts = route.showAccounts,
+            showCategories = route.showCategories,
             alreadySelectedCounterpartyId = route.alreadySelectedCounterpartyId,
         )
 

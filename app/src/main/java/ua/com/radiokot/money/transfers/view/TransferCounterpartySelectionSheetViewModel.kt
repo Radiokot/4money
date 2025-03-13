@@ -63,6 +63,8 @@ class TransferCounterpartySelectionSheetViewModel(
     val isForSource = _isForSource.asStateFlow()
     private val _areAccountsVisible: MutableStateFlow<Boolean?> = MutableStateFlow(null)
     val areAccountsVisible = _areAccountsVisible.asStateFlow()
+    private val areCategoriesVisible: MutableSharedFlow<Boolean> =
+        MutableSharedFlow(replay = 1)
     private val alreadySelectedCounterpartyId: MutableSharedFlow<TransferCounterpartyId?> =
         MutableSharedFlow(replay = 1)
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
@@ -70,25 +72,33 @@ class TransferCounterpartySelectionSheetViewModel(
 
     val areIncomeCategoriesVisible: StateFlow<Boolean?> =
         combine(
+            areCategoriesVisible,
             isForSource,
             alreadySelectedCounterpartyId,
-            transform = ::Pair
+            transform = ::Triple
         )
-            .map { (isForSource, alreadySelectedCounterpartyId) ->
-                isForSource == null
-                        || isForSource == true && alreadySelectedCounterpartyId !is TransferCounterpartyId.Category
+            .map { (areCategoriesVisible, isForSource, alreadySelectedCounterpartyId) ->
+                areCategoriesVisible && (
+                        isForSource == null
+                                || (isForSource == true
+                                && alreadySelectedCounterpartyId !is TransferCounterpartyId.Category)
+                        )
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     val areExpenseCategoriesVisible: StateFlow<Boolean?> =
         combine(
+            areCategoriesVisible,
             isForSource,
             alreadySelectedCounterpartyId,
-            transform = ::Pair
+            transform = ::Triple
         )
-            .map { (isForSource, alreadySelectedCounterpartyId) ->
-                isForSource == null
-                        || isForSource == false && alreadySelectedCounterpartyId !is TransferCounterpartyId.Category
+            .map { (areCategoriesVisible, isForSource, alreadySelectedCounterpartyId) ->
+                areCategoriesVisible && (
+                        isForSource == null
+                                || (isForSource == false
+                                && alreadySelectedCounterpartyId !is TransferCounterpartyId.Category)
+                        )
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
@@ -173,19 +183,22 @@ class TransferCounterpartySelectionSheetViewModel(
         isIncognito: Boolean,
         isForSource: Boolean?,
         showAccounts: Boolean,
+        showCategories: Boolean,
         alreadySelectedCounterpartyId: TransferCounterpartyId?,
     ) {
         log.debug {
             "setParameters(): setting:" +
-                    "\nisIncognito=$isIncognito" +
-                    "\nisForSource=$isForSource" +
-                    "\nshowAccounts=$showAccounts" +
+                    "\nisIncognito=$isIncognito," +
+                    "\nisForSource=$isForSource," +
+                    "\nshowAccounts=$showAccounts," +
+                    "\nshowCategories=$showCategories," +
                     "\nalreadySelectedCounterpartyId=$alreadySelectedCounterpartyId"
         }
 
         this._isIncognito.tryEmit(isIncognito)
         this._isForSource.tryEmit(isForSource)
         this._areAccountsVisible.tryEmit(showAccounts)
+        this.areCategoriesVisible.tryEmit(showCategories)
         this.alreadySelectedCounterpartyId.tryEmit(alreadySelectedCounterpartyId)
     }
 
