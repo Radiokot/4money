@@ -19,7 +19,8 @@
 
 package ua.com.radiokot.money
 
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.AnimationConstants
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,7 +45,7 @@ fun rememberMoneyAppNavController(): NavHostController {
         initialValue = ModalBottomSheetValue.Hidden,
         skipHalfExpanded = true,
         // The default spec causes significant delay 🤦🏻.
-        animationSpec = spring(),
+        animationSpec = tween(durationMillis = AnimationConstants.DefaultDurationMillis / 2),
     )
 
     val bottomSheetNavigator = remember(bottomSheetState) {
