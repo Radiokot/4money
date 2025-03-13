@@ -131,7 +131,14 @@ private data class OneMoneyTransfer(
     val categoryAndSubcategory: Pair<String, String?> =
         CATEGORY_REGEX
             .matchEntire(toAccountCategoryTitle)!!
-            .run { groupValues[1] to groupValues.getOrNull(2)?.takeIf(String::isNotBlank) }
+            .run {
+                Pair(
+                    groupValues[1].trim(),
+                    groupValues.getOrNull(2)
+                        ?.trim()
+                        ?.takeIf(String::isNotEmpty)
+                )
+            }
 
     enum class Type {
         Income,
@@ -378,8 +385,9 @@ fun main() {
 
     val oneMoneyCsvString = File("C:\\Users\\spiri\\Desktop\\1money-4money\\1Money.csv")
         .readText()
-    val moneyAppCurrenciesCsvString = File("C:\\Users\\spiri\\Desktop\\1money-4money\\currencies_rows.csv")
-        .readText()
+    val moneyAppCurrenciesCsvString =
+        File("C:\\Users\\spiri\\Desktop\\1money-4money\\currencies_rows.csv")
+            .readText()
     val moneyAppUserId = UUID.fromString("0b451d9f-527f-4d06-bd0b-d2ba9acc7719")
     val moneyAppCsvOutputDir = File("C:\\Users\\spiri\\Desktop\\1money-4money")
         .apply(File::mkdirs)
