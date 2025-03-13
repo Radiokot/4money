@@ -57,9 +57,12 @@ import ua.com.radiokot.money.categories.view.CategoriesScreenRoute
 import ua.com.radiokot.money.categories.view.categoriesScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
 import ua.com.radiokot.money.stableClickable
+import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.history.view.ActivityScreenRoute
 import ua.com.radiokot.money.transfers.history.view.activityScreen
+import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetRoute
 import ua.com.radiokot.money.transfers.view.TransferSheetRoute
+import ua.com.radiokot.money.transfers.view.transferCounterpartySelectionSheet
 import ua.com.radiokot.money.transfers.view.transferSheet
 import ua.com.radiokot.money.uikit.TextButton
 
@@ -117,7 +120,16 @@ private fun HomeScreen(
             )
 
             categoriesScreen(
-                onCategoryClicked = {},
+                onCategoryClicked = { category ->
+                    navController.navigate(
+                        route = TransferCounterpartySelectionSheetRoute(
+                            isIncognito = false,
+                            isForSource = !category.isIncome,
+                            showAccounts = true,
+                            alreadySelectedCounterpartyId = TransferCounterparty.Category(category).id,
+                        )
+                    )
+                },
             )
 
             activityScreen()
@@ -141,6 +153,14 @@ private fun HomeScreen(
 
             transferSheet(
                 onTransferDone = navController::navigateUp,
+            )
+
+            transferCounterpartySelectionSheet(
+                onSelected = { counterparty ->
+                    // TODO determine if it is a source or destination and open transfer.
+                    // Perhaps return Selection(source, destination)
+                    // instead of just a single counterparty.
+                }
             )
         }
 
