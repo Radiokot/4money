@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
+import ua.com.radiokot.money.stableClickable
 
 @Composable
 fun CategoryGrid(
@@ -58,13 +59,13 @@ fun CategoryGrid(
             items = itemList.value,
             key = ViewCategoryListItem::key,
         ) { item ->
-            val clickableItemModifier = remember(item.key) {
-                Modifier.clickable { onItemClicked(item) }
-            }
-
             CategoryListItem(
                 item = item,
-                modifier = clickableItemModifier
+                modifier = Modifier
+                    .stableClickable(
+                        key = item.key,
+                        onClick = { onItemClicked(item) },
+                    )
             )
         }
     }

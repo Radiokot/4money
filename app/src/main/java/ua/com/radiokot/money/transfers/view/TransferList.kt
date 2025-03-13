@@ -19,7 +19,6 @@
 
 package ua.com.radiokot.money.transfers.view
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -57,6 +56,7 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
+import ua.com.radiokot.money.stableClickable
 
 @Composable
 fun TransferList(
@@ -107,18 +107,17 @@ fun TransferList(
                 }
 
                 is ViewTransferListItem.Transfer -> {
-                    val clickableItemModifier = remember(item.key) {
-                        Modifier.clickable { onTransferItemClicked(item) }
-                    }
-
                     TransferItem(
                         item = item,
                         amountFormat = amountFormat,
                         modifier = Modifier
+                            .stableClickable(
+                                key = item.key,
+                                onClick = { onTransferItemClicked(item) },
+                            )
                             .padding(
                                 bottom = 16.dp
                             )
-                            .then(clickableItemModifier),
                     )
                 }
 

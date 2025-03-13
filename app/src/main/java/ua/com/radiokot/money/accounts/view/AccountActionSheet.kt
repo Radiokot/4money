@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import ua.com.radiokot.money.categories.view.ViewCategoryListItem
 import ua.com.radiokot.money.categories.view.ViewCategoryListItemPreviewParameterProvider
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
+import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.transfers.view.TransferCounterpartySelector
 import ua.com.radiokot.money.uikit.AmountInputField
 import ua.com.radiokot.money.uikit.TextButton
@@ -134,10 +135,6 @@ private fun AccountActionSheet(
             )
             .verticalScroll(rememberScrollState())
     ) {
-        val clickableBalanceModifier = remember {
-            Modifier.clickable { onBalanceClicked() }
-        }
-
         val locale = LocalConfiguration.current.locales[0]
         val amountFormat = remember(locale) {
             ViewAmountFormat(locale)
@@ -180,7 +177,9 @@ private fun AccountActionSheet(
                     .padding(
                         horizontal = 16.dp,
                     )
-                    .then(clickableBalanceModifier)
+                    .stableClickable(
+                        onClick = onBalanceClicked,
+                    )
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -401,14 +400,12 @@ private fun BalanceModeContent(
 
     Spacer(modifier = Modifier.width(24.dp))
 
-    val clickableBalanceSaveModifier = remember {
-        Modifier.clickable { onBalanceInputSubmit() }
-    }
-
     TextButton(
         text = "Save",
         modifier = Modifier
-            .then(clickableBalanceSaveModifier)
+            .stableClickable(
+                onClick = onBalanceInputSubmit,
+            )
     )
 }
 

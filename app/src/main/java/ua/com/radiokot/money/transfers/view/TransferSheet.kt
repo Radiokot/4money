@@ -20,7 +20,6 @@
 package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -66,6 +65,7 @@ import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItemPreviewParameterProvider
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
+import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.uikit.AmountInputField
 import ua.com.radiokot.money.uikit.TextButton
 import java.math.BigInteger
@@ -293,15 +293,13 @@ private fun TransferSheet(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        val clickableSaveModifier = remember {
-            Modifier.clickable { onSaveClicked() }
-        }
-
         TextButton(
             text = "Save",
             isEnabled = isSaveEnabled.value,
             modifier = Modifier
-                .then(clickableSaveModifier)
+                .stableClickable(
+                    onClick = onSaveClicked,
+                )
                 .fillMaxWidth()
                 .padding(
                     horizontal = 16.dp,

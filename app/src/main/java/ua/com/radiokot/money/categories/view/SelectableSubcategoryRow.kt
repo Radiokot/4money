@@ -41,6 +41,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import ua.com.radiokot.money.stableClickable
 
 @Composable
 fun SelectableSubcategoryRow(
@@ -64,14 +65,13 @@ fun SelectableSubcategoryRow(
             items = itemList.value,
             key = ViewSelectableSubcategoryListItem::key,
         ) { item ->
-
-            val clickableItemModifier = remember(item.key) {
-                Modifier.clickable { onItemClicked(item) }
-            }
-
             SelectableSubcategoryListItem(
                 item = item,
-                modifier = clickableItemModifier
+                modifier = Modifier
+                    .stableClickable(
+                        key = item.key,
+                        onClick = { onItemClicked(item) },
+                    )
             )
         }
     }

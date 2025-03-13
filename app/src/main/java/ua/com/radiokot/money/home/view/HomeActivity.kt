@@ -27,7 +27,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,7 +40,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -58,6 +56,7 @@ import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.categories.view.CategoriesScreenRoute
 import ua.com.radiokot.money.categories.view.categoriesScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
+import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.transfers.history.view.ActivityScreenRoute
 import ua.com.radiokot.money.transfers.history.view.activityScreen
 import ua.com.radiokot.money.transfers.view.TransferSheetRoute
@@ -194,34 +193,28 @@ private fun BottomNavigation(
             vertical = 12.dp,
         )
 ) {
-    val clickableAccountsModifier = remember {
-        Modifier.clickable { onAccountsClicked() }
-    }
-
     TextButton(
         text = "👛 Accounts",
         modifier = Modifier
-            .then(clickableAccountsModifier),
+            .stableClickable(
+                onClick = onAccountsClicked,
+            )
     )
-
-    val clickableCategoriesModifier = remember {
-        Modifier.clickable { onCategoriesClicked() }
-    }
 
     TextButton(
         text = "📊 Categories",
         modifier = Modifier
-            .then(clickableCategoriesModifier)
+            .stableClickable(
+                onClick = onCategoriesClicked,
+            )
     )
-
-    val clickableActivityModifier = remember {
-        Modifier.clickable { onActivityClicked() }
-    }
 
     TextButton(
         text = "📃 Activity",
         modifier = Modifier
-            .then(clickableActivityModifier)
+            .stableClickable(
+                onClick = onActivityClicked,
+            )
     )
 }
 

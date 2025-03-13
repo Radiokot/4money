@@ -54,6 +54,7 @@ class ViewCategoryListItem(
 
         if (title != other.title) return false
         if (amount != other.amount) return false
+        if (isIncognito != other.isIncognito) return false
         if (key != other.key) return false
 
         return true
@@ -62,6 +63,7 @@ class ViewCategoryListItem(
     override fun hashCode(): Int {
         var result = title.hashCode()
         result = 31 * result + amount.hashCode()
+        result = 31 * result + isIncognito.hashCode()
         result = 31 * result + key.hashCode()
         return result
     }

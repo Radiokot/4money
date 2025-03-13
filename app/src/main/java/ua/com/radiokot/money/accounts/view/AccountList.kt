@@ -19,7 +19,6 @@
 
 package ua.com.radiokot.money.accounts.view
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -49,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
+import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 import java.math.BigInteger
 
@@ -86,9 +86,10 @@ fun AccountList(
                 AccountItem(
                     item = item,
                     modifier = Modifier
-                        .clickable {
-                            onAccountItemClicked(item)
-                        }
+                        .stableClickable(
+                            key = item.key,
+                            onClick = { onAccountItemClicked(item) }
+                        )
                         .padding(
                             vertical = 8.dp,
                         )
@@ -242,7 +243,7 @@ private fun AccountItem(
         )
 
         Spacer(modifier = Modifier.height(4.dp))
-        
+
         if (!item.isIncognito) {
             val locale = LocalConfiguration.current.locales[0]
             val amountFormat = remember(locale) {

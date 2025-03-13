@@ -20,7 +20,6 @@
 package ua.com.radiokot.money.categories.view
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,13 +27,13 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ua.com.radiokot.money.stableClickable
 
 @Composable
 fun CategoriesScreenRoot(
@@ -63,10 +62,6 @@ private fun CategoriesScreen(
             vertical = 16.dp,
         )
 ) {
-    val clickableTitleModifier = remember {
-        Modifier.clickable { onTitleClicked() }
-    }
-
     BasicText(
         text =
         if (isIncome.value)
@@ -78,7 +73,9 @@ private fun CategoriesScreen(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .then(clickableTitleModifier)
+            .stableClickable(
+                onClick = onTitleClicked,
+            )
     )
 
     CategoryGrid(
