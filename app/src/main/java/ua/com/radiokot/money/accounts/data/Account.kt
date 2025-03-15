@@ -27,8 +27,13 @@ class Account(
     val title: String,
     val balance: BigInteger,
     val currency: Currency,
+    val position: Double,
     val id: String = UUID.randomUUID().toString(),
-) {
+) : Comparable<Account> {
+
+    override fun compareTo(other: Account): Int =
+        other.position.compareTo(this.position)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Account) return false

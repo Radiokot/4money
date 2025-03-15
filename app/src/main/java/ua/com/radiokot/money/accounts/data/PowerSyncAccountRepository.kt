@@ -33,14 +33,14 @@ class PowerSyncAccountRepository(
     override suspend fun getAccounts(): List<Account> =
         database
             .getAll(
-                sql = SELECT,
+                sql = SELECT_ALL,
                 mapper = ::toAccount,
             )
 
     override fun getAccountsFlow(): Flow<List<Account>> =
         database
             .watch(
-                sql = SELECT,
+                sql = SELECT_ALL,
                 mapper = ::toAccount,
             )
 
@@ -86,6 +86,7 @@ class PowerSyncAccountRepository(
             id = getString(++column)!!,
             title = getString(++column)!!.trim(),
             balance = BigInteger(getString(++column)!!.trim()),
+            position = getDouble(++column)!!,
             currency = currency,
         )
     }
@@ -93,7 +94,10 @@ class PowerSyncAccountRepository(
 
 private const val SELECT =
     "SELECT currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
-            "accounts.id, accounts.title, accounts.balance, accounts.currency_id " +
+            "accounts.id, accounts.title, accounts.balance, accounts.position, accounts.currency_id " +
             "FROM accounts, currencies " +
             "WHERE accounts.currency_id = currencies.id"
+
+private const val SELECT_ALL = "$SELECT ORDER BY accounts.position DESC"
+
 private const val SELECT_BY_ID = "$SELECT AND accounts.id = ?"

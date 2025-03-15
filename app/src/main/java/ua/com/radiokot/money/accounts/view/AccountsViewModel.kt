@@ -52,37 +52,39 @@ class AccountsViewModel(
             .combine(currencyRepository.getCurrencyPairMapFlow(), ::Pair)
             .map { (accounts, currencyPairMap) ->
                 val mainCurrency = currencyRepository.getCurrencies()
-                    .first { it.code == "USD" }
-
-                val totalInMainCurrency = accounts.fold(BigInteger.ZERO) { sum, account ->
-                    sum + (
-                            currencyPairMap
-                                .get(
-                                    base = account.currency,
-                                    quote = mainCurrency,
-                                )
-                                ?.baseToQuote(account.balance)
-                                ?: BigInteger.ZERO
-                            )
-                }
+                    // It may not be available yet.
+                    .firstOrNull { it.code == "USD" }
 
                 buildList {
-                    add(
-                        ViewAccountListItem.Header(
-                            title = "Accounts",
-                            amount = ViewAmount(
-                                value = totalInMainCurrency,
-                                currency = mainCurrency,
-                            ),
-                            key = "total",
-                        )
-                    )
+                    if (mainCurrency != null) {
+                        val totalInMainCurrency: BigInteger =
+                            accounts.fold(BigInteger.ZERO) { sum, account ->
+                                sum + (
+                                        currencyPairMap
+                                            .get(
+                                                base = account.currency,
+                                                quote = mainCurrency,
+                                            )
+                                            ?.baseToQuote(account.balance)
+                                            ?: BigInteger.ZERO
+                                        )
+                            }
 
-                    accounts
-                        .sortedBy(Account::title)
-                        .forEach { account ->
-                            add(ViewAccountListItem.Account(account))
-                        }
+                        add(
+                            ViewAccountListItem.Header(
+                                title = "Accounts",
+                                amount = ViewAmount(
+                                    value = totalInMainCurrency,
+                                    currency = mainCurrency,
+                                ),
+                                key = "total",
+                            )
+                        )
+                    }
+
+                    accounts.forEach { account ->
+                        add(ViewAccountListItem.Account(account))
+                    }
                 }
             }
             .flowOn(Dispatchers.Default)

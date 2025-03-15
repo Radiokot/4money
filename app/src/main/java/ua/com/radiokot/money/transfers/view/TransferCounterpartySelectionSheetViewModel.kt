@@ -36,7 +36,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.view.ViewAccountListItem
 import ua.com.radiokot.money.categories.data.CategoryRepository
@@ -114,15 +113,20 @@ class TransferCounterpartySelectionSheetViewModel(
                         transform = ::Triple
                     )
                         .map { (accounts, alreadySelectedCounterpartyId, isIncognito) ->
-                            accounts
-                                .sortedBy(Account::title)
-                                .filterNot { it.id == alreadySelectedCounterpartyId.toString() }
-                                .map { account ->
-                                    ViewAccountListItem.Account(
-                                        account = account,
-                                        isIncognito = isIncognito,
-                                    )
+                            val alreadySelectedCounterpartyIdString =
+                                alreadySelectedCounterpartyId.toString()
+                            buildList {
+                                accounts.forEach { account ->
+                                    if (account.id != alreadySelectedCounterpartyIdString) {
+                                        add(
+                                            ViewAccountListItem.Account(
+                                                account = account,
+                                                isIncognito = isIncognito,
+                                            )
+                                        )
+                                    }
                                 }
+                            }
                         }
                 else
                     flowOf(emptyList())

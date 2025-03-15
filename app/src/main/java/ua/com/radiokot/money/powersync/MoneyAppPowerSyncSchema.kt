@@ -40,6 +40,7 @@ fun moneyAppPowerSyncSchema() = Schema(
                 Column.text("title"),
                 Column.text("balance"),
                 Column.text("currency_id"),
+                Column.real("position"),
             )
         ),
         Table(
