@@ -21,14 +21,22 @@ package ua.com.radiokot.money.accounts.data
 
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.mapNotNull
 import ua.com.radiokot.money.currency.data.Currency
+import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.util.SternBrocotTreeSearch
 import java.math.BigInteger
 
 class PowerSyncAccountRepository(
     private val database: PowerSyncDatabase,
 ) : AccountRepository {
+
+    private val log by lazyLogger("PowerSyncAccountRepo")
 
     override suspend fun getAccounts(): List<Account> =
         database
@@ -37,12 +45,24 @@ class PowerSyncAccountRepository(
                 mapper = ::toAccount,
             )
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getAccountsFlow(): Flow<List<Account>> =
         database
             .watch(
                 sql = SELECT_ALL,
                 mapper = ::toAccount,
             )
+            .flatMapLatest { accounts ->
+                val distinctPositions = accounts.mapTo(mutableSetOf(), Account::position)
+                if (distinctPositions.isNotEmpty()
+                    && (distinctPositions.size < accounts.size || distinctPositions.any { it <= 0 })
+                ) {
+                    healPositions(accounts)
+                    emptyFlow()
+                } else {
+                    flowOf(accounts)
+                }
+            }
 
     override suspend fun getAccount(accountId: String): Account? =
         database
@@ -70,6 +90,39 @@ class PowerSyncAccountRepository(
                     accountId,
                 )
             )
+    }
+
+    private suspend fun healPositions(
+        accounts: List<Account>,
+    ) {
+
+        log.debug {
+            "healPositions(): re-assigning positions:" +
+                    "\ncount=${accounts.size}"
+        }
+
+        // Assign a new position to each account preserving the current order.
+        val params = mutableListOf<String>()
+        val sql = buildString {
+            append("UPDATE accounts SET position = CASE ")
+            val sternBrocotTree = SternBrocotTreeSearch()
+            accounts.indices.reversed().forEach { accountIndex ->
+                append("\nWHEN id = ? THEN ? ")
+                params += accounts[accountIndex].id
+                params += sternBrocotTree.value.toString()
+                sternBrocotTree.goRight()
+            }
+            append("END")
+        }
+
+        database.execute(
+            sql = sql,
+            parameters = params,
+        )
+
+        log.debug {
+            "healPositions(): re-assigned successfully"
+        }
     }
 
     private fun toAccount(sqlCursor: SqlCursor): Account = sqlCursor.run {
