@@ -113,6 +113,7 @@ dependencies {
     }
 
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinSerializationJsonVersion"
+    implementation "sh.calvin.reorderable:reorderable:2.4.3"
 
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$junitExtVersion"

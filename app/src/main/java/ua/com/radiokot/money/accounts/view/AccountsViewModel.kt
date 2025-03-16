@@ -109,6 +109,36 @@ class AccountsViewModel(
         )
     }
 
+    fun onAccountItemMoved(
+        itemToMove: ViewAccountListItem.Account,
+        itemToPlaceBefore: ViewAccountListItem.Account?,
+    ) {
+        val accountToMove = itemToMove.source
+        val accountToPlaceBefore = itemToPlaceBefore?.source
+        if (accountToMove == null || accountToPlaceBefore == null && itemToPlaceBefore != null) {
+            log.warn {
+                "onAccountItemMoved(): missing account source(s)"
+            }
+            return
+        }
+
+        val accountListItems = accountListItems.value
+        if (itemToPlaceBefore == accountListItems.getOrNull(accountListItems.indexOf(itemToMove) + 1)) {
+            log.debug {
+                "onAccountItemMoved(): ignoring as position didn't change"
+            }
+            return
+        }
+
+        log.debug {
+            "onAccountItemMoved(): moving:" +
+                    "\naccount=$accountToMove," +
+                    "\nbefore=$accountToPlaceBefore"
+        }
+
+        // TODO fockin' move
+    }
+
     sealed interface Event {
 
         class AccountClicked(

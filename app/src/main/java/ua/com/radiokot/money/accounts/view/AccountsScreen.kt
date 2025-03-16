@@ -38,6 +38,7 @@ fun AccountsScreenRoot(
 ) = AccountsScreen(
     accountItemList = viewModel.accountListItems.collectAsState(),
     onAccountItemClicked = viewModel::onAccountItemClicked,
+    onAccountItemMoved = viewModel::onAccountItemMoved,
     modifier = modifier,
 )
 
@@ -46,13 +47,18 @@ private fun AccountsScreen(
     modifier: Modifier = Modifier,
     accountItemList: State<List<ViewAccountListItem>>,
     onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
-) = AccountList(
+    onAccountItemMoved: (
+        itemToMove: ViewAccountListItem.Account,
+        itemToPlaceBefore: ViewAccountListItem.Account?,
+    ) -> Unit,
+) = MovableAccountList(
     modifier = modifier
         .padding(
             horizontal = 16.dp,
         ),
     itemList = accountItemList,
     onAccountItemClicked = onAccountItemClicked,
+    onAccountItemMoved = onAccountItemMoved,
 )
 
 @Composable
@@ -71,5 +77,6 @@ private fun AccountsScreenPreview(
             )
         ).let(::mutableStateOf),
         onAccountItemClicked = {},
+        onAccountItemMoved = { _, _ -> },
     )
 }

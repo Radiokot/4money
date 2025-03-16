@@ -30,13 +30,19 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +51,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
@@ -95,6 +103,123 @@ fun AccountList(
                         )
                         .fillMaxWidth()
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun MovableAccountList(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(
+        vertical = 8.dp,
+    ),
+    itemList: State<List<ViewAccountListItem>>,
+    onAccountItemClicked: (ViewAccountListItem.Account) -> Unit,
+    onAccountItemMoved: (
+        itemToMove: ViewAccountListItem.Account,
+        itemToPlaceBefore: ViewAccountListItem.Account?,
+    ) -> Unit,
+) {
+    val movableItemList = remember {
+        mutableStateListOf<ViewAccountListItem>()
+    }
+    var itemToMove by remember {
+        mutableStateOf<ViewAccountListItem.Account?>(null)
+    }
+    var itemToPlaceBefore by remember {
+        mutableStateOf<ViewAccountListItem.Account?>(null)
+    }
+    val currentItemList = remember {
+        derivedStateOf {
+            movableItemList
+                .takeIf(List<*>::isNotEmpty)
+                ?: itemList.value
+        }
+    }
+    val listState = rememberLazyListState()
+    val reorderableState = rememberReorderableLazyListState(
+        lazyListState = listState,
+        onMove = { from, to ->
+            if (itemToMove == null) {
+                itemToMove = movableItemList[from.index]
+                        as? ViewAccountListItem.Account
+            }
+            movableItemList.add(
+                to.index,
+                movableItemList.removeAt(from.index),
+            )
+            itemToPlaceBefore = movableItemList.getOrNull(to.index + 1)
+                    as? ViewAccountListItem.Account
+        },
+    )
+
+    LazyColumn(
+        contentPadding = contentPadding,
+        state = listState,
+        modifier = modifier,
+    ) {
+        items(
+            items = currentItemList.value,
+            key = ViewAccountListItem::key,
+            contentType = ViewAccountListItem::type,
+        ) { item ->
+            when (item) {
+                is ViewAccountListItem.Header -> {
+                    HeaderItem(
+                        title = item.title,
+                        amount = item.amount,
+                        modifier = Modifier
+                            .padding(
+                                vertical = 8.dp,
+                            )
+                            .fillMaxWidth()
+                    )
+                }
+
+                is ViewAccountListItem.Account -> {
+                    ReorderableItem(
+                        state = reorderableState,
+                        key = item.key,
+                        modifier = Modifier
+                            .stableClickable(
+                                key = item.key,
+                                onClick = { onAccountItemClicked(item) }
+                            )
+                    ) { isDragging ->
+                        AccountItem(
+                            item = item,
+                            modifier = Modifier
+                                .longPressDraggableHandle(
+                                    onDragStarted = {
+                                        movableItemList.addAll(itemList.value)
+                                        itemToMove = null
+                                    },
+                                    onDragStopped = {
+                                        movableItemList.clear()
+
+                                        if (itemToMove != null) {
+                                            onAccountItemMoved(
+                                                itemToMove!!,
+                                                itemToPlaceBefore,
+                                            )
+                                        }
+                                    },
+                                )
+                                .graphicsLayer {
+                                    alpha =
+                                        if (isDragging)
+                                            0.7f
+                                        else
+                                            1f
+                                }
+                                .padding(
+                                    vertical = 8.dp,
+                                )
+                                .fillMaxWidth()
+                        )
+                    }
+                }
             }
         }
     }
