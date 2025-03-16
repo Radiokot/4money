@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -130,11 +131,14 @@ fun MovableAccountList(
     var itemToPlaceBefore by remember {
         mutableStateOf<ViewAccountListItem.Account?>(null)
     }
+    var skipOriginalListUpdates by remember {
+        mutableIntStateOf(0)
+    }
     val currentItemList = remember {
         derivedStateOf {
-            movableItemList
-                .takeIf(List<*>::isNotEmpty)
-                ?: itemList.value
+            itemList.value
+                .takeUnless { skipOriginalListUpdates-- > 0 }
+                ?: movableItemList
         }
     }
     val listState = rememberLazyListState()
@@ -192,17 +196,20 @@ fun MovableAccountList(
                             modifier = Modifier
                                 .longPressDraggableHandle(
                                     onDragStarted = {
+                                        movableItemList.clear()
                                         movableItemList.addAll(itemList.value)
+                                        skipOriginalListUpdates = Int.MAX_VALUE
                                         itemToMove = null
                                     },
                                     onDragStopped = {
-                                        movableItemList.clear()
-
                                         if (itemToMove != null) {
+                                            skipOriginalListUpdates = 1
                                             onAccountItemMoved(
                                                 itemToMove!!,
                                                 itemToPlaceBefore,
                                             )
+                                        } else {
+                                            skipOriginalListUpdates = 0
                                         }
                                     },
                                 )
