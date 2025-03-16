@@ -22,6 +22,7 @@ package ua.com.radiokot.money.accounts.view
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -30,8 +31,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
+import ua.com.radiokot.money.accounts.logic.UpdateAccountPositionUseCase
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
@@ -39,8 +42,9 @@ import ua.com.radiokot.money.lazyLogger
 import java.math.BigInteger
 
 class AccountsViewModel(
-    private val accountRepository: AccountRepository,
+    accountRepository: AccountRepository,
     private val currencyRepository: CurrencyRepository,
+    private val updateAccountPositionUseCase: UpdateAccountPositionUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("AccountsVM")
@@ -109,6 +113,7 @@ class AccountsViewModel(
         )
     }
 
+    private var updatePositionJob: Job? = null
     fun onAccountItemMoved(
         itemToMove: ViewAccountListItem.Account,
         itemToPlaceBefore: ViewAccountListItem.Account?,
@@ -130,13 +135,29 @@ class AccountsViewModel(
             return
         }
 
-        log.debug {
-            "onAccountItemMoved(): moving:" +
-                    "\naccount=$accountToMove," +
-                    "\nbefore=$accountToPlaceBefore"
-        }
+        updatePositionJob?.cancel()
+        updatePositionJob = viewModelScope.launch {
+            log.debug {
+                "onAccountItemMoved(): moving:" +
+                        "\naccount=$accountToMove," +
+                        "\nbefore=$accountToPlaceBefore"
+            }
 
-        // TODO fockin' move
+            updateAccountPositionUseCase(
+                accountToMove=accountToMove,
+                accountToPlaceBefore = accountToPlaceBefore,
+            )
+                .onFailure { error ->
+                    log.error(error) {
+                        "onAccountItemMoved(): failed to move"
+                    }
+                }
+                .onSuccess {
+                    log.debug {
+                        "onAccountItemMoved(): moved successfully"
+                    }
+                }
+        }
     }
 
     sealed interface Event {

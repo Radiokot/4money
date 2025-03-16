@@ -92,6 +92,55 @@ class PowerSyncAccountRepository(
             )
     }
 
+    override suspend fun updatePosition(accountToMove: Account, accountToPlaceBefore: Account?) {
+        // As accounts are ordered by descending position,
+        // placing before means assigning greater value.
+
+        log.debug {
+            "updatePosition(): calculating new position" +
+                    "\nfor=$accountToMove," +
+                    "\ntoPlaceBefore=${accountToPlaceBefore}"
+        }
+
+        val newPosition = SternBrocotTreeSearch()
+            .goBetween(
+                lowerBound = accountToPlaceBefore?.position ?: 0.0,
+                upperBound =
+                if (accountToPlaceBefore == null)
+                    database.get(
+                        sql = SELECT_MIN_POSITION,
+                        mapper = { it.getDouble(0)!! },
+                    )
+                else
+                    database.get(
+                        sql = SELECT_MIN_POSITION_AFTER,
+                        parameters = listOf(
+                            accountToPlaceBefore.position.toString(),
+                        ),
+                        mapper = { it.getDouble(0) ?: Double.POSITIVE_INFINITY },
+                    )
+            )
+            .value
+
+        log.debug {
+            "updatePosition(): updating:" +
+                    "\naccount=$accountToMove," +
+                    "\nnewPosition=$newPosition"
+        }
+
+        database.execute(
+            sql = UPDATE_POSITION_BY_ID,
+            parameters = listOf(
+                newPosition.toString(),
+                accountToMove.id,
+            )
+        )
+
+        log.debug {
+            "updatePosition(): updated successfully"
+        }
+    }
+
     private suspend fun healPositions(
         accounts: List<Account>,
     ) {
@@ -154,3 +203,9 @@ private const val SELECT =
 private const val SELECT_ALL = "$SELECT ORDER BY accounts.position DESC"
 
 private const val SELECT_BY_ID = "$SELECT AND accounts.id = ?"
+
+private const val SELECT_MIN_POSITION = "SELECT MIN(position) FROM accounts"
+
+private const val SELECT_MIN_POSITION_AFTER = "$SELECT_MIN_POSITION WHERE position > ?"
+
+private const val UPDATE_POSITION_BY_ID = "UPDATE accounts SET position = ? WHERE id = ?"
