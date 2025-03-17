@@ -24,7 +24,9 @@ import com.powersync.PowerSyncDatabase
 import com.powersync.connector.supabase.SupabaseConnector
 import com.powersync.db.Queries
 import com.powersync.db.schema.Schema
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidApplication
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
@@ -33,6 +35,7 @@ import org.koin.dsl.module
 import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.auth.authModule
 
+@OptIn(DelicateCoroutinesApi::class)
 val powerSyncModule = module {
     includes(authModule)
 
@@ -43,13 +46,12 @@ val powerSyncModule = module {
             factory = DatabaseDriverFactory(androidApplication()),
             schema = get(),
         ).apply {
-            // TODO check if it could freeze.
-            runBlocking {
+            GlobalScope.launch {
                 connect(
                     connector = SupabaseConnector(
                         supabaseClient = get(),
                         powerSyncEndpoint = BuildConfig.POWERSYNC_URL,
-                    )
+                    ).ignoreEmptyUpdates()
                 )
             }
         }
