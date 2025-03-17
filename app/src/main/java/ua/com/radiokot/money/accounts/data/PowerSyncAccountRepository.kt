@@ -225,13 +225,14 @@ class PowerSyncAccountRepository(
         }
 
         // Assign a new position to each account preserving the current order.
+        val sortedAccounts = accounts.sorted()
         val params = mutableListOf<String>()
         val sql = buildString {
             append("UPDATE accounts SET position = CASE ")
             val sternBrocotTree = SternBrocotTreeSearch()
-            accounts.indices.reversed().forEach { accountIndex ->
+            sortedAccounts.indices.reversed().forEach { accountIndex ->
                 append("\nWHEN id = ? THEN ? ")
-                params += accounts[accountIndex].id
+                params += sortedAccounts[accountIndex].id
                 params += sternBrocotTree.value.toString()
                 sternBrocotTree.goRight()
             }
