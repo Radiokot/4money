@@ -115,17 +115,20 @@ class TransferCounterpartySelectionSheetViewModel(
                         .map { (accounts, alreadySelectedCounterpartyId, isIncognito) ->
                             val alreadySelectedCounterpartyIdString =
                                 alreadySelectedCounterpartyId.toString()
+
                             buildList {
-                                accounts.forEach { account ->
-                                    if (account.id != alreadySelectedCounterpartyIdString) {
-                                        add(
-                                            ViewAccountListItem.Account(
-                                                account = account,
-                                                isIncognito = isIncognito,
+                                accounts
+                                    .sorted()
+                                    .forEach { account ->
+                                        if (account.id != alreadySelectedCounterpartyIdString) {
+                                            add(
+                                                ViewAccountListItem.Account(
+                                                    account = account,
+                                                    isIncognito = isIncognito,
+                                                )
                                             )
-                                        )
+                                        }
                                     }
-                                }
                             }
                         }
                 else

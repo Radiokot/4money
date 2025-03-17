@@ -21,7 +21,7 @@ import org.junit.Test
    You should have received a copy of the GNU General Public License
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
-class SternBrocotTreeSearchTest{
+class SternBrocotTreeSearchTest {
     @Test
     fun initialState() {
         val t = SternBrocotTreeSearch()

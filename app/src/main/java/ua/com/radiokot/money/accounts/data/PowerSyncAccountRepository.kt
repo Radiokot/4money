@@ -41,7 +41,7 @@ class PowerSyncAccountRepository(
     override suspend fun getAccounts(): List<Account> =
         database
             .getAll(
-                sql = SELECT_ALL,
+                sql = SELECT_ACCOUNTS,
                 mapper = ::toAccount,
             )
 
@@ -49,7 +49,7 @@ class PowerSyncAccountRepository(
     override fun getAccountsFlow(): Flow<List<Account>> =
         database
             .watch(
-                sql = SELECT_ALL,
+                sql = SELECT_ACCOUNTS,
                 mapper = ::toAccount,
             )
             .flatMapLatest { accounts ->
@@ -67,7 +67,7 @@ class PowerSyncAccountRepository(
     override suspend fun getAccount(accountId: String): Account? =
         database
             .getOptional(
-                sql = SELECT_BY_ID,
+                sql = SELECT_ACCOUNT_BY_ID,
                 parameters = listOf(accountId),
                 mapper = ::toAccount,
             )
@@ -75,7 +75,7 @@ class PowerSyncAccountRepository(
     override fun getAccountFlow(accountId: String): Flow<Account> =
         database
             .watch(
-                sql = SELECT_BY_ID,
+                sql = SELECT_ACCOUNT_BY_ID,
                 parameters = listOf(accountId),
                 mapper = ::toAccount,
             )
@@ -92,9 +92,75 @@ class PowerSyncAccountRepository(
             )
     }
 
-    override suspend fun updatePosition(accountToMove: Account, accountToPlaceBefore: Account?) {
-        // As accounts are ordered by descending position,
-        // placing before means assigning greater value.
+    override suspend fun updatePosition(
+        accountToMoveId: String,
+        accountToPlaceBeforeId: String?,
+    ) {
+        val sortedAccounts = getAccounts().sorted()
+
+        val accountToMoveIndex = sortedAccounts
+            .indexOfFirst { it.id == accountToMoveId }
+        val accountToMove = sortedAccounts[accountToMoveIndex]
+
+        val accountToPlaceBeforeIndex =
+            if (accountToPlaceBeforeId != null)
+                sortedAccounts
+                    .indexOfFirst { it.id == accountToPlaceBeforeId }
+            else
+                null
+        val accountToPlaceBefore = accountToPlaceBeforeIndex?.let(sortedAccounts::get)
+
+        if (accountToPlaceBeforeIndex == accountToMoveIndex + 1
+            || accountToPlaceBeforeIndex == null && accountToMoveIndex == sortedAccounts.size - 1
+        ) {
+            log.debug {
+                "updatePosition(): skipping as the account is already in place"
+            }
+
+            return
+        }
+
+        // Avoid position recalculation when swapping neighbours,
+        // otherwise the fraction quickly becomes tiny (after tens of swaps).
+        if (accountToPlaceBeforeIndex == accountToMoveIndex + 2
+            || accountToPlaceBeforeIndex == null && accountToMoveIndex == sortedAccounts.size - 2
+            || accountToPlaceBeforeIndex == accountToMoveIndex - 1
+        ) {
+            val accountToSwapWith =
+                if (accountToPlaceBeforeIndex == null || accountToPlaceBeforeIndex > accountToMoveIndex)
+                    sortedAccounts[accountToMoveIndex + 1]
+                else
+                    sortedAccounts[accountToMoveIndex - 1]
+
+            log.debug {
+                "updatePosition(): swapping positions:" +
+                        "\nswap=$accountToMove," +
+                        "\nwith=$accountToSwapWith"
+            }
+
+            database.writeTransaction { transition ->
+                transition.execute(
+                    sql = UPDATE_POSITION_BY_ID,
+                    parameters = listOf(
+                        accountToSwapWith.position.toString(),
+                        accountToMove.id,
+                    )
+                )
+                transition.execute(
+                    sql = UPDATE_POSITION_BY_ID,
+                    parameters = listOf(
+                        accountToMove.position.toString(),
+                        accountToSwapWith.id,
+                    )
+                )
+            }
+
+            log.debug {
+                "updatePosition(): swapped successfully"
+            }
+
+            return
+        }
 
         log.debug {
             "updatePosition(): calculating new position" +
@@ -102,23 +168,31 @@ class PowerSyncAccountRepository(
                     "\ntoPlaceBefore=${accountToPlaceBefore}"
         }
 
+        // As accounts are ordered by descending position,
+        // placing before means assigning greater position value.
+        // The end (bottom) has position 0.0.
+        val lowerBound = accountToPlaceBefore?.position ?: 0.0
+        val upperBound =
+            if (accountToPlaceBefore == null)
+                sortedAccounts
+                    .last()
+                    .position
+            else
+                sortedAccounts
+                    .lastOrNull { it.position > accountToPlaceBefore.position }
+                    ?.position
+                    ?: Double.POSITIVE_INFINITY
+
+        log.debug {
+            "updatePosition(): got bounds for new position:" +
+                    "\nlower=$lowerBound," +
+                    "\nupper=$upperBound"
+        }
+
         val newPosition = SternBrocotTreeSearch()
             .goBetween(
-                lowerBound = accountToPlaceBefore?.position ?: 0.0,
-                upperBound =
-                if (accountToPlaceBefore == null)
-                    database.get(
-                        sql = SELECT_MIN_POSITION,
-                        mapper = { it.getDouble(0)!! },
-                    )
-                else
-                    database.get(
-                        sql = SELECT_MIN_POSITION_AFTER,
-                        parameters = listOf(
-                            accountToPlaceBefore.position.toString(),
-                        ),
-                        mapper = { it.getDouble(0) ?: Double.POSITIVE_INFINITY },
-                    )
+                lowerBound = lowerBound,
+                upperBound = upperBound,
             )
             .value
 
@@ -194,18 +268,12 @@ class PowerSyncAccountRepository(
     }
 }
 
-private const val SELECT =
+private const val SELECT_ACCOUNTS =
     "SELECT currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
             "accounts.id, accounts.title, accounts.balance, accounts.position, accounts.currency_id " +
             "FROM accounts, currencies " +
             "WHERE accounts.currency_id = currencies.id"
 
-private const val SELECT_ALL = "$SELECT ORDER BY accounts.position DESC"
-
-private const val SELECT_BY_ID = "$SELECT AND accounts.id = ?"
-
-private const val SELECT_MIN_POSITION = "SELECT MIN(position) FROM accounts"
-
-private const val SELECT_MIN_POSITION_AFTER = "$SELECT_MIN_POSITION WHERE position > ?"
+private const val SELECT_ACCOUNT_BY_ID = "$SELECT_ACCOUNTS AND accounts.id = ?"
 
 private const val UPDATE_POSITION_BY_ID = "UPDATE accounts SET position = ? WHERE id = ?"

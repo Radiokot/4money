@@ -86,9 +86,11 @@ class AccountsViewModel(
                         )
                     }
 
-                    accounts.forEach { account ->
-                        add(ViewAccountListItem.Account(account))
-                    }
+                    accounts
+                        .sorted()
+                        .forEach { account ->
+                            add(ViewAccountListItem.Account(account))
+                        }
                 }
             }
             .flowOn(Dispatchers.Default)
@@ -118,19 +120,11 @@ class AccountsViewModel(
         itemToMove: ViewAccountListItem.Account,
         itemToPlaceBefore: ViewAccountListItem.Account?,
     ) {
-        val accountToMove = itemToMove.source
-        val accountToPlaceBefore = itemToPlaceBefore?.source
-        if (accountToMove == null || accountToPlaceBefore == null && itemToPlaceBefore != null) {
+        val accountToMoveId = itemToMove.source?.id
+        val accountToPlaceBeforeId = itemToPlaceBefore?.source?.id
+        if (accountToMoveId == null || accountToPlaceBeforeId == null && itemToPlaceBefore != null) {
             log.warn {
                 "onAccountItemMoved(): missing account source(s)"
-            }
-            return
-        }
-
-        val accountListItems = accountListItems.value
-        if (itemToPlaceBefore == accountListItems.getOrNull(accountListItems.indexOf(itemToMove) + 1)) {
-            log.debug {
-                "onAccountItemMoved(): ignoring as position didn't change"
             }
             return
         }
@@ -139,13 +133,13 @@ class AccountsViewModel(
         updatePositionJob = viewModelScope.launch {
             log.debug {
                 "onAccountItemMoved(): moving:" +
-                        "\naccount=$accountToMove," +
-                        "\nbefore=$accountToPlaceBefore"
+                        "\naccount=$accountToMoveId," +
+                        "\nbefore=$accountToPlaceBeforeId"
             }
 
             updateAccountPositionUseCase(
-                accountToMove=accountToMove,
-                accountToPlaceBefore = accountToPlaceBefore,
+                accountToMoveId = accountToMoveId,
+                accountToPlaceBeforeId = accountToPlaceBeforeId,
             )
                 .onFailure { error ->
                     log.error(error) {

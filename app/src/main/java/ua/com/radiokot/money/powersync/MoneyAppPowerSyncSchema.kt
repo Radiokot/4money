@@ -40,7 +40,9 @@ fun moneyAppPowerSyncSchema() = Schema(
                 Column.text("title"),
                 Column.text("balance"),
                 Column.text("currency_id"),
-                Column.real("position"),
+                // Real (float8) can't provide sufficient precision,
+                // leading to frequent healing.
+                Column.text("position"),
             )
         ),
         Table(
