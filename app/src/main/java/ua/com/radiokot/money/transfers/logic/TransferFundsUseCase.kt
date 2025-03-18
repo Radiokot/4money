@@ -27,10 +27,14 @@ import java.math.BigInteger
 interface TransferFundsUseCase {
 
     /**
+     * Executes the transfer and adds it to the history.
+     *
      * @param source source of the funds
-     * @param sourceAmount what amount is consumed with this transfer from the source
+     * @param sourceAmount what amount is consumed with this transfer from the source.
+     * If [source] is an account, the amount is deducted from its balance
      * @param destination destination of the funds
-     * @param destinationAmount what amount is produced with this transfer for the destination
+     * @param destinationAmount what amount is produced with this transfer for the destination.
+     * If [destination] is an account, the amount is added to its balance
      * @param time time to log the transfer at
      */
     suspend operator fun invoke(

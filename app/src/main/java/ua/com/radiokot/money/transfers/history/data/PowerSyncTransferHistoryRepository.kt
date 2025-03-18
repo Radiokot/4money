@@ -32,6 +32,7 @@ import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
+import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import java.math.BigInteger
 
 class PowerSyncTransferHistoryRepository(
@@ -44,16 +45,106 @@ class PowerSyncTransferHistoryRepository(
         pageBefore: Instant?,
         pageLimit: Int,
         period: HistoryPeriod,
-        source: TransferCounterparty?,
-        destination: TransferCounterparty?,
+        sourceId: TransferCounterpartyId?,
+        destinationId: TransferCounterpartyId?,
     ): List<Transfer> = withContext(Dispatchers.IO) {
 
+        val endTimeExclusive =
+            if (pageBefore == null)
+                period.endTimeExclusive
+            else
+                minOf(pageBefore, period.endTimeExclusive)
+
+        val records: List<TransferHistoryRecord> = when {
+            sourceId == null && destinationId == null ->
+                database.getAll(
+                    sql = SELECT_FOR_ALL_SOURCES_AND_DESTINATIONS,
+                    parameters = listOf(
+                        period.startTimeInclusive.epochSeconds,
+                        endTimeExclusive.epochSeconds,
+                        pageLimit.toLong(),
+                    ),
+                    mapper = ::toTransferHistoryRecord,
+                )
+
+            sourceId != null && destinationId == null ->
+                database.getAll(
+                    sql = SELECT_FOR_SOURCE,
+                    parameters = listOf(
+                        period.startTimeInclusive.epochSeconds,
+                        endTimeExclusive.epochSeconds,
+                        sourceId.toString(),
+                        sourceId.toString(),
+                        pageLimit.toLong(),
+                    ),
+                    mapper = ::toTransferHistoryRecord,
+                )
+
+            sourceId == null && destinationId != null ->
+                database.getAll(
+                    sql = SELECT_FOR_DESTINATION,
+                    parameters = listOf(
+                        period.startTimeInclusive.epochSeconds,
+                        endTimeExclusive.epochSeconds,
+                        destinationId.toString(),
+                        destinationId.toString(),
+                        pageLimit.toLong(),
+                    ),
+                    mapper = ::toTransferHistoryRecord,
+                )
+
+            else ->
+                throw IllegalArgumentException("Can only filter by either source or destination")
+        }
+
+        return@withContext records.map { record ->
+            toTransfer(
+                record = record,
+                counterpartyById = getCounterpartiesById(),
+            )
+        }
+    }
+
+    override fun getTransferHistoryPagingSource(
+        period: HistoryPeriod,
+        sourceId: TransferCounterpartyId?,
+        destinationId: TransferCounterpartyId?,
+    ) = object : PagingSource<Instant, Transfer>() {
+
+        override fun getRefreshKey(state: PagingState<Instant, Transfer>): Instant? {
+            TODO("Invalidating is not yet supported")
+        }
+
+        override suspend fun load(params: LoadParams<Instant>): LoadResult<Instant, Transfer> =
+            getTransferHistoryPage(
+                pageBefore = params.key,
+                pageLimit = params.loadSize,
+                period = period,
+                sourceId = sourceId,
+                destinationId = destinationId,
+            ).let { transfers ->
+                LoadResult.Page(
+                    data = transfers,
+                    prevKey = null,
+                    nextKey = transfers
+                        .lastOrNull()
+                        ?.time
+                        ?.takeUnless { transfers.size < params.loadSize },
+                )
+            }
+    }
+
+    override suspend fun getTransfer(transferId: String): Transfer {
+        TODO("Not yet implemented")
+    }
+
+    private suspend fun getCounterpartiesById(): Map<String, TransferCounterparty> {
         val subcategoriesByCategories = categoryRepository
             .getSubcategoriesByCategoriesFlow()
             .first()
         val accounts = accountRepository.getAccounts()
 
-        val counterpartyById: Map<String, TransferCounterparty> = buildMap {
+        return buildMap {
             subcategoriesByCategories.forEach { (category, subcategories) ->
                 val categoryCounterparty = TransferCounterparty.Category(category)
                 put(categoryCounterparty.id.toString(), categoryCounterparty)
@@ -71,90 +162,6 @@ class PowerSyncTransferHistoryRepository(
                 put(accountCounterparty.id.toString(), accountCounterparty)
             }
         }
-
-        val endTimeExclusive =
-            if (pageBefore == null)
-                period.endTimeExclusive
-            else
-                minOf(pageBefore, period.endTimeExclusive)
-
-        val records: List<TransferHistoryRecord> = when {
-            source == null && destination == null ->
-                database.getAll(
-                    sql = SELECT_FOR_ALL_SOURCES_AND_DESTINATIONS,
-                    parameters = listOf(
-                        period.startTimeInclusive.epochSeconds,
-                        endTimeExclusive.epochSeconds,
-                        pageLimit.toLong(),
-                    ),
-                    mapper = ::toTransferHistoryRecord,
-                )
-
-            source != null && destination == null ->
-                database.getAll(
-                    sql = SELECT_FOR_SOURCE,
-                    parameters = listOf(
-                        period.startTimeInclusive.epochSeconds,
-                        endTimeExclusive.epochSeconds,
-                        source.id,
-                        source.id,
-                        pageLimit.toLong(),
-                    ),
-                    mapper = ::toTransferHistoryRecord,
-                )
-
-            source == null && destination != null ->
-                database.getAll(
-                    sql = SELECT_FOR_DESTINATION,
-                    parameters = listOf(
-                        period.startTimeInclusive.epochSeconds,
-                        endTimeExclusive.epochSeconds,
-                        destination.id,
-                        destination.id,
-                        pageLimit.toLong(),
-                    ),
-                    mapper = ::toTransferHistoryRecord,
-                )
-
-            else ->
-                throw IllegalArgumentException("Can only filter by either source or destination")
-        }
-
-        return@withContext records.map { record ->
-            toTransfer(
-                record = record,
-                counterpartyById = counterpartyById,
-            )
-        }
-    }
-
-    override fun getTransferHistoryPagingSource(
-        period: HistoryPeriod,
-        source: TransferCounterparty?,
-        destination: TransferCounterparty?,
-    ) = object : PagingSource<Instant, Transfer>() {
-
-        override fun getRefreshKey(state: PagingState<Instant, Transfer>): Instant? {
-            TODO("Invalidating is not yet supported")
-        }
-
-        override suspend fun load(params: LoadParams<Instant>): LoadResult<Instant, Transfer> =
-            getTransferHistoryPage(
-                pageBefore = params.key,
-                pageLimit = params.loadSize,
-                period = period,
-                source = source,
-                destination = destination,
-            ).let { transfers ->
-                LoadResult.Page(
-                    data = transfers,
-                    prevKey = null,
-                    nextKey = transfers
-                        .lastOrNull()
-                        ?.time
-                        ?.takeUnless { transfers.size < params.loadSize },
-                )
-            }
     }
 
     private fun toTransferHistoryRecord(sqlCursor: SqlCursor) = with(sqlCursor) {
@@ -191,8 +198,8 @@ class PowerSyncTransferHistoryRepository(
     )
 }
 
-private const val FIELDS_FROM_TRANSFERS =
-    "transfers.id, transfers.time, " +
+private const val SELECT_TRANSFERS =
+    "SELECT transfers.id, transfers.time, " +
             "transfers.source_id, transfers.source_amount, " +
             "transfers.destination_id, transfers.destination_amount, " +
             "unixepoch(transfers.time) AS unix_time " +
@@ -214,7 +221,7 @@ private const val SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY =
  * 3. Limit
  */
 private const val SELECT_FOR_ALL_SOURCES_AND_DESTINATIONS =
-    "SELECT $FIELDS_FROM_TRANSFERS " +
+    "$SELECT_TRANSFERS " +
             "WHERE $UNIX_TIME_IN_PERIOD " +
             "$ORDER " +
             "LIMIT ?"
@@ -228,7 +235,7 @@ private const val SELECT_FOR_ALL_SOURCES_AND_DESTINATIONS =
  * 5. Limit
  */
 private const val SELECT_FOR_SOURCE =
-    "SELECT $FIELDS_FROM_TRANSFERS " +
+    "$SELECT_TRANSFERS " +
             "WHERE $UNIX_TIME_IN_PERIOD " +
             "AND (transfers.source_id = ? OR transfers.source_id in " +
             "($SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY)) " +
@@ -244,9 +251,16 @@ private const val SELECT_FOR_SOURCE =
  * 5. Limit
  */
 private const val SELECT_FOR_DESTINATION =
-    "SELECT $FIELDS_FROM_TRANSFERS " +
+    "$SELECT_TRANSFERS " +
             "WHERE $UNIX_TIME_IN_PERIOD " +
             "AND (transfers.destination_id = ? OR transfers.destination_id in " +
             "($SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY)) " +
             "$ORDER " +
             "LIMIT ?"
+
+/**
+ * Params:
+ * 1. Transfer ID
+ */
+private const val SELECT_BY_ID =
+        "$SELECT_TRANSFERS WHERE transfers.id = ?"

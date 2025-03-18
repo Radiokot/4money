@@ -27,7 +27,9 @@ import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.categoriesModule
 import ua.com.radiokot.money.powersync.powerSyncModule
 import ua.com.radiokot.money.transfers.history.transfersHistoryModule
+import ua.com.radiokot.money.transfers.logic.PowerSyncRevertTransferUseCase
 import ua.com.radiokot.money.transfers.logic.PowerSyncTransferFundsUseCase
+import ua.com.radiokot.money.transfers.logic.RevertTransferUseCase
 import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
 import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetViewModel
 import ua.com.radiokot.money.transfers.view.TransferSheetViewModel
@@ -46,6 +48,13 @@ val transfersModule = module {
                 database = get(),
             )
         } bind TransferFundsUseCase::class
+
+        factory {
+            PowerSyncRevertTransferUseCase(
+                transferHistoryRepository = get(),
+                database = get(),
+            )
+        } bind RevertTransferUseCase::class
 
         viewModel {
             TransferSheetViewModel(
