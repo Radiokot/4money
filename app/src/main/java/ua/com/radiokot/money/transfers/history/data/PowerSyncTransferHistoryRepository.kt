@@ -97,10 +97,12 @@ class PowerSyncTransferHistoryRepository(
                 throw IllegalArgumentException("Can only filter by either source or destination")
         }
 
+        val counterpartyById = getCounterpartiesById()
+
         return@withContext records.map { record ->
             toTransfer(
                 record = record,
-                counterpartyById = getCounterpartiesById(),
+                counterpartyById = counterpartyById,
             )
         }
     }
@@ -134,9 +136,21 @@ class PowerSyncTransferHistoryRepository(
             }
     }
 
-    override suspend fun getTransfer(transferId: String): Transfer {
-        TODO("Not yet implemented")
-    }
+    override suspend fun getTransfer(transferId: String): Transfer =
+        database
+            .get(
+                sql = SELECT_BY_ID,
+                parameters = listOf(
+                    transferId,
+                ),
+                mapper = ::toTransferHistoryRecord
+            )
+            .let { transferHistoryRecord ->
+                toTransfer(
+                    record = transferHistoryRecord,
+                    counterpartyById = getCounterpartiesById(),
+                )
+            }
 
     private suspend fun getCounterpartiesById(): Map<String, TransferCounterparty> {
         val subcategoriesByCategories = categoryRepository
@@ -263,4 +277,4 @@ private const val SELECT_FOR_DESTINATION =
  * 1. Transfer ID
  */
 private const val SELECT_BY_ID =
-        "$SELECT_TRANSFERS WHERE transfers.id = ?"
+    "$SELECT_TRANSFERS WHERE transfers.id = ?"

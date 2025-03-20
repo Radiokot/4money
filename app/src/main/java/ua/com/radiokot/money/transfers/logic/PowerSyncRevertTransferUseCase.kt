@@ -94,7 +94,7 @@ class PowerSyncRevertTransferUseCase(
     ) = execute(
         sql = "UPDATE accounts SET balance = ? WHERE id = ?",
         parameters = listOf(
-            newBalance,
+            newBalance.toString(),
             accountId,
         )
     )

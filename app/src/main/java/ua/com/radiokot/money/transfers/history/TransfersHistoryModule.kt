@@ -53,6 +53,7 @@ val transfersHistoryModule = module {
         viewModel {
             ActivityViewModel(
                 transferHistoryRepository = get(),
+                revertTransferUseCase = get(),
             )
         } bind ActivityViewModel::class
     }

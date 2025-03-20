@@ -24,11 +24,17 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import androidx.paging.filter
 import androidx.paging.insertSeparators
 import androidx.paging.map
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
@@ -37,15 +43,21 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import ua.com.radiokot.money.isSameDayAs
+import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.data.TransferHistoryRepository
+import ua.com.radiokot.money.transfers.logic.RevertTransferUseCase
 import ua.com.radiokot.money.transfers.view.ViewTransferListItem
 
 class ActivityViewModel(
     private val transferHistoryRepository: TransferHistoryRepository,
+    private val revertTransferUseCase: RevertTransferUseCase,
 ) : ViewModel() {
+
+    private val log by lazyLogger("ActivityVM")
     private val localTimeZone = TimeZone.currentSystemDefault()
+    private val revertedTransfers: MutableStateFlow<Set<Transfer>> = MutableStateFlow(emptySet())
 
     private val transferHistoryPager: Pager<Instant, Transfer> = Pager(
         config = PagingConfig(
@@ -54,51 +66,93 @@ class ActivityViewModel(
         ),
         pagingSourceFactory = {
             transferHistoryRepository.getTransferHistoryPagingSource(
-                source = null,
-                destination = null,
+                sourceId = null,
+                destinationId = null,
                 period = HistoryPeriod.Since70th,
             )
         },
     )
 
-    val transferItemPagingFlow = transferHistoryPager.flow.map { page ->
-        val today = Clock.System.now().toLocalDateTime(localTimeZone).date
-        val yesterday = today.minus(1, DateTimeUnit.DAY)
-
-        page
-            .map<Transfer, Pair<ViewTransferListItem, LocalDate>> { transfer ->
-                val transferLocalDate = transfer.getLocalDateAt(localTimeZone)
-                val transferListItem = ViewTransferListItem.Transfer.fromTransfer(transfer)
-                transferListItem to transferLocalDate
-            }
-            .insertSeparators { previousItemDatePair, nextItemDatePair ->
-                val previousLocalDate = previousItemDatePair?.second
-                val nextLocalDate = nextItemDatePair?.second
-
-                if (nextLocalDate != null &&
-                    (previousLocalDate == null || !nextLocalDate.isSameDayAs(previousLocalDate))
-                ) {
-                    val header = ViewTransferListItem.Header(
-                        localDate = nextLocalDate,
-                        dayType = when {
-                            nextLocalDate.isSameDayAs(today) ->
-                                ViewTransferListItem.Header.DayType.Today
-
-                            nextLocalDate.isSameDayAs(yesterday) ->
-                                ViewTransferListItem.Header.DayType.Yesterday
-
-                            else ->
-                                ViewTransferListItem.Header.DayType.DayOfWeek
-                        }
-                    )
-
-                    header to nextLocalDate
-                } else {
-                    null
-                }
-            }
-            .map { it.first }
-    }
-        .flowOn(Dispatchers.Default)
+    val transferItemPagingFlow = transferHistoryPager.flow
         .cachedIn(viewModelScope)
+        .combine(revertedTransfers, ::Pair)
+        .map { (pagingData, revertedTransfers) ->
+            val today = Clock.System.now().toLocalDateTime(localTimeZone).date
+            val yesterday = today.minus(1, DateTimeUnit.DAY)
+
+            pagingData
+                .filter { it !in revertedTransfers }
+                .map<Transfer, Pair<ViewTransferListItem, LocalDate>> { transfer ->
+                    val transferLocalDate = transfer.getLocalDateAt(localTimeZone)
+                    val transferListItem = ViewTransferListItem.Transfer.fromTransfer(transfer)
+                    transferListItem to transferLocalDate
+                }
+                .insertSeparators { previousItemDatePair, nextItemDatePair ->
+                    val previousLocalDate = previousItemDatePair?.second
+                    val nextLocalDate = nextItemDatePair?.second
+
+                    if (nextLocalDate != null &&
+                        (previousLocalDate == null || !nextLocalDate.isSameDayAs(previousLocalDate))
+                    ) {
+                        val header = ViewTransferListItem.Header(
+                            localDate = nextLocalDate,
+                            dayType = when {
+                                nextLocalDate.isSameDayAs(today) ->
+                                    ViewTransferListItem.Header.DayType.Today
+
+                                nextLocalDate.isSameDayAs(yesterday) ->
+                                    ViewTransferListItem.Header.DayType.Yesterday
+
+                                else ->
+                                    ViewTransferListItem.Header.DayType.DayOfWeek
+                            }
+                        )
+
+                        header to nextLocalDate
+                    } else {
+                        null
+                    }
+                }
+                .map { it.first }
+        }
+        .flowOn(Dispatchers.Default)
+
+    fun onTransferItemClicked(item: ViewTransferListItem.Transfer) {
+        val transfer = item.source
+        if (transfer == null) {
+            log.debug {
+                "onTransferItemClicked(): missing transfer source"
+            }
+            return
+        }
+
+        revertTransfer(transfer)
+    }
+
+    private var revertTransferJob: Job? = null
+    private fun revertTransfer(transfer: Transfer) {
+        revertTransferJob?.cancel()
+        revertTransferJob = viewModelScope.launch {
+            log.debug {
+                "revertTransfer(): reverting:" +
+                        "\ntransfer=$transfer"
+            }
+
+            revertTransferUseCase(
+                transferId = transfer.id,
+            )
+                .onFailure { error ->
+                    log.error(error) {
+                        "revertTransfer(): failed to revert transfer"
+                    }
+                }
+                .onSuccess {
+                    log.debug {
+                        "revertTransfer(): transfer reverted, filtering list items"
+                    }
+
+                    revertedTransfers.update { it + transfer }
+                }
+        }
+    }
 }

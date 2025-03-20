@@ -56,17 +56,19 @@ fun ActivityScreenRoot(
     modifier: Modifier = Modifier,
     viewModel: ActivityViewModel,
 ) = ActivityScreen(
-    itemPagingFlow = viewModel.transferItemPagingFlow,
     modifier = modifier,
+    itemPagingFlow = viewModel.transferItemPagingFlow,
+    onTransferItemClicked = viewModel::onTransferItemClicked,
 )
 
 @Composable
 private fun ActivityScreen(
     modifier: Modifier = Modifier,
     itemPagingFlow: Flow<PagingData<ViewTransferListItem>>,
+    onTransferItemClicked: (ViewTransferListItem.Transfer) -> Unit,
 ) = TransferList(
     itemPagingFlow = itemPagingFlow,
-    onTransferItemClicked = {},
+    onTransferItemClicked = onTransferItemClicked,
     modifier = modifier
         .padding(
             horizontal = 16.dp,
