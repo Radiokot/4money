@@ -34,32 +34,43 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ua.com.radiokot.money.categories.view.SelectableSubcategoryRow
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItemPreviewParameterProvider
@@ -88,6 +99,8 @@ fun TransferSheetRoot(
             ?: return,
         destinationAmountValue = viewModel.destinationAmountValue.collectAsState(),
         onNewDestinationAmountValueParsed = viewModel::onNewDestinationAmountValueParsed,
+        memo = viewModel.memo.collectAsStateWithLifecycle(),
+        onMemoUpdated = viewModel::onMemoUpdated,
         subcategoryItemList = viewModel.subcategoryItemList.collectAsState(),
         onSubcategoryItemClicked = viewModel::onSubcategoryItemClicked,
         isSaveEnabled = viewModel.isSaveEnabled.collectAsState(),
@@ -106,6 +119,8 @@ private fun TransferSheet(
     destination: ViewTransferCounterparty,
     destinationAmountValue: State<BigInteger>,
     onNewDestinationAmountValueParsed: (BigInteger) -> Unit,
+    memo: State<String>,
+    onMemoUpdated: (String) -> Unit,
     subcategoryItemList: State<List<ViewSelectableSubcategoryListItem>>,
     onSubcategoryItemClicked: (ViewSelectableSubcategoryListItem) -> Unit,
     isSaveEnabled: State<Boolean>,
@@ -291,7 +306,52 @@ private fun TransferSheet(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Box(
+            contentAlignment = Alignment.Center,
+        ) {
+            var emptyMemoFieldOffset by remember {
+                mutableStateOf(IntOffset.Zero)
+            }
+
+            if (memo.value.isEmpty()) {
+                BasicText(
+                    text = "Notes…",
+                    style = TextStyle(
+                        fontStyle = FontStyle.Italic,
+                        color = Color.Gray,
+                    ),
+                    modifier = Modifier
+                        .onSizeChanged { (width, _) ->
+                            emptyMemoFieldOffset = IntOffset(
+                                x = -width / 2,
+                                y = 0,
+                            )
+                        }
+                )
+            }
+
+            BasicTextField(
+                value = memo.value,
+                onValueChange = onMemoUpdated,
+                textStyle = TextStyle(
+                    fontStyle = FontStyle.Italic,
+                    textAlign = TextAlign.Center,
+                ),
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    keyboardType = KeyboardType.Text,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .offset {
+                        if (memo.value.isEmpty())
+                            emptyMemoFieldOffset
+                        else
+                            IntOffset.Zero
+                    }
+            )
+        }
 
         TextButton(
             text = "Save",
@@ -354,6 +414,8 @@ private fun TransferSheetPreview(
                 onSubcategoryItemClicked = {},
                 isSaveEnabled = isSaveEnabled.let(::mutableStateOf),
                 onSaveClicked = {},
+                memo = "".let(::mutableStateOf),
+                onMemoUpdated = {},
             )
         }
     }

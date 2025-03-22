@@ -65,6 +65,8 @@ class TransferSheetViewModel(
     private val _destinationAmountValue: MutableStateFlow<BigInteger> =
         MutableStateFlow(BigInteger.ZERO)
     val destinationAmountValue = _destinationAmountValue.asStateFlow()
+    private val _memo: MutableStateFlow<String> = MutableStateFlow("")
+    val memo = _memo.asStateFlow()
     private val subcategoryToSelect: MutableStateFlow<Subcategory?> = MutableStateFlow(null)
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
@@ -180,6 +182,10 @@ class TransferSheetViewModel(
         _destinationAmountValue.tryEmit(value)
     }
 
+    fun onMemoUpdated(memo: String) {
+        _memo.tryEmit(memo)
+    }
+
     fun onSubcategoryItemClicked(item: ViewSelectableSubcategoryListItem) {
         val clickedSubcategory = item.source
         if (clickedSubcategory == null) {
@@ -232,6 +238,9 @@ class TransferSheetViewModel(
                 sourceAmountValue.value
             else
                 destinationAmount
+        val memo = memo.value
+            .trim()
+            .takeIf(String::isNotEmpty)
 
         transferJob?.cancel()
         transferJob = viewModelScope.launch {
@@ -240,7 +249,8 @@ class TransferSheetViewModel(
                         "\nsource=$source," +
                         "\nsourceAmount=$sourceAmount," +
                         "\ndestination=$destination," +
-                        "\ndestinationAmount=$destinationAmount"
+                        "\ndestinationAmount=$destinationAmount," +
+                        "\nmemo=$memo"
             }
 
             transferFundsUseCase(
@@ -248,6 +258,7 @@ class TransferSheetViewModel(
                 sourceAmount = sourceAmount,
                 destination = destination,
                 destinationAmount = destinationAmount,
+                memo = memo,
             )
                 .onFailure { error ->
                     log.error(error) {

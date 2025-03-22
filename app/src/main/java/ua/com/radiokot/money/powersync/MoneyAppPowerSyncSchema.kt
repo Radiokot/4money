@@ -62,6 +62,7 @@ fun moneyAppPowerSyncSchema() = Schema(
                 Column.text("source_amount"),
                 Column.text("destination_id"),
                 Column.text("destination_amount"),
+                Column.text("memo"),
             )
         ),
         Table(

@@ -35,6 +35,7 @@ interface TransferFundsUseCase {
      * @param destination destination of the funds
      * @param destinationAmount what amount is produced with this transfer for the destination.
      * If [destination] is an account, the amount is added to its balance
+     * @param memo a text note to add to the transfer
      * @param time time to log the transfer at
      */
     suspend operator fun invoke(
@@ -42,6 +43,7 @@ interface TransferFundsUseCase {
         sourceAmount: BigInteger,
         destination: TransferCounterparty,
         destinationAmount: BigInteger,
+        memo: String?,
         time: Instant = Clock.System.now(),
     ): Result<Unit>
 }

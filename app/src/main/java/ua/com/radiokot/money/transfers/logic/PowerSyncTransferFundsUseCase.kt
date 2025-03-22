@@ -43,6 +43,7 @@ class PowerSyncTransferFundsUseCase(
         sourceAmount: BigInteger,
         destination: TransferCounterparty,
         destinationAmount: BigInteger,
+        memo: String?,
         time: Instant,
     ): Result<Unit> = runCatching {
         database.writeTransaction { transaction ->
@@ -65,6 +66,7 @@ class PowerSyncTransferFundsUseCase(
                 sourceAmount = sourceAmount,
                 destinationId = destination.id,
                 destinationAmount = destinationAmount,
+                memo = memo,
                 time = time,
             )
         }
@@ -107,6 +109,7 @@ class PowerSyncTransferFundsUseCase(
         sourceAmount: BigInteger,
         destinationId: TransferCounterpartyId,
         destinationAmount: BigInteger,
+        memo: String?,
         time: Instant,
     ) {
         val id = UUID.randomUUID().toString()
@@ -123,13 +126,14 @@ class PowerSyncTransferFundsUseCase(
                     "\nsourceId=$sourceId," +
                     "\nsourceAmount=$sourceAmount," +
                     "\ndestinationId=$destinationId," +
-                    "\ndestinationAmount=$destinationAmount"
+                    "\ndestinationAmount=$destinationAmount," +
+                    "\nmemo=$memo"
         }
 
         execute(
             sql = "INSERT INTO transfers " +
-                    "(id, time, source_id, source_amount, destination_id, destination_amount) " +
-                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    "(id, time, source_id, source_amount, destination_id, destination_amount, memo) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
             parameters = listOf(
                 id,
                 timeString,
@@ -137,6 +141,7 @@ class PowerSyncTransferFundsUseCase(
                 sourceAmount.toString(),
                 destinationId.toString(),
                 destinationAmount.toString(),
+                memo,
             )
         )
     }
