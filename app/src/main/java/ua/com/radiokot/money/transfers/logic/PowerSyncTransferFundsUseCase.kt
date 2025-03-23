@@ -21,10 +21,18 @@ package ua.com.radiokot.money.transfers.logic
 
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.internal.PowerSyncTransaction
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.plus
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
+import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
+import ua.com.radiokot.money.transfers.history.data.TransferHistoryRepository
 import java.math.BigInteger
 import java.util.UUID
 
@@ -33,6 +41,7 @@ import java.util.UUID
  * Saves time with second precision.
  */
 class PowerSyncTransferFundsUseCase(
+    private val transferHistoryRepository: TransferHistoryRepository,
     private val database: PowerSyncDatabase,
 ) : TransferFundsUseCase {
 
@@ -44,8 +53,25 @@ class PowerSyncTransferFundsUseCase(
         destination: TransferCounterparty,
         destinationAmount: BigInteger,
         memo: String?,
-        time: Instant,
+        date: LocalDate,
     ): Result<Unit> = runCatching {
+
+        val lastTransferOfTheDay: Transfer? = transferHistoryRepository
+            .getTransferHistoryPage(
+                period = HistoryPeriod.Day(
+                    localDay = date,
+                ),
+                pageLimit = 1,
+                pageBefore = null,
+                sourceId = null,
+                destinationId = null,
+            )
+            .firstOrNull()
+
+        val thisTransferTime =
+            (lastTransferOfTheDay?.time ?: date.atStartOfDayIn(TimeZone.currentSystemDefault()))
+                .plus(1, DateTimeUnit.SECOND)
+
         database.writeTransaction { transaction ->
             if (source is TransferCounterparty.Account) {
                 transaction.updateAccountBalanceBy(
@@ -67,7 +93,7 @@ class PowerSyncTransferFundsUseCase(
                 destinationId = destination.id,
                 destinationAmount = destinationAmount,
                 memo = memo,
-                time = time,
+                time = thisTransferTime,
             )
         }
     }

@@ -268,6 +268,7 @@ class TransferSheetViewModel(
         val memo = memo.value
             .trim()
             .takeIf(String::isNotEmpty)
+        val date = date.value.localDate
 
         transferJob?.cancel()
         transferJob = viewModelScope.launch {
@@ -277,7 +278,8 @@ class TransferSheetViewModel(
                         "\nsourceAmount=$sourceAmount," +
                         "\ndestination=$destination," +
                         "\ndestinationAmount=$destinationAmount," +
-                        "\nmemo=$memo"
+                        "\nmemo=$memo," +
+                        "\ndate=$date"
             }
 
             transferFundsUseCase(
@@ -285,6 +287,7 @@ class TransferSheetViewModel(
                 sourceAmount = sourceAmount,
                 destination = destination,
                 destinationAmount = destinationAmount,
+                date = date,
                 memo = memo,
             )
                 .onFailure { error ->

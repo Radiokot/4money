@@ -45,6 +45,7 @@ val transfersModule = module {
     sessionScope {
         factory {
             PowerSyncTransferFundsUseCase(
+                transferHistoryRepository = get(),
                 database = get(),
             )
         } bind TransferFundsUseCase::class
