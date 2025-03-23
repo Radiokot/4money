@@ -35,9 +35,9 @@ data class AccountActionSheetRoute(
 
 fun NavGraphBuilder.accountActionSheet(
     onBalanceUpdated: () -> Unit,
-    onIncomeClicked: (accountId: TransferCounterpartyId.Account) -> Unit,
-    onExpenseClicked: (accountId: TransferCounterpartyId.Account) -> Unit,
-    onTransferClicked: (accountId: TransferCounterpartyId.Account) -> Unit,
+    onProceedToIncome: (destinationAccountId: TransferCounterpartyId.Account) -> Unit,
+    onProceedToExpense: (sourceAccountId: TransferCounterpartyId.Account) -> Unit,
+    onProceedToTransfer: (sourceAccountId: TransferCounterpartyId.Account) -> Unit,
 ) = bottomSheet<AccountActionSheetRoute> { entry ->
 
     val accountId = entry.toRoute<AccountActionSheetRoute>()
@@ -56,16 +56,16 @@ fun NavGraphBuilder.accountActionSheet(
                         onBalanceUpdated()
                     }
 
-                    is AccountActionSheetViewModel.Event.ExpenseClicked -> {
-                        onIncomeClicked(event.accountId)
+                    is AccountActionSheetViewModel.Event.ProceedToIncome -> {
+                        onProceedToIncome(event.destinationAccountId)
                     }
 
-                    is AccountActionSheetViewModel.Event.IncomeClicked -> {
-                        onExpenseClicked(event.accountId)
+                    is AccountActionSheetViewModel.Event.ProceedToExpense -> {
+                        onProceedToExpense(event.sourceAccountId)
                     }
 
-                    is AccountActionSheetViewModel.Event.TransferClicked -> {
-                        onTransferClicked(event.accountId)
+                    is AccountActionSheetViewModel.Event.ProceedToTransfer -> {
+                        onProceedToTransfer(event.sourceAccountId)
                     }
                 }
             }

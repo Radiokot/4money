@@ -36,7 +36,7 @@ data class CategoriesScreenRoute(
 )
 
 fun NavGraphBuilder.categoriesScreen(
-    onCategoryClicked: (category: Category) -> Unit,
+    onProceedToTransfer: (category: Category) -> Unit,
 ) = composable<CategoriesScreenRoute> { entry ->
 
     val isIncognito = entry.toRoute<CategoriesScreenRoute>()
@@ -47,8 +47,8 @@ fun NavGraphBuilder.categoriesScreen(
         launch {
             viewModel.events.collect { event ->
                 when (event) {
-                    is CategoriesViewModel.Event.CategoryClicked -> {
-                        onCategoryClicked(event.category)
+                    is CategoriesViewModel.Event.ProceedToTransfer -> {
+                        onProceedToTransfer(event.category)
                     }
                 }
             }

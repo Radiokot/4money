@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.stateIn
-import ua.com.radiokot.money.accounts.view.AccountsViewModel.Event
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.eventSharedFlow
@@ -83,18 +82,18 @@ class CategoriesViewModel(
         }
 
         log.debug {
-            "onCategoryItemClicked(): posting clicked:" +
+            "onCategoryItemClicked(): proceeding to transfer:" +
                     "\ncategory=$category"
         }
 
         _events.tryEmit(
-            Event.CategoryClicked(category)
+            Event.ProceedToTransfer(category)
         )
     }
 
     sealed interface Event {
 
-        class CategoryClicked(
+        class ProceedToTransfer(
             val category: Category,
         ) : Event
     }

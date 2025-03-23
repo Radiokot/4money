@@ -35,7 +35,7 @@ data class AccountsScreenRoute(
 )
 
 fun NavGraphBuilder.accountsScreen(
-    onAccountClicked: (account: Account) -> Unit,
+    onProceedToAccountActions: (account: Account) -> Unit,
 ) = composable<AccountsScreenRoute> { entry ->
 
     val isIncognito = entry.toRoute<AccountsScreenRoute>()
@@ -45,8 +45,8 @@ fun NavGraphBuilder.accountsScreen(
     LaunchedEffect(isIncognito) {
         viewModel.events.collect { event ->
             when (event) {
-                is AccountsViewModel.Event.AccountClicked -> {
-                    onAccountClicked(event.account)
+                is AccountsViewModel.Event.ProceedToAccountActions -> {
+                    onProceedToAccountActions(event.account)
                 }
             }
         }

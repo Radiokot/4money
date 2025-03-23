@@ -106,12 +106,12 @@ class AccountsViewModel(
         }
 
         log.debug {
-            "onAccountItemClicked(): posting clicked:" +
+            "onAccountItemClicked(): proceeding to account actions:" +
                     "\naccount=$account"
         }
 
         _events.tryEmit(
-            Event.AccountClicked(account)
+            Event.ProceedToAccountActions(account)
         )
     }
 
@@ -156,7 +156,7 @@ class AccountsViewModel(
 
     sealed interface Event {
 
-        class AccountClicked(
+        class ProceedToAccountActions(
             val account: Account,
         ) : Event
     }

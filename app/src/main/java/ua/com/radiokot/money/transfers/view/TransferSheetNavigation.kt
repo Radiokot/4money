@@ -123,7 +123,7 @@ fun NavGraphBuilder.transferSheet(
                         onTransferDone()
                     }
 
-                    is TransferSheetViewModel.Event.DatePickRequested -> {
+                    is TransferSheetViewModel.Event.ProceedToDatePicker -> {
                         DatePickerDialogFragment
                             .newInstance(
                                 bundle = DatePickerDialogFragment.getBundle(

@@ -226,7 +226,7 @@ class TransferSheetViewModel(
                     "\ncurrent=$currentDate"
         }
 
-        _events.tryEmit(Event.DatePickRequested(currentDate))
+        _events.tryEmit(Event.ProceedToDatePicker(currentDate))
     }
 
     fun onDatePicked(newDate: LocalDate) {
@@ -333,7 +333,7 @@ class TransferSheetViewModel(
         /**
          * Pass the picked date to [onDatePicked].
          */
-        class DatePickRequested(
+        class ProceedToDatePicker(
             val currentDate: LocalDate,
         ) : Event
 

@@ -115,8 +115,8 @@ class AccountActionSheetViewModel(
         }
 
         _events.tryEmit(
-            Event.TransferClicked(
-                accountId = TransferCounterpartyId.Account(account.id),
+            Event.ProceedToTransfer(
+                sourceAccountId = TransferCounterpartyId.Account(account.id),
             )
         )
     }
@@ -130,8 +130,8 @@ class AccountActionSheetViewModel(
         }
 
         _events.tryEmit(
-            Event.IncomeClicked(
-                accountId = TransferCounterpartyId.Account(account.id),
+            Event.ProceedToIncome(
+                destinationAccountId = TransferCounterpartyId.Account(account.id),
             )
         )
     }
@@ -145,8 +145,8 @@ class AccountActionSheetViewModel(
         }
 
         _events.tryEmit(
-            Event.ExpenseClicked(
-                accountId = TransferCounterpartyId.Account(account.id),
+            Event.ProceedToExpense(
+                sourceAccountId = TransferCounterpartyId.Account(account.id),
             )
         )
     }
@@ -198,16 +198,16 @@ class AccountActionSheetViewModel(
 
     sealed interface Event {
 
-        class IncomeClicked(
-            val accountId: TransferCounterpartyId.Account,
+        class ProceedToIncome(
+            val destinationAccountId: TransferCounterpartyId.Account,
         ) : Event
 
-        class ExpenseClicked(
-            val accountId: TransferCounterpartyId.Account,
+        class ProceedToExpense(
+            val sourceAccountId: TransferCounterpartyId.Account,
         ) : Event
 
-        class TransferClicked(
-            val accountId: TransferCounterpartyId.Account,
+        class ProceedToTransfer(
+            val sourceAccountId: TransferCounterpartyId.Account,
         ) : Event
 
         object BalanceUpdated : Event
