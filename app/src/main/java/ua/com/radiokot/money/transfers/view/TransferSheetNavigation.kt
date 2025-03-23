@@ -19,13 +19,17 @@
 
 package ua.com.radiokot.money.transfers.view
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.material.navigation.bottomSheet
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
+import ua.com.radiokot.money.showSingle
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
 @Serializable
@@ -85,6 +89,26 @@ fun NavGraphBuilder.transferSheet(
 ) = bottomSheet<TransferSheetRoute> { entry ->
     val arguments = entry.toRoute<TransferSheetRoute>()
     val viewModel = koinViewModel<TransferSheetViewModel>()
+    val activity = checkNotNull(LocalActivity.current as? FragmentActivity) {
+        "This sheet needs activity as a parent"
+    }
+
+    DisposableEffect(activity) {
+        activity.supportFragmentManager.setFragmentResultListener(
+            DatePickerDialogFragment.DATE_REQUEST_KEY,
+            activity,
+        ) { _, bundle ->
+            viewModel.onDatePicked(
+                newDate = DatePickerDialogFragment.getLocalDate(bundle),
+            )
+        }
+
+        onDispose {
+            activity.supportFragmentManager.clearFragmentResultListener(
+                DatePickerDialogFragment.DATE_REQUEST_KEY
+            )
+        }
+    }
 
     LaunchedEffect(arguments) {
         viewModel.setSourceAndDestination(
@@ -97,6 +121,19 @@ fun NavGraphBuilder.transferSheet(
                 when (event) {
                     TransferSheetViewModel.Event.TransferDone -> {
                         onTransferDone()
+                    }
+
+                    is TransferSheetViewModel.Event.DatePickRequested -> {
+                        DatePickerDialogFragment
+                            .newInstance(
+                                bundle = DatePickerDialogFragment.getBundle(
+                                    currentDate = event.currentDate,
+                                )
+                            )
+                            .showSingle(
+                                activity.supportFragmentManager,
+                                DatePickerDialogFragment.TAG
+                            )
                     }
                 }
             }

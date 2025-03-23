@@ -23,13 +23,13 @@ import android.app.DatePickerDialog
 import android.app.Dialog
 import android.os.Bundle
 import android.widget.DatePicker
-import androidx.fragment.app.DialogFragment
+import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.fragment.app.setFragmentResult
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import ua.com.radiokot.money.lazyLogger
 
-class DatePickerDialogFragment : DialogFragment(),
+class DatePickerDialogFragment : AppCompatDialogFragment(),
     DatePickerDialog.OnDateSetListener {
 
     private val log by lazyLogger("DatePickerDialog")
@@ -45,7 +45,9 @@ class DatePickerDialogFragment : DialogFragment(),
             localDate.year,
             localDate.monthNumber - 1,
             localDate.dayOfMonth,
-        )
+        ).apply {
+            datePicker.maxDate = System.currentTimeMillis()
+        }
     }
 
     override fun onDateSet(view: DatePicker?, year: Int, month: Int, dayOfMonth: Int) {
@@ -63,7 +65,7 @@ class DatePickerDialogFragment : DialogFragment(),
         setFragmentResult(
             DATE_REQUEST_KEY,
             getBundle(
-                localDate = result,
+                currentDate = result,
             )
         )
     }
@@ -77,8 +79,8 @@ class DatePickerDialogFragment : DialogFragment(),
         fun getLocalDate(bundle: Bundle): LocalDate =
             Json.decodeFromString(bundle.getString(LOCAL_DATE_KEY)!!)
 
-        fun getBundle(localDate: LocalDate) = Bundle().apply {
-            putString(LOCAL_DATE_KEY, Json.encodeToString(localDate))
+        fun getBundle(currentDate: LocalDate) = Bundle().apply {
+            putString(LOCAL_DATE_KEY, Json.encodeToString(currentDate))
         }
 
         fun newInstance(bundle: Bundle) = DatePickerDialogFragment().apply {

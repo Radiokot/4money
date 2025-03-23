@@ -90,6 +90,7 @@ fun TransferSheetRoot(
     val destination = viewModel.destination.collectAsState().value
 
     TransferSheet(
+        modifier = modifier,
         isSourceInputShown = viewModel.isSourceInputShown.collectAsState().value,
         source = source
             ?: return,
@@ -106,7 +107,7 @@ fun TransferSheetRoot(
         onSubcategoryItemClicked = viewModel::onSubcategoryItemClicked,
         isSaveEnabled = viewModel.isSaveEnabled.collectAsState(),
         onSaveClicked = viewModel::onSaveClicked,
-        modifier = modifier,
+        onDateClicked = viewModel::onDateClicked,
     )
 }
 
@@ -127,6 +128,7 @@ private fun TransferSheet(
     onSubcategoryItemClicked: (ViewSelectableSubcategoryListItem) -> Unit,
     isSaveEnabled: State<Boolean>,
     onSaveClicked: () -> Unit,
+    onDateClicked: () -> Unit,
 ) = BoxWithConstraints(
     modifier = modifier
         .background(Color(0xfff0f4f8))
@@ -308,6 +310,31 @@ private fun TransferSheet(
             }
         }
 
+        BasicText(
+            text = when (date.value.specificType) {
+                ViewDate.SpecificType.Today ->
+                    "Today"
+
+                ViewDate.SpecificType.Yesterday ->
+                    "Yesterday"
+
+                null ->
+                    date.value.localDate.toString()
+            },
+            style = TextStyle(
+                textAlign = TextAlign.Center,
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .stableClickable(
+                    onClick = onDateClicked,
+                )
+                .padding(
+                    top = 16.dp,
+                    bottom = 8.dp,
+                )
+        )
+
         Box(
             contentAlignment = Alignment.Center,
         ) {
@@ -317,7 +344,7 @@ private fun TransferSheet(
 
             if (memo.value.isEmpty()) {
                 BasicText(
-                    text = "Notes…",
+                    text = "Add a note",
                     style = TextStyle(
                         fontStyle = FontStyle.Italic,
                         color = Color.Gray,
@@ -345,7 +372,7 @@ private fun TransferSheet(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(8.dp)
                     .offset {
                         if (memo.value.isEmpty())
                             emptyMemoFieldOffset
@@ -354,6 +381,8 @@ private fun TransferSheet(
                     }
             )
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(
             text = "Save",
@@ -368,25 +397,7 @@ private fun TransferSheet(
                 )
         )
 
-        BasicText(
-            text = when (date.value.specificType) {
-                ViewDate.SpecificType.Today ->
-                    "Today"
-
-                ViewDate.SpecificType.Yesterday ->
-                    "Yesterday"
-
-                null ->
-                    date.value.localDate.toString()
-            },
-            style = TextStyle(
-                textAlign = TextAlign.Center,
-                color = Color.DarkGray,
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        )
+        Spacer(modifier = Modifier.height(22.dp))
     }
 }
 
@@ -426,6 +437,9 @@ private fun TransferSheetPreview(
                 ),
                 destinationAmountValue = BigInteger("331").let(::mutableStateOf),
                 onNewDestinationAmountValueParsed = {},
+                memo = "".let(::mutableStateOf),
+                date = ViewDate.today().let(::mutableStateOf),
+                onMemoUpdated = {},
                 subcategoryItemList =
                 ViewSelectableSubcategoryListItemPreviewParameterProvider()
                     .values
@@ -434,9 +448,7 @@ private fun TransferSheetPreview(
                 onSubcategoryItemClicked = {},
                 isSaveEnabled = isSaveEnabled.let(::mutableStateOf),
                 onSaveClicked = {},
-                memo = "".let(::mutableStateOf),
-                date = ViewDate.today().let(::mutableStateOf),
-                onMemoUpdated = {},
+                onDateClicked = {},
             )
         }
     }

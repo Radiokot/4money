@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.Subcategory
@@ -217,6 +218,30 @@ class TransferSheetViewModel(
         }
     }
 
+    fun onDateClicked() {
+        val currentDate = date.value.localDate
+
+        log.debug {
+            "onDateClicked(): requesting picking a date:" +
+                    "\ncurrent=$currentDate"
+        }
+
+        _events.tryEmit(Event.DatePickRequested(currentDate))
+    }
+
+    fun onDatePicked(newDate: LocalDate) {
+        log.debug {
+            "onDatePicked(): updating date:" +
+                    "\nnewDate=$newDate"
+        }
+
+        _date.tryEmit(
+            ViewDate(
+                localDate = newDate,
+            )
+        )
+    }
+
     fun onSaveClicked() {
         if (!isSaveEnabled.value) {
             log.warn {
@@ -301,6 +326,14 @@ class TransferSheetViewModel(
         }
 
     sealed interface Event {
+
+        /**
+         * Pass the picked date to [onDatePicked].
+         */
+        class DatePickRequested(
+            val currentDate: LocalDate,
+        ) : Event
+
         object TransferDone : Event
     }
 }

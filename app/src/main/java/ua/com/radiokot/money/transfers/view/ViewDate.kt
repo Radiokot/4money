@@ -21,8 +21,10 @@ package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.runtime.Immutable
 import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import ua.com.radiokot.money.isSameDayAs
 
@@ -33,8 +35,10 @@ class ViewDate(
 ) {
     constructor(
         localDate: LocalDate,
-        today: LocalDate,
-        yesterday: LocalDate,
+        today: LocalDate = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date,
+        yesterday: LocalDate = today.minus(1, DateTimeUnit.DAY),
     ) : this(
         localDate = localDate,
         specificType = when {
@@ -78,7 +82,6 @@ class ViewDate(
     companion object {
         fun today() = ViewDate(
             localDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
-            specificType = SpecificType.Today,
         )
     }
 }
