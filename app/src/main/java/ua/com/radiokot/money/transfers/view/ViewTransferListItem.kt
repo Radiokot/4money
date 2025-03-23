@@ -54,6 +54,7 @@ sealed interface ViewTransferListItem {
         val secondaryCounterparty: ViewTransferCounterparty,
         val secondaryAmount: BigInteger,
         val type: Type,
+        val memo: String?,
         val source: ua.com.radiokot.money.transfers.data.Transfer?,
         override val key: Any = source?.hashCode() ?: Random.nextInt(),
     ) : ViewTransferListItem {
@@ -68,7 +69,9 @@ sealed interface ViewTransferListItem {
             if (primaryAmount != other.primaryAmount) return false
             if (secondaryCounterparty != other.secondaryCounterparty) return false
             if (secondaryAmount != other.secondaryAmount) return false
-            if (source != other.source) return false
+            if (type != other.type) return false
+            if (memo != other.memo) return false
+            if (key != other.key) return false
 
             return true
         }
@@ -78,7 +81,9 @@ sealed interface ViewTransferListItem {
             result = 31 * result + primaryAmount.hashCode()
             result = 31 * result + secondaryCounterparty.hashCode()
             result = 31 * result + secondaryAmount.hashCode()
-            result = 31 * result + (source?.hashCode() ?: 0)
+            result = 31 * result + type.hashCode()
+            result = 31 * result + (memo?.hashCode() ?: 0)
+            result = 31 * result + key.hashCode()
             return result
         }
 
@@ -100,6 +105,7 @@ sealed interface ViewTransferListItem {
                         secondaryCounterparty = ViewTransferCounterparty.fromCounterparty(transfer.destination),
                         secondaryAmount = transfer.destinationAmount,
                         type = Type.Income,
+                        memo = transfer.memo,
                         source = transfer,
                     )
                 } else {
@@ -114,6 +120,7 @@ sealed interface ViewTransferListItem {
                             Type.Expense
                         else
                             Type.Other,
+                        memo = transfer.memo,
                         source = transfer,
                     )
                 }

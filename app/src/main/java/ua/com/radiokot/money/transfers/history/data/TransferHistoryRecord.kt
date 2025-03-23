@@ -29,6 +29,7 @@ class TransferHistoryRecord(
     val sourceAmount: BigInteger,
     val destinationId: String,
     val destinationAmount: BigInteger,
+    val memo: String?,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -194,6 +194,7 @@ class PowerSyncTransferHistoryRepository(
             sourceAmount = BigInteger(getString(++column)!!.trim()),
             destinationId = getString(++column)!!,
             destinationAmount = BigInteger(getString(++column)!!.trim()),
+            memo = getString(++column)?.trim(),
         )
     }
 
@@ -209,13 +210,14 @@ class PowerSyncTransferHistoryRepository(
             ?: error("Destination ${record.sourceId} not found"),
         destinationAmount = record.destinationAmount,
         time = record.time,
+        memo = record.memo,
     )
 }
 
 private const val SELECT_TRANSFERS =
     "SELECT transfers.id, transfers.time, " +
             "transfers.source_id, transfers.source_amount, " +
-            "transfers.destination_id, transfers.destination_amount, " +
+            "transfers.destination_id, transfers.destination_amount, transfers.memo, " +
             "unixepoch(transfers.time) AS unix_time " +
             "FROM transfers"
 

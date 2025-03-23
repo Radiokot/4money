@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -244,10 +245,12 @@ private fun TransferItem(
         )
     }
 
-    Spacer(modifier = Modifier.height(2.dp))
-
     Row(
         verticalAlignment = Alignment.Top,
+        modifier = Modifier
+            .padding(
+                top = 2.dp,
+            )
     ) {
         BasicText(
             text = item.secondaryCounterparty.title,
@@ -273,5 +276,22 @@ private fun TransferItem(
                 )
             )
         }
+    }
+
+    if (item.memo != null) {
+        BasicText(
+            text = item.memo,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = TextStyle(
+                color = Color.Gray,
+                fontSize = 14.sp,
+                fontStyle = FontStyle.Italic,
+            ),
+            modifier = Modifier
+                .padding(
+                    top = 2.dp,
+                )
+        )
     }
 }

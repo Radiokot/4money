@@ -32,6 +32,7 @@ class Transfer(
     val destination: TransferCounterparty,
     val destinationAmount: BigInteger,
     val time: Instant,
+    val memo: String?,
     val id: String = UUID.randomUUID().toString(),
 ) {
     fun getLocalDateAt(timeZone: TimeZone): LocalDate =
