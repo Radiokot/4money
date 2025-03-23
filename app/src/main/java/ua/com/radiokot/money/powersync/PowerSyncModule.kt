@@ -30,7 +30,6 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidApplication
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
-import org.koin.dsl.binds
 import org.koin.dsl.module
 import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.auth.authModule
@@ -55,8 +54,5 @@ val powerSyncModule = module {
                 )
             }
         }
-    } binds arrayOf(
-        PowerSyncDatabase::class,
-        Queries::class,
-    )
+    } bind Queries::class
 }

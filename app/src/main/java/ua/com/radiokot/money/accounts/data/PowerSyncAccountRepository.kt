@@ -21,6 +21,7 @@ package ua.com.radiokot.money.accounts.data
 
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
+import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -247,6 +248,39 @@ class PowerSyncAccountRepository(
         log.debug {
             "healPositions(): re-assigned successfully"
         }
+    }
+
+    fun updateAccountBalanceBy(
+        accountId: String,
+        delta: BigInteger,
+        transaction: PowerSyncTransaction,
+    ) {
+        val currentBalance = transaction.get(
+            sql = "SELECT balance FROM accounts WHERE id = ?",
+            parameters = listOf(
+                accountId
+            ),
+            mapper = { cursor ->
+                BigInteger(cursor.getString(0)!!.trim())
+            }
+        )
+
+        val newBalance = (currentBalance + delta).toString()
+
+        log.debug {
+            "updateAccountBalanceBy(): updating balance:" +
+                    "\naccountId=$accountId," +
+                    "\ndelta=$delta" +
+                    "\nnewBalance=$newBalance"
+        }
+
+        transaction.execute(
+            sql = "UPDATE accounts SET balance = ? WHERE id = ?",
+            parameters = listOf(
+                newBalance,
+                accountId,
+            )
+        )
     }
 
     private fun toAccount(sqlCursor: SqlCursor): Account = sqlCursor.run {

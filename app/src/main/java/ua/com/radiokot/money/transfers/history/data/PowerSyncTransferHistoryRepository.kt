@@ -23,6 +23,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.powersync.db.Queries
 import com.powersync.db.SqlCursor
+import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -30,16 +31,20 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.format.DateTimeComponents
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
+import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import java.math.BigInteger
+import java.util.UUID
 
 class PowerSyncTransferHistoryRepository(
     private val database: Queries,
     private val accountRepository: AccountRepository,
     private val categoryRepository: CategoryRepository,
 ) : TransferHistoryRepository {
+
+    private val log by lazyLogger("PowerSyncTransferHistoryRepo")
 
     override suspend fun getTransferHistoryPage(
         pageBefore: Instant?,
@@ -151,6 +156,66 @@ class PowerSyncTransferHistoryRepository(
                     counterpartyById = getCounterpartiesById(),
                 )
             }
+
+    fun logTransfer(
+        sourceId: TransferCounterpartyId,
+        sourceAmount: BigInteger,
+        destinationId: TransferCounterpartyId,
+        destinationAmount: BigInteger,
+        memo: String?,
+        time: Instant,
+        transaction: PowerSyncTransaction,
+    ) {
+        val id = UUID.randomUUID().toString()
+
+        // ISO-8601 datetime with T, without millis,
+        // with explicitly specified UTC timezone (Z).
+        // For example, 2025-02-22T08:37:23Z
+        val timeString = Instant.fromEpochSeconds(time.epochSeconds).toString()
+
+        log.debug {
+            "logTransfer(): logging transfer:" +
+                    "\nid=$id," +
+                    "\ntime=$timeString," +
+                    "\nsourceId=$sourceId," +
+                    "\nsourceAmount=$sourceAmount," +
+                    "\ndestinationId=$destinationId," +
+                    "\ndestinationAmount=$destinationAmount," +
+                    "\nmemo=$memo"
+        }
+
+        transaction.execute(
+            sql = "INSERT INTO transfers " +
+                    "(id, time, source_id, source_amount, destination_id, destination_amount, memo) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            parameters = listOf(
+                id,
+                timeString,
+                sourceId.toString(),
+                sourceAmount.toString(),
+                destinationId.toString(),
+                destinationAmount.toString(),
+                memo,
+            )
+        )
+    }
+
+    fun deleteTransfer(
+        transferId: String,
+        transaction: PowerSyncTransaction,
+    ) {
+        log.debug {
+            "deleteTransfer(): deleting:" +
+                    "\ntransferId=$transferId"
+        }
+
+        transaction.execute(
+            sql = "DELETE FROM transfers WHERE transfers.id = ?",
+            parameters = listOf(
+                transferId,
+            )
+        )
+    }
 
     private suspend fun getCounterpartiesById(): Map<String, TransferCounterparty> {
         val subcategoriesByCategories = categoryRepository

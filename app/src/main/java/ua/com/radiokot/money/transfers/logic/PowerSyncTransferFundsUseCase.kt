@@ -20,32 +20,26 @@
 package ua.com.radiokot.money.transfers.logic
 
 import com.powersync.PowerSyncDatabase
-import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
-import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
-import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
-import ua.com.radiokot.money.transfers.history.data.TransferHistoryRepository
+import ua.com.radiokot.money.transfers.history.data.PowerSyncTransferHistoryRepository
 import java.math.BigInteger
-import java.util.UUID
 
 /**
  * A transfer implementation utilizing PowerSync database transactions.
- * Saves time with second precision.
  */
 class PowerSyncTransferFundsUseCase(
-    private val transferHistoryRepository: TransferHistoryRepository,
+    private val accountRepository: PowerSyncAccountRepository,
+    private val transferHistoryRepository: PowerSyncTransferHistoryRepository,
     private val database: PowerSyncDatabase,
 ) : TransferFundsUseCase {
-
-    private val log by lazyLogger("PowerSyncTransferFundsUC")
 
     override suspend fun invoke(
         source: TransferCounterparty,
@@ -74,101 +68,30 @@ class PowerSyncTransferFundsUseCase(
 
         database.writeTransaction { transaction ->
             if (source is TransferCounterparty.Account) {
-                transaction.updateAccountBalanceBy(
+                accountRepository.updateAccountBalanceBy(
                     accountId = source.account.id,
                     delta = -sourceAmount,
+                    transaction = transaction,
                 )
             }
 
             if (destination is TransferCounterparty.Account) {
-                transaction.updateAccountBalanceBy(
+                accountRepository.updateAccountBalanceBy(
                     accountId = destination.account.id,
                     delta = destinationAmount,
+                    transaction = transaction,
                 )
             }
 
-            transaction.logTransfer(
+            transferHistoryRepository.logTransfer(
                 sourceId = source.id,
                 sourceAmount = sourceAmount,
                 destinationId = destination.id,
                 destinationAmount = destinationAmount,
                 memo = memo,
                 time = thisTransferTime,
+                transaction = transaction,
             )
         }
-    }
-
-    private fun PowerSyncTransaction.updateAccountBalanceBy(
-        accountId: String,
-        delta: BigInteger,
-    ) {
-        val currentBalance = get(
-            sql = "SELECT balance FROM accounts WHERE id = ?",
-            parameters = listOf(
-                accountId
-            ),
-            mapper = { cursor ->
-                BigInteger(cursor.getString(0)!!.trim())
-            }
-        )
-
-        val newBalance = (currentBalance + delta).toString()
-
-        log.debug {
-            "updateAccountBalanceBy(): updating balance:" +
-                    "\naccountId=$accountId," +
-                    "\ndelta=$delta" +
-                    "\nnewBalance=$newBalance"
-        }
-
-        execute(
-            sql = "UPDATE accounts SET balance = ? WHERE id = ?",
-            parameters = listOf(
-                newBalance,
-                accountId,
-            )
-        )
-    }
-
-    private fun PowerSyncTransaction.logTransfer(
-        sourceId: TransferCounterpartyId,
-        sourceAmount: BigInteger,
-        destinationId: TransferCounterpartyId,
-        destinationAmount: BigInteger,
-        memo: String?,
-        time: Instant,
-    ) {
-        val id = UUID.randomUUID().toString()
-
-        // ISO-8601 datetime with T, without millis,
-        // with explicitly specified UTC timezone (Z).
-        // For example, 2025-02-22T08:37:23Z
-        val timeString = Instant.fromEpochSeconds(time.epochSeconds).toString()
-
-        log.debug {
-            "logTransfer(): logging transfer:" +
-                    "\nid=$id," +
-                    "\ntime=$timeString," +
-                    "\nsourceId=$sourceId," +
-                    "\nsourceAmount=$sourceAmount," +
-                    "\ndestinationId=$destinationId," +
-                    "\ndestinationAmount=$destinationAmount," +
-                    "\nmemo=$memo"
-        }
-
-        execute(
-            sql = "INSERT INTO transfers " +
-                    "(id, time, source_id, source_amount, destination_id, destination_amount, memo) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            parameters = listOf(
-                id,
-                timeString,
-                sourceId.toString(),
-                sourceAmount.toString(),
-                destinationId.toString(),
-                destinationAmount.toString(),
-                memo,
-            )
-        )
     }
 }

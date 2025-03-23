@@ -19,83 +19,43 @@
 
 package ua.com.radiokot.money.transfers.logic
 
-import com.powersync.db.Queries
-import com.powersync.db.internal.PowerSyncTransaction
-import ua.com.radiokot.money.lazyLogger
+import com.powersync.PowerSyncDatabase
+import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
-import ua.com.radiokot.money.transfers.history.data.TransferHistoryRepository
-import java.math.BigInteger
+import ua.com.radiokot.money.transfers.history.data.PowerSyncTransferHistoryRepository
 
 class PowerSyncRevertTransferUseCase(
-    private val transferHistoryRepository: TransferHistoryRepository,
-    private val database: Queries,
+    private val accountRepository: PowerSyncAccountRepository,
+    private val transferHistoryRepository: PowerSyncTransferHistoryRepository,
+    private val database: PowerSyncDatabase,
 ) : RevertTransferUseCase {
-
-    private val log by lazyLogger("PowerSyncRevertTransferUC")
 
     override suspend fun invoke(transferId: String): Result<Unit> = runCatching {
 
         val transfer = transferHistoryRepository.getTransfer(transferId)
 
         database.writeTransaction { transaction ->
-            log.debug {
-                "invoke(): deleting:" +
-                        "\ntransferId=$transferId"
-            }
 
-            transaction.execute(
-                sql = "DELETE FROM transfers WHERE transfers.id = ?",
-                parameters = listOf(
-                    transferId,
-                )
+            transferHistoryRepository.deleteTransfer(
+                transferId = transferId,
+                transaction = transaction,
             )
 
             if (transfer.source is TransferCounterparty.Account) {
-                val sourceAccount = transfer.source.account
-                val newSourceAccountBalance =
-                    sourceAccount.balance + transfer.sourceAmount
-
-                log.debug {
-                    "invoke(): refunding spent amount:" +
-                            "\naccountId=${sourceAccount.id}," +
-                            "\nspentAmount=${transfer.sourceAmount}," +
-                            "\nnewBalance=$newSourceAccountBalance"
-                }
-
-                transaction.updateAccountBalance(
-                    accountId = sourceAccount.id,
-                    newBalance = newSourceAccountBalance,
+                accountRepository.updateAccountBalanceBy(
+                    accountId = transfer.source.account.id,
+                    delta = transfer.sourceAmount,
+                    transaction = transaction
                 )
             }
 
             if (transfer.destination is TransferCounterparty.Account) {
-                val destinationAccount = transfer.destination.account
-                val newDestinationAccountBalance =
-                    destinationAccount.balance - transfer.sourceAmount
-
-                log.debug {
-                    "invoke(): refunding received amount:" +
-                            "\naccountId=${destinationAccount.id}," +
-                            "\nreceivedAmount=${transfer.destinationAmount}," +
-                            "\nnewBalance=$newDestinationAccountBalance"
-                }
-
-                transaction.updateAccountBalance(
-                    accountId = destinationAccount.id,
-                    newBalance = newDestinationAccountBalance,
+                accountRepository.updateAccountBalanceBy(
+                    accountId = transfer.destination.account.id,
+                    delta = -transfer.destinationAmount,
+                    transaction=transaction,
                 )
             }
         }
     }
-
-    private fun PowerSyncTransaction.updateAccountBalance(
-        accountId: String,
-        newBalance: BigInteger,
-    ) = execute(
-        sql = "UPDATE accounts SET balance = ? WHERE id = ?",
-        parameters = listOf(
-            newBalance.toString(),
-            accountId,
-        )
-    )
 }
