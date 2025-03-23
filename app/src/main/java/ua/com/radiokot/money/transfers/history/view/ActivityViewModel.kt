@@ -48,6 +48,7 @@ import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.data.TransferHistoryRepository
 import ua.com.radiokot.money.transfers.logic.RevertTransferUseCase
+import ua.com.radiokot.money.transfers.view.ViewDate
 import ua.com.radiokot.money.transfers.view.ViewTransferListItem
 
 class ActivityViewModel(
@@ -95,17 +96,11 @@ class ActivityViewModel(
                         (previousLocalDate == null || !nextLocalDate.isSameDayAs(previousLocalDate))
                     ) {
                         val header = ViewTransferListItem.Header(
-                            localDate = nextLocalDate,
-                            dayType = when {
-                                nextLocalDate.isSameDayAs(today) ->
-                                    ViewTransferListItem.Header.DayType.Today
-
-                                nextLocalDate.isSameDayAs(yesterday) ->
-                                    ViewTransferListItem.Header.DayType.Yesterday
-
-                                else ->
-                                    ViewTransferListItem.Header.DayType.DayOfWeek
-                            }
+                            date = ViewDate(
+                                localDate = nextLocalDate,
+                                today = today,
+                                yesterday = yesterday,
+                            ),
                         )
 
                         header to nextLocalDate

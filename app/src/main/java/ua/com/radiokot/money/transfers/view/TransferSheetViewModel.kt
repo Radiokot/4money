@@ -67,6 +67,8 @@ class TransferSheetViewModel(
     val destinationAmountValue = _destinationAmountValue.asStateFlow()
     private val _memo: MutableStateFlow<String> = MutableStateFlow("")
     val memo = _memo.asStateFlow()
+    private val _date: MutableStateFlow<ViewDate> = MutableStateFlow(ViewDate.today())
+    val date = _date.asStateFlow()
     private val subcategoryToSelect: MutableStateFlow<Subcategory?> = MutableStateFlow(null)
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()

@@ -100,6 +100,7 @@ fun TransferSheetRoot(
         destinationAmountValue = viewModel.destinationAmountValue.collectAsState(),
         onNewDestinationAmountValueParsed = viewModel::onNewDestinationAmountValueParsed,
         memo = viewModel.memo.collectAsStateWithLifecycle(),
+        date = viewModel.date.collectAsStateWithLifecycle(),
         onMemoUpdated = viewModel::onMemoUpdated,
         subcategoryItemList = viewModel.subcategoryItemList.collectAsState(),
         onSubcategoryItemClicked = viewModel::onSubcategoryItemClicked,
@@ -120,6 +121,7 @@ private fun TransferSheet(
     destinationAmountValue: State<BigInteger>,
     onNewDestinationAmountValueParsed: (BigInteger) -> Unit,
     memo: State<String>,
+    date: State<ViewDate>,
     onMemoUpdated: (String) -> Unit,
     subcategoryItemList: State<List<ViewSelectableSubcategoryListItem>>,
     onSubcategoryItemClicked: (ViewSelectableSubcategoryListItem) -> Unit,
@@ -366,7 +368,25 @@ private fun TransferSheet(
                 )
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        BasicText(
+            text = when (date.value.specificType) {
+                ViewDate.SpecificType.Today ->
+                    "Today"
+
+                ViewDate.SpecificType.Yesterday ->
+                    "Yesterday"
+
+                null ->
+                    date.value.localDate.toString()
+            },
+            style = TextStyle(
+                textAlign = TextAlign.Center,
+                color = Color.DarkGray,
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
     }
 }
 
@@ -415,6 +435,7 @@ private fun TransferSheetPreview(
                 isSaveEnabled = isSaveEnabled.let(::mutableStateOf),
                 onSaveClicked = {},
                 memo = "".let(::mutableStateOf),
+                date = ViewDate.today().let(::mutableStateOf),
                 onMemoUpdated = {},
             )
         }

@@ -20,8 +20,6 @@
 package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.runtime.Immutable
-import kotlinx.datetime.LocalDate
-import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import java.math.BigInteger
 import kotlin.random.Random
@@ -33,19 +31,11 @@ sealed interface ViewTransferListItem {
     val key: Any
 
     class Header(
-        val localDate: LocalDate,
-        val dayType: DayType,
-        override val key: Any = localDate.toString(),
+        val date: ViewDate,
+        override val key: Any = date.hashCode(),
     ) : ViewTransferListItem {
 
         override val itemType: String = "header"
-
-        enum class DayType {
-            Today,
-            Yesterday,
-            DayOfWeek,
-            ;
-        }
     }
 
     class Transfer(

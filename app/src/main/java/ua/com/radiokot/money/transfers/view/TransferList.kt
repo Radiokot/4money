@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -152,7 +151,7 @@ private fun HeaderItem(
         .fillMaxWidth(),
 ) {
     BasicText(
-        text = item.localDate.dayOfMonth.toString(),
+        text = item.date.localDate.dayOfMonth.toString(),
         style = TextStyle(
             fontSize = 30.sp,
             fontWeight = FontWeight(300),
@@ -168,15 +167,15 @@ private fun HeaderItem(
     ) {
         BasicText(
             text =
-            when (item.dayType) {
-                ViewTransferListItem.Header.DayType.Today ->
+            when (item.date.specificType) {
+                ViewDate.SpecificType.Today ->
                     "Today"
 
-                ViewTransferListItem.Header.DayType.Yesterday ->
+                ViewDate.SpecificType.Yesterday ->
                     "Yesterday"
 
-                ViewTransferListItem.Header.DayType.DayOfWeek ->
-                    dayFormat.format(item.localDate)
+                null ->
+                    dayFormat.format(item.date.localDate)
             },
             style = TextStyle(
                 fontSize = 12.sp,
@@ -184,7 +183,7 @@ private fun HeaderItem(
             ),
         )
         BasicText(
-            text = monthYearFormat.format(item.localDate),
+            text = monthYearFormat.format(item.date.localDate),
             style = TextStyle(
                 fontSize = 14.sp,
             ),

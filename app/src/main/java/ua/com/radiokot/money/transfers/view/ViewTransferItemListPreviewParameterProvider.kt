@@ -20,7 +20,6 @@
 package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import kotlinx.datetime.LocalDate
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import java.math.BigInteger
 
@@ -30,8 +29,7 @@ class ViewTransferItemListPreviewParameterProvider :
         get() = sequenceOf(
             listOf(
                 ViewTransferListItem.Header(
-                    localDate = LocalDate(2025, 2, 26),
-                    dayType = ViewTransferListItem.Header.DayType.Today,
+                    date = ViewDate.today(),
                 ),
                 ViewTransferListItem.Transfer(
                     primaryCounterparty = ViewTransferCounterparty.Category(
