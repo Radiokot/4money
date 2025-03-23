@@ -231,7 +231,7 @@ private data class MoneyAppTransfer(
     val sourceAmount: BigInteger,
     val destinationId: UUID,
     val destinationAmount: BigInteger,
-    val notes: String?,
+    val memo: String?,
 ) {
     val id: UUID =
         deterministicUuid(
@@ -252,12 +252,12 @@ private data class MoneyAppTransfer(
             sourceAmount.toString(),
             destinationId.toString(),
             destinationAmount.toString(),
-            notes ?: "",
+            memo ?: "",
         )
 
     companion object {
         val CSV_HEADER =
-            "id,user_id,time,source_id,source_amount,destination_id,destination_amount,notes"
+            "id,user_id,time,source_id,source_amount,destination_id,destination_amount,memo"
                 .split(',')
 
         private val EXTRA_SECONDS_BY_DAY = mutableMapOf<LocalDate, Int>()
@@ -373,7 +373,7 @@ private data class MoneyAppTransfer(
                 sourceAmount = sourceAmount,
                 destinationId = destinationId,
                 destinationAmount = destinationAmount,
-                notes = oneMoneyTransfer.notes,
+                memo = oneMoneyTransfer.notes,
             )
         }
     }
