@@ -23,3 +23,6 @@ local.properties
 *.aab
 app/release*/
 app/debug*/
+
+# Supabase
+supabase/.temp
