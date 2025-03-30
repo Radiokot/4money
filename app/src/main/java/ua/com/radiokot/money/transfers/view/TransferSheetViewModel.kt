@@ -47,6 +47,7 @@ import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.Subcategory
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.eventSharedFlow
+import ua.com.radiokot.money.home.view.HomeViewModel.Event
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
@@ -187,6 +188,46 @@ class TransferSheetViewModel(
 
     fun onMemoUpdated(memo: String) {
         _memo.tryEmit(memo)
+    }
+
+    fun onSourceClicked() {
+        val source = sourceCounterparty
+            ?: error("Source counterparty must be set at this point")
+        val destination = destinationCounterparty
+            ?: error("Destination counterparty must be set at this point")
+
+        log.debug {
+            "onSourceClicked(): requesting to select source"
+        }
+
+        _events.tryEmit(
+            Event.ProceedToTransferCounterpartySelection(
+                alreadySelectedCounterpartyId = destination.id,
+                selectSource = true,
+                showCategories = source is TransferCounterparty.Category,
+                showAccounts = source is TransferCounterparty.Account,
+            )
+        )
+    }
+
+    fun onDestinationClicked() {
+        val source = sourceCounterparty
+            ?: error("Source counterparty must be set at this point")
+        val destination = destinationCounterparty
+            ?: error("Destination counterparty must be set at this point")
+
+        log.debug {
+            "onDestinationClicked(): requesting to select destination"
+        }
+
+        _events.tryEmit(
+            Event.ProceedToTransferCounterpartySelection(
+                alreadySelectedCounterpartyId = source.id,
+                selectSource = false,
+                showCategories = destination is TransferCounterparty.Category,
+                showAccounts = destination is TransferCounterparty.Account,
+            )
+        )
     }
 
     fun onSubcategoryItemClicked(item: ViewSelectableSubcategoryListItem) {
@@ -338,5 +379,12 @@ class TransferSheetViewModel(
         ) : Event
 
         object TransferDone : Event
+
+        class ProceedToTransferCounterpartySelection(
+            val alreadySelectedCounterpartyId: TransferCounterpartyId,
+            val selectSource: Boolean,
+            val showCategories: Boolean,
+            val showAccounts: Boolean,
+        ) : Event
     }
 }

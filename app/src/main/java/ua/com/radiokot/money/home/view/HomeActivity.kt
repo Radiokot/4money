@@ -59,6 +59,7 @@ import ua.com.radiokot.money.categories.view.CategoriesScreenRoute
 import ua.com.radiokot.money.categories.view.categoriesScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
 import ua.com.radiokot.money.stableClickable
+import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.history.view.ActivityScreenRoute
 import ua.com.radiokot.money.transfers.history.view.activityScreen
 import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetRoute
@@ -184,6 +185,26 @@ private fun HomeScreen() {
             )
 
             transferSheet(
+                onProceedToTransferCounterpartySelection = {
+                        alreadySelectedCounterpartyId: TransferCounterpartyId,
+                        selectSource: Boolean,
+                        showCategories: Boolean,
+                        showAccounts: Boolean,
+                    ->
+                    navController.navigate(
+                        route = TransferCounterpartySelectionSheetRoute(
+                            isForSource = selectSource,
+                            alreadySelectedCounterpartyId = alreadySelectedCounterpartyId,
+                            showCategories = showCategories,
+                            showAccounts = showAccounts,
+                        ),
+                        navOptions = navOptions {
+                            popUpTo<TransferSheetRoute> {
+                                inclusive = true
+                            }
+                        },
+                    )
+                },
                 onTransferDone = navController::navigateUp,
             )
 

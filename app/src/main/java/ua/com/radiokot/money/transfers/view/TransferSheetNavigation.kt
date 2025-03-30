@@ -85,6 +85,12 @@ data class TransferSheetRoute(
 }
 
 fun NavGraphBuilder.transferSheet(
+    onProceedToTransferCounterpartySelection: (
+        alreadySelectedCounterpartyId: TransferCounterpartyId,
+        selectSource: Boolean,
+        showCategories: Boolean,
+        showAccounts: Boolean,
+    ) -> Unit,
     onTransferDone: () -> Unit,
 ) = bottomSheet<TransferSheetRoute> { entry ->
     val arguments = entry.toRoute<TransferSheetRoute>()
@@ -134,6 +140,15 @@ fun NavGraphBuilder.transferSheet(
                                 activity.supportFragmentManager,
                                 DatePickerDialogFragment.TAG
                             )
+                    }
+
+                    is TransferSheetViewModel.Event.ProceedToTransferCounterpartySelection -> {
+                        onProceedToTransferCounterpartySelection(
+                            event.alreadySelectedCounterpartyId,
+                            event.selectSource,
+                            event.showCategories,
+                            event.showAccounts,
+                        )
                     }
                 }
             }

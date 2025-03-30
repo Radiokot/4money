@@ -108,6 +108,8 @@ fun TransferSheetRoot(
         isSaveEnabled = viewModel.isSaveEnabled.collectAsState(),
         onSaveClicked = viewModel::onSaveClicked,
         onDateClicked = viewModel::onDateClicked,
+        onSourceClicked = viewModel::onSourceClicked,
+        onDestinationClicked = viewModel::onDestinationClicked,
     )
 }
 
@@ -129,6 +131,8 @@ private fun TransferSheet(
     isSaveEnabled: State<Boolean>,
     onSaveClicked: () -> Unit,
     onDateClicked: () -> Unit,
+    onSourceClicked: () -> Unit,
+    onDestinationClicked: () -> Unit,
 ) = BoxWithConstraints(
     modifier = modifier
         .background(Color(0xfff0f4f8))
@@ -175,6 +179,9 @@ private fun TransferSheet(
                 ),
                 modifier = Modifier
                     .weight(1f)
+                    .stableClickable(
+                        onClick = onSourceClicked,
+                    )
                     .padding(
                         vertical = 24.dp,
                         horizontal = 8.dp,
@@ -197,6 +204,9 @@ private fun TransferSheet(
                 ),
                 modifier = Modifier
                     .weight(1f)
+                    .stableClickable(
+                        onClick = onDestinationClicked,
+                    )
                     .padding(
                         vertical = 24.dp,
                         horizontal = 8.dp,
@@ -449,6 +459,8 @@ private fun TransferSheetPreview(
                 isSaveEnabled = isSaveEnabled.let(::mutableStateOf),
                 onSaveClicked = {},
                 onDateClicked = {},
+                onSourceClicked = { },
+                onDestinationClicked = { },
             )
         }
     }

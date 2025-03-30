@@ -149,6 +149,27 @@ private fun TransferShortcutScreen(
         )
 
         transferSheet(
+            onProceedToTransferCounterpartySelection = {
+                    alreadySelectedCounterpartyId: TransferCounterpartyId,
+                    selectSource: Boolean,
+                    showCategories: Boolean,
+                    showAccounts: Boolean,
+                ->
+                navController.navigate(
+                    route = TransferCounterpartySelectionSheetRoute(
+                        isForSource = selectSource,
+                        alreadySelectedCounterpartyId = alreadySelectedCounterpartyId,
+                        showCategories = showCategories,
+                        showAccounts = showAccounts,
+                        isIncognito = true,
+                    ),
+                    navOptions = navOptions {
+                        popUpTo<TransferSheetRoute> {
+                            inclusive = true
+                        }
+                    },
+                )
+            },
             onTransferDone = navController::popBackStack,
         )
     }
