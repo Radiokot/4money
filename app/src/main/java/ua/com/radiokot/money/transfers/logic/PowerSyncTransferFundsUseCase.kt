@@ -28,17 +28,21 @@ import kotlinx.datetime.plus
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
+import ua.com.radiokot.money.transfers.data.TransfersPreferences
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.data.PowerSyncTransferHistoryRepository
 import java.math.BigInteger
 
 /**
  * A transfer implementation utilizing PowerSync database transactions.
+ *
+ * @param transfersPreferences if set, last used account for category is saved
  */
 class PowerSyncTransferFundsUseCase(
     private val accountRepository: PowerSyncAccountRepository,
     private val transferHistoryRepository: PowerSyncTransferHistoryRepository,
     private val database: PowerSyncDatabase,
+    private val transfersPreferences: TransfersPreferences?,
 ) : TransferFundsUseCase {
 
     override suspend fun invoke(
@@ -73,6 +77,13 @@ class PowerSyncTransferFundsUseCase(
                     delta = -sourceAmount,
                     transaction = transaction,
                 )
+
+                if (destination is TransferCounterparty.Category) {
+                    transfersPreferences?.setLastUsedAccountByCategory(
+                        categoryId = destination.category.id,
+                        accountId = source.account.id,
+                    )
+                }
             }
 
             if (destination is TransferCounterparty.Account) {
@@ -81,6 +92,13 @@ class PowerSyncTransferFundsUseCase(
                     delta = destinationAmount,
                     transaction = transaction,
                 )
+
+                if (source is TransferCounterparty.Category) {
+                    transfersPreferences?.setLastUsedAccountByCategory(
+                        categoryId = source.category.id,
+                        accountId = destination.account.id,
+                    )
+                }
             }
 
             transferHistoryRepository.logTransfer(

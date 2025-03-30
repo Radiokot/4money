@@ -19,6 +19,8 @@
 
 package ua.com.radiokot.money.transfers
 
+import android.content.Context
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -26,6 +28,8 @@ import ua.com.radiokot.money.accounts.accountsModule
 import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.categoriesModule
 import ua.com.radiokot.money.powersync.powerSyncModule
+import ua.com.radiokot.money.transfers.data.TransferPreferencesOnPrefs
+import ua.com.radiokot.money.transfers.data.TransfersPreferences
 import ua.com.radiokot.money.transfers.history.transfersHistoryModule
 import ua.com.radiokot.money.transfers.logic.PowerSyncRevertTransferUseCase
 import ua.com.radiokot.money.transfers.logic.PowerSyncTransferFundsUseCase
@@ -42,12 +46,22 @@ val transfersModule = module {
         transfersHistoryModule,
     )
 
+    single {
+        TransferPreferencesOnPrefs(
+            preferences = androidContext().getSharedPreferences(
+                "transfers",
+                Context.MODE_PRIVATE,
+            )
+        )
+    } bind TransfersPreferences::class
+
     sessionScope {
         factory {
             PowerSyncTransferFundsUseCase(
                 accountRepository = get(),
                 transferHistoryRepository = get(),
                 database = get(),
+                transfersPreferences = get(),
             )
         } bind TransferFundsUseCase::class
 
