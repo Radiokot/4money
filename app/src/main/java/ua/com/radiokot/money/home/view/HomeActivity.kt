@@ -40,12 +40,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
+import org.koin.compose.viewmodel.koinViewModel
 import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.accounts.view.AccountActionSheetRoute
 import ua.com.radiokot.money.accounts.view.AccountsScreenRoute
@@ -67,6 +69,7 @@ import ua.com.radiokot.money.transfers.view.transferSheet
 import ua.com.radiokot.money.uikit.TextButton
 
 class HomeActivity : UserSessionScopeActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -86,10 +89,43 @@ class HomeActivity : UserSessionScopeActivity() {
 
 @SuppressLint("RestrictedApi")
 @Composable
-private fun HomeScreen(
-
-) {
+private fun HomeScreen() {
     val navController = rememberMoneyAppNavController()
+    val viewModel = koinViewModel<HomeViewModel>()
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is HomeViewModel.Event.ProceedToTransfer -> {
+                    navController.navigate(
+                        route = TransferSheetRoute(
+                            sourceId = event.sourceId,
+                            destinationId = event.destinationId,
+                        ),
+                        navOptions = navOptions {
+                            popUpTo<AccountActionSheetRoute> {
+                                inclusive = true
+                            }
+                        },
+                    )
+                }
+
+                is HomeViewModel.Event.ProceedToTransferCounterpartySelectionWithCategory -> {
+                    navController.navigate(
+                        route = TransferCounterpartySelectionSheetRoute(
+                            isForSource = !event.category.isIncome,
+                            alreadySelectedCounterpartyId = TransferCounterparty.Category(event.category).id,
+                        ),
+                        navOptions = navOptions {
+                            popUpTo<AccountActionSheetRoute> {
+                                inclusive = true
+                            }
+                        },
+                    )
+                }
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -114,20 +150,13 @@ private fun HomeScreen(
                     navController.navigate(
                         route = AccountActionSheetRoute(
                             accountId = account.id,
-                        )
+                        ),
                     )
                 }
             )
 
             categoriesScreen(
-                onProceedToTransfer = { category ->
-                    navController.navigate(
-                        route = TransferCounterpartySelectionSheetRoute(
-                            isForSource = !category.isIncome,
-                            alreadySelectedCounterpartyId = TransferCounterparty.Category(category).id,
-                        )
-                    )
-                },
+                onProceedToTransfer = viewModel::onProceedToTransferWithCategory,
             )
 
             activityScreen()

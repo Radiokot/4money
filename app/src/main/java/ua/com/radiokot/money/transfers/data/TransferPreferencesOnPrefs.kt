@@ -28,11 +28,16 @@ class TransferPreferencesOnPrefs(
 ) : TransfersPreferences {
 
     private val log by lazyLogger("TransferPreferencesOnPrefs")
+    private val knownCategoriesKey = "known_categories"
+
+    private fun getLastUsedAccountByCategoryKey(categoryId: String) =
+        "transfer_last_used_acc_$categoryId"
 
     override fun getLastUsedAccountByCategory(
         categoryId: String,
     ): String? =
-        preferences.getString(getLastUsedAccountByCategoryKey(categoryId), null)
+        preferences
+            .getString(getLastUsedAccountByCategoryKey(categoryId), null)
 
     override fun setLastUsedAccountByCategory(
         categoryId: String,
@@ -45,9 +50,22 @@ class TransferPreferencesOnPrefs(
                     "\naccountId=$accountId"
         }
 
+        putStringSet(
+            knownCategoriesKey,
+            preferences.getStringSet(knownCategoriesKey, emptySet())!! + categoryId
+        )
         putString(getLastUsedAccountByCategoryKey(categoryId), accountId)
     }
 
-    private fun getLastUsedAccountByCategoryKey(categoryId: String) =
-        "transfer_last_used_acc_$categoryId"
+    override val lastUsedAccountsByCategory: Map<String, String>
+        get() = buildMap {
+            preferences
+                .getStringSet(knownCategoriesKey, emptySet())!!
+                .forEach { categoryId ->
+                    val accountId = getLastUsedAccountByCategory(categoryId)
+                    if (accountId != null) {
+                        put(categoryId, accountId)
+                    }
+                }
+        }
 }

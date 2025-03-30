@@ -17,21 +17,29 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.transfers.data
+package ua.com.radiokot.money.home
 
-interface TransfersPreferences {
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.module
+import ua.com.radiokot.money.accounts.accountsModule
+import ua.com.radiokot.money.auth.logic.sessionScope
+import ua.com.radiokot.money.categories.categoriesModule
+import ua.com.radiokot.money.home.view.HomeViewModel
+import ua.com.radiokot.money.transfers.transfersModule
 
-    /**
-     * @return last used account ID for given category, if exists.
-     */
-    fun getLastUsedAccountByCategory(
-        categoryId: String,
-    ): String?
+val homeModule = module {
 
-    fun setLastUsedAccountByCategory(
-        categoryId: String,
-        accountId: String,
+    includes(
+        accountsModule,
+        categoriesModule,
+        transfersModule,
     )
 
-    val lastUsedAccountsByCategory: Map<String, String>
+    sessionScope {
+        viewModel {
+            HomeViewModel(
+                getLastUsedAccountsByCategoryUseCase = get(),
+            )
+        }
+    }
 }

@@ -33,6 +33,7 @@ import ua.com.radiokot.money.accounts.accountsModule
 import ua.com.radiokot.money.auth.authModule
 import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
+import ua.com.radiokot.money.home.homeModule
 import ua.com.radiokot.money.transfers.transfersModule
 
 class MoneyApp : Application() {
@@ -49,8 +50,7 @@ class MoneyApp : Application() {
 
             modules(
                 authModule,
-                accountsModule,
-                transfersModule,
+                homeModule,
             )
         }
 
