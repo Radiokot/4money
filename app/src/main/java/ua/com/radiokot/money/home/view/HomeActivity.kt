@@ -59,7 +59,6 @@ import ua.com.radiokot.money.categories.view.CategoriesScreenRoute
 import ua.com.radiokot.money.categories.view.categoriesScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
 import ua.com.radiokot.money.stableClickable
-import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.history.view.ActivityScreenRoute
 import ua.com.radiokot.money.transfers.history.view.activityScreen
 import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetRoute
@@ -103,18 +102,19 @@ private fun HomeScreen() {
                             destinationId = event.destinationId,
                         ),
                         navOptions = navOptions {
-                            popUpTo<AccountActionSheetRoute> {
+                            popUpTo<TransferCounterpartySelectionSheetRoute> {
                                 inclusive = true
                             }
                         },
                     )
                 }
 
-                is HomeViewModel.Event.ProceedToTransferCounterpartySelectionWithCategory -> {
+                is HomeViewModel.Event.ProceedToTransferCounterpartySelection -> {
                     navController.navigate(
                         route = TransferCounterpartySelectionSheetRoute(
-                            isForSource = !event.category.isIncome,
-                            alreadySelectedCounterpartyId = TransferCounterparty.Category(event.category).id,
+                            isForSource = event.selectSource,
+                            alreadySelectedCounterpartyId = event.alreadySelectedCounterpartyId,
+                            showCategories = event.showCategories,
                         ),
                         navOptions = navOptions {
                             popUpTo<AccountActionSheetRoute> {
@@ -164,43 +164,21 @@ private fun HomeScreen() {
             accountActionSheet(
                 onBalanceUpdated = navController::navigateUp,
                 onProceedToExpense = { sourceAccountId ->
-                    navController.navigate(
-                        route = TransferCounterpartySelectionSheetRoute(
-                            isForSource = false,
-                            alreadySelectedCounterpartyId = sourceAccountId,
-                        ),
-                        navOptions = navOptions {
-                            popUpTo<AccountActionSheetRoute> {
-                                inclusive = true
-                            }
-                        },
+                    viewModel.onProceedToTransferWithAccount(
+                        accountId = sourceAccountId,
+                        isIncome = false,
                     )
                 },
                 onProceedToIncome = { destinationAccountId ->
-                    navController.navigate(
-                        route = TransferCounterpartySelectionSheetRoute(
-                            isForSource = true,
-                            alreadySelectedCounterpartyId = destinationAccountId,
-                        ),
-                        navOptions = navOptions {
-                            popUpTo<AccountActionSheetRoute> {
-                                inclusive = true
-                            }
-                        },
+                    viewModel.onProceedToTransferWithAccount(
+                        accountId = destinationAccountId,
+                        isIncome = true,
                     )
                 },
                 onProceedToTransfer = { sourceAccountId ->
-                    navController.navigate(
-                        route = TransferCounterpartySelectionSheetRoute(
-                            isForSource = false,
-                            alreadySelectedCounterpartyId = sourceAccountId,
-                            showCategories = false,
-                        ),
-                        navOptions = navOptions {
-                            popUpTo<AccountActionSheetRoute> {
-                                inclusive = true
-                            }
-                        },
+                    viewModel.onProceedToTransferWithAccount(
+                        accountId = sourceAccountId,
+                        isIncome = null,
                     )
                 },
             )
@@ -210,28 +188,11 @@ private fun HomeScreen() {
             )
 
             transferCounterpartySelectionSheet(
-                onSelected = { (selected, isSelectedAsSource, otherSelectedId) ->
-                    if (otherSelectedId == null) {
-                        return@transferCounterpartySelectionSheet
-                    }
-
-                    navController.navigate(
-                        route =
-                        if (isSelectedAsSource)
-                            TransferSheetRoute(
-                                sourceId = selected.id,
-                                destinationId = otherSelectedId,
-                            )
-                        else
-                            TransferSheetRoute(
-                                sourceId = otherSelectedId,
-                                destinationId = selected.id,
-                            ),
-                        navOptions = navOptions {
-                            popUpTo<TransferCounterpartySelectionSheetRoute> {
-                                inclusive = true
-                            }
-                        },
+                onSelected = { result ->
+                    viewModel.onTransferCounterpartySelected(
+                        selectedCounterpartyId = result.selectedCounterparty.id,
+                        otherSelectedCounterpartyId = result.otherSelectedCounterpartyId,
+                        isSelectedForSource = result.isSelectedAsSource,
                     )
                 }
             )

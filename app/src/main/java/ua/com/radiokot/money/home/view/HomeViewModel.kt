@@ -44,40 +44,69 @@ class HomeViewModel(
     val events = _events.asSharedFlow()
 
     private var proceedToTransferWithCategoryJob: Job? = null
+
     fun onProceedToTransferWithCategory(category: Category) {
         proceedToTransferWithCategoryJob?.cancel()
         proceedToTransferWithCategoryJob = viewModelScope.launch {
             val lastUsedAccount = lastUsedAccountsByCategoryDeferred.await()[category.id]
             if (lastUsedAccount != null) {
-                proceedToTransfer(
-                    category = category,
-                    account = lastUsedAccount,
+                _events.tryEmit(
+                    if (category.isIncome)
+                        Event.ProceedToTransfer(
+                            sourceId = TransferCounterparty.Category(category).id,
+                            destinationId = TransferCounterparty.Account(lastUsedAccount).id,
+                        )
+                    else
+                        Event.ProceedToTransfer(
+                            sourceId = TransferCounterparty.Account(lastUsedAccount).id,
+                            destinationId = TransferCounterparty.Category(category).id,
+                        )
                 )
             } else {
                 _events.tryEmit(
-                    Event.ProceedToTransferCounterpartySelectionWithCategory(
-                        category = category,
+                    Event.ProceedToTransferCounterpartySelection(
+                        alreadySelectedCounterpartyId = TransferCounterparty.Category(category).id,
+                        selectSource = !category.isIncome,
+                        showCategories = false,
                     )
                 )
             }
         }
     }
 
-    private fun proceedToTransfer(
-        category: Category,
-        account: Account,
+    fun onTransferCounterpartySelected(
+        selectedCounterpartyId: TransferCounterpartyId,
+        otherSelectedCounterpartyId: TransferCounterpartyId?,
+        isSelectedForSource: Boolean,
     ) {
+        if (otherSelectedCounterpartyId == null) {
+            return
+        }
+
         _events.tryEmit(
-            if (category.isIncome)
+            if (isSelectedForSource)
                 Event.ProceedToTransfer(
-                    sourceId = TransferCounterparty.Category(category).id,
-                    destinationId = TransferCounterparty.Account(account).id,
+                    sourceId = selectedCounterpartyId,
+                    destinationId = otherSelectedCounterpartyId,
                 )
             else
                 Event.ProceedToTransfer(
-                    sourceId = TransferCounterparty.Account(account).id,
-                    destinationId = TransferCounterparty.Category(category).id,
+                    sourceId = otherSelectedCounterpartyId,
+                    destinationId = selectedCounterpartyId,
                 )
+        )
+    }
+
+    fun onProceedToTransferWithAccount(
+        accountId: TransferCounterpartyId.Account,
+        isIncome: Boolean?,
+    ) {
+        _events.tryEmit(
+            Event.ProceedToTransferCounterpartySelection(
+                alreadySelectedCounterpartyId = accountId,
+                selectSource = isIncome == true,
+                showCategories = isIncome != null,
+            )
         )
     }
 
@@ -88,8 +117,10 @@ class HomeViewModel(
             val destinationId: TransferCounterpartyId,
         ) : Event
 
-        class ProceedToTransferCounterpartySelectionWithCategory(
-            val category: Category,
+        class ProceedToTransferCounterpartySelection(
+            val alreadySelectedCounterpartyId: TransferCounterpartyId,
+            val selectSource: Boolean,
+            val showCategories: Boolean,
         ) : Event
     }
 }
