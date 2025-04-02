@@ -31,17 +31,29 @@ import ua.com.radiokot.money.currency.data.Currency
 class PowerSyncCategoryRepository(
     private val database: PowerSyncDatabase,
 ) : CategoryRepository {
-    override suspend fun getCategories(): List<Category> =
+    override suspend fun getCategories(isIncome: Boolean): List<Category> =
         database
             .getAll(
-                sql = SELECT_CATEGORIES,
+                sql = SELECT_CATEGORIES_BY_INCOME,
+                parameters = listOf(
+                    if (isIncome)
+                        "1"
+                    else
+                        "0"
+                ),
                 mapper = ::toCategory,
             )
 
-    override fun getCategoriesFlow(): Flow<List<Category>> =
+    override fun getCategoriesFlow(isIncome: Boolean): Flow<List<Category>> =
         database
             .watch(
-                sql = SELECT_CATEGORIES,
+                sql = SELECT_CATEGORIES_BY_INCOME,
+                parameters = listOf(
+                    if (isIncome)
+                        "1"
+                    else
+                        "0"
+                ),
                 mapper = ::toCategory,
             )
 
@@ -139,9 +151,15 @@ private const val SUBCATEGORY_FIELDS_FROM_CATEGORIES =
 private const val CURRENCY_MATCHES_CATEGORY =
     "categories.currency_id = currencies.id"
 
-private const val SELECT_CATEGORIES =
+/**
+ * Params:
+ * 1. 1 for income, 0 for expense
+ */
+private const val SELECT_CATEGORIES_BY_INCOME =
     "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
-            "WHERE categories.parent_category_id IS NULL AND $CURRENCY_MATCHES_CATEGORY"
+            "WHERE categories.parent_category_id IS NULL " +
+            "AND $CURRENCY_MATCHES_CATEGORY " +
+            "AND categories.is_income = ?"
 
 /**
  * Params:
@@ -149,7 +167,8 @@ private const val SELECT_CATEGORIES =
  */
 private const val SELECT_CATEGORY_BY_ID =
     "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
-            "WHERE categories.id = ? AND $CURRENCY_MATCHES_CATEGORY"
+            "WHERE categories.id = ? " +
+            "AND $CURRENCY_MATCHES_CATEGORY"
 
 /**
  * Params:

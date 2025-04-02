@@ -23,9 +23,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface CategoryRepository {
 
-    suspend fun getCategories(): List<Category>
+    suspend fun getCategories(isIncome: Boolean): List<Category>
 
-    fun getCategoriesFlow(): Flow<List<Category>>
+    fun getCategoriesFlow(isIncome: Boolean): Flow<List<Category>>
 
     fun getCategoryFlow(categoryId: String): Flow<Category>
 

@@ -37,7 +37,9 @@ class GetCategoryStatsUseCase(
         period: HistoryPeriod,
     ): Flow<List<CategoryStats>> =
         combine(
-            categoryRepository.getCategoriesFlow(),
+            categoryRepository.getCategoriesFlow(
+                isIncome = isIncome,
+            ),
             historyStatsRepository.getCategoryStatsFlow(
                 isIncome = isIncome,
                 period = period,
@@ -47,14 +49,12 @@ class GetCategoryStatsUseCase(
             .map { (categories, amountsByCategoryId) ->
                 buildList {
                     categories.forEach { category ->
-                        if (category.isIncome == isIncome) {
-                            add(
-                                category to amountsByCategoryId.getOrDefault(
-                                    category.id,
-                                    BigInteger.ZERO
-                                )
+                        add(
+                            category to amountsByCategoryId.getOrDefault(
+                                category.id,
+                                BigInteger.ZERO
                             )
-                        }
+                        )
                     }
                 }
             }

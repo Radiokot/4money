@@ -40,7 +40,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.view.ViewAccountListItem
-import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.CategoryStats
 import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
@@ -157,11 +156,11 @@ class TransferCounterpartySelectionSheetViewModel(
                             .map(List<CategoryStats>::toSortedViewItemList)
                     else
                         categoryRepository
-                            .getCategoriesFlow()
+                            .getCategoriesFlow(
+                                isIncome = true,
+                            )
                             .map { categories ->
-                                categories
-                                    .filter(Category::isIncome)
-                                    .toSortedIncognitoViewItemList()
+                                categories.toSortedIncognitoViewItemList()
                             }
                 else
                     flowOf(emptyList())
@@ -185,11 +184,11 @@ class TransferCounterpartySelectionSheetViewModel(
                             .map(List<CategoryStats>::toSortedViewItemList)
                     else
                         categoryRepository
-                            .getCategoriesFlow()
+                            .getCategoriesFlow(
+                                isIncome = false,
+                            )
                             .map { categories ->
-                                categories
-                                    .filterNot(Category::isIncome)
-                                    .toSortedIncognitoViewItemList()
+                                categories.toSortedIncognitoViewItemList()
                             }
                 else
                     flowOf(emptyList())
