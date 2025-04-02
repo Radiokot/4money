@@ -21,6 +21,7 @@ package ua.com.radiokot.money.transfers.view
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,26 +34,30 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.view.ViewAccountListItem
+import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.CategoryRepository
+import ua.com.radiokot.money.categories.data.CategoryStats
+import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
 import ua.com.radiokot.money.categories.view.ViewCategoryListItem
-import ua.com.radiokot.money.categories.view.viewCategoryItemListFlow
+import ua.com.radiokot.money.categories.view.toSortedIncognitoViewItemList
+import ua.com.radiokot.money.categories.view.toSortedViewItemList
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
-import ua.com.radiokot.money.transfers.history.data.HistoryStatsRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TransferCounterpartySelectionSheetViewModel(
     accountRepository: AccountRepository,
     private val categoryRepository: CategoryRepository,
-    private val historyStatsRepository: HistoryStatsRepository,
+    private val getCategoryStatsUseCase: GetCategoryStatsUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("TransferCounterpartySelectionSheetVM")
@@ -145,20 +150,23 @@ class TransferCounterpartySelectionSheetViewModel(
             .flatMapLatest { (areCategoriesVisible, isIncognito) ->
                 if (areCategoriesVisible == true)
                     if (!isIncognito)
-                        viewCategoryItemListFlow(
+                        getCategoryStatsUseCase(
                             isIncome = true,
                             period = HistoryPeriod.Month(),
-                            categoryRepository = categoryRepository,
-                            historyStatsRepository = historyStatsRepository,
                         )
+                            .map(List<CategoryStats>::toSortedViewItemList)
                     else
-                        viewCategoryItemListFlow(
-                            isIncome = true,
-                            categoryRepository = categoryRepository,
-                        )
+                        categoryRepository
+                            .getCategoriesFlow()
+                            .map { categories ->
+                                categories
+                                    .filter(Category::isIncome)
+                                    .toSortedIncognitoViewItemList()
+                            }
                 else
                     flowOf(emptyList())
             }
+            .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val expenseCategoryListItems: StateFlow<List<ViewCategoryListItem>> =
@@ -170,20 +178,23 @@ class TransferCounterpartySelectionSheetViewModel(
             .flatMapLatest { (areCategoriesVisible, isIncognito) ->
                 if (areCategoriesVisible == true)
                     if (!isIncognito)
-                        viewCategoryItemListFlow(
+                        getCategoryStatsUseCase(
                             isIncome = false,
                             period = HistoryPeriod.Month(),
-                            categoryRepository = categoryRepository,
-                            historyStatsRepository = historyStatsRepository,
                         )
+                            .map(List<CategoryStats>::toSortedViewItemList)
                     else
-                        viewCategoryItemListFlow(
-                            isIncome = false,
-                            categoryRepository = categoryRepository,
-                        )
+                        categoryRepository
+                            .getCategoriesFlow()
+                            .map { categories ->
+                                categories
+                                    .filterNot(Category::isIncome)
+                                    .toSortedIncognitoViewItemList()
+                            }
                 else
                     flowOf(emptyList())
             }
+            .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun setParameters(

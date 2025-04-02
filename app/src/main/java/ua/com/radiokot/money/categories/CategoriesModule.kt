@@ -25,12 +25,13 @@ import org.koin.dsl.module
 import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
+import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
 import ua.com.radiokot.money.categories.view.CategoriesViewModel
-import ua.com.radiokot.money.powersync.powerSyncModule
+import ua.com.radiokot.money.transfers.history.transfersHistoryModule
 
 val categoriesModule = module {
     includes(
-        powerSyncModule,
+        transfersHistoryModule,
     )
 
     sessionScope {
@@ -40,10 +41,16 @@ val categoriesModule = module {
             )
         } bind CategoryRepository::class
 
-        viewModel {
-            CategoriesViewModel(
+        factory {
+            GetCategoryStatsUseCase(
                 categoryRepository = get(),
                 historyStatsRepository = get(),
+            )
+        } bind GetCategoryStatsUseCase::class
+
+        viewModel {
+            CategoriesViewModel(
+                getCategoryStatsUseCase = get(),
             )
         } bind CategoriesViewModel::class
     }

@@ -21,6 +21,7 @@ package ua.com.radiokot.money.categories.view
 
 import androidx.compose.runtime.Immutable
 import ua.com.radiokot.money.categories.data.Category
+import ua.com.radiokot.money.categories.data.CategoryStats
 import ua.com.radiokot.money.currency.view.ViewAmount
 import java.math.BigInteger
 import kotlin.random.Random
@@ -68,3 +69,27 @@ class ViewCategoryListItem(
         return result
     }
 }
+
+private val categoryComparator = compareBy(Category::title)
+
+fun List<Category>.toSortedIncognitoViewItemList(): List<ViewCategoryListItem> =
+    sortedWith(categoryComparator)
+        .map { category ->
+            ViewCategoryListItem(
+                category = category,
+                amount = BigInteger.ZERO,
+                isIncognito = true,
+            )
+        }
+
+private val statsComparator = compareBy<CategoryStats> { (category, _) -> category.title }
+
+fun List<CategoryStats>.toSortedViewItemList(): List<ViewCategoryListItem> =
+    sortedWith(statsComparator)
+        .map { (category, amount) ->
+            ViewCategoryListItem(
+                category = category,
+                amount = amount,
+                isIncognito = false,
+            )
+        }

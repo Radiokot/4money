@@ -21,22 +21,25 @@ package ua.com.radiokot.money.categories.view
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import ua.com.radiokot.money.categories.data.Category
-import ua.com.radiokot.money.categories.data.CategoryRepository
+import ua.com.radiokot.money.categories.data.CategoryStats
+import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
-import ua.com.radiokot.money.transfers.history.data.HistoryStatsRepository
 
 class CategoriesViewModel(
-    categoryRepository: CategoryRepository,
-    historyStatsRepository: HistoryStatsRepository,
+    getCategoryStatsUseCase: GetCategoryStatsUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("CategoriesVM")
@@ -45,21 +48,27 @@ class CategoriesViewModel(
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
-    val incomeCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
-        viewCategoryItemListFlow(
+    private val incomeCategoryStats: Flow<List<CategoryStats>> =
+        getCategoryStatsUseCase(
             isIncome = true,
             period = HistoryPeriod.Month(),
-            categoryRepository = categoryRepository,
-            historyStatsRepository = historyStatsRepository,
-        ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+        )
+    val incomeCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
+        incomeCategoryStats
+            .map(List<CategoryStats>::toSortedViewItemList)
+            .flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val expenseCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
-        viewCategoryItemListFlow(
+    private val expenseCategoryStats: Flow<List<CategoryStats>> =
+        getCategoryStatsUseCase(
             isIncome = false,
             period = HistoryPeriod.Month(),
-            categoryRepository = categoryRepository,
-            historyStatsRepository = historyStatsRepository,
-        ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+        )
+    val expenseCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
+       expenseCategoryStats
+           .map(List<CategoryStats>::toSortedViewItemList)
+           .flowOn(Dispatchers.Default)
+           .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun onTitleClicked() {
         val newIsIncome = !isIncome.value
