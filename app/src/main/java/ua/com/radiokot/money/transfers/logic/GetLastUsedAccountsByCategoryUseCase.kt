@@ -20,7 +20,11 @@
 package ua.com.radiokot.money.transfers.logic
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.mapLatest
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.transfers.data.TransfersPreferences
@@ -30,20 +34,24 @@ class GetLastUsedAccountsByCategoryUseCase(
     private val transfersPreferences: TransfersPreferences,
 ) {
 
-    suspend operator fun invoke(): Map<String, Account> = withContext(Dispatchers.Default) {
-        val accountById = accountRepository
-            .getAccounts()
-            .associateBy(Account::id)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    operator fun invoke(): Flow<Map<String, Account>> =
+        combine(
+            accountRepository.getAccountsFlow(),
+            transfersPreferences.getLastUsedAccountsByCategoryFlow(),
+            transform = ::Pair,
+        )
+            .mapLatest { (allAccounts, accountsByCategoryId) ->
+                val accountById = allAccounts.associateBy(Account::id)
 
-        buildMap {
-            transfersPreferences
-                .lastUsedAccountsByCategory
-                .forEach { (categoryId, accountId) ->
-                    val account = accountById[accountId]
-                    if (account != null) {
-                        put(categoryId, account)
+                buildMap {
+                    accountsByCategoryId.forEach { (categoryId, accountId) ->
+                        val account = accountById[accountId]
+                        if (account != null) {
+                            put(categoryId, account)
+                        }
                     }
                 }
-        }
-    }
+            }
+            .flowOn(Dispatchers.Default)
 }

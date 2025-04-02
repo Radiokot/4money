@@ -21,6 +21,10 @@ package ua.com.radiokot.money.transfers.data
 
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.update
 import ua.com.radiokot.money.lazyLogger
 
 class TransferPreferencesOnPrefs(
@@ -29,6 +33,8 @@ class TransferPreferencesOnPrefs(
 
     private val log by lazyLogger("TransferPreferencesOnPrefs")
     private val knownCategoriesKey = "known_categories"
+    private val lastUsedAccountsByCategoryStateFlow =
+        MutableStateFlow(getLastUsedAccountsByCategoryMap())
 
     private fun getLastUsedAccountByCategoryKey(categoryId: String) =
         "transfer_last_used_acc_$categoryId"
@@ -55,17 +61,23 @@ class TransferPreferencesOnPrefs(
             preferences.getStringSet(knownCategoriesKey, emptySet())!! + categoryId
         )
         putString(getLastUsedAccountByCategoryKey(categoryId), accountId)
+
+        lastUsedAccountsByCategoryStateFlow.update { currentMap ->
+            currentMap + (categoryId to accountId)
+        }
     }
 
-    override val lastUsedAccountsByCategory: Map<String, String>
-        get() = buildMap {
-            preferences
-                .getStringSet(knownCategoriesKey, emptySet())!!
-                .forEach { categoryId ->
-                    val accountId = getLastUsedAccountByCategory(categoryId)
-                    if (accountId != null) {
-                        put(categoryId, accountId)
-                    }
+    override fun getLastUsedAccountsByCategoryFlow(): Flow<Map<String, String>> =
+        lastUsedAccountsByCategoryStateFlow.asSharedFlow()
+
+    private fun getLastUsedAccountsByCategoryMap(): Map<String, String> = buildMap {
+        preferences
+            .getStringSet(knownCategoriesKey, emptySet())!!
+            .forEach { categoryId ->
+                val accountId = getLastUsedAccountByCategory(categoryId)
+                if (accountId != null) {
+                    put(categoryId, accountId)
                 }
-        }
+            }
+    }
 }

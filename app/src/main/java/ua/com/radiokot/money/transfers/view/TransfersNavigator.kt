@@ -23,26 +23,23 @@ import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.navOptions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.logic.GetLastUsedAccountsByCategoryUseCase
 
 class TransfersNavigator(
-    private val getLastUsedAccountsByCategoryUseCase: GetLastUsedAccountsByCategoryUseCase,
+    getLastUsedAccountsByCategoryUseCase: GetLastUsedAccountsByCategoryUseCase,
     private val isIncognito: Boolean,
     private val navController: NavController,
 ) {
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private var lastUsedAccountsByCategoryDeferred: Deferred<Map<String, Account>> =
-        coroutineScope.async { getLastUsedAccountsByCategoryUseCase() }
+    private val lastUsedAccountsByCategoryFlow = getLastUsedAccountsByCategoryUseCase()
 
     private var proceedToTransferWithCategoryJob: Job? = null
     fun proceedToTransfer(
@@ -51,7 +48,7 @@ class TransfersNavigator(
     ) {
         proceedToTransferWithCategoryJob?.cancel()
         proceedToTransferWithCategoryJob = coroutineScope.launch {
-            val lastUsedAccount = lastUsedAccountsByCategoryDeferred.await()[category.id]
+            val lastUsedAccount = lastUsedAccountsByCategoryFlow.first()[category.id]
             if (lastUsedAccount != null) {
                 navController.navigate(
                     route =

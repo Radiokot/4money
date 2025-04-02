@@ -19,6 +19,8 @@
 
 package ua.com.radiokot.money.transfers.data
 
+import kotlinx.coroutines.flow.Flow
+
 interface TransfersPreferences {
 
     /**
@@ -33,5 +35,5 @@ interface TransfersPreferences {
         accountId: String,
     )
 
-    val lastUsedAccountsByCategory: Map<String, String>
+    fun getLastUsedAccountsByCategoryFlow(): Flow<Map<String, String>>
 }
