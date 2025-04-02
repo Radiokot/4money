@@ -17,110 +17,88 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.home.view
+package ua.com.radiokot.money.transfers.view
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
+import androidx.navigation.NavOptions
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.categories.data.Category
-import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.logic.GetLastUsedAccountsByCategoryUseCase
 
-class HomeViewModel(
+class TransfersNavigator(
     private val getLastUsedAccountsByCategoryUseCase: GetLastUsedAccountsByCategoryUseCase,
-) : ViewModel() {
-
+    private val isIncognito: Boolean,
+    private val navController: NavController,
+) {
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var lastUsedAccountsByCategoryDeferred: Deferred<Map<String, Account>> =
-        viewModelScope.async { getLastUsedAccountsByCategoryUseCase() }
-    private val _events: MutableSharedFlow<Event> = eventSharedFlow()
-    val events = _events.asSharedFlow()
+        coroutineScope.async { getLastUsedAccountsByCategoryUseCase() }
 
     private var proceedToTransferWithCategoryJob: Job? = null
-
-    fun onProceedToTransferWithCategory(category: Category) {
+    fun proceedToTransfer(
+        category: Category,
+        navOptions: NavOptions? = null,
+    ) {
         proceedToTransferWithCategoryJob?.cancel()
-        proceedToTransferWithCategoryJob = viewModelScope.launch {
+        proceedToTransferWithCategoryJob = coroutineScope.launch {
             val lastUsedAccount = lastUsedAccountsByCategoryDeferred.await()[category.id]
             if (lastUsedAccount != null) {
-                _events.tryEmit(
+                navController.navigate(
+                    route =
                     if (category.isIncome)
-                        Event.ProceedToTransfer(
+                        TransferSheetRoute(
                             sourceId = TransferCounterparty.Category(category).id,
                             destinationId = TransferCounterparty.Account(lastUsedAccount).id,
                         )
                     else
-                        Event.ProceedToTransfer(
+                        TransferSheetRoute(
                             sourceId = TransferCounterparty.Account(lastUsedAccount).id,
                             destinationId = TransferCounterparty.Category(category).id,
-                        )
+                        ),
+                    navOptions = navOptions,
                 )
             } else {
-                _events.tryEmit(
-                    Event.ProceedToTransferCounterpartySelection(
+                navController.navigate(
+                    route = TransferCounterpartySelectionSheetRoute(
+                        isForSource = !category.isIncome,
                         alreadySelectedCounterpartyId = TransferCounterparty.Category(category).id,
-                        selectSource = !category.isIncome,
                         showCategories = false,
-                    )
+                        isIncognito = isIncognito,
+                    ),
+                    navOptions = navOptions,
                 )
             }
         }
     }
 
-    fun onTransferCounterpartySelected(
-        selectedCounterpartyId: TransferCounterpartyId,
-        otherSelectedCounterpartyId: TransferCounterpartyId?,
-        isSelectedForSource: Boolean,
-    ) {
-        if (otherSelectedCounterpartyId == null) {
-            return
-        }
-
-        _events.tryEmit(
-            if (isSelectedForSource)
-                Event.ProceedToTransfer(
-                    sourceId = selectedCounterpartyId,
-                    destinationId = otherSelectedCounterpartyId,
-                )
-            else
-                Event.ProceedToTransfer(
-                    sourceId = otherSelectedCounterpartyId,
-                    destinationId = selectedCounterpartyId,
-                )
-        )
-    }
-
-    fun onProceedToTransferWithAccount(
+    fun proceedToTransfer(
         accountId: TransferCounterpartyId.Account,
         isIncome: Boolean?,
-    ) {
-        _events.tryEmit(
-            Event.ProceedToTransferCounterpartySelection(
+        navOptions: NavOptions? = null,
+    ) =
+        navController.navigate(
+            route = TransferCounterpartySelectionSheetRoute(
+                isForSource = isIncome == true,
                 alreadySelectedCounterpartyId = accountId,
-                selectSource = isIncome == true,
                 showCategories = isIncome != null,
-            )
+                isIncognito = isIncognito,
+            ),
+            navOptions = navOptions,
         )
-    }
 
-    sealed interface Event {
-
-        class ProceedToTransfer(
-            val sourceId: TransferCounterpartyId,
-            val destinationId: TransferCounterpartyId,
-        ) : Event
-
-        class ProceedToTransferCounterpartySelection(
-            val alreadySelectedCounterpartyId: TransferCounterpartyId,
-            val selectSource: Boolean,
-            val showCategories: Boolean,
-        ) : Event
+    fun interface Factory {
+        fun create(
+            isIncognito: Boolean,
+            navController: NavController,
+        ): TransfersNavigator
     }
 }

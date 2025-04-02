@@ -19,12 +19,9 @@
 
 package ua.com.radiokot.money.home
 
-import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import ua.com.radiokot.money.accounts.accountsModule
-import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.categoriesModule
-import ua.com.radiokot.money.home.view.HomeViewModel
 import ua.com.radiokot.money.transfers.transfersModule
 
 val homeModule = module {
@@ -35,11 +32,4 @@ val homeModule = module {
         transfersModule,
     )
 
-    sessionScope {
-        viewModel {
-            HomeViewModel(
-                getLastUsedAccountsByCategoryUseCase = get(),
-            )
-        }
-    }
 }

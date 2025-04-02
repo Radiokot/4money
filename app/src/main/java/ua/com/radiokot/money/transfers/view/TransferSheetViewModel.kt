@@ -47,7 +47,6 @@ import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.Subcategory
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.eventSharedFlow
-import ua.com.radiokot.money.home.view.HomeViewModel.Event
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId

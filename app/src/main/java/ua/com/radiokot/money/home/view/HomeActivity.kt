@@ -40,14 +40,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
 import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.accounts.view.AccountActionSheetRoute
 import ua.com.radiokot.money.accounts.view.AccountsScreenRoute
@@ -64,6 +64,7 @@ import ua.com.radiokot.money.transfers.history.view.ActivityScreenRoute
 import ua.com.radiokot.money.transfers.history.view.activityScreen
 import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetRoute
 import ua.com.radiokot.money.transfers.view.TransferSheetRoute
+import ua.com.radiokot.money.transfers.view.TransfersNavigator
 import ua.com.radiokot.money.transfers.view.transferCounterpartySelectionSheet
 import ua.com.radiokot.money.transfers.view.transferSheet
 import ua.com.radiokot.money.uikit.TextButton
@@ -91,41 +92,12 @@ class HomeActivity : UserSessionScopeActivity() {
 @Composable
 private fun HomeScreen() {
     val navController = rememberMoneyAppNavController()
-    val viewModel = koinViewModel<HomeViewModel>()
-
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is HomeViewModel.Event.ProceedToTransfer -> {
-                    navController.navigate(
-                        route = TransferSheetRoute(
-                            sourceId = event.sourceId,
-                            destinationId = event.destinationId,
-                        ),
-                        navOptions = navOptions {
-                            popUpTo<TransferCounterpartySelectionSheetRoute> {
-                                inclusive = true
-                            }
-                        },
-                    )
-                }
-
-                is HomeViewModel.Event.ProceedToTransferCounterpartySelection -> {
-                    navController.navigate(
-                        route = TransferCounterpartySelectionSheetRoute(
-                            isForSource = event.selectSource,
-                            alreadySelectedCounterpartyId = event.alreadySelectedCounterpartyId,
-                            showCategories = event.showCategories,
-                        ),
-                        navOptions = navOptions {
-                            popUpTo<AccountActionSheetRoute> {
-                                inclusive = true
-                            }
-                        },
-                    )
-                }
-            }
-        }
+    val transfersNavigatorFactory = koinInject<TransfersNavigator.Factory>()
+    val transfersNavigator = remember(navController) {
+        transfersNavigatorFactory.create(
+            isIncognito = false,
+            navController = navController,
+        )
     }
 
     Column(
@@ -157,7 +129,7 @@ private fun HomeScreen() {
             )
 
             categoriesScreen(
-                onProceedToTransfer = viewModel::onProceedToTransferWithCategory,
+                onProceedToTransfer = transfersNavigator::proceedToTransfer,
             )
 
             activityScreen()
@@ -165,19 +137,19 @@ private fun HomeScreen() {
             accountActionSheet(
                 onBalanceUpdated = navController::navigateUp,
                 onProceedToExpense = { sourceAccountId ->
-                    viewModel.onProceedToTransferWithAccount(
+                    transfersNavigator.proceedToTransfer(
                         accountId = sourceAccountId,
                         isIncome = false,
                     )
                 },
                 onProceedToIncome = { destinationAccountId ->
-                    viewModel.onProceedToTransferWithAccount(
+                    transfersNavigator.proceedToTransfer(
                         accountId = destinationAccountId,
                         isIncome = true,
                     )
                 },
                 onProceedToTransfer = { sourceAccountId ->
-                    viewModel.onProceedToTransferWithAccount(
+                    transfersNavigator.proceedToTransfer(
                         accountId = sourceAccountId,
                         isIncome = null,
                     )
@@ -209,11 +181,28 @@ private fun HomeScreen() {
             )
 
             transferCounterpartySelectionSheet(
-                onSelected = { result ->
-                    viewModel.onTransferCounterpartySelected(
-                        selectedCounterpartyId = result.selectedCounterparty.id,
-                        otherSelectedCounterpartyId = result.otherSelectedCounterpartyId,
-                        isSelectedForSource = result.isSelectedAsSource,
+                onSelected = { (selected, isSelectedAsSource, otherSelectedId) ->
+                    if (otherSelectedId == null) {
+                        return@transferCounterpartySelectionSheet
+                    }
+
+                    navController.navigate(
+                        route =
+                        if (isSelectedAsSource)
+                            TransferSheetRoute(
+                                sourceId = selected.id,
+                                destinationId = otherSelectedId,
+                            )
+                        else
+                            TransferSheetRoute(
+                                sourceId = otherSelectedId,
+                                destinationId = selected.id,
+                            ),
+                        navOptions = navOptions {
+                            popUpTo<TransferCounterpartySelectionSheetRoute> {
+                                inclusive = true
+                            }
+                        },
                     )
                 }
             )

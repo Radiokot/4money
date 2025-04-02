@@ -38,6 +38,7 @@ import ua.com.radiokot.money.transfers.logic.RevertTransferUseCase
 import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
 import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetViewModel
 import ua.com.radiokot.money.transfers.view.TransferSheetViewModel
+import ua.com.radiokot.money.transfers.view.TransfersNavigator
 
 val transfersModule = module {
     includes(
@@ -79,7 +80,17 @@ val transfersModule = module {
                 accountRepository = get(),
                 transfersPreferences = get(),
             )
-        }
+        } bind GetLastUsedAccountsByCategoryUseCase::class
+
+        scoped {
+            TransfersNavigator.Factory { isIncognito, navController ->
+                TransfersNavigator(
+                    getLastUsedAccountsByCategoryUseCase = get(),
+                    isIncognito = isIncognito,
+                    navController = navController,
+                )
+            }
+        } bind TransfersNavigator.Factory::class
 
         viewModel {
             TransferSheetViewModel(
