@@ -26,11 +26,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import kotlinx.coroutines.flow.collectLatest
+import org.koin.compose.koinInject
 import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
@@ -85,6 +87,13 @@ private fun TransferShortcutScreen(
     finishActivity: () -> Unit,
 ) {
     val navController = rememberMoneyAppNavController()
+    val transfersNavigatorFactory = koinInject<TransfersNavigator.Factory>()
+    val transfersNavigator = remember(transfersNavigatorFactory, navController) {
+        transfersNavigatorFactory.create(
+            isIncognito = true,
+            navController = navController,
+        )
+    }
 
     LaunchedEffect(navController) {
         navController.currentBackStack.collectLatest { backStack ->
@@ -110,42 +119,7 @@ private fun TransferShortcutScreen(
             .fillMaxSize()
     ) {
         transferCounterpartySelectionSheet(
-            onSelected = { (selected, isSelectedAsSource, otherSelectedId) ->
-                if (otherSelectedId == null) {
-                    navController.navigate(
-                        route = TransferCounterpartySelectionSheetRoute(
-                            isIncognito = true,
-                            isForSource = !isSelectedAsSource,
-                            alreadySelectedCounterpartyId = selected.id,
-                            showCategories = !(selected.id is TransferCounterpartyId.Account && isSelectedAsSource),
-                        ),
-                        navOptions = navOptions {
-                            popUpTo<TransferCounterpartySelectionSheetRoute> {
-                                inclusive = true
-                            }
-                        },
-                    )
-                } else {
-                    navController.navigate(
-                        route =
-                        if (isSelectedAsSource)
-                            TransferSheetRoute(
-                                sourceId = selected.id,
-                                destinationId = otherSelectedId,
-                            )
-                        else
-                            TransferSheetRoute(
-                                sourceId = otherSelectedId,
-                                destinationId = selected.id,
-                            ),
-                        navOptions = navOptions {
-                            popUpTo<TransferCounterpartySelectionSheetRoute> {
-                                inclusive = true
-                            }
-                        },
-                    )
-                }
-            }
+            onSelected = transfersNavigator::proceedToTransfer,
         )
 
         transferSheet(

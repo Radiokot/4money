@@ -21,6 +21,7 @@ package ua.com.radiokot.money.transfers.view
 
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
+import androidx.navigation.navOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -94,6 +95,52 @@ class TransfersNavigator(
             ),
             navOptions = navOptions,
         )
+
+    fun proceedToTransfer(
+        counterpartySelectionResult: TransferCounterpartySelectionResult,
+    ) = with(counterpartySelectionResult) {
+
+        val popUpToCounterpartySelection = navOptions {
+            popUpTo<TransferCounterpartySelectionSheetRoute> {
+                inclusive = true
+            }
+        }
+
+        if (otherSelectedCounterpartyId == null) {
+            when (selectedCounterparty) {
+                is TransferCounterparty.Category -> {
+                    proceedToTransfer(
+                        category = selectedCounterparty.category,
+                        navOptions = popUpToCounterpartySelection,
+                    )
+                }
+
+                is TransferCounterparty.Account -> {
+                    proceedToTransfer(
+                        accountId = selectedCounterparty.id,
+                        isIncome = null,
+                        navOptions = popUpToCounterpartySelection,
+                    )
+                }
+            }
+            return@with
+        }
+
+        navController.navigate(
+            route =
+            if (isSelectedAsSource)
+                TransferSheetRoute(
+                    sourceId = selectedCounterparty.id,
+                    destinationId = otherSelectedCounterpartyId,
+                )
+            else
+                TransferSheetRoute(
+                    sourceId = otherSelectedCounterpartyId,
+                    destinationId = selectedCounterparty.id,
+                ),
+            navOptions = popUpToCounterpartySelection,
+        )
+    }
 
     fun interface Factory {
         fun create(

@@ -93,7 +93,7 @@ class HomeActivity : UserSessionScopeActivity() {
 private fun HomeScreen() {
     val navController = rememberMoneyAppNavController()
     val transfersNavigatorFactory = koinInject<TransfersNavigator.Factory>()
-    val transfersNavigator = remember(navController) {
+    val transfersNavigator = remember(transfersNavigatorFactory, navController) {
         transfersNavigatorFactory.create(
             isIncognito = false,
             navController = navController,
@@ -140,18 +140,33 @@ private fun HomeScreen() {
                     transfersNavigator.proceedToTransfer(
                         accountId = sourceAccountId,
                         isIncome = false,
+                        navOptions = navOptions {
+                            popUpTo<AccountActionSheetRoute> {
+                                inclusive = true
+                            }
+                        },
                     )
                 },
                 onProceedToIncome = { destinationAccountId ->
                     transfersNavigator.proceedToTransfer(
                         accountId = destinationAccountId,
                         isIncome = true,
+                        navOptions = navOptions {
+                            popUpTo<AccountActionSheetRoute> {
+                                inclusive = true
+                            }
+                        },
                     )
                 },
                 onProceedToTransfer = { sourceAccountId ->
                     transfersNavigator.proceedToTransfer(
                         accountId = sourceAccountId,
                         isIncome = null,
+                        navOptions = navOptions {
+                            popUpTo<AccountActionSheetRoute> {
+                                inclusive = true
+                            }
+                        },
                     )
                 },
             )
@@ -181,30 +196,7 @@ private fun HomeScreen() {
             )
 
             transferCounterpartySelectionSheet(
-                onSelected = { (selected, isSelectedAsSource, otherSelectedId) ->
-                    if (otherSelectedId == null) {
-                        return@transferCounterpartySelectionSheet
-                    }
-
-                    navController.navigate(
-                        route =
-                        if (isSelectedAsSource)
-                            TransferSheetRoute(
-                                sourceId = selected.id,
-                                destinationId = otherSelectedId,
-                            )
-                        else
-                            TransferSheetRoute(
-                                sourceId = otherSelectedId,
-                                destinationId = selected.id,
-                            ),
-                        navOptions = navOptions {
-                            popUpTo<TransferCounterpartySelectionSheetRoute> {
-                                inclusive = true
-                            }
-                        },
-                    )
-                }
+                onSelected = transfersNavigator::proceedToTransfer,
             )
         }
 
