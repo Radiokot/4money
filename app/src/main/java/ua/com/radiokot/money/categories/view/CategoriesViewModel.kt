@@ -22,24 +22,31 @@ package ua.com.radiokot.money.categories.view
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.CategoryStats
 import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
+import ua.com.radiokot.money.currency.data.CurrencyRepository
+import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
+import java.math.BigInteger
 
 class CategoriesViewModel(
     getCategoryStatsUseCase: GetCategoryStatsUseCase,
+    private val currencyRepository: CurrencyRepository,
 ) : ViewModel() {
 
     private val log by lazyLogger("CategoriesVM")
@@ -65,10 +72,53 @@ class CategoriesViewModel(
             period = HistoryPeriod.Month(),
         )
     val expenseCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
-       expenseCategoryStats
-           .map(List<CategoryStats>::toSortedViewItemList)
-           .flowOn(Dispatchers.Default)
-           .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+        expenseCategoryStats
+            .map(List<CategoryStats>::toSortedViewItemList)
+            .flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val totalAmount: StateFlow<ViewAmount?> =
+        isIncome
+            .flatMapLatest { isIncome ->
+                if (isIncome)
+                    incomeCategoryStats
+                else
+                    expenseCategoryStats
+            }
+            .combine(
+                currencyRepository.getCurrencyPairMapFlow(),
+                transform = ::Pair,
+            )
+            .map { (categoryStats, currencyPairMap) ->
+                val mainCurrency = currencyRepository.getCurrencies()
+                    // It may not be available yet.
+                    .firstOrNull { it.code == "USD" }
+
+                if (mainCurrency == null) {
+                    return@map null
+                }
+
+                val totalInMainCurrency: BigInteger =
+                    categoryStats.fold(BigInteger.ZERO) { sum, (category, amount) ->
+                        sum + (
+                                currencyPairMap
+                                    .get(
+                                        base = category.currency,
+                                        quote = mainCurrency,
+                                    )
+                                    ?.baseToQuote(amount)
+                                    ?: BigInteger.ZERO
+                                )
+                    }
+
+                ViewAmount(
+                    value = totalInMainCurrency,
+                    currency = mainCurrency,
+                )
+            }
+            .flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     fun onTitleClicked() {
         val newIsIncome = !isIncome.value

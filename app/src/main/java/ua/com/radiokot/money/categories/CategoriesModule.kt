@@ -27,11 +27,13 @@ import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
 import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
 import ua.com.radiokot.money.categories.view.CategoriesViewModel
+import ua.com.radiokot.money.currency.currencyModule
 import ua.com.radiokot.money.transfers.history.transfersHistoryModule
 
 val categoriesModule = module {
     includes(
         transfersHistoryModule,
+        currencyModule,
     )
 
     sessionScope {
@@ -51,6 +53,7 @@ val categoriesModule = module {
         viewModel {
             CategoriesViewModel(
                 getCategoryStatsUseCase = get(),
+                currencyRepository = get(),
             )
         } bind CategoriesViewModel::class
     }

@@ -26,14 +26,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ua.com.radiokot.money.currency.view.ViewAmount
+import ua.com.radiokot.money.currency.view.ViewAmountFormat
+import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.stableClickable
+import java.math.BigInteger
 
 @Composable
 fun CategoriesScreenRoot(
@@ -41,6 +51,7 @@ fun CategoriesScreenRoot(
     viewModel: CategoriesViewModel,
 ) = CategoriesScreen(
     isIncome = viewModel.isIncome.collectAsStateWithLifecycle(),
+    totalAmount = viewModel.totalAmount.collectAsStateWithLifecycle(),
     incomeCategoryItemList = viewModel.incomeCategoryItemList.collectAsStateWithLifecycle(),
     expenseCategoryItemList = viewModel.expenseCategoryItemList.collectAsStateWithLifecycle(),
     onTitleClicked = viewModel::onTitleClicked,
@@ -52,6 +63,7 @@ fun CategoriesScreenRoot(
 private fun CategoriesScreen(
     modifier: Modifier = Modifier,
     isIncome: State<Boolean>,
+    totalAmount: State<ViewAmount?>,
     incomeCategoryItemList: State<List<ViewCategoryListItem>>,
     expenseCategoryItemList: State<List<ViewCategoryListItem>>,
     onTitleClicked: () -> Unit,
@@ -78,6 +90,41 @@ private fun CategoriesScreen(
             )
     )
 
+    val locale = LocalConfiguration.current.locales.get(0)
+    val amountFormat = remember(locale) {
+        ViewAmountFormat(locale)
+    }
+    val totalAmountText: AnnotatedString by remember {
+        derivedStateOf {
+            if (totalAmount.value != null)
+                amountFormat(
+                    amount = totalAmount.value!!,
+                    customColor =
+                    if (isIncome.value)
+                        Color(0xff50af99)
+                    else
+                        Color(0xffd85e8c)
+                )
+            else
+                AnnotatedString("")
+        }
+    }
+
+    BasicText(
+        text = totalAmountText,
+        style = TextStyle(
+            textAlign = TextAlign.Center,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .stableClickable(
+                onClick = onTitleClicked,
+            )
+            .padding(
+                vertical = 6.dp,
+            )
+    )
+
     CategoryGrid(
         itemList =
         if (isIncome.value)
@@ -101,6 +148,13 @@ private fun CategoriesScreenPreview(
 
     CategoriesScreen(
         isIncome = mutableStateOf(true),
+        totalAmount = ViewAmount(
+            value = BigInteger("10100000"),
+            currency = ViewCurrency(
+                symbol = "$",
+                precision = 2,
+            )
+        ).let(::mutableStateOf),
         incomeCategoryItemList = mutableStateOf(categories),
         expenseCategoryItemList = mutableStateOf(categories),
         onTitleClicked = {},
