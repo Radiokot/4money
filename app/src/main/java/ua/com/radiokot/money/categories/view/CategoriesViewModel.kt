@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.CategoryStats
 import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
@@ -155,6 +156,30 @@ class CategoriesViewModel(
         _events.tryEmit(
             Event.ProceedToTransfer(category)
         )
+    }
+
+    fun onNextPeriodClicked() {
+        log.debug {
+            "onNextPeriodClicked(): switching to next period"
+        }
+
+        _period.update { period ->
+            checkNotNull(period.getNext()) {
+                "Next period must be obtainable"
+            }
+        }
+    }
+
+    fun onPreviousPeriodClicked() {
+        log.debug {
+            "onPreviousPeriodClicked(): switching to previous period"
+        }
+
+        _period.update { period ->
+            checkNotNull(period.getPrevious()) {
+                "Previous period must be obtainable"
+            }
+        }
     }
 
     sealed interface Event {

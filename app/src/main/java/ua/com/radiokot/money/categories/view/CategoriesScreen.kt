@@ -62,8 +62,8 @@ fun CategoriesScreenRoot(
     onTitleClicked = viewModel::onTitleClicked,
     onCategoryItemClicked = viewModel::onCategoryItemClicked,
     onPeriodClicked = {},
-    onPreviousPeriodClicked = {},
-    onNextPeriodClicked = {},
+    onPreviousPeriodClicked = viewModel::onPreviousPeriodClicked,
+    onNextPeriodClicked = viewModel::onNextPeriodClicked,
     modifier = modifier,
 )
 

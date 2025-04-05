@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -56,9 +58,20 @@ fun PeriodBar(
     val buttonPadding = remember {
         PaddingValues(6.dp)
     }
+    val isPreviousButtonEnabled by remember(period) {
+        derivedStateOf {
+            period.value.getPrevious() != null
+        }
+    }
+    val isNextButtonEnabled by remember(period) {
+        derivedStateOf {
+            period.value.getNext() != null
+        }
+    }
 
     TextButton(
         text = "⬅️",
+        isEnabled = isPreviousButtonEnabled,
         padding = buttonPadding,
         modifier = Modifier
             .stableClickable(
@@ -94,6 +107,7 @@ fun PeriodBar(
 
     TextButton(
         text = "➡️",
+        isEnabled = isNextButtonEnabled,
         padding = buttonPadding,
         modifier = Modifier
             .stableClickable(
