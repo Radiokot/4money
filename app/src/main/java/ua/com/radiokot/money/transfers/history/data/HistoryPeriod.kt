@@ -34,39 +34,59 @@ sealed interface HistoryPeriod {
     val startTimeInclusive: Instant
     val endTimeExclusive: Instant
 
+    fun getNext(): HistoryPeriod?
+    fun getPrevious(): HistoryPeriod?
+
     operator fun contains(time: Instant): Boolean =
         time >= startTimeInclusive && time < endTimeExclusive
 
     class Day(
-        timeZone: TimeZone = TimeZone.currentSystemDefault(),
+        private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
         val localDay: LocalDate = Clock.System.now().toLocalDateTime(timeZone).date,
     ) : HistoryPeriod {
 
+        private val nextDay = localDay.plus(1, DateTimeUnit.DAY)
+
         override val startTimeInclusive: Instant =
-            localDay
-                .atStartOfDayIn(timeZone)
+            localDay.atStartOfDayIn(timeZone)
 
         override val endTimeExclusive: Instant =
-            localDay
-                .plus(1, DateTimeUnit.DAY)
-                .atStartOfDayIn(timeZone)
+            nextDay.atStartOfDayIn(timeZone)
+
+        override fun getNext() = Day(
+            timeZone = timeZone,
+            localDay = nextDay,
+        )
+
+        override fun getPrevious() = Day(
+            timeZone = timeZone,
+            localDay = localDay.minus(1, DateTimeUnit.DAY),
+        )
     }
 
     class Month(
-        timeZone: TimeZone = TimeZone.currentSystemDefault(),
+        private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
         val localMonth: LocalDate = Clock.System.now().toLocalDateTime(timeZone).date,
     ) : HistoryPeriod {
 
+        private val firstDay = localMonth.minus(localMonth.dayOfMonth - 1, DateTimeUnit.DAY)
+        private val fistDayOfNextMonth = firstDay.plus(1, DateTimeUnit.MONTH)
+
         override val startTimeInclusive: Instant =
-            localMonth
-                .minus(localMonth.dayOfMonth - 1, DateTimeUnit.DAY)
-                .atStartOfDayIn(timeZone)
+            firstDay.atStartOfDayIn(timeZone)
 
         override val endTimeExclusive: Instant =
-            localMonth
-                .minus(localMonth.dayOfMonth - 1, DateTimeUnit.DAY)
-                .plus(1, DateTimeUnit.MONTH)
-                .atStartOfDayIn(timeZone)
+            fistDayOfNextMonth.atStartOfDayIn(timeZone)
+
+        override fun getNext() = Month(
+            timeZone = timeZone,
+            localMonth = fistDayOfNextMonth,
+        )
+
+        override fun getPrevious() = Month(
+            timeZone = timeZone,
+            localMonth = firstDay.minus(1, DateTimeUnit.MONTH),
+        )
     }
 
     object Since70th : HistoryPeriod {
@@ -75,5 +95,11 @@ sealed interface HistoryPeriod {
 
         override val endTimeExclusive: Instant =
             Instant.DISTANT_FUTURE
+
+        override fun getNext(): HistoryPeriod? =
+            null
+
+        override fun getPrevious(): HistoryPeriod? =
+            null
     }
 }

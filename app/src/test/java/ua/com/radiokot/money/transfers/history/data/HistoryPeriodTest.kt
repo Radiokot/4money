@@ -31,6 +31,36 @@ class HistoryPeriodTest {
     @Test
     fun month() {
 
+        // Previous is the previous month.
+        HistoryPeriod.Month(
+            localMonth = LocalDate(2024, 1, 22),
+            timeZone = TimeZone.of("GMT+2")
+        ).apply {
+            Assert.assertEquals(
+                12,
+                getPrevious().localMonth.monthNumber,
+            )
+            Assert.assertEquals(
+                2023,
+                getPrevious().localMonth.year,
+            )
+        }
+
+        // Next is the next month.
+        HistoryPeriod.Month(
+            localMonth = LocalDate(2024, 12, 22),
+            timeZone = TimeZone.of("GMT+2")
+        ).apply {
+            Assert.assertEquals(
+                1,
+                getNext().localMonth.monthNumber,
+            )
+            Assert.assertEquals(
+                2025,
+                getNext().localMonth.year,
+            )
+        }
+
         // Other months are not within it.
         HistoryPeriod.Month(
             localMonth = LocalDate(2024, 2, 22),
@@ -139,6 +169,28 @@ class HistoryPeriodTest {
 
     @Test
     fun day() {
+
+        // Previous is the previous day.
+        HistoryPeriod.Day(
+            localDay = LocalDate(2024, 3, 1),
+            timeZone = TimeZone.of("GMT+2")
+        ).apply {
+            Assert.assertEquals(
+                LocalDate(2024, 2, 29),
+                getPrevious().localDay,
+            )
+        }
+
+        // Next is the next day.
+        HistoryPeriod.Day(
+            localDay = LocalDate(2025, 2, 22),
+            timeZone = TimeZone.of("GMT+2")
+        ).apply {
+            Assert.assertEquals(
+                LocalDate(2025, 2, 23),
+                getNext().localDay,
+            )
+        }
 
         // Other days are not within it.
         HistoryPeriod.Day(
