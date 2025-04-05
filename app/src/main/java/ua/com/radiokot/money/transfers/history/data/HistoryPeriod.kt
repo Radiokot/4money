@@ -39,7 +39,7 @@ sealed interface HistoryPeriod {
 
     class Day(
         timeZone: TimeZone = TimeZone.currentSystemDefault(),
-        localDay: LocalDate = Clock.System.now().toLocalDateTime(timeZone).date,
+        val localDay: LocalDate = Clock.System.now().toLocalDateTime(timeZone).date,
     ) : HistoryPeriod {
 
         override val startTimeInclusive: Instant =
@@ -54,7 +54,7 @@ sealed interface HistoryPeriod {
 
     class Month(
         timeZone: TimeZone = TimeZone.currentSystemDefault(),
-        localMonth: LocalDate = Clock.System.now().toLocalDateTime(timeZone).date,
+        val localMonth: LocalDate = Clock.System.now().toLocalDateTime(timeZone).date,
     ) : HistoryPeriod {
 
         override val startTimeInclusive: Instant =

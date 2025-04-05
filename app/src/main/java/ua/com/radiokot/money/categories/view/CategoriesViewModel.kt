@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
@@ -44,6 +45,7 @@ import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import java.math.BigInteger
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class CategoriesViewModel(
     getCategoryStatsUseCase: GetCategoryStatsUseCase,
     private val currencyRepository: CurrencyRepository,
@@ -51,15 +53,19 @@ class CategoriesViewModel(
 
     private val log by lazyLogger("CategoriesVM")
     private val _isIncome: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isIncome: StateFlow<Boolean> = _isIncome
+    val isIncome = _isIncome.asStateFlow()
+    private val _period: MutableStateFlow<HistoryPeriod> = MutableStateFlow(HistoryPeriod.Month())
+    val period = _period.asStateFlow()
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
     private val incomeCategoryStats: Flow<List<CategoryStats>> =
-        getCategoryStatsUseCase(
-            isIncome = true,
-            period = HistoryPeriod.Month(),
-        )
+        period.flatMapLatest { period ->
+            getCategoryStatsUseCase(
+                isIncome = true,
+                period = period,
+            )
+        }
     val incomeCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
         incomeCategoryStats
             .map(List<CategoryStats>::toSortedViewItemList)
@@ -67,17 +73,18 @@ class CategoriesViewModel(
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val expenseCategoryStats: Flow<List<CategoryStats>> =
-        getCategoryStatsUseCase(
-            isIncome = false,
-            period = HistoryPeriod.Month(),
-        )
+        period.flatMapLatest { period ->
+            getCategoryStatsUseCase(
+                isIncome = false,
+                period = period,
+            )
+        }
     val expenseCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
         expenseCategoryStats
             .map(List<CategoryStats>::toSortedViewItemList)
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val totalAmount: StateFlow<ViewAmount?> =
         isIncome
             .flatMapLatest { isIncome ->

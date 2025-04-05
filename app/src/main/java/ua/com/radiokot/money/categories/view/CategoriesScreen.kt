@@ -21,7 +21,9 @@ package ua.com.radiokot.money.categories.view
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -43,6 +45,8 @@ import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.stableClickable
+import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
+import ua.com.radiokot.money.transfers.history.view.PeriodBar
 import java.math.BigInteger
 
 @Composable
@@ -51,11 +55,15 @@ fun CategoriesScreenRoot(
     viewModel: CategoriesViewModel,
 ) = CategoriesScreen(
     isIncome = viewModel.isIncome.collectAsStateWithLifecycle(),
+    period = viewModel.period.collectAsStateWithLifecycle(),
     totalAmount = viewModel.totalAmount.collectAsStateWithLifecycle(),
     incomeCategoryItemList = viewModel.incomeCategoryItemList.collectAsStateWithLifecycle(),
     expenseCategoryItemList = viewModel.expenseCategoryItemList.collectAsStateWithLifecycle(),
     onTitleClicked = viewModel::onTitleClicked,
     onCategoryItemClicked = viewModel::onCategoryItemClicked,
+    onPeriodClicked = {},
+    onPreviousPeriodClicked = {},
+    onNextPeriodClicked = {},
     modifier = modifier,
 )
 
@@ -63,17 +71,35 @@ fun CategoriesScreenRoot(
 private fun CategoriesScreen(
     modifier: Modifier = Modifier,
     isIncome: State<Boolean>,
+    period: State<HistoryPeriod>,
     totalAmount: State<ViewAmount?>,
     incomeCategoryItemList: State<List<ViewCategoryListItem>>,
     expenseCategoryItemList: State<List<ViewCategoryListItem>>,
     onTitleClicked: () -> Unit,
     onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
+    onPeriodClicked: () -> Unit,
+    onNextPeriodClicked: () -> Unit,
+    onPreviousPeriodClicked: () -> Unit,
 ) = Column(
     modifier = modifier
         .padding(
             vertical = 16.dp,
         )
 ) {
+    PeriodBar(
+        period = period,
+        onPeriodClicked = onPeriodClicked,
+        onNextPeriodClicked = onNextPeriodClicked,
+        onPreviousPeriodClicked = onPreviousPeriodClicked,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 22.dp,
+            )
+    )
+
+    Spacer(modifier = Modifier.height(12.dp))
+
     BasicText(
         text =
         if (isIncome.value)
@@ -155,9 +181,13 @@ private fun CategoriesScreenPreview(
                 precision = 2,
             )
         ).let(::mutableStateOf),
+        period = HistoryPeriod.Month().let(::mutableStateOf),
         incomeCategoryItemList = mutableStateOf(categories),
         expenseCategoryItemList = mutableStateOf(categories),
         onTitleClicked = {},
         onCategoryItemClicked = {},
+        onPreviousPeriodClicked = {},
+        onNextPeriodClicked = {},
+        onPeriodClicked = {},
     )
 }

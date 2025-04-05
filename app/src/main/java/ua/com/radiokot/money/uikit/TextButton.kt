@@ -22,6 +22,7 @@ package ua.com.radiokot.money.uikit
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -40,6 +41,7 @@ fun TextButton(
     modifier: Modifier = Modifier,
     text: String,
     isEnabled: Boolean = true,
+    padding: PaddingValues = PaddingValues(12.dp),
 ) {
     val shape = remember {
         RoundedCornerShape(12.dp)
@@ -65,7 +67,7 @@ fun TextButton(
                 color = color,
                 shape = shape,
             )
-            .padding(12.dp)
+            .padding(padding)
     )
 }
 
