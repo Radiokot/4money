@@ -35,19 +35,19 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.CategoryStats
 import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
+import ua.com.radiokot.money.home.view.HomeViewModel
 import ua.com.radiokot.money.lazyLogger
-import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import java.math.BigInteger
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CategoriesViewModel(
+    homeViewModel: HomeViewModel,
     getCategoryStatsUseCase: GetCategoryStatsUseCase,
     private val currencyRepository: CurrencyRepository,
 ) : ViewModel() {
@@ -55,13 +55,11 @@ class CategoriesViewModel(
     private val log by lazyLogger("CategoriesVM")
     private val _isIncome: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isIncome = _isIncome.asStateFlow()
-    private val _period: MutableStateFlow<HistoryPeriod> = MutableStateFlow(HistoryPeriod.Month())
-    val period = _period.asStateFlow()
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
     private val incomeCategoryStats: Flow<List<CategoryStats>> =
-        period.flatMapLatest { period ->
+        homeViewModel.period.flatMapLatest { period ->
             getCategoryStatsUseCase(
                 isIncome = true,
                 period = period,
@@ -74,7 +72,7 @@ class CategoriesViewModel(
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val expenseCategoryStats: Flow<List<CategoryStats>> =
-        period.flatMapLatest { period ->
+        homeViewModel.period.flatMapLatest { period ->
             getCategoryStatsUseCase(
                 isIncome = false,
                 period = period,
@@ -156,30 +154,6 @@ class CategoriesViewModel(
         _events.tryEmit(
             Event.ProceedToTransfer(category)
         )
-    }
-
-    fun onNextPeriodClicked() {
-        log.debug {
-            "onNextPeriodClicked(): switching to next period"
-        }
-
-        _period.update { period ->
-            checkNotNull(period.getNext()) {
-                "Next period must be obtainable"
-            }
-        }
-    }
-
-    fun onPreviousPeriodClicked() {
-        log.debug {
-            "onPreviousPeriodClicked(): switching to previous period"
-        }
-
-        _period.update { period ->
-            checkNotNull(period.getPrevious()) {
-                "Previous period must be obtainable"
-            }
-        }
     }
 
     sealed interface Event {

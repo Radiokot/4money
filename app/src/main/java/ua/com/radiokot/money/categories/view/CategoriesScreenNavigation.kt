@@ -28,7 +28,9 @@ import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import ua.com.radiokot.money.categories.data.Category
+import ua.com.radiokot.money.home.view.HomeViewModel
 
 @Serializable
 data class CategoriesScreenRoute(
@@ -37,11 +39,16 @@ data class CategoriesScreenRoute(
 
 fun NavGraphBuilder.categoriesScreen(
     onProceedToTransfer: (category: Category) -> Unit,
+    homeViewModel: HomeViewModel,
 ) = composable<CategoriesScreenRoute> { entry ->
 
     val isIncognito = entry.toRoute<CategoriesScreenRoute>()
         .isIncognito
-    val viewModel = koinViewModel<CategoriesViewModel>()
+    val viewModel = koinViewModel<CategoriesViewModel> {
+        parametersOf(
+            homeViewModel,
+        )
+    }
 
     LaunchedEffect(isIncognito) {
         launch {
@@ -57,6 +64,7 @@ fun NavGraphBuilder.categoriesScreen(
 
     CategoriesScreenRoot(
         viewModel = viewModel,
+        homeViewModel = homeViewModel,
         modifier = Modifier
             .fillMaxSize()
     )

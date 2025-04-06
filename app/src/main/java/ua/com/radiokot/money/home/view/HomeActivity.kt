@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
 import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.accounts.view.AccountActionSheetRoute
@@ -71,6 +72,8 @@ import ua.com.radiokot.money.uikit.TextButton
 
 class HomeActivity : UserSessionScopeActivity() {
 
+    private val viewModel: HomeViewModel by viewModel()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -82,7 +85,9 @@ class HomeActivity : UserSessionScopeActivity() {
 
         setContent {
             UserSessionScope {
-                HomeScreen()
+                HomeScreen(
+                    viewModel = viewModel,
+                )
             }
         }
     }
@@ -90,7 +95,9 @@ class HomeActivity : UserSessionScopeActivity() {
 
 @SuppressLint("RestrictedApi")
 @Composable
-private fun HomeScreen() {
+private fun HomeScreen(
+    viewModel: HomeViewModel,
+) {
     val navController = rememberMoneyAppNavController()
     val transfersNavigatorFactory = koinInject<TransfersNavigator.Factory>()
     val transfersNavigator = remember(transfersNavigatorFactory, navController) {
@@ -130,6 +137,7 @@ private fun HomeScreen() {
 
             categoriesScreen(
                 onProceedToTransfer = transfersNavigator::proceedToTransfer,
+                homeViewModel = viewModel,
             )
 
             activityScreen()
