@@ -140,7 +140,9 @@ private fun HomeScreen(
                 homeViewModel = viewModel,
             )
 
-            activityScreen()
+            activityScreen(
+                homeViewModel = viewModel,
+            )
 
             accountActionSheet(
                 onBalanceUpdated = navController::navigateUp,

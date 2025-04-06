@@ -19,46 +19,34 @@
 
 package ua.com.radiokot.money.transfers.history.view
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.ViewGroup
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import ua.com.radiokot.money.auth.view.UserSessionScopeFragment
+import ua.com.radiokot.money.home.view.HomeViewModel
+import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.view.TransferList
 import ua.com.radiokot.money.transfers.view.ViewTransferListItem
-
-class ActivityFragment : UserSessionScopeFragment() {
-
-    private val viewModel: ActivityViewModel by viewModel()
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ) = ComposeView(requireContext()).apply {
-        setContent {
-            ActivityScreenRoot(
-                viewModel = viewModel,
-            )
-        }
-    }
-}
 
 @Composable
 fun ActivityScreenRoot(
     modifier: Modifier = Modifier,
     viewModel: ActivityViewModel,
+    homeViewModel: HomeViewModel,
 ) = ActivityScreen(
-    modifier = modifier,
     itemPagingFlow = viewModel.transferItemPagingFlow,
     onTransferItemClicked = viewModel::onTransferItemClicked,
+    period = homeViewModel.period.collectAsStateWithLifecycle(),
+    onPeriodClicked = {},
+    onPreviousPeriodClicked = homeViewModel::onPreviousPeriodClicked,
+    onNextPeriodClicked = homeViewModel::onNextPeriodClicked,
+    modifier = modifier,
 )
 
 @Composable
@@ -66,11 +54,32 @@ private fun ActivityScreen(
     modifier: Modifier = Modifier,
     itemPagingFlow: Flow<PagingData<ViewTransferListItem>>,
     onTransferItemClicked: (ViewTransferListItem.Transfer) -> Unit,
-) = TransferList(
-    itemPagingFlow = itemPagingFlow,
-    onTransferItemClicked = onTransferItemClicked,
-    modifier = modifier
-        .padding(
-            horizontal = 16.dp,
-        )
-)
+    period: State<HistoryPeriod>,
+    onPeriodClicked: () -> Unit,
+    onNextPeriodClicked: () -> Unit,
+    onPreviousPeriodClicked: () -> Unit,
+) = Column(
+    modifier = modifier,
+) {
+    PeriodBar(
+        period = period,
+        onPeriodClicked = onPeriodClicked,
+        onNextPeriodClicked = onNextPeriodClicked,
+        onPreviousPeriodClicked = onPreviousPeriodClicked,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 22.dp,
+                vertical = 16.dp,
+            )
+    )
+
+    TransferList(
+        itemPagingFlow = itemPagingFlow,
+        onTransferItemClicked = onTransferItemClicked,
+        modifier = modifier
+            .padding(
+                horizontal = 16.dp,
+            )
+    )
+}

@@ -50,8 +50,12 @@ val transfersHistoryModule = module {
             )
         } bind TransferHistoryRepository::class
 
-        viewModel {
+        viewModel { parameters ->
             ActivityViewModel(
+                homeViewModel = checkNotNull(parameters.getOrNull()) {
+                    "HomeViewModel must be provided through the parameters " +
+                            "to share the same instance"
+                },
                 transferHistoryRepository = get(),
                 revertTransferUseCase = get(),
             )

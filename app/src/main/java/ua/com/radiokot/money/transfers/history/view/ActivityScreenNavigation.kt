@@ -25,18 +25,23 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+import ua.com.radiokot.money.home.view.HomeViewModel
 
 @Serializable
 object ActivityScreenRoute
 
 fun NavGraphBuilder.activityScreen(
-
+    homeViewModel: HomeViewModel,
 ) = composable<ActivityScreenRoute> {
 
-    val viewModel = koinViewModel<ActivityViewModel>()
+    val viewModel = koinViewModel<ActivityViewModel>{
+        parametersOf(homeViewModel)
+    }
 
     ActivityScreenRoot(
         viewModel = viewModel,
+        homeViewModel = homeViewModel,
         modifier = Modifier
             .fillMaxSize()
     )
