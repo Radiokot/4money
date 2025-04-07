@@ -31,7 +31,9 @@ import ua.com.radiokot.money.powersync.powerSyncModule
 import ua.com.radiokot.money.transfers.data.TransferPreferencesOnPrefs
 import ua.com.radiokot.money.transfers.data.TransfersPreferences
 import ua.com.radiokot.money.transfers.history.transfersHistoryModule
+import ua.com.radiokot.money.transfers.logic.EditTransferUseCase
 import ua.com.radiokot.money.transfers.logic.GetLastUsedAccountsByCategoryUseCase
+import ua.com.radiokot.money.transfers.logic.PowerSyncEditTransferUseCase
 import ua.com.radiokot.money.transfers.logic.PowerSyncRevertTransferUseCase
 import ua.com.radiokot.money.transfers.logic.PowerSyncTransferFundsUseCase
 import ua.com.radiokot.money.transfers.logic.RevertTransferUseCase
@@ -74,6 +76,15 @@ val transfersModule = module {
                 database = get(),
             )
         } bind RevertTransferUseCase::class
+
+        factory {
+            PowerSyncEditTransferUseCase(
+                revertTransferUseCase = get(),
+                transferFundsUseCase = get(),
+                transferHistoryRepository = get(),
+                database = get(),
+            )
+        } bind EditTransferUseCase::class
 
         factory {
             GetLastUsedAccountsByCategoryUseCase(
