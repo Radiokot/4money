@@ -50,9 +50,11 @@ import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.Subcategory
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.eventSharedFlow
+import ua.com.radiokot.money.isSameDayAs
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
+import ua.com.radiokot.money.transfers.logic.EditTransferUseCase
 import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
 import java.math.BigInteger
 
@@ -61,6 +63,7 @@ class TransferSheetViewModel(
     private val accountRepository: AccountRepository,
     private val categoryRepository: CategoryRepository,
     private val transferFundsUseCase: TransferFundsUseCase,
+    private val editTransferUseCase: EditTransferUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("TransferSheetVM")
@@ -81,6 +84,7 @@ class TransferSheetViewModel(
     private val requestedDestinationCounterpartyId: MutableStateFlow<TransferCounterpartyId?> =
         MutableStateFlow(null)
     private var transferToEditId: String? = null
+    private var requestedTime: Instant? = null
 
     private var sourceCounterparty: TransferCounterparty? = null
     private val sourceCounterpartySharedFlow: SharedFlow<TransferCounterparty> =
@@ -185,6 +189,7 @@ class TransferSheetViewModel(
         destinationAmount?.also(_destinationAmountValue::tryEmit)
         memo?.also(_memo::tryEmit)
         time
+            ?.also { requestedTime = it }
             ?.toLocalDateTime(TimeZone.currentSystemDefault())
             ?.date
             ?.let(::ViewDate)
@@ -314,7 +319,77 @@ class TransferSheetViewModel(
             return
         }
 
-        transferFunds()
+        if (transferToEditId != null) {
+            editTransfer()
+        } else {
+            transferFunds()
+        }
+    }
+
+    private var editTransferJob: Job? = null
+    private fun editTransfer() {
+        val transferId = transferToEditId
+            ?: error("Transfer to edit ID must be set for this to be called")
+        val source = sourceCounterparty
+            ?: error("Source counterparty must be set at this point")
+        val destination = destinationCounterparty
+            ?: error("Destination counterparty must be set at this point")
+        val destinationAmount = destinationAmountValue.value
+        val sourceAmount =
+            if (isSourceInputShown.value)
+                sourceAmountValue.value
+            else
+                destinationAmount
+        val memo = memo.value
+            .trim()
+            .takeIf(String::isNotEmpty)
+        val date = date.value.localDate
+        // If the date was not modified, keep the existing transfer time.
+        val exactTime = requestedTime
+            ?.takeIf { requestedTime ->
+                requestedTime
+                    .toLocalDateTime(TimeZone.currentSystemDefault())
+                    .date
+                    .isSameDayAs(date)
+            }
+
+        editTransferJob?.cancel()
+        editTransferJob = viewModelScope.launch {
+            log.debug {
+                "editTransfer(): editing:" +
+                        "\ntransferId=$transferId," +
+                        "\nsource=$source," +
+                        "\nsourceAmount=$sourceAmount," +
+                        "\ndestination=$destination," +
+                        "\ndestinationAmount=$destinationAmount," +
+                        "\nmemo=$memo," +
+                        "\ndate=$date," +
+                        "\nexactTime=$exactTime"
+            }
+
+            editTransferUseCase(
+                transferId = transferId,
+                sourceId = source.id,
+                sourceAmount = sourceAmount,
+                destinationId = destination.id,
+                destinationAmount = destinationAmount,
+                date = date,
+                exactTime = exactTime,
+                memo = memo,
+            )
+                .onFailure { error ->
+                    log.error(error) {
+                        "editTransfer(): failed to edit the transfer"
+                    }
+                }
+                .onSuccess {
+                    log.debug {
+                        "editTransfer(): transfer edited"
+                    }
+
+                    _events.emit(Event.TransferDone)
+                }
+        }
     }
 
     private var transferJob: Job? = null

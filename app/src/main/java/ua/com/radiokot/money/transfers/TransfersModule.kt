@@ -108,6 +108,7 @@ val transfersModule = module {
                 accountRepository = get(),
                 categoryRepository = get(),
                 transferFundsUseCase = get(),
+                editTransferUseCase = get(),
             )
         } bind TransferSheetViewModel::class
 
