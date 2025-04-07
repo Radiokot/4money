@@ -27,61 +27,64 @@ import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.koin.compose.viewmodel.koinViewModel
 import ua.com.radiokot.money.showSingle
+import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
+import java.math.BigInteger
 
 @Serializable
 data class TransferSheetRoute(
-    val sourceAccountId: String? = null,
-    val sourceCategoryId: String? = null,
-    val sourceSubcategoryId: String? = null,
-    val destinationAccountId: String? = null,
-    val destinationCategoryId: String? = null,
-    val destinationSubcategoryId: String? = null,
+    private val sourceIdJson: String,
+    private val destinationIdJson: String,
+    val transferToEditId: String?,
+    private val sourceAmountString: String?,
+    private val destinationAmountString: String?,
+    val memo: String?,
+    private val timeEpochSeconds: Long?,
 ) {
+    val sourceId: TransferCounterpartyId
+        get() = Json.decodeFromString(sourceIdJson)
+
+    val destinationId: TransferCounterpartyId
+        get() = Json.decodeFromString(destinationIdJson)
+
+    val sourceAmount: BigInteger?
+        get() = sourceAmountString?.toBigInteger()
+
+    val destinationAmount: BigInteger?
+        get() = destinationAmountString?.toBigInteger()
+
+    val time: Instant?
+        get() = timeEpochSeconds?.let(Instant::fromEpochSeconds)
+
     constructor(
         sourceId: TransferCounterpartyId,
         destinationId: TransferCounterpartyId,
     ) : this(
-        sourceAccountId = (sourceId as? TransferCounterpartyId.Account)?.accountId,
-        sourceCategoryId = (sourceId as? TransferCounterpartyId.Category)?.categoryId,
-        sourceSubcategoryId = (sourceId as? TransferCounterpartyId.Category)?.subcategoryId,
-        destinationAccountId = (destinationId as? TransferCounterpartyId.Account)?.accountId,
-        destinationCategoryId = (destinationId as? TransferCounterpartyId.Category)?.categoryId,
-        destinationSubcategoryId = (destinationId as? TransferCounterpartyId.Category)?.subcategoryId,
+        sourceIdJson = Json.encodeToString(sourceId),
+        destinationIdJson = Json.encodeToString(destinationId),
+        transferToEditId = null,
+        sourceAmountString = null,
+        destinationAmountString = null,
+        memo = null,
+        timeEpochSeconds = null,
     )
 
-    val sourceId: TransferCounterpartyId
-        get() = when {
-            sourceAccountId != null ->
-                TransferCounterpartyId.Account(sourceAccountId)
-
-            sourceCategoryId != null ->
-                TransferCounterpartyId.Category(
-                    categoryId = sourceCategoryId,
-                    subcategoryId = sourceSubcategoryId,
-                )
-
-            else ->
-                error("All the source IDs are missing")
-        }
-
-    val destinationId: TransferCounterpartyId
-        get() = when {
-            destinationAccountId != null ->
-                TransferCounterpartyId.Account(destinationAccountId)
-
-            destinationCategoryId != null ->
-                TransferCounterpartyId.Category(
-                    categoryId = destinationCategoryId,
-                    subcategoryId = destinationSubcategoryId,
-                )
-
-            else ->
-                error("All the destination IDs are missing")
-        }
+    constructor(
+        transferToEdit: Transfer,
+    ) : this(
+        sourceIdJson = Json.encodeToString(transferToEdit.source.id),
+        destinationIdJson = Json.encodeToString(transferToEdit.destination.id),
+        transferToEditId = transferToEdit.id,
+        sourceAmountString = transferToEdit.sourceAmount.toString(),
+        destinationAmountString = transferToEdit.destinationAmount.toString(),
+        memo = transferToEdit.memo,
+        timeEpochSeconds = transferToEdit.time.epochSeconds,
+    )
 }
 
 fun NavGraphBuilder.transferSheet(
@@ -117,9 +120,14 @@ fun NavGraphBuilder.transferSheet(
     }
 
     LaunchedEffect(arguments) {
-        viewModel.setSourceAndDestination(
+        viewModel.setParameters(
             sourceId = arguments.sourceId,
             destinationId = arguments.destinationId,
+            transferToEditId = arguments.transferToEditId,
+            sourceAmount = arguments.sourceAmount,
+            destinationAmount = arguments.destinationAmount,
+            memo = arguments.memo,
+            time = arguments.time,
         )
 
         launch {

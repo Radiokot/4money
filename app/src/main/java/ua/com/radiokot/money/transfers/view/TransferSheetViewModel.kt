@@ -41,7 +41,10 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.Subcategory
@@ -77,6 +80,7 @@ class TransferSheetViewModel(
         MutableStateFlow(null)
     private val requestedDestinationCounterpartyId: MutableStateFlow<TransferCounterpartyId?> =
         MutableStateFlow(null)
+    private var transferToEditId: String? = null
 
     private var sourceCounterparty: TransferCounterparty? = null
     private val sourceCounterpartySharedFlow: SharedFlow<TransferCounterparty> =
@@ -153,18 +157,38 @@ class TransferSheetViewModel(
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
-    fun setSourceAndDestination(
-        sourceId: TransferCounterpartyId?,
-        destinationId: TransferCounterpartyId?,
+    fun setParameters(
+        sourceId: TransferCounterpartyId,
+        destinationId: TransferCounterpartyId,
+        transferToEditId: String?,
+        sourceAmount: BigInteger?,
+        destinationAmount: BigInteger?,
+        memo: String?,
+        time: Instant?,
     ) {
         log.debug {
-            "setSourceAndDestination(): setting: " +
+            "setParameters(): setting:" +
                     "\nsourceId=$sourceId," +
-                    "\ndestinationId=$destinationId"
+                    "\ndestinationId=$destinationId," +
+                    "\ntransferToEditId=$transferToEditId," +
+                    "\nsourceAmount=$sourceAmount," +
+                    "\ndestinationAmount=$destinationAmount," +
+                    "\nmemo=$memo," +
+                    "\ntime=$time"
         }
 
-        sourceId?.let(requestedSourceCounterpartyId::tryEmit)
-        destinationId?.let(requestedDestinationCounterpartyId::tryEmit)
+        requestedSourceCounterpartyId.tryEmit(sourceId)
+        requestedDestinationCounterpartyId.tryEmit(destinationId)
+
+        this.transferToEditId = transferToEditId
+        sourceAmount?.also(_sourceAmountValue::tryEmit)
+        destinationAmount?.also(_destinationAmountValue::tryEmit)
+        memo?.also(_memo::tryEmit)
+        time
+            ?.toLocalDateTime(TimeZone.currentSystemDefault())
+            ?.date
+            ?.let(::ViewDate)
+            ?.also(_date::tryEmit)
     }
 
     fun onNewSourceAmountValueParsed(value: BigInteger) {
