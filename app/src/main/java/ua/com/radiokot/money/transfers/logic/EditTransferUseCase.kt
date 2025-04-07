@@ -21,7 +21,7 @@ package ua.com.radiokot.money.transfers.logic
 
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import ua.com.radiokot.money.transfers.data.TransferCounterparty
+import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import java.math.BigInteger
 
 interface EditTransferUseCase {
@@ -31,9 +31,9 @@ interface EditTransferUseCase {
      */
     suspend operator fun invoke(
         transferId: String,
-        source: TransferCounterparty,
+        sourceId: TransferCounterpartyId,
         sourceAmount: BigInteger,
-        destination: TransferCounterparty,
+        destinationId: TransferCounterpartyId,
         destinationAmount: BigInteger,
         memo: String?,
         date: LocalDate,

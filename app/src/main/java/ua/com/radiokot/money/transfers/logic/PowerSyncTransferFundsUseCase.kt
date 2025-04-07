@@ -29,7 +29,7 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.transfers.data.Transfer
-import ua.com.radiokot.money.transfers.data.TransferCounterparty
+import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.data.TransfersPreferences
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.data.PowerSyncTransferHistoryRepository
@@ -48,9 +48,9 @@ class PowerSyncTransferFundsUseCase(
 ) : TransferFundsUseCase {
 
     override suspend fun invoke(
-        source: TransferCounterparty,
+        sourceId: TransferCounterpartyId,
         sourceAmount: BigInteger,
-        destination: TransferCounterparty,
+        destinationId: TransferCounterpartyId,
         destinationAmount: BigInteger,
         memo: String?,
         date: LocalDate,
@@ -60,8 +60,8 @@ class PowerSyncTransferFundsUseCase(
 
         database.writeTransaction { transaction ->
             transferInTransaction(
-                source = source,
-                destination = destination,
+                sourceId = sourceId,
+                destinationId = destinationId,
                 sourceAmount = sourceAmount,
                 destinationAmount = destinationAmount,
                 memo = memo,
@@ -72,48 +72,48 @@ class PowerSyncTransferFundsUseCase(
     }
 
     fun transferInTransaction(
-        source: TransferCounterparty,
-        destination: TransferCounterparty,
+        sourceId: TransferCounterpartyId,
+        destinationId: TransferCounterpartyId,
         sourceAmount: BigInteger,
         destinationAmount: BigInteger,
         memo: String?,
         time: Instant,
         transaction: PowerSyncTransaction,
     ) {
-        if (source is TransferCounterparty.Account) {
+        if (sourceId is TransferCounterpartyId.Account) {
             accountRepository.updateAccountBalanceBy(
-                accountId = source.account.id,
+                accountId = sourceId.accountId,
                 delta = -sourceAmount,
                 transaction = transaction,
             )
 
-            if (destination is TransferCounterparty.Category) {
+            if (destinationId is TransferCounterpartyId.Category) {
                 transfersPreferences?.setLastUsedAccountByCategory(
-                    categoryId = destination.category.id,
-                    accountId = source.account.id,
+                    categoryId = destinationId.categoryId,
+                    accountId = sourceId.accountId,
                 )
             }
         }
 
-        if (destination is TransferCounterparty.Account) {
+        if (destinationId is TransferCounterpartyId.Account) {
             accountRepository.updateAccountBalanceBy(
-                accountId = destination.account.id,
+                accountId = destinationId.accountId,
                 delta = destinationAmount,
                 transaction = transaction,
             )
 
-            if (source is TransferCounterparty.Category) {
+            if (sourceId is TransferCounterpartyId.Category) {
                 transfersPreferences?.setLastUsedAccountByCategory(
-                    categoryId = source.category.id,
-                    accountId = destination.account.id,
+                    categoryId = sourceId.categoryId,
+                    accountId = destinationId.accountId,
                 )
             }
         }
 
         transferHistoryRepository.logTransfer(
-            sourceId = source.id,
+            sourceId = sourceId,
             sourceAmount = sourceAmount,
-            destinationId = destination.id,
+            destinationId = destinationId,
             destinationAmount = destinationAmount,
             memo = memo,
             time = time,

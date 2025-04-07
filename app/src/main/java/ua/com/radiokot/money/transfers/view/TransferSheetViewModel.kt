@@ -347,9 +347,9 @@ class TransferSheetViewModel(
             }
 
             transferFundsUseCase(
-                source = source,
+                sourceId = source.id,
                 sourceAmount = sourceAmount,
-                destination = destination,
+                destinationId = destination.id,
                 destinationAmount = destinationAmount,
                 date = date,
                 memo = memo,
