@@ -32,7 +32,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
@@ -47,6 +49,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
+import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.home.view.HomeViewModel
 import ua.com.radiokot.money.isSameDayAs
 import ua.com.radiokot.money.lazyLogger
@@ -66,6 +69,8 @@ class ActivityViewModel(
     private val log by lazyLogger("ActivityVM")
     private val localTimeZone = TimeZone.currentSystemDefault()
     private val revertedTransfers: MutableStateFlow<Set<Transfer>> = MutableStateFlow(emptySet())
+    private val _events: MutableSharedFlow<Event> = eventSharedFlow()
+    val events = _events.asSharedFlow()
 
     private val transferHistoryPagerFlow: Flow<Pager<Instant, Transfer>> =
         homeViewModel.period.mapLatest { period ->
@@ -138,6 +143,22 @@ class ActivityViewModel(
             return
         }
 
+        _events.tryEmit(
+            Event.ProceedToEditingTransfer(
+                transferToEdit = transfer,
+            )
+        )
+    }
+
+    fun onTransferItemLongClicked(item: ViewTransferListItem.Transfer) {
+        val transfer = item.source
+        if (transfer == null) {
+            log.debug {
+                "onTransferItemLongClicked(): missing transfer source"
+            }
+            return
+        }
+
         revertTransfer(transfer)
     }
 
@@ -166,5 +187,12 @@ class ActivityViewModel(
                     revertedTransfers.update { it + transfer }
                 }
         }
+    }
+
+    sealed interface Event {
+
+        class ProceedToEditingTransfer(
+            val transferToEdit: Transfer,
+        ) : Event
     }
 }

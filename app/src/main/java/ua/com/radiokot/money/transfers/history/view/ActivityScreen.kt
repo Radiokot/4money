@@ -42,6 +42,7 @@ fun ActivityScreenRoot(
 ) = ActivityScreen(
     itemPagingFlow = viewModel.transferItemPagingFlow,
     onTransferItemClicked = viewModel::onTransferItemClicked,
+    onTransferItemLongClicked = viewModel::onTransferItemLongClicked,
     period = homeViewModel.period.collectAsStateWithLifecycle(),
     onPeriodClicked = {},
     onPreviousPeriodClicked = homeViewModel::onPreviousPeriodClicked,
@@ -54,6 +55,7 @@ private fun ActivityScreen(
     modifier: Modifier = Modifier,
     itemPagingFlow: Flow<PagingData<ViewTransferListItem>>,
     onTransferItemClicked: (ViewTransferListItem.Transfer) -> Unit,
+    onTransferItemLongClicked: (ViewTransferListItem.Transfer) -> Unit,
     period: State<HistoryPeriod>,
     onPeriodClicked: () -> Unit,
     onNextPeriodClicked: () -> Unit,
@@ -77,6 +79,7 @@ private fun ActivityScreen(
     TransferList(
         itemPagingFlow = itemPagingFlow,
         onTransferItemClicked = onTransferItemClicked,
+        onTransferItemLongClicked = onTransferItemLongClicked,
         modifier = modifier
             .padding(
                 horizontal = 16.dp,

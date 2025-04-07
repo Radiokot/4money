@@ -142,6 +142,7 @@ private fun HomeScreen(
 
             activityScreen(
                 homeViewModel = viewModel,
+                onProceedToEditingTransfer = transfersNavigator::proceedToTransfer,
             )
 
             accountActionSheet(

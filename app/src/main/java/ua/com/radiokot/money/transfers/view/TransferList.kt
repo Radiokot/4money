@@ -19,6 +19,8 @@
 
 package ua.com.radiokot.money.transfers.view
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -56,13 +58,13 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
-import ua.com.radiokot.money.stableClickable
 
 @Composable
 fun TransferList(
     modifier: Modifier = Modifier,
     itemPagingFlow: Flow<PagingData<ViewTransferListItem>>,
     onTransferItemClicked: (ViewTransferListItem.Transfer) -> Unit,
+    onTransferItemLongClicked: (ViewTransferListItem.Transfer) -> Unit,
 ) {
     val locale = LocalConfiguration.current.locales.get(0)
     val amountFormat = remember(locale) {
@@ -107,14 +109,23 @@ fun TransferList(
                 }
 
                 is ViewTransferListItem.Transfer -> {
+                    val clickableModifier = remember(item.key) {
+                        // Long click – experimental 🤡.
+                        @OptIn(ExperimentalFoundationApi::class)
+                        Modifier.combinedClickable(
+                            onClick = {
+                                onTransferItemClicked(item)
+                            },
+                            onLongClick = {
+                                onTransferItemLongClicked(item)
+                            },
+                        )
+                    }
+
                     TransferItem(
                         item = item,
                         amountFormat = amountFormat,
-                        modifier = Modifier
-                            .stableClickable(
-                                key = item.key,
-                                onClick = { onTransferItemClicked(item) },
-                            )
+                        modifier = clickableModifier
                             .padding(
                                 bottom = 16.dp
                             )
@@ -137,6 +148,7 @@ private fun TransferListPreview(
 ) = TransferList(
     itemPagingFlow = flowOf(PagingData.from(itemList)),
     onTransferItemClicked = {},
+    onTransferItemLongClicked = {},
 )
 
 @Composable

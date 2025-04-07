@@ -29,6 +29,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.categories.data.Category
+import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.logic.GetLastUsedAccountsByCategoryUseCase
@@ -136,6 +137,18 @@ class TransfersNavigator(
                     destinationId = selectedCounterparty.id,
                 ),
             navOptions = popUpToCounterpartySelection,
+        )
+    }
+
+    fun proceedToTransfer(
+        transferToEdit: Transfer,
+        navOptions: NavOptions? = null,
+    ) {
+        navController.navigate(
+            route = TransferSheetRoute(
+                transferToEdit = transferToEdit,
+            ),
+            navOptions = navOptions,
         )
     }
 

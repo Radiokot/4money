@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.transfers.history.view
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -27,16 +28,28 @@ import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ua.com.radiokot.money.home.view.HomeViewModel
+import ua.com.radiokot.money.transfers.data.Transfer
 
 @Serializable
 object ActivityScreenRoute
 
 fun NavGraphBuilder.activityScreen(
     homeViewModel: HomeViewModel,
+    onProceedToEditingTransfer: (transferToEdit: Transfer) -> Unit,
 ) = composable<ActivityScreenRoute> {
 
-    val viewModel = koinViewModel<ActivityViewModel>{
+    val viewModel = koinViewModel<ActivityViewModel> {
         parametersOf(homeViewModel)
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is ActivityViewModel.Event.ProceedToEditingTransfer -> {
+                    onProceedToEditingTransfer(event.transferToEdit)
+                }
+            }
+        }
     }
 
     ActivityScreenRoot(
