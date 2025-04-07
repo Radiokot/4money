@@ -22,6 +22,7 @@ package ua.com.radiokot.money.transfers
 import android.content.Context
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.accounts.accountsModule
@@ -41,6 +42,8 @@ import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
 import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetViewModel
 import ua.com.radiokot.money.transfers.view.TransferSheetViewModel
 import ua.com.radiokot.money.transfers.view.TransfersNavigator
+
+private const val WITHOUT_TRANSFER_PREFERENCES_UPDATE = "WITHOUT_TRANSFER_PREFERENCES_UPDATE"
 
 val transfersModule = module {
     includes(
@@ -69,6 +72,15 @@ val transfersModule = module {
             )
         } bind TransferFundsUseCase::class
 
+        factory(named(WITHOUT_TRANSFER_PREFERENCES_UPDATE)) {
+            PowerSyncTransferFundsUseCase(
+                accountRepository = get(),
+                transferHistoryRepository = get(),
+                database = get(),
+                transfersPreferences = null,
+            )
+        } bind TransferFundsUseCase::class
+
         factory {
             PowerSyncRevertTransferUseCase(
                 accountRepository = get(),
@@ -80,7 +92,7 @@ val transfersModule = module {
         factory {
             PowerSyncEditTransferUseCase(
                 revertTransferUseCase = get(),
-                transferFundsUseCase = get(),
+                transferFundsUseCase = get(named(WITHOUT_TRANSFER_PREFERENCES_UPDATE)),
                 transferHistoryRepository = get(),
                 database = get(),
             )
