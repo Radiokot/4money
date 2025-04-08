@@ -24,9 +24,17 @@ import androidx.paging.PagingState
 import com.powersync.db.Queries
 import com.powersync.db.SqlCursor
 import com.powersync.db.internal.PowerSyncTransaction
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -36,12 +44,14 @@ import kotlinx.datetime.format.DateTimeComponents
 import kotlinx.datetime.plus
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
+import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import java.math.BigInteger
 import java.util.UUID
+import kotlin.time.Duration.Companion.seconds
 
 class PowerSyncTransferHistoryRepository(
     private val database: Queries,
@@ -50,6 +60,11 @@ class PowerSyncTransferHistoryRepository(
 ) : TransferHistoryRepository {
 
     private val log by lazyLogger("PowerSyncTransferHistoryRepo")
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val _updatedTransfersFlow: MutableSharedFlow<Transfer> = eventSharedFlow()
+    override val updatedTransfers: Flow<Transfer> = _updatedTransfersFlow.asSharedFlow()
+    private val _deletedTransferIdsFlow: MutableSharedFlow<String> = eventSharedFlow()
+    override val deletedTransferIds: Flow<String> = _deletedTransferIdsFlow.asSharedFlow()
 
     override suspend fun getTransferHistoryPage(
         pageBefore: Instant?,
@@ -170,7 +185,7 @@ class PowerSyncTransferHistoryRepository(
         memo: String?,
         time: Instant,
         transaction: PowerSyncTransaction,
-        transferId: String = UUID.randomUUID().toString()
+        transferId: String = UUID.randomUUID().toString(),
     ) {
         val timeString = time.toDbTimeString()
 
@@ -197,6 +212,38 @@ class PowerSyncTransferHistoryRepository(
                 memo,
             )
         )
+
+        coroutineScope.launch {
+            try {
+                withTimeout(1.seconds) {
+                    val updatedTransfer = database
+                        .watch(
+                            sql = SELECT_BY_ID,
+                            parameters = listOf(transferId),
+                            mapper = ::toTransferHistoryRecord,
+                        )
+                        .first()
+                        .first()
+                        .let { transferHistoryRecord ->
+                            toTransfer(
+                                record = transferHistoryRecord,
+                                counterpartyById = getCounterpartiesById(),
+                            )
+                        }
+
+                    log.debug {
+                        "addOrUpdateTransfer(): posting updated transfer"
+                    }
+
+                    _updatedTransfersFlow.tryEmit(updatedTransfer)
+                }
+            } catch (e: TimeoutCancellationException) {
+                log.error {
+                    "addOrUpdateTransfer(): not updated in time:" +
+                            "\ntransferId=$transferId"
+                }
+            }
+        }
     }
 
     fun deleteTransfer(
@@ -214,6 +261,31 @@ class PowerSyncTransferHistoryRepository(
                 transferId,
             )
         )
+
+        coroutineScope.launch {
+            try {
+                withTimeout(1.seconds) {
+                    database
+                        .watch(
+                            sql = "SELECT transfers.id FROM transfers WHERE transfers.id = ?",
+                            parameters = listOf(transferId),
+                            mapper = { },
+                        )
+                        .first(List<*>::isEmpty)
+
+                    log.debug {
+                        "deleteTransfer(): posting deleted id"
+                    }
+
+                    _deletedTransferIdsFlow.tryEmit(transferId)
+                }
+            } catch (e: TimeoutCancellationException) {
+                log.error {
+                    "deleteTransfer(): not deleted in time:" +
+                            "\ntransferId=$transferId"
+                }
+            }
+        }
     }
 
     /**

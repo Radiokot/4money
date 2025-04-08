@@ -33,14 +33,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
@@ -68,9 +70,25 @@ class ActivityViewModel(
 
     private val log by lazyLogger("ActivityVM")
     private val localTimeZone = TimeZone.currentSystemDefault()
-    private val revertedTransfers: MutableStateFlow<Set<Transfer>> = MutableStateFlow(emptySet())
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
+
+    private val revertedTransferIds: SharedFlow<Set<String>> =
+        transferHistoryRepository
+            .deletedTransferIds
+            .runningFold(mutableSetOf<String>()) { set, id ->
+                set += id
+                set
+            }
+            .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
+
+    private val updatedTransfersById: SharedFlow<Map<String, Transfer>> =
+        transferHistoryRepository.updatedTransfers
+            .runningFold(mutableMapOf<String, Transfer>()) { map, transfer ->
+                map[transfer.id] = transfer
+                map
+            }
+            .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
     private val transferHistoryPagerFlow: Flow<Pager<Instant, Transfer>> =
         homeViewModel.period.mapLatest { period ->
@@ -95,17 +113,21 @@ class ActivityViewModel(
             transferHistoryPagerFlow
                 .flatMapLatest { it.flow }
                 .cachedIn(viewModelScope),
-            revertedTransfers,
-            transform = ::Pair
-        ).map { (pagingData, revertedTransfers) ->
+            revertedTransferIds,
+            updatedTransfersById,
+            transform = ::Triple
+        ).map { (pagingData, revertedTransferIds, updatedTransfersById) ->
             val today = Clock.System.now().toLocalDateTime(localTimeZone).date
             val yesterday = today.minus(1, DateTimeUnit.DAY)
 
             pagingData
-                .filter { it !in revertedTransfers }
+                .filter { it.id !in revertedTransferIds }
                 .map<Transfer, Pair<ViewTransferListItem, LocalDate>> { transfer ->
-                    val transferLocalDate = transfer.getLocalDateAt(localTimeZone)
-                    val transferListItem = ViewTransferListItem.Transfer.fromTransfer(transfer)
+                    val mostRecentTransfer = updatedTransfersById[transfer.id]
+                        ?: transfer
+                    val transferLocalDate = mostRecentTransfer.getLocalDateAt(localTimeZone)
+                    val transferListItem =
+                        ViewTransferListItem.Transfer.fromTransfer(mostRecentTransfer)
                     transferListItem to transferLocalDate
                 }
                 .insertSeparators { previousItemDatePair, nextItemDatePair ->
@@ -181,10 +203,8 @@ class ActivityViewModel(
                 }
                 .onSuccess {
                     log.debug {
-                        "revertTransfer(): transfer reverted, filtering list items"
+                        "revertTransfer(): transfer reverted"
                     }
-
-                    revertedTransfers.update { it + transfer }
                 }
         }
     }

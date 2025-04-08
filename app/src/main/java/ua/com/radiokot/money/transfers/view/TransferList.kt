@@ -109,7 +109,7 @@ fun TransferList(
                 }
 
                 is ViewTransferListItem.Transfer -> {
-                    val clickableModifier = remember(item.key) {
+                    val clickableModifier = remember(item) {
                         // Long click – experimental 🤡.
                         @OptIn(ExperimentalFoundationApi::class)
                         Modifier.combinedClickable(
