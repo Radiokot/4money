@@ -28,6 +28,9 @@ interface EditTransferUseCase {
 
     /**
      * Replaces the existing transfer with its updated copy.
+     *
+     * Account counterparty balances get updated to revert existing amounts
+     * and apply updated ones.
      */
     suspend operator fun invoke(
         transferId: String,

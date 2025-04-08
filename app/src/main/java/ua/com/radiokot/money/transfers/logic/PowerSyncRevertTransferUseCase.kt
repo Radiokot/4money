@@ -20,10 +20,7 @@
 package ua.com.radiokot.money.transfers.logic
 
 import com.powersync.PowerSyncDatabase
-import com.powersync.db.internal.PowerSyncTransaction
-import kotlinx.coroutines.delay
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
-import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.history.data.PowerSyncTransferHistoryRepository
 
@@ -38,36 +35,26 @@ class PowerSyncRevertTransferUseCase(
         val transfer = transferHistoryRepository.getTransfer(transferId)
 
         database.writeTransaction { transaction ->
-            revertInTransaction(
-                transfer = transfer,
+            transferHistoryRepository.deleteTransfer(
+                transferId = transfer.id,
                 transaction = transaction,
             )
-        }
-    }
 
-    fun revertInTransaction(
-        transfer: Transfer,
-        transaction: PowerSyncTransaction,
-    ) {
-        transferHistoryRepository.deleteTransfer(
-            transferId = transfer.id,
-            transaction = transaction,
-        )
+            if (transfer.source is TransferCounterparty.Account) {
+                accountRepository.updateAccountBalanceBy(
+                    accountId = transfer.source.account.id,
+                    delta = transfer.sourceAmount,
+                    transaction = transaction
+                )
+            }
 
-        if (transfer.source is TransferCounterparty.Account) {
-            accountRepository.updateAccountBalanceBy(
-                accountId = transfer.source.account.id,
-                delta = transfer.sourceAmount,
-                transaction = transaction
-            )
-        }
-
-        if (transfer.destination is TransferCounterparty.Account) {
-            accountRepository.updateAccountBalanceBy(
-                accountId = transfer.destination.account.id,
-                delta = -transfer.destinationAmount,
-                transaction = transaction,
-            )
+            if (transfer.destination is TransferCounterparty.Account) {
+                accountRepository.updateAccountBalanceBy(
+                    accountId = transfer.destination.account.id,
+                    delta = -transfer.destinationAmount,
+                    transaction = transaction,
+                )
+            }
         }
     }
 }

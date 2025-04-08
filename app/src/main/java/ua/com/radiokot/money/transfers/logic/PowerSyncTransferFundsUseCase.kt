@@ -20,18 +20,10 @@
 package ua.com.radiokot.money.transfers.logic
 
 import com.powersync.PowerSyncDatabase
-import com.powersync.db.internal.PowerSyncTransaction
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.plus
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
-import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.data.TransfersPreferences
-import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.data.PowerSyncTransferHistoryRepository
 import java.math.BigInteger
 
@@ -56,85 +48,50 @@ class PowerSyncTransferFundsUseCase(
         date: LocalDate,
     ): Result<Unit> = runCatching {
 
-        val time = findSuitableTime(date)
+        val time = transferHistoryRepository.getTimeForTransfer(
+            date = date,
+        )
 
         database.writeTransaction { transaction ->
-            transferInTransaction(
+            transferHistoryRepository.addOrUpdateTransfer(
                 sourceId = sourceId,
-                destinationId = destinationId,
                 sourceAmount = sourceAmount,
+                destinationId = destinationId,
                 destinationAmount = destinationAmount,
                 memo = memo,
                 time = time,
                 transaction = transaction,
             )
-        }
-    }
 
-    fun transferInTransaction(
-        sourceId: TransferCounterpartyId,
-        destinationId: TransferCounterpartyId,
-        sourceAmount: BigInteger,
-        destinationAmount: BigInteger,
-        memo: String?,
-        time: Instant,
-        transaction: PowerSyncTransaction,
-    ) {
-        if (sourceId is TransferCounterpartyId.Account) {
-            accountRepository.updateAccountBalanceBy(
-                accountId = sourceId.accountId,
-                delta = -sourceAmount,
-                transaction = transaction,
-            )
-
-            if (destinationId is TransferCounterpartyId.Category) {
-                transfersPreferences?.setLastUsedAccountByCategory(
-                    categoryId = destinationId.categoryId,
+            if (sourceId is TransferCounterpartyId.Account) {
+                accountRepository.updateAccountBalanceBy(
                     accountId = sourceId.accountId,
+                    delta = -sourceAmount,
+                    transaction = transaction,
                 )
+
+                if (destinationId is TransferCounterpartyId.Category) {
+                    transfersPreferences?.setLastUsedAccountByCategory(
+                        categoryId = destinationId.categoryId,
+                        accountId = sourceId.accountId,
+                    )
+                }
             }
-        }
 
-        if (destinationId is TransferCounterpartyId.Account) {
-            accountRepository.updateAccountBalanceBy(
-                accountId = destinationId.accountId,
-                delta = destinationAmount,
-                transaction = transaction,
-            )
-
-            if (sourceId is TransferCounterpartyId.Category) {
-                transfersPreferences?.setLastUsedAccountByCategory(
-                    categoryId = sourceId.categoryId,
+            if (destinationId is TransferCounterpartyId.Account) {
+                accountRepository.updateAccountBalanceBy(
                     accountId = destinationId.accountId,
+                    delta = destinationAmount,
+                    transaction = transaction,
                 )
+
+                if (sourceId is TransferCounterpartyId.Category) {
+                    transfersPreferences?.setLastUsedAccountByCategory(
+                        categoryId = sourceId.categoryId,
+                        accountId = destinationId.accountId,
+                    )
+                }
             }
         }
-
-        transferHistoryRepository.logTransfer(
-            sourceId = sourceId,
-            sourceAmount = sourceAmount,
-            destinationId = destinationId,
-            destinationAmount = destinationAmount,
-            memo = memo,
-            time = time,
-            transaction = transaction,
-        )
-    }
-
-    suspend fun findSuitableTime(date: LocalDate): Instant {
-        val lastTransferOfTheDay: Transfer? = transferHistoryRepository
-            .getTransferHistoryPage(
-                period = HistoryPeriod.Day(
-                    localDay = date,
-                ),
-                pageLimit = 1,
-                pageBefore = null,
-                sourceId = null,
-                destinationId = null,
-            )
-            .firstOrNull()
-
-        return (lastTransferOfTheDay?.time ?: date.atStartOfDayIn(TimeZone.currentSystemDefault()))
-            .plus(1, DateTimeUnit.SECOND)
     }
 }

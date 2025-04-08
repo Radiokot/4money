@@ -27,8 +27,13 @@ import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.format.DateTimeComponents
+import kotlinx.datetime.plus
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.lazyLogger
@@ -157,7 +162,7 @@ class PowerSyncTransferHistoryRepository(
                 )
             }
 
-    fun logTransfer(
+    fun addOrUpdateTransfer(
         sourceId: TransferCounterpartyId,
         sourceAmount: BigInteger,
         destinationId: TransferCounterpartyId,
@@ -165,17 +170,13 @@ class PowerSyncTransferHistoryRepository(
         memo: String?,
         time: Instant,
         transaction: PowerSyncTransaction,
+        transferId: String = UUID.randomUUID().toString()
     ) {
-        val id = UUID.randomUUID().toString()
-
-        // ISO-8601 datetime with T, without millis,
-        // with explicitly specified UTC timezone (Z).
-        // For example, 2025-02-22T08:37:23Z
-        val timeString = Instant.fromEpochSeconds(time.epochSeconds).toString()
+        val timeString = time.toDbTimeString()
 
         log.debug {
-            "logTransfer(): logging transfer:" +
-                    "\nid=$id," +
+            "addOrUpdateTransfer(): executing:" +
+                    "\nid=$transferId," +
                     "\ntime=$timeString," +
                     "\nsourceId=$sourceId," +
                     "\nsourceAmount=$sourceAmount," +
@@ -185,11 +186,9 @@ class PowerSyncTransferHistoryRepository(
         }
 
         transaction.execute(
-            sql = "INSERT INTO transfers " +
-                    "(id, time, source_id, source_amount, destination_id, destination_amount, memo) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            sql = INSERT_OR_REPLACE_TRANSFER,
             parameters = listOf(
-                id,
+                transferId,
                 timeString,
                 sourceId.toString(),
                 sourceAmount.toString(),
@@ -215,6 +214,27 @@ class PowerSyncTransferHistoryRepository(
                 transferId,
             )
         )
+    }
+
+    /**
+     * @return exact time to be set for a transfer
+     * that must be logged at the given [date]
+     */
+    suspend fun getTimeForTransfer(date: LocalDate): Instant {
+        val lastTransferOfTheDay: Transfer? =
+            getTransferHistoryPage(
+                period = HistoryPeriod.Day(
+                    localDay = date,
+                ),
+                pageLimit = 1,
+                pageBefore = null,
+                sourceId = null,
+                destinationId = null,
+            )
+                .firstOrNull()
+
+        return (lastTransferOfTheDay?.time ?: date.atStartOfDayIn(TimeZone.currentSystemDefault()))
+            .plus(1, DateTimeUnit.SECOND)
     }
 
     private suspend fun getCounterpartiesById(): Map<String, TransferCounterparty> {
@@ -277,6 +297,14 @@ class PowerSyncTransferHistoryRepository(
         time = record.time,
         memo = record.memo,
     )
+
+    /**
+     * @return ISO-8601 datetime with T, without millis,
+     * with explicitly specified UTC timezone (Z).
+     * For example, 2025-02-22T08:37:23Z.
+     */
+    private fun Instant.toDbTimeString(): String =
+        Instant.fromEpochSeconds(epochSeconds).toString()
 }
 
 private const val SELECT_TRANSFERS =
@@ -345,3 +373,19 @@ private const val SELECT_FOR_DESTINATION =
  */
 private const val SELECT_BY_ID =
     "$SELECT_TRANSFERS WHERE transfers.id = ?"
+
+/**
+ * Params:
+ * 1. Transfer ID
+ * 2. Time string
+ * 3. Source ID
+ * 4. Source amount
+ * 5. Destination ID
+ * 6. Destination amount
+ * 7. Memo
+ */
+private const val INSERT_OR_REPLACE_TRANSFER =
+    "INSERT OR REPLACE INTO transfers " +
+            "(id, time, source_id, source_amount, destination_id, destination_amount, memo) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?)"
+

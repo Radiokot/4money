@@ -22,14 +22,15 @@ package ua.com.radiokot.money.transfers.logic
 import com.powersync.PowerSyncDatabase
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
+import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
-import ua.com.radiokot.money.transfers.history.data.TransferHistoryRepository
+import ua.com.radiokot.money.transfers.history.data.PowerSyncTransferHistoryRepository
 import java.math.BigInteger
 
 class PowerSyncEditTransferUseCase(
-    private val revertTransferUseCase: PowerSyncRevertTransferUseCase,
-    private val transferFundsUseCase: PowerSyncTransferFundsUseCase,
-    private val transferHistoryRepository: TransferHistoryRepository,
+    private val accountRepository: PowerSyncAccountRepository,
+    private val transferHistoryRepository: PowerSyncTransferHistoryRepository,
     private val database: PowerSyncDatabase,
 ) : EditTransferUseCase {
 
@@ -45,24 +46,54 @@ class PowerSyncEditTransferUseCase(
     ): Result<Unit> = runCatching {
 
         val transfer = transferHistoryRepository.getTransfer(transferId)
-        val time = exactTime
-            ?: transferFundsUseCase.findSuitableTime(date)
-
-        database.writeTransaction { transaction ->
-            revertTransferUseCase.revertInTransaction(
-                transfer = transfer,
-                transaction = transaction,
+        val timeToSet = exactTime
+            ?: transferHistoryRepository.getTimeForTransfer(
+                date = date,
             )
 
-            transferFundsUseCase.transferInTransaction(
+        database.writeTransaction { transaction ->
+            transferHistoryRepository.addOrUpdateTransfer(
+                transferId = transferId,
                 sourceId = sourceId,
                 sourceAmount = sourceAmount,
                 destinationId = destinationId,
                 destinationAmount = destinationAmount,
                 memo = memo,
-                time = time,
+                time = timeToSet,
                 transaction = transaction,
             )
+
+            if (transfer.source is TransferCounterparty.Account) {
+                accountRepository.updateAccountBalanceBy(
+                    accountId = transfer.source.account.id,
+                    delta = transfer.sourceAmount,
+                    transaction = transaction
+                )
+            }
+
+            if (transfer.destination is TransferCounterparty.Account) {
+                accountRepository.updateAccountBalanceBy(
+                    accountId = transfer.destination.account.id,
+                    delta = -transfer.destinationAmount,
+                    transaction = transaction,
+                )
+            }
+
+            if (sourceId is TransferCounterpartyId.Account) {
+                accountRepository.updateAccountBalanceBy(
+                    accountId = sourceId.accountId,
+                    delta = -sourceAmount,
+                    transaction = transaction,
+                )
+            }
+
+            if (destinationId is TransferCounterpartyId.Account) {
+                accountRepository.updateAccountBalanceBy(
+                    accountId = destinationId.accountId,
+                    delta = destinationAmount,
+                    transaction = transaction,
+                )
+            }
         }
     }
 }
