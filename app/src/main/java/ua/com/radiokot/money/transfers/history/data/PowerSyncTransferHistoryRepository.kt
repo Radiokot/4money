@@ -138,9 +138,14 @@ class PowerSyncTransferHistoryRepository(
         destinationId: TransferCounterpartyId?,
     ) = object : PagingSource<Instant, Transfer>() {
 
-        override fun getRefreshKey(state: PagingState<Instant, Transfer>): Instant? {
-            TODO("Invalidating is not yet supported")
-        }
+        override fun getRefreshKey(state: PagingState<Instant, Transfer>): Instant? =
+            state
+                .anchorPosition
+                ?.let(state::closestPageToPosition)
+                ?.data
+                ?.firstOrNull()
+                ?.time
+                ?.plus(1.seconds)
 
         override suspend fun load(params: LoadParams<Instant>): LoadResult<Instant, Transfer> =
             getTransferHistoryPage(

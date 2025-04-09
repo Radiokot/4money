@@ -46,7 +46,6 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
@@ -90,7 +89,7 @@ class ActivityViewModel(
             }
             .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
-    private val transferHistoryPagerFlow: Flow<Pager<Instant, Transfer>> =
+    private val transferHistoryPagerFlow: Flow<Pager<*, Transfer>> =
         homeViewModel.period.mapLatest { period ->
             Pager(
                 config = PagingConfig(
