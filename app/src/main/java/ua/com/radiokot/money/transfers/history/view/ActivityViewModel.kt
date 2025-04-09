@@ -25,7 +25,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.paging.filter
 import androidx.paging.insertSeparators
 import androidx.paging.map
 import kotlinx.coroutines.Dispatchers
@@ -33,16 +32,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.runningFold
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
@@ -72,23 +66,6 @@ class ActivityViewModel(
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
-    private val revertedTransferIds: SharedFlow<Set<String>> =
-        transferHistoryRepository
-            .deletedTransferIds
-            .runningFold(mutableSetOf<String>()) { set, id ->
-                set += id
-                set
-            }
-            .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
-
-    private val updatedTransfersById: SharedFlow<Map<String, Transfer>> =
-        transferHistoryRepository.updatedTransfers
-            .runningFold(mutableMapOf<String, Transfer>()) { map, transfer ->
-                map[transfer.id] = transfer
-                map
-            }
-            .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
-
     private val transferHistoryPagerFlow: Flow<Pager<*, Transfer>> =
         homeViewModel.period.mapLatest { period ->
             Pager(
@@ -108,51 +85,44 @@ class ActivityViewModel(
         }
 
     val transferItemPagingFlow: Flow<PagingData<ViewTransferListItem>> =
-        combine(
-            transferHistoryPagerFlow
-                .flatMapLatest { it.flow }
-                .cachedIn(viewModelScope),
-            revertedTransferIds,
-            updatedTransfersById,
-            transform = ::Triple
-        ).map { (pagingData, revertedTransferIds, updatedTransfersById) ->
-            val today = Clock.System.now().toLocalDateTime(localTimeZone).date
-            val yesterday = today.minus(1, DateTimeUnit.DAY)
+        transferHistoryPagerFlow
+            .flatMapLatest { it.flow }
+            .cachedIn(viewModelScope)
+            .map { pagingData ->
+                val today = Clock.System.now().toLocalDateTime(localTimeZone).date
+                val yesterday = today.minus(1, DateTimeUnit.DAY)
 
-            pagingData
-                .filter { it.id !in revertedTransferIds }
-                .map<Transfer, Pair<ViewTransferListItem, LocalDate>> { transfer ->
-                    val mostRecentTransfer = updatedTransfersById[transfer.id]
-                        ?: transfer
-                    val transferLocalDate = mostRecentTransfer.getLocalDateAt(localTimeZone)
-                    val transferListItem =
-                        ViewTransferListItem.Transfer.fromTransfer(mostRecentTransfer)
-                    transferListItem to transferLocalDate
-                }
-                .insertSeparators { previousItemDatePair, nextItemDatePair ->
-                    val previousLocalDate = previousItemDatePair?.second
-                    val nextLocalDate = nextItemDatePair?.second
-
-                    if (nextLocalDate != null &&
-                        (previousLocalDate == null || !nextLocalDate.isSameDayAs(
-                            previousLocalDate
-                        ))
-                    ) {
-                        val header = ViewTransferListItem.Header(
-                            date = ViewDate(
-                                localDate = nextLocalDate,
-                                today = today,
-                                yesterday = yesterday,
-                            ),
-                        )
-
-                        header to nextLocalDate
-                    } else {
-                        null
+                pagingData
+                    .map<Transfer, Pair<ViewTransferListItem, LocalDate>> { transfer ->
+                        val transferLocalDate = transfer.getLocalDateAt(localTimeZone)
+                        val transferListItem =
+                            ViewTransferListItem.Transfer.fromTransfer(transfer)
+                        transferListItem to transferLocalDate
                     }
-                }
-                .map { it.first }
-        }
+                    .insertSeparators { previousItemDatePair, nextItemDatePair ->
+                        val previousLocalDate = previousItemDatePair?.second
+                        val nextLocalDate = nextItemDatePair?.second
+
+                        if (nextLocalDate != null &&
+                            (previousLocalDate == null || !nextLocalDate.isSameDayAs(
+                                previousLocalDate
+                            ))
+                        ) {
+                            val header = ViewTransferListItem.Header(
+                                date = ViewDate(
+                                    localDate = nextLocalDate,
+                                    today = today,
+                                    yesterday = yesterday,
+                                ),
+                            )
+
+                            header to nextLocalDate
+                        } else {
+                            null
+                        }
+                    }
+                    .map { it.first }
+            }
             .flowOn(Dispatchers.Default)
 
     fun onTransferItemClicked(item: ViewTransferListItem.Transfer) {

@@ -28,9 +28,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -44,11 +41,11 @@ import kotlinx.datetime.format.DateTimeComponents
 import kotlinx.datetime.plus
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
-import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
+import java.lang.ref.WeakReference
 import java.math.BigInteger
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
@@ -61,10 +58,8 @@ class PowerSyncTransferHistoryRepository(
 
     private val log by lazyLogger("PowerSyncTransferHistoryRepo")
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val _updatedTransfersFlow: MutableSharedFlow<Transfer> = eventSharedFlow()
-    override val updatedTransfers: Flow<Transfer> = _updatedTransfersFlow.asSharedFlow()
-    private val _deletedTransferIdsFlow: MutableSharedFlow<String> = eventSharedFlow()
-    override val deletedTransferIds: Flow<String> = _deletedTransferIdsFlow.asSharedFlow()
+    private val createdPagingSources: MutableList<WeakReference<PagingSource<*, *>>> =
+        mutableListOf()
 
     override suspend fun getTransferHistoryPage(
         pageBefore: Instant?,
@@ -164,7 +159,7 @@ class PowerSyncTransferHistoryRepository(
                         ?.takeUnless { transfers.size < params.loadSize },
                 )
             }
-    }
+    }.also { createdPagingSources += WeakReference(it) }
 
     override suspend fun getTransfer(transferId: String): Transfer =
         database
@@ -218,36 +213,14 @@ class PowerSyncTransferHistoryRepository(
             )
         )
 
-        coroutineScope.launch {
-            try {
-                withTimeout(1.seconds) {
-                    val updatedTransfer = database
-                        .watch(
-                            sql = SELECT_BY_ID,
-                            parameters = listOf(transferId),
-                            mapper = ::toTransferHistoryRecord,
-                        )
-                        .first()
-                        .first()
-                        .let { transferHistoryRecord ->
-                            toTransfer(
-                                record = transferHistoryRecord,
-                                counterpartyById = getCounterpartiesById(),
-                            )
-                        }
-
-                    log.debug {
-                        "addOrUpdateTransfer(): posting updated transfer"
-                    }
-
-                    _updatedTransfersFlow.tryEmit(updatedTransfer)
-                }
-            } catch (e: TimeoutCancellationException) {
-                log.error {
-                    "addOrUpdateTransfer(): not updated in time:" +
-                            "\ntransferId=$transferId"
-                }
-            }
+        invalidatePagingSourcesWhen {
+            database
+                .watch(
+                    sql = SELECT_BY_ID,
+                    parameters = listOf(transferId),
+                    mapper = ::toTransferHistoryRecord,
+                )
+                .first()
         }
     }
 
@@ -267,28 +240,36 @@ class PowerSyncTransferHistoryRepository(
             )
         )
 
-        coroutineScope.launch {
-            try {
-                withTimeout(1.seconds) {
-                    database
-                        .watch(
-                            sql = "SELECT transfers.id FROM transfers WHERE transfers.id = ?",
-                            parameters = listOf(transferId),
-                            mapper = { },
-                        )
-                        .first(List<*>::isEmpty)
+        invalidatePagingSourcesWhen {
+            database
+                .watch(
+                    sql = "SELECT transfers.id FROM transfers WHERE transfers.id = ?",
+                    parameters = listOf(transferId),
+                    mapper = { },
+                )
+                .first(List<*>::isEmpty)
+        }
+    }
 
-                    log.debug {
-                        "deleteTransfer(): posting deleted id"
-                    }
+    private fun invalidatePagingSourcesWhen(
+        whenWhat: suspend () -> Any,
+    ) = coroutineScope.launch {
+        try {
+            withTimeout(1.seconds) {
+                whenWhat()
 
-                    _deletedTransferIdsFlow.tryEmit(transferId)
+                val invalidatedCount = createdPagingSources.sumOf { weakReference ->
+                    weakReference.get()?.invalidate()?.let { 1L } ?: 0L
                 }
-            } catch (e: TimeoutCancellationException) {
-                log.error {
-                    "deleteTransfer(): not deleted in time:" +
-                            "\ntransferId=$transferId"
+
+                log.debug {
+                    "invalidatePagingSourcesWhen(): invalidated paging sources:" +
+                            "\ncount=$invalidatedCount"
                 }
+            }
+        } catch (e: TimeoutCancellationException) {
+            log.error {
+                "invalidatePagingSourcesWhen(): condition not reached in time"
             }
         }
     }

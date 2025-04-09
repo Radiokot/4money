@@ -20,22 +20,11 @@
 package ua.com.radiokot.money.transfers.history.data
 
 import androidx.paging.PagingSource
-import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
 interface TransferHistoryRepository {
-
-    /**
-     * A hot flow emitting updated/added transfers.
-     */
-    val updatedTransfers: Flow<Transfer>
-
-    /**
-     * A hot flow emitting IDs of deleted transfers.
-     */
-    val deletedTransferIds: Flow<String>
 
     /**
      * @return list of records within the period in reverse chronological order,
