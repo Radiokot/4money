@@ -29,6 +29,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.categories.data.Category
+import ua.com.radiokot.money.routeIs
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
@@ -97,6 +98,18 @@ class TransfersNavigator(
     fun proceedToTransfer(
         counterpartySelectionResult: TransferCounterpartySelectionResult,
     ) = with(counterpartySelectionResult) {
+
+        val previousBackStackEntry = navController.previousBackStackEntry
+
+        // In case the selection was requested by the transfer sheet,
+        // pass it back through the saved state handle.
+        if (previousBackStackEntry?.destination?.routeIs<TransferSheetRoute>() == true) {
+            counterpartySelectionResult.setSelectedCounterpartyId(
+                savedStateHandle = previousBackStackEntry.savedStateHandle,
+            )
+            navController.navigateUp()
+            return@with
+        }
 
         val popUpToCounterpartySelection = navOptions {
             popUpTo<TransferCounterpartySelectionSheetRoute> {

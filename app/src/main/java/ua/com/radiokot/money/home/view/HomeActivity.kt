@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
+import kotlinx.serialization.json.Json
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
 import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
@@ -64,7 +65,6 @@ import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.history.view.ActivityScreenRoute
 import ua.com.radiokot.money.transfers.history.view.activityScreen
 import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetRoute
-import ua.com.radiokot.money.transfers.view.TransferSheetRoute
 import ua.com.radiokot.money.transfers.view.TransfersNavigator
 import ua.com.radiokot.money.transfers.view.transferCounterpartySelectionSheet
 import ua.com.radiokot.money.transfers.view.transferSheet
@@ -196,11 +196,6 @@ private fun HomeScreen(
                             showCategories = showCategories,
                             showAccounts = showAccounts,
                         ),
-                        navOptions = navOptions {
-                            popUpTo<TransferSheetRoute> {
-                                inclusive = true
-                            }
-                        },
                     )
                 },
                 onTransferDone = navController::navigateUp,

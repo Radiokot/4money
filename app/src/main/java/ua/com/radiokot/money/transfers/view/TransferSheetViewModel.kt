@@ -196,6 +196,20 @@ class TransferSheetViewModel(
             ?.also(_date::tryEmit)
     }
 
+    fun onCounterpartiesSelected(
+        newSourceId: TransferCounterpartyId?,
+        newDestinationId: TransferCounterpartyId?,
+    ) {
+        log.debug {
+            "onCounterpartiesSelected(): updating:" +
+                    "\nnewSourceId=$newSourceId," +
+                    "\nnewDestinationId=$newDestinationId"
+        }
+
+        newSourceId?.also(requestedSourceCounterpartyId::tryEmit)
+        newDestinationId?.also(requestedDestinationCounterpartyId::tryEmit)
+    }
+
     fun onNewSourceAmountValueParsed(value: BigInteger) {
         log.debug {
             "onNewSourceAmountValueParsed(): updating source amount:" +
@@ -229,7 +243,7 @@ class TransferSheetViewModel(
         }
 
         _events.tryEmit(
-            Event.ProceedToTransferCounterpartySelection(
+            Event.ProceedToCounterpartySelection(
                 alreadySelectedCounterpartyId = destination.id,
                 selectSource = true,
                 showCategories = source is TransferCounterparty.Category,
@@ -249,7 +263,7 @@ class TransferSheetViewModel(
         }
 
         _events.tryEmit(
-            Event.ProceedToTransferCounterpartySelection(
+            Event.ProceedToCounterpartySelection(
                 alreadySelectedCounterpartyId = source.id,
                 selectSource = false,
                 showCategories = destination is TransferCounterparty.Category,
@@ -478,7 +492,10 @@ class TransferSheetViewModel(
 
         object TransferDone : Event
 
-        class ProceedToTransferCounterpartySelection(
+        /**
+         * Pass the selected IDs to [onCounterpartiesSelected].
+         */
+        class ProceedToCounterpartySelection(
             val alreadySelectedCounterpartyId: TransferCounterpartyId,
             val selectSource: Boolean,
             val showCategories: Boolean,

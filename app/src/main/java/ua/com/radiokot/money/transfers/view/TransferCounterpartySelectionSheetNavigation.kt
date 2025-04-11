@@ -21,6 +21,7 @@ package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.material.navigation.bottomSheet
 import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
@@ -61,7 +62,39 @@ data class TransferCounterpartySelectionResult(
     val selectedCounterparty: TransferCounterparty,
     val isSelectedAsSource: Boolean,
     val otherSelectedCounterpartyId: TransferCounterpartyId?,
-)
+) {
+
+    fun setSelectedCounterpartyId(savedStateHandle: SavedStateHandle) {
+        val selectedCounterpartyIdJson = Json.encodeToString(selectedCounterparty.id)
+        if (isSelectedAsSource) {
+            savedStateHandle[SELECTED_SOURCE_ID_JSON] = selectedCounterpartyIdJson
+            savedStateHandle[SELECTED_DESTINATION_ID_JSON] = null
+        } else {
+            savedStateHandle[SELECTED_SOURCE_ID_JSON] = null
+            savedStateHandle[SELECTED_DESTINATION_ID_JSON] = selectedCounterpartyIdJson
+        }
+    }
+
+    companion object {
+
+        private const val SELECTED_SOURCE_ID_JSON = "selected_source_id_json"
+        private const val SELECTED_DESTINATION_ID_JSON = "selected_destination_id_json"
+
+        fun getSelectedSourceCounterpartyId(
+            savedStateHandle: SavedStateHandle,
+        ): TransferCounterpartyId? =
+            savedStateHandle
+                .get<String?>(SELECTED_SOURCE_ID_JSON)
+                ?.let(Json::decodeFromString)
+
+        fun getSelectedDestinationCounterpartyId(
+            savedStateHandle: SavedStateHandle,
+        ): TransferCounterpartyId? =
+            savedStateHandle
+                .get<String?>(SELECTED_DESTINATION_ID_JSON)
+                ?.let(Json::decodeFromString)
+    }
+}
 
 fun NavGraphBuilder.transferCounterpartySelectionSheet(
     onSelected: (TransferCounterpartySelectionResult) -> Unit,

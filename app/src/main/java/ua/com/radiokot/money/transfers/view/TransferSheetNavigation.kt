@@ -120,15 +120,31 @@ fun NavGraphBuilder.transferSheet(
     }
 
     LaunchedEffect(arguments) {
-        viewModel.setParameters(
-            sourceId = arguments.sourceId,
-            destinationId = arguments.destinationId,
-            transferToEditId = arguments.transferToEditId,
-            sourceAmount = arguments.sourceAmount,
-            destinationAmount = arguments.destinationAmount,
-            memo = arguments.memo,
-            time = arguments.time,
-        )
+        val selectedSourceId: TransferCounterpartyId? = TransferCounterpartySelectionResult
+            .getSelectedSourceCounterpartyId(
+                savedStateHandle = entry.savedStateHandle,
+            )
+        val selectedDestinationId: TransferCounterpartyId? = TransferCounterpartySelectionResult
+            .getSelectedDestinationCounterpartyId(
+                savedStateHandle = entry.savedStateHandle,
+            )
+
+        if (selectedSourceId != null || selectedDestinationId != null) {
+            viewModel.onCounterpartiesSelected(
+                newSourceId = selectedSourceId,
+                newDestinationId = selectedDestinationId,
+            )
+        } else {
+            viewModel.setParameters(
+                sourceId = arguments.sourceId,
+                destinationId = arguments.destinationId,
+                transferToEditId = arguments.transferToEditId,
+                sourceAmount = arguments.sourceAmount,
+                destinationAmount = arguments.destinationAmount,
+                memo = arguments.memo,
+                time = arguments.time,
+            )
+        }
 
         launch {
             viewModel.events.collect { event ->
@@ -150,7 +166,7 @@ fun NavGraphBuilder.transferSheet(
                             )
                     }
 
-                    is TransferSheetViewModel.Event.ProceedToTransferCounterpartySelection -> {
+                    is TransferSheetViewModel.Event.ProceedToCounterpartySelection -> {
                         onProceedToTransferCounterpartySelection(
                             event.alreadySelectedCounterpartyId,
                             event.selectSource,

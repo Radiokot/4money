@@ -36,8 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import kotlinx.serialization.serializer
 
 @Composable
 fun rememberMoneyAppNavController(): NavHostController {
@@ -92,3 +94,6 @@ fun MoneyAppModalBottomSheetLayout(
             .imePadding()
     )
 }
+
+inline fun <reified RouteType> NavDestination.routeIs(): Boolean =
+    route?.startsWith(serializer<RouteType>().descriptor.serialName) == true
