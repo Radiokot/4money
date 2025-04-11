@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.transfers.history.data
 
 import androidx.paging.PagingSource
+import androidx.paging.PagingSource.LoadResult
 import androidx.paging.PagingState
 import com.powersync.db.Queries
 import com.powersync.db.SqlCursor
@@ -62,53 +63,81 @@ class PowerSyncTransferHistoryRepository(
         mutableListOf()
 
     override suspend fun getTransferHistoryPage(
-        pageBefore: Instant?,
-        pageLimit: Int,
-        period: HistoryPeriod,
+        cursor: TransferHistoryPage.Cursor?,
+        limit: Int,
+        withinPeriod: HistoryPeriod,
         sourceId: TransferCounterpartyId?,
         destinationId: TransferCounterpartyId?,
-    ): List<Transfer> = withContext(Dispatchers.IO) {
+    ): TransferHistoryPage = withContext(Dispatchers.IO) {
 
-        val endTimeExclusive =
-            if (pageBefore == null)
-                period.endTimeExclusive
-            else
-                minOf(pageBefore, period.endTimeExclusive)
+        val timeCondition = buildString {
+            append("$UNIX_TIME >= ${withinPeriod.startTimeInclusive.epochSeconds} ")
+            append("AND $UNIX_TIME < ${withinPeriod.endTimeExclusive.epochSeconds} ")
+            when {
+                cursor?.isBefore == true ->
+                    append("AND $UNIX_TIME < ${cursor.timeExclusive.epochSeconds} ")
+
+                cursor?.isAfter == true ->
+                    append("AND $UNIX_TIME > ${cursor.timeExclusive.epochSeconds} ")
+            }
+        }
+
+        val orderCondition = buildString {
+            append("ORDER BY $UNIX_TIME ")
+            when {
+                cursor?.isAfter == true ->
+                    append("ASC ")
+
+                else ->
+                    append("DESC ")
+            }
+        }
+
+        val limitCondition = "LIMIT $limit "
 
         val records: List<TransferHistoryRecord> = when {
             sourceId == null && destinationId == null ->
                 database.getAll(
-                    sql = SELECT_FOR_ALL_SOURCES_AND_DESTINATIONS,
-                    parameters = listOf(
-                        period.startTimeInclusive.epochSeconds,
-                        endTimeExclusive.epochSeconds,
-                        pageLimit.toLong(),
-                    ),
+                    sql = buildString {
+                        append(SELECT_TRANSFERS)
+                        append(" WHERE ")
+                        append(timeCondition)
+                        append(orderCondition)
+                        append(limitCondition)
+                    },
+                    parameters = listOf(),
                     mapper = ::toTransferHistoryRecord,
                 )
 
             sourceId != null && destinationId == null ->
                 database.getAll(
-                    sql = SELECT_FOR_SOURCE,
+                    sql = buildString {
+                        append(SELECT_TRANSFERS_FOR_SOURCE)
+                        append(" AND ")
+                        append(timeCondition)
+                        append(orderCondition)
+                        append(limitCondition)
+                    },
                     parameters = listOf(
-                        period.startTimeInclusive.epochSeconds,
-                        endTimeExclusive.epochSeconds,
                         sourceId.toString(),
                         sourceId.toString(),
-                        pageLimit.toLong(),
                     ),
                     mapper = ::toTransferHistoryRecord,
                 )
 
             sourceId == null && destinationId != null ->
                 database.getAll(
-                    sql = SELECT_FOR_DESTINATION,
+                    sql = buildString {
+                        append(SELECT_TRANSFERS_FOR_DESTINATION)
+                        append(" AND ")
+                        append(timeCondition)
+                        append(orderCondition)
+                        append(limitCondition)
+                    },
                     parameters = listOf(
-                        period.startTimeInclusive.epochSeconds,
-                        endTimeExclusive.epochSeconds,
                         destinationId.toString(),
                         destinationId.toString(),
-                        pageLimit.toLong(),
+                        limit.toLong(),
                     ),
                     mapper = ::toTransferHistoryRecord,
                 )
@@ -118,47 +147,73 @@ class PowerSyncTransferHistoryRepository(
         }
 
         val counterpartyById = getCounterpartiesById()
+        val transfers = records
+            .run {
+                if (cursor?.isAfter == true)
+                    sortedByDescending(TransferHistoryRecord::time)
+                else
+                    this
+            }
+            .map { record ->
+                toTransfer(
+                    record = record,
+                    counterpartyById = counterpartyById,
+                )
+            }
 
-        return@withContext records.map { record ->
-            toTransfer(
-                record = record,
-                counterpartyById = counterpartyById,
-            )
-        }
+        return@withContext TransferHistoryPage(
+            data = transfers,
+            nextPageCursor = transfers
+                .lastOrNull()
+                ?.time
+                ?.takeUnless { transfers.size < limit }
+                ?.let { oldestTransferTime ->
+                    TransferHistoryPage.Cursor(
+                        timeExclusive = oldestTransferTime,
+                        isBefore = true,
+                    )
+                },
+            previousPageCursor = transfers
+                .firstOrNull()
+                ?.takeUnless { cursor == null || cursor.isAfter && transfers.size < limit }
+                ?.time
+                ?.let { newestTransferTime ->
+                    TransferHistoryPage.Cursor(
+                        timeExclusive = newestTransferTime,
+                        isBefore = false,
+                    )
+                }
+        )
     }
 
     override fun getTransferHistoryPagingSource(
         period: HistoryPeriod,
         sourceId: TransferCounterpartyId?,
         destinationId: TransferCounterpartyId?,
-    ) = object : PagingSource<Instant, Transfer>() {
+    ) = object : PagingSource<TransferHistoryPage.Cursor, Transfer>() {
 
-        override fun getRefreshKey(state: PagingState<Instant, Transfer>): Instant? =
+        override fun getRefreshKey(state: PagingState<TransferHistoryPage.Cursor, Transfer>): TransferHistoryPage.Cursor? =
             state
                 .anchorPosition
                 ?.let(state::closestPageToPosition)
                 ?.data
                 ?.firstOrNull()
                 ?.time
-                ?.plus(1.seconds)
+                ?.let { newestTransferTime ->
+                    TransferHistoryPage.Cursor(
+                        timeExclusive = newestTransferTime.plus(1.seconds),
+                        isBefore = true,
+                    )
+                }
 
-        override suspend fun load(params: LoadParams<Instant>): LoadResult<Instant, Transfer> =
+        override suspend fun load(params: LoadParams<TransferHistoryPage.Cursor>): LoadResult<TransferHistoryPage.Cursor, Transfer> =
             getTransferHistoryPage(
-                pageBefore = params.key,
-                pageLimit = params.loadSize,
-                period = period,
+                cursor = params.key,
+                limit = params.loadSize,
+                withinPeriod = period,
                 sourceId = sourceId,
                 destinationId = destinationId,
-            ).let { transfers ->
-                LoadResult.Page(
-                    data = transfers,
-                    prevKey = null,
-                    nextKey = transfers
-                        .lastOrNull()
-                        ?.time
-                        ?.takeUnless { transfers.size < params.loadSize },
-                )
-            }
+            ).toLoadResultPage()
     }.also { createdPagingSources += WeakReference(it) }
 
     override suspend fun getTransfer(transferId: String): Transfer =
@@ -281,14 +336,15 @@ class PowerSyncTransferHistoryRepository(
     suspend fun getTimeForTransfer(date: LocalDate): Instant {
         val lastTransferOfTheDay: Transfer? =
             getTransferHistoryPage(
-                period = HistoryPeriod.Day(
+                withinPeriod = HistoryPeriod.Day(
                     localDay = date,
                 ),
-                pageLimit = 1,
-                pageBefore = null,
+                limit = 1,
+                cursor = null,
                 sourceId = null,
                 destinationId = null,
             )
+                .data
                 .firstOrNull()
 
         return (lastTransferOfTheDay?.time ?: date.atStartOfDayIn(TimeZone.currentSystemDefault()))
@@ -356,6 +412,12 @@ class PowerSyncTransferHistoryRepository(
         memo = record.memo,
     )
 
+    private fun TransferHistoryPage.toLoadResultPage() = LoadResult.Page(
+        data = data,
+        prevKey = previousPageCursor,
+        nextKey = nextPageCursor,
+    )
+
     /**
      * @return ISO-8601 datetime with T, without millis,
      * with explicitly specified UTC timezone (Z).
@@ -365,65 +427,38 @@ class PowerSyncTransferHistoryRepository(
         Instant.fromEpochSeconds(epochSeconds).toString()
 }
 
+private const val UNIX_TIME = "unix_time"
+
 private const val SELECT_TRANSFERS =
     "SELECT transfers.id, transfers.time, " +
             "transfers.source_id, transfers.source_amount, " +
             "transfers.destination_id, transfers.destination_amount, transfers.memo, " +
-            "unixepoch(transfers.time) AS unix_time " +
+            "unixepoch(transfers.time) AS $UNIX_TIME " +
             "FROM transfers"
 
-private const val UNIX_TIME_IN_PERIOD =
-    "unix_time >= ? AND unix_time < ?"
-
-private const val ORDER =
-    "ORDER BY unix_time DESC, transfers.id ASC"
 
 private const val SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY =
     "SELECT categories.id FROM categories WHERE categories.parent_id = ?"
 
 /**
  * Params:
- * 1. Period start time seconds inclusive
- * 2. Period end time seconds exclusive
- * 3. Limit
+ * 1. Source ID
+ * 2. Source ID once again
  */
-private const val SELECT_FOR_ALL_SOURCES_AND_DESTINATIONS =
+private const val SELECT_TRANSFERS_FOR_SOURCE =
     "$SELECT_TRANSFERS " +
-            "WHERE $UNIX_TIME_IN_PERIOD " +
-            "$ORDER " +
-            "LIMIT ?"
+            "WHERE (transfers.source_id = ? OR transfers.source_id in " +
+            "($SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY)) "
 
 /**
  * Params:
- * 1. Period start time seconds inclusive
- * 2. Period end time seconds exclusive
- * 3. Source ID
- * 4. Source ID once again
- * 5. Limit
+ * 1. Destination ID
+ * 2. Destination ID once again
  */
-private const val SELECT_FOR_SOURCE =
+private const val SELECT_TRANSFERS_FOR_DESTINATION =
     "$SELECT_TRANSFERS " +
-            "WHERE $UNIX_TIME_IN_PERIOD " +
-            "AND (transfers.source_id = ? OR transfers.source_id in " +
-            "($SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY)) " +
-            "$ORDER " +
-            "LIMIT ?"
-
-/**
- * Params:
- * 1. Period start time seconds inclusive
- * 2. Period end time seconds exclusive
- * 3. Destination ID
- * 4. Destination ID once again
- * 5. Limit
- */
-private const val SELECT_FOR_DESTINATION =
-    "$SELECT_TRANSFERS " +
-            "WHERE $UNIX_TIME_IN_PERIOD " +
-            "AND (transfers.destination_id = ? OR transfers.destination_id in " +
-            "($SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY)) " +
-            "$ORDER " +
-            "LIMIT ?"
+            "WHERE (transfers.destination_id = ? OR transfers.destination_id in " +
+            "($SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY)) "
 
 /**
  * Params:
@@ -446,4 +481,3 @@ private const val INSERT_OR_REPLACE_TRANSFER =
     "INSERT OR REPLACE INTO transfers " +
             "(id, time, source_id, source_amount, destination_id, destination_amount, memo) " +
             "VALUES (?, ?, ?, ?, ?, ?, ?)"
-
