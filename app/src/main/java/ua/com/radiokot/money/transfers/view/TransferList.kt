@@ -29,6 +29,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -62,6 +64,7 @@ import ua.com.radiokot.money.currency.view.ViewAmountFormat
 @Composable
 fun TransferList(
     modifier: Modifier = Modifier,
+    state: LazyListState = rememberLazyListState(),
     itemPagingFlow: Flow<PagingData<ViewTransferListItem>>,
     onTransferItemClicked: (ViewTransferListItem.Transfer) -> Unit,
     onTransferItemLongClicked: (ViewTransferListItem.Transfer) -> Unit,
@@ -88,6 +91,7 @@ fun TransferList(
         contentPadding = PaddingValues(
             vertical = 16.dp,
         ),
+        state = state,
         modifier = modifier,
     ) {
         items(

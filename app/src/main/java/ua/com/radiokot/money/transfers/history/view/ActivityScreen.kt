@@ -22,8 +22,10 @@ package ua.com.radiokot.money.transfers.history.view
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -76,10 +78,15 @@ private fun ActivityScreen(
             )
     )
 
+    val transferListState = remember(period.value) {
+        LazyListState()
+    }
+
     TransferList(
         itemPagingFlow = itemPagingFlow,
         onTransferItemClicked = onTransferItemClicked,
         onTransferItemLongClicked = onTransferItemLongClicked,
+        state = transferListState,
         modifier = modifier
             .padding(
                 horizontal = 16.dp,
