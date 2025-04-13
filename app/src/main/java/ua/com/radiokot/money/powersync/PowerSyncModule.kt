@@ -50,7 +50,7 @@ val powerSyncModule = module {
                     connector = SupabaseConnector(
                         supabaseClient = get(),
                         powerSyncEndpoint = BuildConfig.POWERSYNC_URL,
-                    ).ignoreEmptyUpdates()
+                    )
                 )
             }
         }
