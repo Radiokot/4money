@@ -29,12 +29,11 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
 import org.slf4j.impl.HandroidLoggerAdapter
-import ua.com.radiokot.money.accounts.accountsModule
 import ua.com.radiokot.money.auth.authModule
 import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
+import ua.com.radiokot.money.colors.colorsModule
 import ua.com.radiokot.money.home.homeModule
-import ua.com.radiokot.money.transfers.transfersModule
 
 class MoneyApp : Application() {
     private val log by lazyLogger("App")
@@ -51,6 +50,7 @@ class MoneyApp : Application() {
             modules(
                 authModule,
                 homeModule,
+                colorsModule,
             )
         }
 
