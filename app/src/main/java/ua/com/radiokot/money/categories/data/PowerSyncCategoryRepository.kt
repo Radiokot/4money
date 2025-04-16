@@ -88,7 +88,7 @@ class PowerSyncCategoryRepository(
             .watch(
                 sql = SELECT_CATEGORIES_THEN_SUBCATEGORIES,
                 mapper = { sqlCursor ->
-                    val parentCategoryId = sqlCursor.getString(7)
+                    val parentCategoryId = sqlCursor.getString(8)
                     if (parentCategoryId == null)
                         toCategory(sqlCursor)
                     else

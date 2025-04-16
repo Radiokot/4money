@@ -19,6 +19,9 @@
 
 package ua.com.radiokot.money.colors.data
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 class ItemColorScheme(
     val name: String,
     val primary: Long,

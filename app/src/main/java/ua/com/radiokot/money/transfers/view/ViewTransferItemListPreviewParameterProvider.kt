@@ -20,11 +20,16 @@
 package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import java.math.BigInteger
 
 class ViewTransferItemListPreviewParameterProvider :
     PreviewParameterProvider<List<ViewTransferListItem>> {
+
+    private val colorSchemesByName = HardcodedItemColorSchemeRepository()
+        .getItemColorSchemesByName()
+
     override val values: Sequence<List<ViewTransferListItem>>
         get() = sequenceOf(
             listOf(
@@ -39,6 +44,7 @@ class ViewTransferItemListPreviewParameterProvider :
                             symbol = "$",
                             precision = 2,
                         ),
+                        colorSchemesByName.getValue("Blue4"),
                     ),
                     primaryAmount = BigInteger("10000"),
                     secondaryCounterparty = ViewTransferCounterparty.Account(
@@ -61,6 +67,7 @@ class ViewTransferItemListPreviewParameterProvider :
                             symbol = "$",
                             precision = 2,
                         ),
+                        colorSchemesByName.getValue("Orange1"),
                     ),
                     primaryAmount = BigInteger("5000"),
                     secondaryCounterparty = ViewTransferCounterparty.Account(

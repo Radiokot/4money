@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
@@ -49,6 +50,7 @@ import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.Subcategory
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
+import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.isSameDayAs
 import ua.com.radiokot.money.lazyLogger
@@ -141,6 +143,21 @@ class TransferSheetViewModel(
 
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val subcategoriesColorScheme: StateFlow<ItemColorScheme?> =
+        combine(
+            sourceCounterpartySharedFlow,
+            destinationCounterpartySharedFlow,
+            transform = ::Pair
+        )
+            .map { (source, destination) ->
+                val categoryCounterparty =
+                    (source as? TransferCounterparty.Category)
+                        ?: (destination as? TransferCounterparty.Category)
+                        ?: return@map null
+                categoryCounterparty.category.colorScheme
+            }
+            .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     val isSourceInputShown: StateFlow<Boolean> =
         // Only require source input if currencies are different.

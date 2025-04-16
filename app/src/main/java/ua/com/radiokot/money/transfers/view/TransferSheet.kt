@@ -74,6 +74,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ua.com.radiokot.money.categories.view.SelectableSubcategoryRow
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItemPreviewParameterProvider
+import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.stableClickable
@@ -104,6 +106,7 @@ fun TransferSheetRoot(
         date = viewModel.date.collectAsStateWithLifecycle(),
         onMemoUpdated = viewModel::onMemoUpdated,
         subcategoryItemList = viewModel.subcategoryItemList.collectAsState(),
+        subcategoriesColorScheme = viewModel.subcategoriesColorScheme.collectAsState(),
         onSubcategoryItemClicked = viewModel::onSubcategoryItemClicked,
         isSaveEnabled = viewModel.isSaveEnabled.collectAsState(),
         onSaveClicked = viewModel::onSaveClicked,
@@ -127,6 +130,7 @@ private fun TransferSheet(
     date: State<ViewDate>,
     onMemoUpdated: (String) -> Unit,
     subcategoryItemList: State<List<ViewSelectableSubcategoryListItem>>,
+    subcategoriesColorScheme: State<ItemColorScheme?>,
     onSubcategoryItemClicked: (ViewSelectableSubcategoryListItem) -> Unit,
     isSaveEnabled: State<Boolean>,
     onSaveClicked: () -> Unit,
@@ -135,7 +139,7 @@ private fun TransferSheet(
     onDestinationClicked: () -> Unit,
 ) = BoxWithConstraints(
     modifier = modifier
-        .background(Color(0xfff0f4f8))
+        .background(Color.White)
         .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
 ) {
 
@@ -222,9 +226,12 @@ private fun TransferSheet(
         )
 
 
-        if (subcategoryItemList.value.isNotEmpty()) {
+        if (subcategoryItemList.value.isNotEmpty()
+            && subcategoriesColorScheme.value != null
+        ) {
             SelectableSubcategoryRow(
                 itemList = subcategoryItemList,
+                colorScheme = subcategoriesColorScheme.value!!,
                 onItemClicked = onSubcategoryItemClicked,
                 modifier = Modifier
                     .padding(
@@ -419,6 +426,9 @@ private fun TransferSheetPreview(
 ) = Column {
     val isSourceInputShownOptions = listOf(true, false)
     val isSaveEnabledOptions = listOf(true, false)
+    val categoryColorScheme = HardcodedItemColorSchemeRepository()
+        .getItemColorSchemesByName()
+        .getValue("Green2")
 
     isSourceInputShownOptions.forEach { isSourceInputShown ->
         isSaveEnabledOptions.forEach { isSaveEnabled ->
@@ -438,12 +448,14 @@ private fun TransferSheetPreview(
                 ),
                 sourceAmountValue = BigInteger("133").let(::mutableStateOf),
                 onNewSourceAmountValueParsed = {},
-                destination = ViewTransferCounterparty.Account(
-                    accountTitle = "Destination",
+                destination = ViewTransferCounterparty.Category(
+                    categoryTitle = "Destination",
+                    subcategoryTitle = null,
                     currency = ViewCurrency(
                         symbol = "B",
                         precision = 2,
                     ),
+                    colorScheme = categoryColorScheme,
                 ),
                 destinationAmountValue = BigInteger("331").let(::mutableStateOf),
                 onNewDestinationAmountValueParsed = {},
@@ -455,6 +467,7 @@ private fun TransferSheetPreview(
                     .values
                     .toList()
                     .let(::mutableStateOf),
+                subcategoriesColorScheme = categoryColorScheme.let(::mutableStateOf),
                 onSubcategoryItemClicked = {},
                 isSaveEnabled = isSaveEnabled.let(::mutableStateOf),
                 onSaveClicked = {},

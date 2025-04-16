@@ -21,7 +21,6 @@ package ua.com.radiokot.money.categories.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -39,14 +38,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.stableClickable
 
 @Composable
 fun SelectableSubcategoryRow(
     modifier: Modifier = Modifier,
     itemList: State<List<ViewSelectableSubcategoryListItem>>,
+    colorScheme: ItemColorScheme,
     onItemClicked: (ViewSelectableSubcategoryListItem) -> Unit,
 ) {
     val rowState = rememberLazyListState()
@@ -67,6 +68,7 @@ fun SelectableSubcategoryRow(
         ) { item ->
             SelectableSubcategoryListItem(
                 item = item,
+                colorScheme = colorScheme,
                 modifier = Modifier
                     .stableClickable(
                         key = item.key,
@@ -86,6 +88,9 @@ private fun SelectableSubcategoryRowPreview() {
 
     SelectableSubcategoryRow(
         itemList = items.let(::mutableStateOf),
+        colorScheme = HardcodedItemColorSchemeRepository()
+            .getItemColorSchemesByName()
+            .getValue("Purple3"),
         onItemClicked = {},
     )
 }
@@ -94,8 +99,14 @@ private fun SelectableSubcategoryRowPreview() {
 private fun SelectableSubcategoryListItem(
     modifier: Modifier = Modifier,
     item: ViewSelectableSubcategoryListItem,
+    colorScheme: ItemColorScheme,
 ) {
-    val primaryColor = Color(0xff67ad5b)
+    val primaryColor = remember(colorScheme) {
+        Color(colorScheme.primary)
+    }
+    val onPrimaryColor = remember(colorScheme) {
+        Color(colorScheme.onPrimary)
+    }
     val shape = RoundedCornerShape(
         percent = 50,
     )
@@ -105,7 +116,7 @@ private fun SelectableSubcategoryListItem(
         style = TextStyle(
             color =
             if (item.isSelected)
-                Color.White
+                onPrimaryColor
             else
                 primaryColor
         ),
@@ -129,9 +140,3 @@ private fun SelectableSubcategoryListItem(
             )
     )
 }
-
-@Composable
-@Preview
-private fun SelectableSubcategoryListItemPreview(
-    @PreviewParameter(ViewSelectableSubcategoryListItemPreviewParameterProvider::class) item: ViewSelectableSubcategoryListItem,
-) = SelectableSubcategoryListItem(item = item)

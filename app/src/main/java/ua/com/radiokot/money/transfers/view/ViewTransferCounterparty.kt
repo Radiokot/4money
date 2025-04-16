@@ -21,8 +21,10 @@ package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import ua.com.radiokot.money.R
+import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 
@@ -64,6 +66,7 @@ sealed interface ViewTransferCounterparty {
         val categoryTitle: String,
         val subcategoryTitle: String?,
         override val currency: ViewCurrency,
+        val colorScheme: ItemColorScheme,
     ) : ViewTransferCounterparty {
 
         override val title: String
@@ -78,6 +81,9 @@ sealed interface ViewTransferCounterparty {
                 else
                     categoryTitle
 
+        val primaryColor = Color(colorScheme.primary)
+        val onPrimaryColor = Color(colorScheme.onPrimary)
+
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is Category) return false
@@ -85,6 +91,7 @@ sealed interface ViewTransferCounterparty {
             if (categoryTitle != other.categoryTitle) return false
             if (subcategoryTitle != other.subcategoryTitle) return false
             if (currency != other.currency) return false
+            if (colorScheme != other.colorScheme) return false
 
             return true
         }
@@ -93,6 +100,7 @@ sealed interface ViewTransferCounterparty {
             var result = categoryTitle.hashCode()
             result = 31 * result + (subcategoryTitle?.hashCode() ?: 0)
             result = 31 * result + currency.hashCode()
+            result = 31 * result + colorScheme.hashCode()
             return result
         }
     }
@@ -116,6 +124,7 @@ sealed interface ViewTransferCounterparty {
                     currency = ViewCurrency(
                         currency = counterparty.category.currency,
                     ),
+                    colorScheme = counterparty.category.colorScheme,
                 )
         }
     }
