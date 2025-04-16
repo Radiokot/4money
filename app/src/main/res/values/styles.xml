@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <style name="DefaultActivity" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">#FFFFFF</item>
+    </style>
+
     <style name="TransparentActivity" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>

@@ -20,12 +20,18 @@
 package ua.com.radiokot.money.categories.view
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import java.math.BigInteger
 
 class ViewCategoryListItemPreviewParameterProvider :
     PreviewParameterProvider<ViewCategoryListItem> {
+
+    private val colorSchemesByName = HardcodedItemColorSchemeRepository()
+        .getItemColorSchemesByName()
+
     val income: Sequence<ViewCategoryListItem>
         get() = sequenceOf(
             ViewCategoryListItem(
@@ -37,6 +43,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                         precision = 2,
                     )
                 ),
+                colorScheme = colorSchemesByName.getValue("Blue2"),
                 isIncognito = false,
             ),
             ViewCategoryListItem(
@@ -48,6 +55,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                         precision = 2,
                     )
                 ),
+                colorScheme = colorSchemesByName.getValue("Turquoise3"),
                 isIncognito = true,
             ),
         )
@@ -63,6 +71,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                         precision = 0,
                     )
                 ),
+                colorScheme = colorSchemesByName.getValue("Red1"),
                 isIncognito = false,
             ),
             ViewCategoryListItem(
@@ -74,6 +83,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                         precision = 0,
                     )
                 ),
+                colorScheme = colorSchemesByName.getValue("Green1"),
                 isIncognito = false,
             ),
             ViewCategoryListItem(
@@ -85,6 +95,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                         precision = 0,
                     )
                 ),
+                colorScheme = colorSchemesByName.getValue("Orange2"),
                 isIncognito = true,
             )
         )

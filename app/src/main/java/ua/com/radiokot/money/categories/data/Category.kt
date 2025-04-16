@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.categories.data
 
+import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.data.Currency
 import java.util.UUID
 
@@ -26,6 +27,7 @@ class Category(
     val title: String,
     val currency: Currency,
     val isIncome: Boolean,
+    val colorScheme: ItemColorScheme,
     val id: String = UUID.randomUUID().toString(),
 ) {
     override fun equals(other: Any?): Boolean {

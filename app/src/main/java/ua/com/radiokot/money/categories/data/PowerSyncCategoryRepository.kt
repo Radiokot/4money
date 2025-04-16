@@ -26,11 +26,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 
 class PowerSyncCategoryRepository(
+    colorSchemeRepository: ItemColorSchemeRepository,
     private val database: PowerSyncDatabase,
 ) : CategoryRepository {
+
+    private val colorSchemesByName = colorSchemeRepository.getItemColorSchemesByName()
+
     override suspend fun getCategories(isIncome: Boolean): List<Category> =
         database
             .getAll(
@@ -124,6 +129,10 @@ class PowerSyncCategoryRepository(
             id = getString(++column)!!,
             title = getString(++column)!!.trim(),
             isIncome = getBoolean(++column) == true,
+            colorScheme = getString(++column)!!.let { colorSchemeName ->
+                colorSchemesByName[colorSchemeName]
+                    ?: error("Can't find '$colorSchemeName' color scheme")
+            },
             currency = currency,
         )
     }
@@ -141,7 +150,8 @@ class PowerSyncCategoryRepository(
 
 private const val CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES =
     "currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
-            "categories.id, categories.title, categories.is_income, categories.parent_category_id " +
+            "categories.id, categories.title, categories.is_income, categories.color_scheme, " +
+            "categories.parent_category_id " +
             "FROM categories, currencies"
 
 private const val SUBCATEGORY_FIELDS_FROM_CATEGORIES =

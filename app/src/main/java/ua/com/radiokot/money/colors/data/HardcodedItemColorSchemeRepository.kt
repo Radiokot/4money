@@ -201,7 +201,7 @@ class HardcodedItemColorSchemeRepository : ItemColorSchemeRepository {
             ),
             ItemColorScheme(
                 name = "Turquoise4",
-                primary = 0xFF3FA56F,
+                primary = 0xFFEEFDF5,
                 onPrimary = 0xFF3FA56F,
             ),
             ItemColorScheme(
@@ -311,7 +311,13 @@ class HardcodedItemColorSchemeRepository : ItemColorSchemeRepository {
                 onPrimary = 0xFFE590B8,
             ),
             // endregion
-        )
+        ).apply {
+            forEach { scheme ->
+                if (scheme.primary == scheme.onPrimary) {
+                    error("Colors blend in ${scheme.name}")
+                }
+            }
+        }
     }
 
     override fun getItemColorSchemes(): List<ItemColorScheme> =

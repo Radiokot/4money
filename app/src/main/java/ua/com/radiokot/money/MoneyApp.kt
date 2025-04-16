@@ -50,7 +50,6 @@ class MoneyApp : Application() {
             modules(
                 authModule,
                 homeModule,
-                colorsModule,
             )
         }
 

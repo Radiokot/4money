@@ -27,6 +27,7 @@ import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
 import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
 import ua.com.radiokot.money.categories.view.CategoriesViewModel
+import ua.com.radiokot.money.colors.colorsModule
 import ua.com.radiokot.money.currency.currencyModule
 import ua.com.radiokot.money.transfers.history.transfersHistoryModule
 
@@ -34,11 +35,13 @@ val categoriesModule = module {
     includes(
         transfersHistoryModule,
         currencyModule,
+        colorsModule,
     )
 
     sessionScope {
         scoped {
             PowerSyncCategoryRepository(
+                colorSchemeRepository = get(),
                 database = get(),
             )
         } bind CategoryRepository::class

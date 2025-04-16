@@ -1,7 +1,6 @@
 package ua.com.radiokot.money.categories.view
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -22,7 +21,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -117,7 +115,7 @@ private fun CategoryListItem(
         modifier = Modifier
             .size(48.dp)
             .background(
-                color = Color(0xfff0f2eb),
+                color = item.primaryColor,
                 shape = CircleShape,
             )
     ) {
@@ -132,7 +130,7 @@ private fun CategoryListItem(
         BasicText(
             text = firstSymbol,
             style = TextStyle(
-                color = Color(0xffa6cb72),
+                color = item.onPrimaryColor,
                 fontSize = fontSizeSp,
             )
         )
