@@ -53,15 +53,12 @@ class PowerSyncTransferFundsUseCase(
         )
 
         database.writeTransaction { transaction ->
-            transferHistoryRepository.addOrUpdateTransfer(
-                sourceId = sourceId,
-                sourceAmount = sourceAmount,
-                destinationId = destinationId,
-                destinationAmount = destinationAmount,
-                memo = memo,
-                time = time,
-                transaction = transaction,
-            )
+
+            // For yet unknown reasons, the balance updates must go
+            // before transfer insert, otherwise they may not be applied
+            // when the use case is launched from the shortcut screen,
+            // when app goes to background immediately on completion.
+            // https://github.com/powersync-ja/powersync-kotlin/issues/167
 
             if (sourceId is TransferCounterpartyId.Account) {
                 accountRepository.updateAccountBalanceBy(
@@ -92,6 +89,16 @@ class PowerSyncTransferFundsUseCase(
                     )
                 }
             }
+
+            transferHistoryRepository.addOrUpdateTransfer(
+                sourceId = sourceId,
+                sourceAmount = sourceAmount,
+                destinationId = destinationId,
+                destinationAmount = destinationAmount,
+                memo = memo,
+                time = time,
+                transaction = transaction,
+            )
         }
     }
 }
