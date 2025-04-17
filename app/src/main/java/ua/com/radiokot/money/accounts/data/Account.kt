@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.accounts.data
 
+import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.data.Currency
 import java.math.BigInteger
 import java.util.UUID
@@ -28,6 +29,7 @@ class Account(
     val balance: BigInteger,
     val currency: Currency,
     val position: Double,
+    val colorScheme: ItemColorScheme,
     val id: String = UUID.randomUUID().toString(),
 ) : Comparable<Account> {
 

@@ -21,7 +21,6 @@ package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import ua.com.radiokot.money.R
 import ua.com.radiokot.money.colors.data.ItemColorScheme
@@ -36,9 +35,12 @@ sealed interface ViewTransferCounterparty {
     @get:Composable
     val title: String
 
+    val colorScheme: ItemColorScheme
+
     class Account(
         val accountTitle: String,
         override val currency: ViewCurrency,
+        override val colorScheme: ItemColorScheme,
     ) : ViewTransferCounterparty {
 
         override val title: String
@@ -51,6 +53,7 @@ sealed interface ViewTransferCounterparty {
 
             if (accountTitle != other.accountTitle) return false
             if (currency != other.currency) return false
+            if (colorScheme != other.colorScheme) return false
 
             return true
         }
@@ -58,6 +61,7 @@ sealed interface ViewTransferCounterparty {
         override fun hashCode(): Int {
             var result = accountTitle.hashCode()
             result = 31 * result + currency.hashCode()
+            result = 31 * result + colorScheme.hashCode()
             return result
         }
     }
@@ -66,7 +70,7 @@ sealed interface ViewTransferCounterparty {
         val categoryTitle: String,
         val subcategoryTitle: String?,
         override val currency: ViewCurrency,
-        val colorScheme: ItemColorScheme,
+        override val colorScheme: ItemColorScheme,
     ) : ViewTransferCounterparty {
 
         override val title: String
@@ -80,9 +84,6 @@ sealed interface ViewTransferCounterparty {
                     )
                 else
                     categoryTitle
-
-        val primaryColor = Color(colorScheme.primary)
-        val onPrimaryColor = Color(colorScheme.onPrimary)
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -115,6 +116,7 @@ sealed interface ViewTransferCounterparty {
                     currency = ViewCurrency(
                         currency = counterparty.account.currency,
                     ),
+                    colorScheme = counterparty.account.colorScheme,
                 )
 
             is TransferCounterparty.Category ->

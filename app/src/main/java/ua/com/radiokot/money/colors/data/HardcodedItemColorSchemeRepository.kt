@@ -320,6 +320,13 @@ class HardcodedItemColorSchemeRepository : ItemColorSchemeRepository {
         }
     }
 
+    private val schemesByName: Map<String, ItemColorScheme> by lazy {
+        schemes.associateBy(ItemColorScheme::name)
+    }
+
     override fun getItemColorSchemes(): List<ItemColorScheme> =
         schemes
+
+    override fun getItemColorSchemesByName(): Map<String, ItemColorScheme> =
+        schemesByName
 }

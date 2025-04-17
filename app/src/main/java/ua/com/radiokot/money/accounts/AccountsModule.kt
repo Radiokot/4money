@@ -45,6 +45,7 @@ val accountsModule = module {
     sessionScope {
         scoped {
             PowerSyncAccountRepository(
+                colorSchemeRepository = get(),
                 database = get(),
             )
         } bind AccountRepository::class

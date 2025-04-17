@@ -23,6 +23,5 @@ interface ItemColorSchemeRepository {
 
     fun getItemColorSchemes(): List<ItemColorScheme>
 
-    fun getItemColorSchemesByName(): Map<String, ItemColorScheme> =
-        getItemColorSchemes().associateBy(ItemColorScheme::name)
+    fun getItemColorSchemesByName(): Map<String, ItemColorScheme>
 }

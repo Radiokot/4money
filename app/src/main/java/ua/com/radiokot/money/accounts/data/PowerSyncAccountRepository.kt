@@ -28,16 +28,19 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.mapNotNull
+import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.util.SternBrocotTreeSearch
 import java.math.BigInteger
 
 class PowerSyncAccountRepository(
+    colorSchemeRepository: ItemColorSchemeRepository,
     private val database: PowerSyncDatabase,
 ) : AccountRepository {
 
     private val log by lazyLogger("PowerSyncAccountRepo")
+    private val colorSchemesByName = colorSchemeRepository.getItemColorSchemesByName()
 
     override suspend fun getAccounts(): List<Account> =
         database
@@ -298,6 +301,10 @@ class PowerSyncAccountRepository(
             title = getString(++column)!!.trim(),
             balance = BigInteger(getString(++column)!!.trim()),
             position = getDouble(++column)!!,
+            colorScheme = getString(++column)!!.let { colorSchemeName ->
+                colorSchemesByName[colorSchemeName]
+                    ?: error("Can't find '$colorSchemeName' color scheme")
+            },
             currency = currency,
         )
     }
@@ -305,7 +312,8 @@ class PowerSyncAccountRepository(
 
 private const val SELECT_ACCOUNTS =
     "SELECT currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
-            "accounts.id, accounts.title, accounts.balance, accounts.position, accounts.currency_id " +
+            "accounts.id, accounts.title, accounts.balance, accounts.position, " +
+            "accounts.color_scheme, accounts.currency_id " +
             "FROM accounts, currencies " +
             "WHERE accounts.currency_id = currencies.id"
 

@@ -37,7 +37,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
@@ -173,6 +172,18 @@ private fun TransferSheet(
             val shortDestinationTitle: String? = remember(destination) {
                 (destination as? ViewTransferCounterparty.Category)?.categoryTitle
             }
+            val sourcePrimaryColor = remember(source) {
+                Color(source.colorScheme.primary)
+            }
+            val sourceOnPrimaryColor = remember(source) {
+                Color(source.colorScheme.onPrimary)
+            }
+            val destinationPrimaryColor = remember(destination) {
+                Color(destination.colorScheme.primary)
+            }
+            val destinationOnPrimaryColor = remember(destination) {
+                Color(destination.colorScheme.onPrimary)
+            }
 
             BasicText(
                 text = shortSourceTitle ?: source.title,
@@ -180,9 +191,12 @@ private fun TransferSheet(
                     textAlign = TextAlign.Center,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
+                    color = sourceOnPrimaryColor,
                 ),
                 modifier = Modifier
                     .weight(1f)
+                    .fillMaxHeight()
+                    .background(sourcePrimaryColor)
                     .stableClickable(
                         onClick = onSourceClicked,
                     )
@@ -192,22 +206,18 @@ private fun TransferSheet(
                     )
             )
 
-            Box(
-                modifier = Modifier
-                    .width(1.dp)
-                    .fillMaxHeight()
-                    .background(Color.Gray)
-            )
-
             BasicText(
                 text = shortDestinationTitle ?: destination.title,
                 style = TextStyle(
                     textAlign = TextAlign.Center,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
+                    color = destinationOnPrimaryColor,
                 ),
                 modifier = Modifier
                     .weight(1f)
+                    .fillMaxHeight()
+                    .background(destinationPrimaryColor)
                     .stableClickable(
                         onClick = onDestinationClicked,
                     )
@@ -217,14 +227,6 @@ private fun TransferSheet(
                     )
             )
         }
-
-        Box(
-            modifier = Modifier
-                .height(1.dp)
-                .fillMaxWidth()
-                .background(Color.Gray)
-        )
-
 
         if (subcategoryItemList.value.isNotEmpty()
             && subcategoriesColorScheme.value != null
@@ -426,9 +428,10 @@ private fun TransferSheetPreview(
 ) = Column {
     val isSourceInputShownOptions = listOf(true, false)
     val isSaveEnabledOptions = listOf(true, false)
-    val categoryColorScheme = HardcodedItemColorSchemeRepository()
+    val colorSchemesByName = HardcodedItemColorSchemeRepository()
         .getItemColorSchemesByName()
-        .getValue("Green2")
+    val categoryColorScheme = colorSchemesByName.getValue("Green2")
+    val accountColorScheme = colorSchemesByName.getValue("Yellow4")
 
     isSourceInputShownOptions.forEach { isSourceInputShown ->
         isSaveEnabledOptions.forEach { isSaveEnabled ->
@@ -445,6 +448,7 @@ private fun TransferSheetPreview(
                         symbol = "A",
                         precision = 2,
                     ),
+                    colorScheme = accountColorScheme,
                 ),
                 sourceAmountValue = BigInteger("133").let(::mutableStateOf),
                 onNewSourceAmountValueParsed = {},

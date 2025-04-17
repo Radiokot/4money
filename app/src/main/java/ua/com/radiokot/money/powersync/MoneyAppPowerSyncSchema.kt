@@ -43,6 +43,7 @@ fun moneyAppPowerSyncSchema() = Schema(
                 // Real (float8) can't provide sufficient precision,
                 // leading to frequent healing.
                 Column.text("position"),
+                Column.text("color_scheme"),
             )
         ),
         Table(
