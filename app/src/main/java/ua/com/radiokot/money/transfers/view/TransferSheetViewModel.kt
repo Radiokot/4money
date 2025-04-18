@@ -36,7 +36,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
@@ -51,6 +50,7 @@ import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.Subcategory
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.isSameDayAs
 import ua.com.radiokot.money.lazyLogger
@@ -177,6 +177,29 @@ class TransferSheetViewModel(
                         && destAmountValue.signum() > 0
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    // Reset amounts if counterparty currency changes.
+    init {
+        viewModelScope.launch {
+            var currentSourceCurrency: ViewCurrency? = null
+            source.collect { updatedSource ->
+                if (updatedSource?.currency != currentSourceCurrency) {
+                    _sourceAmountValue.emit(BigInteger.ZERO)
+                }
+                currentSourceCurrency = updatedSource?.currency
+            }
+        }
+
+        viewModelScope.launch {
+            var currentDestinationCurrency: ViewCurrency? = null
+            destination.collect { updatedDestination ->
+                if (updatedDestination?.currency != currentDestinationCurrency) {
+                    _destinationAmountValue.emit(BigInteger.ZERO)
+                }
+                currentDestinationCurrency = updatedDestination?.currency
+            }
+        }
+    }
 
     fun setParameters(
         sourceId: TransferCounterpartyId,
