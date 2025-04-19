@@ -301,10 +301,12 @@ class PowerSyncAccountRepository(
             title = getString(++column)!!.trim(),
             balance = BigInteger(getString(++column)!!.trim()),
             position = getDouble(++column)!!,
-            colorScheme = getString(++column)!!.let { colorSchemeName ->
-                colorSchemesByName[colorSchemeName]
-                    ?: error("Can't find '$colorSchemeName' color scheme")
-            },
+            colorScheme = getString(++column)!!
+                .trim()
+                .let { colorSchemeName ->
+                    colorSchemesByName[colorSchemeName]
+                        ?: error("Can't find '$colorSchemeName' color scheme")
+                },
             currency = currency,
         )
     }

@@ -129,10 +129,12 @@ class PowerSyncCategoryRepository(
             id = getString(++column)!!,
             title = getString(++column)!!.trim(),
             isIncome = getBoolean(++column) == true,
-            colorScheme = getString(++column)!!.let { colorSchemeName ->
-                colorSchemesByName[colorSchemeName]
-                    ?: error("Can't find '$colorSchemeName' color scheme")
-            },
+            colorScheme = getString(++column)!!
+                .trim()
+                .let { colorSchemeName ->
+                    colorSchemesByName[colorSchemeName]
+                        ?: error("Can't find '$colorSchemeName' color scheme")
+                },
             currency = currency,
         )
     }

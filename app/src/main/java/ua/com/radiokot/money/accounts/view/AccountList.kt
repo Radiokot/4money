@@ -19,7 +19,9 @@
 
 package ua.com.radiokot.money.accounts.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -28,9 +30,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -45,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
@@ -221,7 +228,8 @@ fun MovableAccountList(
                                             1f
                                 }
                                 .padding(
-                                    vertical = 8.dp,
+                                    top = 8.dp,
+                                    bottom = 12.dp,
                                 )
                                 .fillMaxWidth()
                         )
@@ -237,6 +245,9 @@ fun MovableAccountList(
     widthDp = 200
 )
 private fun AccountListPreview() {
+    val colorSchemesByName = HardcodedItemColorSchemeRepository()
+        .getItemColorSchemesByName()
+
     AccountList(
         itemList = listOf(
             ViewAccountListItem.Header(
@@ -260,6 +271,7 @@ private fun AccountListPreview() {
                     ),
                 ),
                 isIncognito = false,
+                colorScheme = colorSchemesByName.getValue("Purple1"),
                 key = "acc1",
             ),
             ViewAccountListItem.Account(
@@ -272,6 +284,7 @@ private fun AccountListPreview() {
                     ),
                 ),
                 isIncognito = false,
+                colorScheme = colorSchemesByName.getValue("Red4"),
                 key = "acc2",
             ),
             ViewAccountListItem.Header(
@@ -295,6 +308,7 @@ private fun AccountListPreview() {
                     ),
                 ),
                 isIncognito = true,
+                colorScheme = colorSchemesByName.getValue("Green3"),
                 key = "acc3",
             ),
         ).let(::mutableStateOf),
@@ -358,12 +372,46 @@ private fun HeaderItemPreview(
 private fun AccountItem(
     modifier: Modifier = Modifier,
     item: ViewAccountListItem.Account,
+) = Row(
+    modifier = modifier,
 ) {
+    val colorBoxShape = remember {
+        RoundedCornerShape(12.dp)
+    }
+
+    BoxWithConstraints(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(38.dp)
+            .background(
+                color = item.primaryColor,
+                shape = colorBoxShape,
+            )
+    ) {
+        val fontSizeSp = (maxWidth * 0.5f).value.sp / LocalDensity.current.fontScale
+        val firstSymbol = remember(item.title) {
+            val firstCodepoint = item.title.codePoints()
+                .findFirst()
+                .orElse(8230) // …
+            String(intArrayOf(firstCodepoint), 0, 1)
+        }
+
+        BasicText(
+            text = firstSymbol,
+            style = TextStyle(
+                color = item.onPrimaryColor,
+                fontSize = fontSizeSp,
+            )
+        )
+    }
+
+    Spacer(modifier = Modifier.width(12.dp))
+
     Column(
-        modifier = modifier
+        modifier = Modifier
             .heightIn(
                 min = 38.dp,
-            ),
+            )
     ) {
         BasicText(
             text = item.title,

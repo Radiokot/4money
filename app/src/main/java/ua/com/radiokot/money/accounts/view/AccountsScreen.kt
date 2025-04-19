@@ -61,22 +61,3 @@ private fun AccountsScreen(
     onAccountItemMoved = onAccountItemMoved,
 )
 
-@Composable
-@Preview
-private fun AccountsScreenPreview(
-    @PreviewParameter(ViewAmountPreviewParameterProvider::class, limit = 1)
-    amount: ViewAmount,
-) {
-    AccountsScreen(
-        accountItemList = listOf(
-            ViewAccountListItem.Account(
-                title = "Account #1",
-                balance = amount,
-                isIncognito = false,
-                key = "1",
-            )
-        ).let(::mutableStateOf),
-        onAccountItemClicked = {},
-        onAccountItemMoved = { _, _ -> },
-    )
-}
