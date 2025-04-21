@@ -20,18 +20,25 @@
 package ua.com.radiokot.money.transfers.logic
 
 import com.powersync.PowerSyncDatabase
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.LocalDate
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.data.TransfersPreferences
 import ua.com.radiokot.money.transfers.history.data.PowerSyncTransferHistoryRepository
 import java.math.BigInteger
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * A transfer implementation utilizing PowerSync database transactions.
  *
  * @param transfersPreferences if set, last used account for category is saved
  */
+@OptIn(FlowPreview::class)
 class PowerSyncTransferFundsUseCase(
     private val accountRepository: PowerSyncAccountRepository,
     private val transferHistoryRepository: PowerSyncTransferHistoryRepository,
@@ -52,6 +59,8 @@ class PowerSyncTransferFundsUseCase(
             date = date,
         )
 
+        val changesToAwait = mutableListOf<Flow<*>>()
+
         database.writeTransaction { transaction ->
 
             // For yet unknown reasons, the balance updates must go
@@ -67,6 +76,10 @@ class PowerSyncTransferFundsUseCase(
                     transaction = transaction,
                 )
 
+                changesToAwait += accountRepository.getAccountFlow(
+                    accountId = sourceId.accountId,
+                )
+
                 if (destinationId is TransferCounterpartyId.Category) {
                     transfersPreferences?.setLastUsedAccountByCategory(
                         categoryId = destinationId.categoryId,
@@ -80,6 +93,10 @@ class PowerSyncTransferFundsUseCase(
                     accountId = destinationId.accountId,
                     delta = destinationAmount,
                     transaction = transaction,
+                )
+
+                changesToAwait += accountRepository.getAccountFlow(
+                    accountId = destinationId.accountId,
                 )
 
                 if (sourceId is TransferCounterpartyId.Category) {
@@ -99,6 +116,15 @@ class PowerSyncTransferFundsUseCase(
                 time = time,
                 transaction = transaction,
             )
+        }
+
+        // Wait for the changes to be processed by PowerSync.
+        // https://github.com/powersync-ja/powersync-kotlin/issues/167
+        if (changesToAwait.isNotEmpty()) {
+            withTimeout(500.milliseconds) {
+                combine(changesToAwait, ::listOf)
+                    .first()
+            }
         }
     }
 }
