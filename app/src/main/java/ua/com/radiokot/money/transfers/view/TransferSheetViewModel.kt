@@ -183,7 +183,9 @@ class TransferSheetViewModel(
         viewModelScope.launch {
             var currentSourceCurrency: ViewCurrency? = null
             source.collect { updatedSource ->
-                if (updatedSource?.currency != currentSourceCurrency) {
+                if (currentSourceCurrency != null
+                    && updatedSource?.currency != currentSourceCurrency
+                ) {
                     _sourceAmountValue.emit(BigInteger.ZERO)
                 }
                 currentSourceCurrency = updatedSource?.currency
@@ -193,7 +195,9 @@ class TransferSheetViewModel(
         viewModelScope.launch {
             var currentDestinationCurrency: ViewCurrency? = null
             destination.collect { updatedDestination ->
-                if (updatedDestination?.currency != currentDestinationCurrency) {
+                if (currentDestinationCurrency != null
+                    && updatedDestination?.currency != currentDestinationCurrency
+                ) {
                     _destinationAmountValue.emit(BigInteger.ZERO)
                 }
                 currentDestinationCurrency = updatedDestination?.currency
