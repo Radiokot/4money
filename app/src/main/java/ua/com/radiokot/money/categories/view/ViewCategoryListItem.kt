@@ -81,10 +81,8 @@ class ViewCategoryListItem(
     }
 }
 
-private val categoryComparator = compareBy(Category::title)
-
 fun List<Category>.toSortedIncognitoViewItemList(): List<ViewCategoryListItem> =
-    sortedWith(categoryComparator)
+    sorted()
         .map { category ->
             ViewCategoryListItem(
                 category = category,
@@ -93,7 +91,7 @@ fun List<Category>.toSortedIncognitoViewItemList(): List<ViewCategoryListItem> =
             )
         }
 
-private val statsComparator = compareBy<CategoryStats> { (category, _) -> category.title }
+private val statsComparator = compareBy(CategoryStats::first)
 
 fun List<CategoryStats>.toSortedViewItemList(): List<ViewCategoryListItem> =
     sortedWith(statsComparator)

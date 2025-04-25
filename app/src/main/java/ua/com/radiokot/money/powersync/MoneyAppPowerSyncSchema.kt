@@ -54,6 +54,9 @@ fun moneyAppPowerSyncSchema() = Schema(
                 Column.text("parent_category_id"),
                 Column.integer("is_income"),
                 Column.text("color_scheme"),
+                // Real (float8) can't provide sufficient precision,
+                // leading to frequent healing.
+                Column.text("position"),
             )
         ),
         Table(

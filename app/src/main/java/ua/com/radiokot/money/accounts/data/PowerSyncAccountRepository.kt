@@ -56,17 +56,7 @@ class PowerSyncAccountRepository(
                 sql = SELECT_ACCOUNTS,
                 mapper = ::toAccount,
             )
-            .flatMapLatest { accounts ->
-                val distinctPositions = accounts.mapTo(mutableSetOf(), Account::position)
-                if (distinctPositions.isNotEmpty()
-                    && (distinctPositions.size < accounts.size || distinctPositions.any { it <= 0 })
-                ) {
-                    healPositions(accounts)
-                    emptyFlow()
-                } else {
-                    flowOf(accounts)
-                }
-            }
+            .flatMapLatest(::healPositionsIfNeeded)
 
     override suspend fun getAccount(accountId: String): Account? =
         database
@@ -216,6 +206,20 @@ class PowerSyncAccountRepository(
 
         log.debug {
             "updatePosition(): updated successfully"
+        }
+    }
+
+    private suspend fun healPositionsIfNeeded(
+        accounts: List<Account>,
+    ): Flow<List<Account>> {
+        val distinctPositions = accounts.mapTo(mutableSetOf(), Account::position)
+        if (distinctPositions.isNotEmpty()
+            && (distinctPositions.size < accounts.size || distinctPositions.any { it <= 0 })
+        ) {
+            healPositions(accounts)
+            return emptyFlow()
+        } else {
+            return flowOf(accounts)
         }
     }
 

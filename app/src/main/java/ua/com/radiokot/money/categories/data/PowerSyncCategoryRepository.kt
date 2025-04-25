@@ -22,18 +22,26 @@ package ua.com.radiokot.money.categories.data
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
+import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.util.SternBrocotTreeSearch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PowerSyncCategoryRepository(
     colorSchemeRepository: ItemColorSchemeRepository,
     private val database: PowerSyncDatabase,
 ) : CategoryRepository {
 
+    private val log by lazyLogger("PowerSyncCategoryRepo")
     private val colorSchemesByName = colorSchemeRepository.getItemColorSchemesByName()
 
     override suspend fun getCategories(isIncome: Boolean): List<Category> =
@@ -61,6 +69,7 @@ class PowerSyncCategoryRepository(
                 ),
                 mapper = ::toCategory,
             )
+            .flatMapLatest(::healPositionsIfNeeded)
 
     override fun getCategoryFlow(categoryId: String): Flow<Category> =
         database
@@ -88,7 +97,7 @@ class PowerSyncCategoryRepository(
             .watch(
                 sql = SELECT_CATEGORIES_THEN_SUBCATEGORIES,
                 mapper = { sqlCursor ->
-                    val parentCategoryId = sqlCursor.getString(8)
+                    val parentCategoryId = sqlCursor.getString(9)
                     if (parentCategoryId == null)
                         toCategory(sqlCursor)
                     else
@@ -115,6 +124,53 @@ class PowerSyncCategoryRepository(
             }
             .flowOn(Dispatchers.Default)
 
+    private suspend fun healPositionsIfNeeded(
+        categories: List<Category>,
+    ): Flow<List<Category>> {
+        val distinctPositions = categories.mapTo(mutableSetOf(), Category::position)
+        if (distinctPositions.isNotEmpty()
+            && (distinctPositions.size < categories.size || distinctPositions.any { it <= 0 })
+        ) {
+            healPositions(categories)
+            return emptyFlow()
+        } else {
+            return flowOf(categories)
+        }
+    }
+
+    private suspend fun healPositions(
+        categories: List<Category>,
+    ) {
+        log.debug {
+            "healPositions(): re-assigning positions:" +
+                    "\ncount=${categories.size}"
+        }
+
+        // Assign a new position to each category preserving the current order.
+        val sortedCategories = categories.sorted()
+        val params = mutableListOf<String>()
+        val sql = buildString {
+            append("UPDATE categories SET position = CASE ")
+            val sternBrocotTree = SternBrocotTreeSearch()
+            sortedCategories.indices.reversed().forEach { categoryIndex ->
+                append("\nWHEN id = ? THEN ? ")
+                params += sortedCategories[categoryIndex].id
+                params += sternBrocotTree.value.toString()
+                sternBrocotTree.goRight()
+            }
+            append("ELSE position END")
+        }
+
+        database.execute(
+            sql = sql,
+            parameters = params,
+        )
+
+        log.debug {
+            "healPositions(): re-assigned successfully"
+        }
+    }
+
     private fun toCategory(sqlCursor: SqlCursor): Category = sqlCursor.run {
         var column = 0
 
@@ -135,6 +191,7 @@ class PowerSyncCategoryRepository(
                     colorSchemesByName[colorSchemeName]
                         ?: error("Can't find '$colorSchemeName' color scheme")
                 },
+            position = getDouble(++column)!!,
             currency = currency,
         )
     }
@@ -153,6 +210,7 @@ class PowerSyncCategoryRepository(
 private const val CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES =
     "currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
             "categories.id, categories.title, categories.is_income, categories.color_scheme, " +
+            "categories.position, " +
             "categories.parent_category_id " +
             "FROM categories, currencies"
 

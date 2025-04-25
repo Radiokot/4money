@@ -28,8 +28,13 @@ class Category(
     val currency: Currency,
     val isIncome: Boolean,
     val colorScheme: ItemColorScheme,
+    val position: Double,
     val id: String = UUID.randomUUID().toString(),
-) {
+) : Comparable<Category> {
+
+    override fun compareTo(other: Category): Int =
+        other.position.compareTo(this.position)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Category) return false
