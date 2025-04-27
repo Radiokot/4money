@@ -22,12 +22,18 @@ package ua.com.radiokot.money.accounts.data
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
 import com.powersync.db.internal.PowerSyncTransaction
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.shareIn
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
@@ -35,6 +41,7 @@ import ua.com.radiokot.money.util.SternBrocotTreeDescPositionHealer
 import ua.com.radiokot.money.util.SternBrocotTreeSearch
 import java.math.BigInteger
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PowerSyncAccountRepository(
     colorSchemeRepository: ItemColorSchemeRepository,
     private val database: PowerSyncDatabase,
@@ -43,6 +50,7 @@ class PowerSyncAccountRepository(
     private val log by lazyLogger("PowerSyncAccountRepo")
     private val colorSchemesByName = colorSchemeRepository.getItemColorSchemesByName()
     private val positionHealer = SternBrocotTreeDescPositionHealer(Account::position)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override suspend fun getAccounts(): List<Account> =
         database
@@ -51,14 +59,18 @@ class PowerSyncAccountRepository(
                 mapper = ::toAccount,
             )
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getAccountsFlow(): Flow<List<Account>> =
+    private val accountsSharedFlow =
         database
             .watch(
                 sql = SELECT_ACCOUNTS,
                 mapper = ::toAccount,
             )
             .flatMapLatest(::healPositionsIfNeeded)
+            .flowOn(Dispatchers.Default)
+            .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
+
+    override fun getAccountsFlow(): Flow<List<Account>> =
+        accountsSharedFlow
 
     override suspend fun getAccount(accountId: String): Account? =
         database

@@ -21,15 +21,19 @@ package ua.com.radiokot.money.categories.data
 
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.shareIn
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
@@ -44,6 +48,7 @@ class PowerSyncCategoryRepository(
     private val log by lazyLogger("PowerSyncCategoryRepo")
     private val colorSchemesByName = colorSchemeRepository.getItemColorSchemesByName()
     private val categoryPositionHealer = SternBrocotTreeDescPositionHealer(Category::position)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override suspend fun getCategories(isIncome: Boolean): List<Category> =
         database
@@ -58,19 +63,33 @@ class PowerSyncCategoryRepository(
                 mapper = ::toCategory,
             )
 
-    override fun getCategoriesFlow(isIncome: Boolean): Flow<List<Category>> =
+    private val incomeCategoriesSharedFlow =
         database
             .watch(
                 sql = SELECT_CATEGORIES_BY_INCOME,
-                parameters = listOf(
-                    if (isIncome)
-                        "1"
-                    else
-                        "0"
-                ),
+                parameters = listOf("1"),
                 mapper = ::toCategory,
             )
             .flatMapLatest(::healPositionsIfNeeded)
+            .flowOn(Dispatchers.Default)
+            .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
+
+    private val expenseCategoriesSharedFlow =
+        database
+            .watch(
+                sql = SELECT_CATEGORIES_BY_INCOME,
+                parameters = listOf("0"),
+                mapper = ::toCategory,
+            )
+            .flatMapLatest(::healPositionsIfNeeded)
+            .flowOn(Dispatchers.Default)
+            .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
+
+    override fun getCategoriesFlow(isIncome: Boolean): Flow<List<Category>> =
+        if (isIncome)
+            incomeCategoriesSharedFlow
+        else
+            expenseCategoriesSharedFlow
 
     override fun getCategoryFlow(categoryId: String): Flow<Category> =
         database
