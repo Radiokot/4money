@@ -33,7 +33,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
-import ua.com.radiokot.money.util.SternBrocotTreeSearch
+import ua.com.radiokot.money.util.SternBrocotTreeDescPositionHealer
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PowerSyncCategoryRepository(
@@ -43,6 +43,7 @@ class PowerSyncCategoryRepository(
 
     private val log by lazyLogger("PowerSyncCategoryRepo")
     private val colorSchemesByName = colorSchemeRepository.getItemColorSchemesByName()
+    private val categoryPositionHealer = SternBrocotTreeDescPositionHealer(Category::position)
 
     override suspend fun getCategories(isIncome: Boolean): List<Category> =
         database
@@ -127,48 +128,37 @@ class PowerSyncCategoryRepository(
     private suspend fun healPositionsIfNeeded(
         categories: List<Category>,
     ): Flow<List<Category>> {
-        val distinctPositions = categories.mapTo(mutableSetOf(), Category::position)
-        if (distinctPositions.isNotEmpty()
-            && (distinctPositions.size < categories.size || distinctPositions.any { it <= 0 })
-        ) {
-            healPositions(categories)
-            return emptyFlow()
-        } else {
+        if (categoryPositionHealer.arePositionsHealthy(categories)) {
             return flowOf(categories)
         }
-    }
-
-    private suspend fun healPositions(
-        categories: List<Category>,
-    ) {
-        log.debug {
-            "healPositions(): re-assigning positions:" +
-                    "\ncount=${categories.size}"
-        }
-
-        // Assign a new position to each category preserving the current order.
-        val sortedCategories = categories.sorted()
-        val params = mutableListOf<String>()
-        val sql = buildString {
-            append("UPDATE categories SET position = CASE ")
-            val sternBrocotTree = SternBrocotTreeSearch()
-            sortedCategories.indices.reversed().forEach { categoryIndex ->
-                append("\nWHEN id = ? THEN ? ")
-                params += sortedCategories[categoryIndex].id
-                params += sternBrocotTree.value.toString()
-                sternBrocotTree.goRight()
-            }
-            append("ELSE position END")
-        }
-
-        database.execute(
-            sql = sql,
-            parameters = params,
-        )
 
         log.debug {
-            "healPositions(): re-assigned successfully"
+            "healPositionsIfNeeded(): start healing"
         }
+
+        var updateCount = 0
+        database.writeTransaction { transaction ->
+            categoryPositionHealer.healPositions(
+                items = categories,
+                updatePosition = { item, newPosition ->
+                    transaction.execute(
+                        sql = "UPDATE categories SET position = ? WHERE id = ?",
+                        parameters = listOf(
+                            newPosition.toString(),
+                            item.id,
+                        )
+                    )
+                    updateCount++
+                }
+            )
+        }
+
+        log.debug {
+            "healPositionsIfNeeded(): healed successfully:" +
+                    "\nupdates=$updateCount"
+        }
+
+        return emptyFlow()
     }
 
     private fun toCategory(sqlCursor: SqlCursor): Category = sqlCursor.run {

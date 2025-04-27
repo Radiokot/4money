@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.util.SternBrocotTreeDescPositionHealer
 import ua.com.radiokot.money.util.SternBrocotTreeSearch
 import java.math.BigInteger
 
@@ -41,6 +42,7 @@ class PowerSyncAccountRepository(
 
     private val log by lazyLogger("PowerSyncAccountRepo")
     private val colorSchemesByName = colorSchemeRepository.getItemColorSchemesByName()
+    private val positionHealer = SternBrocotTreeDescPositionHealer(Account::position)
 
     override suspend fun getAccounts(): List<Account> =
         database
@@ -212,49 +214,37 @@ class PowerSyncAccountRepository(
     private suspend fun healPositionsIfNeeded(
         accounts: List<Account>,
     ): Flow<List<Account>> {
-        val distinctPositions = accounts.mapTo(mutableSetOf(), Account::position)
-        if (distinctPositions.isNotEmpty()
-            && (distinctPositions.size < accounts.size || distinctPositions.any { it <= 0 })
-        ) {
-            healPositions(accounts)
-            return emptyFlow()
-        } else {
+        if (positionHealer.arePositionsHealthy(accounts)) {
             return flowOf(accounts)
         }
-    }
-
-    private suspend fun healPositions(
-        accounts: List<Account>,
-    ) {
 
         log.debug {
-            "healPositions(): re-assigning positions:" +
-                    "\ncount=${accounts.size}"
+            "healPositionsIfNeeded(): start healing"
         }
 
-        // Assign a new position to each account preserving the current order.
-        val sortedAccounts = accounts.sorted()
-        val params = mutableListOf<String>()
-        val sql = buildString {
-            append("UPDATE accounts SET position = CASE ")
-            val sternBrocotTree = SternBrocotTreeSearch()
-            sortedAccounts.indices.reversed().forEach { accountIndex ->
-                append("\nWHEN id = ? THEN ? ")
-                params += sortedAccounts[accountIndex].id
-                params += sternBrocotTree.value.toString()
-                sternBrocotTree.goRight()
-            }
-            append("END")
+        var updateCount = 0
+        database.writeTransaction { transaction ->
+            positionHealer.healPositions(
+                items = accounts,
+                updatePosition = { item, newPosition ->
+                    transaction.execute(
+                        sql = "UPDATE accounts SET position = ? WHERE id = ?",
+                        parameters = listOf(
+                            newPosition.toString(),
+                            item.id,
+                        )
+                    )
+                    updateCount++
+                }
+            )
         }
-
-        database.execute(
-            sql = sql,
-            parameters = params,
-        )
 
         log.debug {
-            "healPositions(): re-assigned successfully"
+            "healPositionsIfNeeded(): healed successfully:" +
+                    "\nupdates=$updateCount"
         }
+
+        return emptyFlow()
     }
 
     fun updateAccountBalanceBy(
