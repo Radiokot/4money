@@ -31,9 +31,9 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.R
+import ua.com.radiokot.money.auth.logic.AuthenticateUseCase
 import ua.com.radiokot.money.auth.logic.KoinScopeUserSessionHolder
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
-import ua.com.radiokot.money.auth.logic.AuthenticateUseCase
 import ua.com.radiokot.money.auth.view.AuthViewModel
 
 val authModule = module {
@@ -54,6 +54,13 @@ val authModule = module {
                 flowType = FlowType.PKCE
                 scheme = androidContext().getString(R.string.uri_scheme)
                 host = androidContext().getString(R.string.auth_uri_host)
+
+                autoLoadFromStorage = true
+                autoSaveToStorage = true
+                alwaysAutoRefresh = true
+                // Enabling this makes the session unavailable
+                // when the app is in background.
+                enableLifecycleCallbacks = false
             }
         }
     } bind SupabaseClient::class
