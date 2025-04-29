@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.logic.UpdateAccountPositionUseCase
+import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
@@ -44,6 +45,7 @@ import java.math.BigInteger
 class AccountsViewModel(
     accountRepository: AccountRepository,
     private val currencyRepository: CurrencyRepository,
+    private val currencyPreferences: CurrencyPreferences,
     private val updateAccountPositionUseCase: UpdateAccountPositionUseCase,
 ) : ViewModel() {
 
@@ -52,22 +54,26 @@ class AccountsViewModel(
     val events = _events.asSharedFlow()
 
     val accountListItems: StateFlow<List<ViewAccountListItem>> =
-        accountRepository.getAccountsFlow()
-            .combine(currencyRepository.getCurrencyPairMapFlow(), ::Pair)
-            .map { (accounts, currencyPairMap) ->
-                val mainCurrency = currencyRepository.getCurrencies()
+        combine(
+            accountRepository.getAccountsFlow(),
+            currencyRepository.getCurrencyPairMapFlow(),
+            currencyPreferences.primaryCurrencyCode,
+            transform = ::Triple
+        )
+            .map { (accounts, currencyPairMap, primaryCurrencyCode) ->
+                val primaryCurrency = currencyRepository.getCurrencies()
                     // It may not be available yet.
-                    .firstOrNull { it.code == "USD" }
+                    .firstOrNull { it.code == primaryCurrencyCode }
 
                 buildList {
-                    if (mainCurrency != null) {
-                        val totalInMainCurrency: BigInteger =
+                    if (primaryCurrency != null) {
+                        val totalInPrimaryCurrency: BigInteger =
                             accounts.fold(BigInteger.ZERO) { sum, account ->
                                 sum + (
                                         currencyPairMap
                                             .get(
                                                 base = account.currency,
-                                                quote = mainCurrency,
+                                                quote = primaryCurrency,
                                             )
                                             ?.baseToQuote(account.balance)
                                             ?: BigInteger.ZERO
@@ -78,8 +84,8 @@ class AccountsViewModel(
                             ViewAccountListItem.Header(
                                 title = "Accounts",
                                 amount = ViewAmount(
-                                    value = totalInMainCurrency,
-                                    currency = mainCurrency,
+                                    value = totalInPrimaryCurrency,
+                                    currency = primaryCurrency,
                                 ),
                                 key = "total",
                             )

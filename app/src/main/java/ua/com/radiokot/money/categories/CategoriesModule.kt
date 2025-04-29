@@ -61,6 +61,7 @@ val categoriesModule = module {
                 },
                 getCategoryStatsUseCase = get(),
                 currencyRepository = get(),
+                currencyPreferences = get(),
             )
         } bind CategoriesViewModel::class
     }

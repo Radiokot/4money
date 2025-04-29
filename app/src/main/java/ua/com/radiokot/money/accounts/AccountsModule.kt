@@ -66,6 +66,7 @@ val accountsModule = module {
             AccountsViewModel(
                 accountRepository = get(),
                 currencyRepository = get(),
+                currencyPreferences = get(),
                 updateAccountPositionUseCase = get(),
             )
         } bind AccountsViewModel::class

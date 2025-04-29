@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.stateIn
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.CategoryStats
 import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
+import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
@@ -50,6 +51,7 @@ class CategoriesViewModel(
     homeViewModel: HomeViewModel,
     getCategoryStatsUseCase: GetCategoryStatsUseCase,
     private val currencyRepository: CurrencyRepository,
+    private val currencyPreferences: CurrencyPreferences,
 ) : ViewModel() {
 
     private val log by lazyLogger("CategoriesVM")
@@ -85,33 +87,33 @@ class CategoriesViewModel(
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val totalAmount: StateFlow<ViewAmount?> =
-        isIncome
-            .flatMapLatest { isIncome ->
+        combine(
+            isIncome.flatMapLatest { isIncome ->
                 if (isIncome)
                     incomeCategoryStats
                 else
                     expenseCategoryStats
-            }
-            .combine(
-                currencyRepository.getCurrencyPairMapFlow(),
-                transform = ::Pair,
-            )
-            .map { (categoryStats, currencyPairMap) ->
-                val mainCurrency = currencyRepository.getCurrencies()
+            },
+            currencyRepository.getCurrencyPairMapFlow(),
+            currencyPreferences.primaryCurrencyCode,
+            transform = ::Triple,
+        )
+            .map { (categoryStats, currencyPairMap, primaryCurrencyCode) ->
+                val primaryCurrency = currencyRepository.getCurrencies()
                     // It may not be available yet.
-                    .firstOrNull { it.code == "USD" }
+                    .firstOrNull { it.code == primaryCurrencyCode }
 
-                if (mainCurrency == null) {
+                if (primaryCurrency == null) {
                     return@map null
                 }
 
-                val totalInMainCurrency: BigInteger =
+                val totalInPrimaryCurrency: BigInteger =
                     categoryStats.fold(BigInteger.ZERO) { sum, (category, amount) ->
                         sum + (
                                 currencyPairMap
                                     .get(
                                         base = category.currency,
-                                        quote = mainCurrency,
+                                        quote = primaryCurrency,
                                     )
                                     ?.baseToQuote(amount)
                                     ?: BigInteger.ZERO
@@ -119,8 +121,8 @@ class CategoriesViewModel(
                     }
 
                 ViewAmount(
-                    value = totalInMainCurrency,
-                    currency = mainCurrency,
+                    value = totalInPrimaryCurrency,
+                    currency = primaryCurrency,
                 )
             }
             .flowOn(Dispatchers.Default)
