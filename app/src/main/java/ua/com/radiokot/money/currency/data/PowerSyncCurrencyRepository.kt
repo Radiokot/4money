@@ -41,6 +41,13 @@ class PowerSyncCurrencyRepository(
             mapper = ::toCurrency,
         )
 
+    override suspend fun getCurrencyByCode(code: String): Currency? =
+        database.getOptional(
+            sql = SELECT_CURRENCY_BY_CODE,
+            parameters = listOf(code),
+            mapper = ::toCurrency,
+        )
+
     override fun getCurrencyPairMapFlow(): Flow<CurrencyPairMap> =
         database
             .watch(
@@ -70,5 +77,8 @@ class PowerSyncCurrencyRepository(
 }
 
 private const val SELECT_CURRENCIES = "SELECT code, symbol, precision, id FROM currencies"
+
+private const val SELECT_CURRENCY_BY_CODE = "$SELECT_CURRENCIES " +
+        "WHERE code = ? ORDER BY id LIMIT 1"
 
 private const val SELECT_PAIRS = "SELECT id, price FROM pairs"

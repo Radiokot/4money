@@ -99,13 +99,9 @@ class CategoriesViewModel(
             transform = ::Triple,
         )
             .map { (categoryStats, currencyPairMap, primaryCurrencyCode) ->
-                val primaryCurrency = currencyRepository.getCurrencies()
-                    // It may not be available yet.
-                    .firstOrNull { it.code == primaryCurrencyCode }
-
-                if (primaryCurrency == null) {
-                    return@map null
-                }
+                val primaryCurrency = currencyRepository
+                    .getCurrencyByCode(primaryCurrencyCode)
+                    ?: return@map null
 
                 val totalInPrimaryCurrency: BigInteger =
                     categoryStats.fold(BigInteger.ZERO) { sum, (category, amount) ->

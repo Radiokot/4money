@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.logic.UpdateAccountPositionUseCase
+import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.currency.view.ViewAmount
@@ -61,9 +62,8 @@ class AccountsViewModel(
             transform = ::Triple
         )
             .map { (accounts, currencyPairMap, primaryCurrencyCode) ->
-                val primaryCurrency = currencyRepository.getCurrencies()
-                    // It may not be available yet.
-                    .firstOrNull { it.code == primaryCurrencyCode }
+                val primaryCurrency: Currency? = currencyRepository
+                    .getCurrencyByCode(primaryCurrencyCode)
 
                 buildList {
                     if (primaryCurrency != null) {

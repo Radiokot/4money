@@ -27,5 +27,7 @@ interface CurrencyRepository {
 
     fun getCurrenciesFlow(): Flow<List<Currency>>
 
+    suspend fun getCurrencyByCode(code: String): Currency?
+
     fun getCurrencyPairMapFlow(): Flow<CurrencyPairMap>
 }
