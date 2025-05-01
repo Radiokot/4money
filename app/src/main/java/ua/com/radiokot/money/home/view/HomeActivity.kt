@@ -29,25 +29,32 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
-import kotlinx.serialization.json.Json
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
 import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
@@ -68,7 +75,6 @@ import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetRo
 import ua.com.radiokot.money.transfers.view.TransfersNavigator
 import ua.com.radiokot.money.transfers.view.transferCounterpartySelectionSheet
 import ua.com.radiokot.money.transfers.view.transferSheet
-import ua.com.radiokot.money.uikit.TextButton
 
 class HomeActivity : UserSessionScopeActivity() {
 
@@ -229,6 +235,9 @@ private fun HomeScreen(
                     route = ActivityScreenRoute,
                 )
             },
+            onMoreClicked = {
+
+            }
         )
     }
 
@@ -242,11 +251,9 @@ private fun BottomNavigation(
     onAccountsClicked: () -> Unit,
     onCategoriesClicked: () -> Unit,
     onActivityClicked: () -> Unit,
+    onMoreClicked: () -> Unit,
 ) = Row(
-    horizontalArrangement = Arrangement.spacedBy(
-        16.dp,
-        Alignment.CenterHorizontally
-    ),
+    horizontalArrangement = Arrangement.SpaceAround,
     modifier = Modifier
         .fillMaxWidth()
         .background(Color(0xfff0edf1))
@@ -255,28 +262,86 @@ private fun BottomNavigation(
             vertical = 12.dp,
         )
 ) {
-    TextButton(
-        text = "👛 Accounts",
+    BottomNavigationEntry(
+        text = "Accounts",
+        icon = "👛",
         modifier = Modifier
+            .weight(1f)
             .stableClickable(
                 onClick = onAccountsClicked,
             )
     )
 
-    TextButton(
-        text = "📊 Categories",
+    BottomNavigationEntry(
+        text = "Categories",
+        icon = "📊",
         modifier = Modifier
+            .weight(1f)
             .stableClickable(
                 onClick = onCategoriesClicked,
             )
     )
 
-    TextButton(
-        text = "📃 Activity",
+    BottomNavigationEntry(
+        text = "Activity",
+        icon = "📜",
         modifier = Modifier
+            .weight(1f)
             .stableClickable(
                 onClick = onActivityClicked,
             )
     )
+
+    BottomNavigationEntry(
+        text = "More",
+        icon = "⚙️",
+        modifier = Modifier
+            .weight(1f)
+            .stableClickable(
+                onClick = onMoreClicked,
+            )
+    )
 }
 
+@Composable
+private fun BottomNavigationEntry(
+    modifier: Modifier = Modifier,
+    text: String,
+    icon: String,
+) = Column(
+    modifier = modifier
+        .width(IntrinsicSize.Max),
+) {
+    BasicText(
+        text = icon,
+        style = TextStyle(
+            fontSize = 16.sp,
+            textAlign = TextAlign.Center,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(6.dp))
+
+    BasicText(
+        text = text,
+        style = TextStyle(
+            fontSize = 13.sp,
+            textAlign = TextAlign.Center,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+    )
+}
+
+@Preview
+@Composable
+private fun BottomNavigation2Preview(
+
+) = BottomNavigation(
+    onAccountsClicked = { },
+    onCategoriesClicked = { },
+    onActivityClicked = { },
+    onMoreClicked = { },
+)
