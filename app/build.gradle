@@ -121,3 +121,10 @@ dependencies {
 
     testImplementation "com.jsoizo:kotlin-csv-jvm:1.10.0"
 }
+
+// Make the built APKs have a release-style name.
+android.applicationVariants.configureEach { variant ->
+    variant.outputs.configureEach { output ->
+        outputFileName = "${variant.applicationId}-${variant.versionName}.apk"
+    }
+}
