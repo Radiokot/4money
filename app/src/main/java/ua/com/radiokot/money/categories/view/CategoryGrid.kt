@@ -40,10 +40,10 @@ fun CategoryGrid(
     onItemClicked: (ViewCategoryListItem) -> Unit,
 ) {
     val gridState = rememberLazyGridState()
-    val space = 12.dp
+    val space = 6.dp
 
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(64.dp),
+        columns = GridCells.Adaptive(72.dp),
         contentPadding = PaddingValues(
             vertical = space,
             horizontal = space,
@@ -113,7 +113,7 @@ private fun CategoryListItem(
     BoxWithConstraints(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(48.dp)
+            .size(52.dp)
             .background(
                 color = item.primaryColor,
                 shape = CircleShape,
