@@ -66,6 +66,8 @@ import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.categories.view.CategoriesScreenRoute
 import ua.com.radiokot.money.categories.view.categoriesScreen
+import ua.com.radiokot.money.preferences.view.PreferencesScreenRoute
+import ua.com.radiokot.money.preferences.view.preferencesScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
 import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
@@ -150,6 +152,8 @@ private fun HomeScreen(
                 homeViewModel = viewModel,
                 onProceedToEditingTransfer = transfersNavigator::proceedToTransfer,
             )
+
+            preferencesScreen()
 
             accountActionSheet(
                 onBalanceUpdated = navController::navigateUp,
@@ -236,7 +240,10 @@ private fun HomeScreen(
                 )
             },
             onMoreClicked = {
-
+                navController.popBackStack()
+                navController.navigate(
+                    route = PreferencesScreenRoute,
+                )
             }
         )
     }

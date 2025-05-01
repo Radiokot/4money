@@ -17,29 +17,30 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.home
+package ua.com.radiokot.money.preferences.view
 
-import org.koin.core.module.dsl.viewModel
-import org.koin.dsl.bind
-import org.koin.dsl.module
-import ua.com.radiokot.money.accounts.accountsModule
-import ua.com.radiokot.money.categories.categoriesModule
-import ua.com.radiokot.money.home.view.HomeViewModel
-import ua.com.radiokot.money.preferences.preferencesModule
-import ua.com.radiokot.money.transfers.transfersModule
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.composable
+import org.koin.compose.viewmodel.koinViewModel
 
-val homeModule = module {
+const val PreferencesScreenRoute = "preferences"
 
-    includes(
-        accountsModule,
-        categoriesModule,
-        transfersModule,
-        preferencesModule,
-    )
+fun NavGraphBuilder.preferencesScreen(
 
-    viewModel {
-        HomeViewModel(
+) {
+    composable(route = PreferencesScreenRoute) {
 
+        val viewModel = koinViewModel<PreferencesScreenViewModel>()
+
+        PreferencesScreenRoot(
+            viewModel = viewModel,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         )
-    } bind HomeViewModel::class
+    }
 }

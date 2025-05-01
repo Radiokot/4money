@@ -17,29 +17,27 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.home
+package ua.com.radiokot.money.preferences
 
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import ua.com.radiokot.money.accounts.accountsModule
-import ua.com.radiokot.money.categories.categoriesModule
-import ua.com.radiokot.money.home.view.HomeViewModel
-import ua.com.radiokot.money.preferences.preferencesModule
-import ua.com.radiokot.money.transfers.transfersModule
+import ua.com.radiokot.money.auth.logic.sessionScope
+import ua.com.radiokot.money.currency.currencyModule
+import ua.com.radiokot.money.preferences.view.PreferencesScreenViewModel
 
-val homeModule = module {
+val preferencesModule = module {
 
     includes(
-        accountsModule,
-        categoriesModule,
-        transfersModule,
-        preferencesModule,
+        currencyModule,
     )
 
-    viewModel {
-        HomeViewModel(
+    sessionScope {
 
-        )
-    } bind HomeViewModel::class
+        viewModel {
+            PreferencesScreenViewModel(
+                currencyPreferences = get(),
+            )
+        } bind PreferencesScreenViewModel::class
+    }
 }
