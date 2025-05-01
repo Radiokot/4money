@@ -19,6 +19,9 @@
 
 package ua.com.radiokot.money.transfers.history.view
 
+import android.app.Activity
+import androidx.activity.compose.LocalActivity
+import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -38,7 +41,8 @@ fun NavGraphBuilder.activityScreen(
     onProceedToEditingTransfer: (transferToEdit: Transfer) -> Unit,
 ) = composable<ActivityScreenRoute> {
 
-    val viewModel = koinViewModel<ActivityViewModel> {
+    val activity: Activity? = LocalActivity.current
+    val viewModel: ActivityViewModel = koinViewModel() {
         parametersOf(homeViewModel)
     }
 
@@ -47,6 +51,23 @@ fun NavGraphBuilder.activityScreen(
             when (event) {
                 is ActivityViewModel.Event.ProceedToEditingTransfer -> {
                     onProceedToEditingTransfer(event.transferToEdit)
+                }
+
+                is ActivityViewModel.Event.ProceedToRevertingTransferConfirmation -> {
+                    checkNotNull(activity) {
+                        "The screen must have an activity to proceed"
+                    }
+
+                    AlertDialog.Builder(activity)
+                        .setTitle("Revert a transfer")
+                        .setMessage("Are you sure you want to revert this transfer?")
+                        .setPositiveButton("Yes") { _, _ ->
+                            viewModel.onTransferRevertConfirmed(
+                                transferToRevertId = event.transferToRevertId,
+                            )
+                        }
+                        .setNegativeButton("No", null)
+                        .show()
                 }
             }
         }

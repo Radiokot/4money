@@ -150,20 +150,32 @@ class ActivityViewModel(
             return
         }
 
-        revertTransfer(transfer)
+        _events.tryEmit(
+            Event.ProceedToRevertingTransferConfirmation(
+                transferToRevertId = transfer.id,
+            )
+        )
+    }
+
+    fun onTransferRevertConfirmed(
+        transferToRevertId: String,
+    ) {
+        revertTransfer(
+            id = transferToRevertId,
+        )
     }
 
     private var revertTransferJob: Job? = null
-    private fun revertTransfer(transfer: Transfer) {
+    private fun revertTransfer(id: String) {
         revertTransferJob?.cancel()
         revertTransferJob = viewModelScope.launch {
             log.debug {
                 "revertTransfer(): reverting:" +
-                        "\ntransfer=$transfer"
+                        "\nid=$id"
             }
 
             revertTransferUseCase(
-                transferId = transfer.id,
+                transferId = id,
             )
                 .onFailure { error ->
                     log.error(error) {
@@ -182,6 +194,13 @@ class ActivityViewModel(
 
         class ProceedToEditingTransfer(
             val transferToEdit: Transfer,
+        ) : Event
+
+        /**
+         * Pass the confirmation to [onTransferRevertConfirmed].
+         */
+        class ProceedToRevertingTransferConfirmation(
+            val transferToRevertId: String,
         ) : Event
     }
 }
