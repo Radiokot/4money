@@ -12,6 +12,7 @@ if (localPropertiesFile.exists()) {
 } else {
     throw new Exception("Required local properties file is missing: " + localPropertiesFile)
 }
+def ciSigningKeystoreFile = project.file("ci-signing.jks")
 
 android {
     namespace 'ua.com.radiokot.money'
@@ -40,9 +41,23 @@ android {
         compose true
     }
 
+    signingConfigs {
+        ci {
+            storeFile ciSigningKeystoreFile
+            storePassword "ci"
+            keyAlias "ci"
+            keyPassword "ci"
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig(signingConfigs.debug)
+            if (ciSigningKeystoreFile.exists()) {
+                signingConfig signingConfigs.ci
+            } else {
+                signingConfig signingConfigs.debug
+            }
+
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
