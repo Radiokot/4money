@@ -102,6 +102,21 @@ class AccountsViewModel(
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    val totalAmountsPerCurrency: StateFlow<List<ViewAmount>> =
+        accountRepository.getAccountsFlow()
+            .map { accounts ->
+                accounts
+                    .groupBy(Account::currency)
+                    .map { (currency, accountsInThisCurrency) ->
+                        ViewAmount(
+                            value = accountsInThisCurrency.sumOf(Account::balance),
+                            currency = currency,
+                        )
+                    }
+            }
+            .flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
     fun onAccountItemClicked(item: ViewAccountListItem.Account) {
         val account = item.source
         if (account == null) {

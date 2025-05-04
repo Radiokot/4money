@@ -22,27 +22,34 @@ package ua.com.radiokot.money.accounts.view
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import ua.com.radiokot.money.currency.view.ViewAmount
+import ua.com.radiokot.money.currency.view.ViewAmountFormat
 
 @Composable
 fun AccountsScreenRoot(
@@ -52,6 +59,7 @@ fun AccountsScreenRoot(
     accountItemList = viewModel.accountListItems.collectAsState(),
     onAccountItemClicked = viewModel::onAccountItemClicked,
     onAccountItemMoved = viewModel::onAccountItemMoved,
+    totalAmountPerCurrencyList = viewModel.totalAmountsPerCurrency.collectAsState(),
     modifier = modifier,
 )
 
@@ -64,6 +72,7 @@ private fun AccountsScreen(
         itemToMove: ViewAccountListItem.Account,
         itemToPlaceBefore: ViewAccountListItem.Account?,
     ) -> Unit,
+    totalAmountPerCurrencyList: State<List<ViewAmount>>,
 ) = Column(
     modifier = modifier
         .padding(
@@ -160,7 +169,9 @@ private fun AccountsScreen(
                 )
 
             Page.Total ->
-                BasicText(text = "Here will be the Total view")
+                TotalPage(
+                    amountPerCurrencyList = totalAmountPerCurrencyList,
+                )
         }
     }
 
@@ -173,6 +184,66 @@ private fun AccountsScreen(
         onAccountItemClicked = onAccountItemClicked,
         onAccountItemMoved = onAccountItemMoved,
     )
+}
+
+@Composable
+private fun TotalPage(
+    modifier: Modifier = Modifier,
+    amountPerCurrencyList: State<List<ViewAmount>>,
+) = Row(
+    modifier = modifier
+        .padding(
+            horizontal = 16.dp,
+        )
+) {
+    val textStyle = remember {
+        TextStyle(
+            fontSize = 18.sp,
+        )
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(IntrinsicSize.Max)
+    ) {
+        amountPerCurrencyList.value.forEach { amount ->
+            key(amount.currency) {
+                BasicText(
+                    text = amount.currency.symbol,
+                    style = textStyle,
+                    modifier = Modifier
+                        .padding(
+                            vertical = 4.dp,
+                        )
+                )
+            }
+        }
+    }
+
+    Column(
+        horizontalAlignment = Alignment.End,
+        modifier = Modifier
+            .weight(1f)
+    ) {
+        val locale = LocalConfiguration.current.locales[0]
+        val amountFormat = remember(locale) {
+            ViewAmountFormat(locale)
+        }
+
+        amountPerCurrencyList.value.forEach { amount ->
+            key(amount.currency) {
+                BasicText(
+                    text = amountFormat(amount),
+                    style = textStyle,
+                    modifier = Modifier
+                        .padding(
+                            vertical = 4.dp,
+                        )
+                )
+            }
+        }
+    }
 }
 
 private enum class Page {
