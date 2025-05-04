@@ -19,17 +19,30 @@
 
 package ua.com.radiokot.money.accounts.view
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import ua.com.radiokot.money.currency.view.ViewAmount
-import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
+import kotlinx.coroutines.launch
 
 @Composable
 fun AccountsScreenRoot(
@@ -51,13 +64,118 @@ private fun AccountsScreen(
         itemToMove: ViewAccountListItem.Account,
         itemToPlaceBefore: ViewAccountListItem.Account?,
     ) -> Unit,
-) = MovableAccountList(
+) = Column(
     modifier = modifier
         .padding(
-            horizontal = 16.dp,
+            top = 16.dp,
         ),
-    itemList = accountItemList,
-    onAccountItemClicked = onAccountItemClicked,
-    onAccountItemMoved = onAccountItemMoved,
-)
+) {
 
+    val pages: List<Page> = remember {
+        listOf(
+            Page.All,
+            Page.Total,
+        )
+    }
+    val pagerState = rememberPagerState(
+        initialPage = pages.indexOf(Page.All).coerceAtLeast(0),
+        pageCount = pages::size,
+    )
+    val coroutineScope = rememberCoroutineScope()
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        if (Page.All in pages) {
+            val pageIndex = pages.indexOf(Page.All)
+            BasicText(
+                text = "Accounts",
+                style = TextStyle(
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    textDecoration =
+                    if (pagerState.currentPage == pageIndex)
+                        TextDecoration.Underline
+                    else
+                        null,
+                ),
+                modifier = Modifier
+                    .clickable {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(
+                                page = pageIndex,
+                            )
+                        }
+                    }
+            )
+        }
+
+        if (Page.Total in pages) {
+            val pageIndex = pages.indexOf(Page.Total)
+            BasicText(
+                text = "Total",
+                style = TextStyle(
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    textDecoration =
+                    if (pagerState.currentPage == pageIndex)
+                        TextDecoration.Underline
+                    else
+                        null,
+                ),
+                modifier = Modifier
+                    .clickable {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(
+                                page = pageIndex,
+                            )
+                        }
+                    }
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(12.dp))
+
+    HorizontalPager(
+        state = pagerState,
+        beyondViewportPageCount = pages.size - 1,
+        verticalAlignment = Alignment.Top,
+        key = Int::unaryPlus,
+        modifier = Modifier
+            .fillMaxWidth()
+    ) { pageIndex ->
+        when (pages[pageIndex]) {
+            Page.All ->
+                MovableAccountList(
+                    modifier = Modifier
+                        .padding(
+                            horizontal = 16.dp,
+                        ),
+                    itemList = accountItemList,
+                    onAccountItemClicked = onAccountItemClicked,
+                    onAccountItemMoved = onAccountItemMoved,
+                )
+
+            Page.Total ->
+                BasicText(text = "Here will be the Total view")
+        }
+    }
+
+    MovableAccountList(
+        modifier = Modifier
+            .padding(
+                horizontal = 16.dp,
+            ),
+        itemList = accountItemList,
+        onAccountItemClicked = onAccountItemClicked,
+        onAccountItemMoved = onAccountItemMoved,
+    )
+}
+
+private enum class Page {
+    All,
+    Total,
+}
