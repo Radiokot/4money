@@ -48,7 +48,7 @@ jobs:
           for file in ${{ matrix.result }}; do
             if [ -f "$file" ]; then
               echo "Uploading $file"
-              curl --fail \
+              curl --silent --output /dev/null --show-error --fail \
                 -F "document=@$file" \
                 -F chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
                 "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
