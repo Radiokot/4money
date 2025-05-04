@@ -1,4 +1,4 @@
-name: Release dogfood
+name: Release dogfood to the Telegram channel
 
 on:
   workflow_dispatch:
@@ -39,3 +39,17 @@ jobs:
 
       - name: Build ${{ matrix.name }}
         run: ./gradlew ${{ matrix.gradle-command }} --stacktrace
+
+      - name: Install curl
+        run: sudo apt-get update && sudo apt-get install -y curl
+
+      - name: Send file to Telegram
+        run: |
+          # For each matrix result
+          for result in ${{ matrix.result }}; do
+            if [ -f "extracted_artifact/$result" ]; then
+              curl -F document=@"extracted_artifact/$result" \
+                "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+                -F chat_id=${{ secrets.TELEGRAM_CHAT_ID }}
+            fi
+          done
