@@ -51,6 +51,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+
+            resValue 'string', 'uri_scheme', 'money21m-debug'
+        }
+
         release {
             if (ciSigningKeystoreFile.exists()) {
                 signingConfig signingConfigs.ci
