@@ -21,25 +21,37 @@ package ua.com.radiokot.money.currency.data
 
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import java.math.BigDecimal
 
 class PowerSyncCurrencyRepository(
     private val database: PowerSyncDatabase,
 ) : CurrencyRepository {
 
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    private val currenciesSharedFlow =
+        database
+            .watch(
+                sql = SELECT_CURRENCIES,
+                mapper = ::toCurrency,
+            )
+            .flowOn(Dispatchers.Default)
+            .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
+
     override suspend fun getCurrencies(): List<Currency> =
-        database.getAll(
-            sql = SELECT_CURRENCIES,
-            mapper = ::toCurrency,
-        )
+        currenciesSharedFlow.first()
 
     override fun getCurrenciesFlow(): Flow<List<Currency>> =
-        database.watch(
-            sql = SELECT_CURRENCIES,
-            mapper = ::toCurrency,
-        )
+        currenciesSharedFlow
 
     override suspend fun getCurrencyByCode(code: String): Currency? =
         database.getOptional(
@@ -48,7 +60,7 @@ class PowerSyncCurrencyRepository(
             mapper = ::toCurrency,
         )
 
-    override fun getCurrencyPairMapFlow(): Flow<CurrencyPairMap> =
+    private val currencyPairMapSharedFlow =
         database
             .watch(
                 sql = SELECT_PAIRS,
@@ -61,6 +73,11 @@ class PowerSyncCurrencyRepository(
                     decimalPriceByBaseCode = pairs.toMap(),
                 )
             }
+            .flowOn(Dispatchers.Default)
+            .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
+
+    override fun getCurrencyPairMapFlow(): Flow<CurrencyPairMap> =
+        currencyPairMapSharedFlow
 
     private fun toCurrency(sqlCursor: SqlCursor) = sqlCursor.run {
         Currency(

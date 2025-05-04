@@ -29,6 +29,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
@@ -52,13 +53,6 @@ class PowerSyncAccountRepository(
     private val positionHealer = SternBrocotTreeDescPositionHealer(Account::position)
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    override suspend fun getAccounts(): List<Account> =
-        database
-            .getAll(
-                sql = SELECT_ACCOUNTS,
-                mapper = ::toAccount,
-            )
-
     private val accountsSharedFlow =
         database
             .watch(
@@ -68,6 +62,9 @@ class PowerSyncAccountRepository(
             .flatMapLatest(::healPositionsIfNeeded)
             .flowOn(Dispatchers.Default)
             .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
+
+    override suspend fun getAccounts(): List<Account> =
+        accountsSharedFlow.first()
 
     override fun getAccountsFlow(): Flow<List<Account>> =
         accountsSharedFlow

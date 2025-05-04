@@ -117,6 +117,39 @@ class AccountsViewModel(
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    val totalAmount: StateFlow<ViewAmount?> =
+        combine(
+            accountRepository.getAccountsFlow(),
+            currencyRepository.getCurrencyPairMapFlow(),
+            currencyPreferences.primaryCurrencyCode,
+            transform = ::Triple
+        )
+            .map { (accounts, currencyPairMap, primaryCurrencyCode) ->
+                val primaryCurrency = currencyRepository
+                    .getCurrencyByCode(primaryCurrencyCode)
+                    ?: return@map null
+
+                val totalInPrimaryCurrency: BigInteger =
+                    accounts.fold(BigInteger.ZERO) { sum, account ->
+                        sum + (
+                                currencyPairMap
+                                    .get(
+                                        base = account.currency,
+                                        quote = primaryCurrency,
+                                    )
+                                    ?.baseToQuote(account.balance)
+                                    ?: BigInteger.ZERO
+                                )
+                    }
+
+                ViewAmount(
+                    value = totalInPrimaryCurrency,
+                    currency = primaryCurrency,
+                )
+            }
+            .flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
     fun onAccountItemClicked(item: ViewAccountListItem.Account) {
         val account = item.source
         if (account == null) {

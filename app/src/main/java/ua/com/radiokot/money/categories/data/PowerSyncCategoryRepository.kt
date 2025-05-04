@@ -28,6 +28,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
@@ -50,19 +51,6 @@ class PowerSyncCategoryRepository(
     private val categoryPositionHealer = SternBrocotTreeDescPositionHealer(Category::position)
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    override suspend fun getCategories(isIncome: Boolean): List<Category> =
-        database
-            .getAll(
-                sql = SELECT_CATEGORIES_BY_INCOME,
-                parameters = listOf(
-                    if (isIncome)
-                        "1"
-                    else
-                        "0"
-                ),
-                mapper = ::toCategory,
-            )
-
     private val incomeCategoriesSharedFlow =
         database
             .watch(
@@ -84,6 +72,12 @@ class PowerSyncCategoryRepository(
             .flatMapLatest(::healPositionsIfNeeded)
             .flowOn(Dispatchers.Default)
             .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
+
+    override suspend fun getCategories(isIncome: Boolean): List<Category> =
+        if (isIncome)
+            incomeCategoriesSharedFlow.first()
+        else
+            expenseCategoriesSharedFlow.first()
 
     override fun getCategoriesFlow(isIncome: Boolean): Flow<List<Category>> =
         if (isIncome)

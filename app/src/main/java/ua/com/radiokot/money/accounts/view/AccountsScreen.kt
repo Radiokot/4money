@@ -19,8 +19,10 @@
 
 package ua.com.radiokot.money.accounts.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -35,11 +37,14 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -56,11 +61,12 @@ fun AccountsScreenRoot(
     modifier: Modifier = Modifier,
     viewModel: AccountsViewModel,
 ) = AccountsScreen(
+    modifier = modifier,
     accountItemList = viewModel.accountListItems.collectAsState(),
     onAccountItemClicked = viewModel::onAccountItemClicked,
     onAccountItemMoved = viewModel::onAccountItemMoved,
     totalAmountPerCurrencyList = viewModel.totalAmountsPerCurrency.collectAsState(),
-    modifier = modifier,
+    totalAmount = viewModel.totalAmount.collectAsState(),
 )
 
 @Composable
@@ -73,6 +79,7 @@ private fun AccountsScreen(
         itemToPlaceBefore: ViewAccountListItem.Account?,
     ) -> Unit,
     totalAmountPerCurrencyList: State<List<ViewAmount>>,
+    totalAmount: State<ViewAmount?>,
 ) = Column(
     modifier = modifier
         .padding(
@@ -171,6 +178,7 @@ private fun AccountsScreen(
             Page.Total ->
                 TotalPage(
                     amountPerCurrencyList = totalAmountPerCurrencyList,
+                    totalAmount = totalAmount,
                 )
         }
     }
@@ -190,59 +198,91 @@ private fun AccountsScreen(
 private fun TotalPage(
     modifier: Modifier = Modifier,
     amountPerCurrencyList: State<List<ViewAmount>>,
-) = Row(
+    totalAmount: State<ViewAmount?>,
+) = Column(
     modifier = modifier
         .padding(
             horizontal = 16.dp,
         )
 ) {
-    val textStyle = remember {
-        TextStyle(
-            fontSize = 18.sp,
+    val locale = LocalConfiguration.current.locales[0]
+    val amountFormat = remember(locale) {
+        ViewAmountFormat(locale)
+    }
+
+    Row {
+        val textStyle = remember {
+            TextStyle(
+                fontSize = 18.sp,
+            )
+        }
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .width(IntrinsicSize.Max)
+        ) {
+            amountPerCurrencyList.value.forEach { amount ->
+                key(amount.currency) {
+                    BasicText(
+                        text = amount.currency.symbol,
+                        style = textStyle,
+                        modifier = Modifier
+                            .padding(
+                                vertical = 4.dp,
+                            )
+                    )
+                }
+            }
+        }
+
+        Column(
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier
+                .weight(1f)
+        ) {
+            amountPerCurrencyList.value.forEach { amount ->
+                key(amount.currency) {
+                    BasicText(
+                        text = amountFormat(amount),
+                        style = textStyle,
+                        modifier = Modifier
+                            .padding(
+                                vertical = 4.dp,
+                            )
+                    )
+                }
+            }
+        }
+    }
+
+    val isTotalAmountVisible by remember {
+        derivedStateOf {
+            totalAmount.value != null
+        }
+    }
+
+    if (isTotalAmountVisible) {
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color.Gray)
         )
-    }
 
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .width(IntrinsicSize.Max)
-    ) {
-        amountPerCurrencyList.value.forEach { amount ->
-            key(amount.currency) {
-                BasicText(
-                    text = amount.currency.symbol,
-                    style = textStyle,
-                    modifier = Modifier
-                        .padding(
-                            vertical = 4.dp,
-                        )
-                )
-            }
-        }
-    }
+        Spacer(modifier = Modifier.height(8.dp))
 
-    Column(
-        horizontalAlignment = Alignment.End,
-        modifier = Modifier
-            .weight(1f)
-    ) {
-        val locale = LocalConfiguration.current.locales[0]
-        val amountFormat = remember(locale) {
-            ViewAmountFormat(locale)
-        }
-
-        amountPerCurrencyList.value.forEach { amount ->
-            key(amount.currency) {
-                BasicText(
-                    text = amountFormat(amount),
-                    style = textStyle,
-                    modifier = Modifier
-                        .padding(
-                            vertical = 4.dp,
-                        )
-                )
-            }
-        }
+        BasicText(
+            text = amountFormat(totalAmount.value!!),
+            style = TextStyle(
+                fontSize = 22.sp,
+                textAlign = TextAlign.Center,
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+        )
     }
 }
 
