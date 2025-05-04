@@ -43,13 +43,14 @@ jobs:
       - name: Install curl
         run: sudo apt-get update && sudo apt-get install -y curl
 
-      - name: Send file to Telegram
+      - name: Send files to Telegram
         run: |
-          # For each matrix result
-          for result in ${{ matrix.result }}; do
-            if [ -f "extracted_artifact/$result" ]; then
-              curl -F document=@"extracted_artifact/$result" \
-                "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-                -F chat_id=${{ secrets.TELEGRAM_CHAT_ID }}
+          for file in ${{ matrix.result }}; do
+            if [ -f "$file" ]; then
+              echo "Uploading $file"
+              curl --fail \
+                -F "document=@$file" \
+                -F chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+                "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
             fi
           done
