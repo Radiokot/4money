@@ -21,7 +21,6 @@ package ua.com.radiokot.money.powersync
 
 import com.powersync.DatabaseDriverFactory
 import com.powersync.PowerSyncDatabase
-import com.powersync.connector.supabase.SupabaseConnector
 import com.powersync.db.Queries
 import com.powersync.db.schema.Schema
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -47,7 +46,7 @@ val powerSyncModule = module {
         ).apply {
             GlobalScope.launch {
                 connect(
-                    connector = SupabaseConnector(
+                    connector = AtomicCrudSupabaseConnector(
                         supabaseClient = get(),
                         powerSyncEndpoint = BuildConfig.POWERSYNC_URL,
                     )

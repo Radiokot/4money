@@ -1,0 +1,192 @@
+/* Copyright 2025 Oleg Koretsky
+
+   This file is part of the 4Money,
+   a budget tracking Android app.
+
+   4Money is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   4Money is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+   See the GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with 4Money. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package ua.com.radiokot.money.powersync
+
+import co.touchlab.kermit.Logger
+import com.powersync.PowerSyncDatabase
+import com.powersync.connectors.PowerSyncBackendConnector
+import com.powersync.connectors.PowerSyncCredentials
+import com.powersync.db.crud.CrudEntry
+import com.powersync.db.crud.CrudTransaction
+import com.powersync.db.crud.UpdateType
+import com.powersync.db.runWrappedSuspending
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.annotations.SupabaseInternal
+import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.status.SessionStatus
+import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
+import io.ktor.client.plugins.HttpSend
+import io.ktor.client.plugins.plugin
+import io.ktor.client.statement.bodyAsText
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+
+/**
+ * A Supabase connector applying CRUD transactions atomically,
+ * using [`atomic_crud`](https://gist.github.com/Radiokot/fbc8d1a7cf283d1f476938ca573ced82)
+ * function which must be manually added to the DB functions.
+ */
+@OptIn(SupabaseInternal::class)
+class AtomicCrudSupabaseConnector(
+    private val supabaseClient: SupabaseClient,
+    private val powerSyncEndpoint: String,
+) : PowerSyncBackendConnector() {
+
+    private var errorCode: String? = null
+
+    private object PostgresFatalCodes {
+        // Using Regex patterns for Postgres error codes
+        private val FATAL_RESPONSE_CODES =
+            listOf(
+                // Class 22 — Data Exception
+                "^22...".toRegex(),
+                // Class 23 — Integrity Constraint Violation
+                "^23...".toRegex(),
+                // INSUFFICIENT PRIVILEGE
+                "^42501$".toRegex(),
+            )
+
+        fun isFatalError(code: String): Boolean =
+            FATAL_RESPONSE_CODES.any { pattern ->
+                pattern.matches(code)
+            }
+    }
+
+    @Serializable
+    private class AtomicCrudInput(
+        val operations: List<Operation>,
+    ) {
+        constructor(transaction: CrudTransaction) : this(
+            operations = transaction.crud.map(::Operation)
+        )
+
+        @Serializable
+        class Operation(
+            val t: String,
+            val id: String,
+            val o: String,
+            val d: List<List<String?>>?,
+        ) {
+            constructor(crudEntry: CrudEntry) : this(
+                t = crudEntry.table,
+                id = crudEntry.id,
+                o = when (crudEntry.op) {
+                    UpdateType.PUT -> "I"
+                    UpdateType.PATCH -> "U"
+                    UpdateType.DELETE -> "D"
+                },
+                d = crudEntry.opData?.map { (columnName, columnValue) ->
+                    listOf(columnName, columnValue)
+                },
+            )
+        }
+    }
+
+    init {
+        require(supabaseClient.pluginManager.getPluginOrNull(Auth) != null) {
+            "The Auth plugin must be installed on the Supabase client"
+        }
+        require(supabaseClient.pluginManager.getPluginOrNull(Postgrest) != null) {
+            "The Postgrest plugin must be installed on the Supabase client"
+        }
+
+        // This retrieves the error code from the response
+        // as this is not accessible in the Supabase client RestException
+        // to handle fatal Postgres errors
+        val json = Json { coerceInputValues = true }
+        supabaseClient.httpClient.httpClient.plugin(HttpSend).intercept { request ->
+            val resp = execute(request)
+            val response = resp.response
+            if (response.status.value == 400) {
+                val responseText = response.bodyAsText()
+
+                try {
+                    val error = json.decodeFromString<Map<String, String?>>(
+                        responseText,
+                    )
+                    errorCode = error["code"]
+                } catch (e: Exception) {
+                    Logger.e("Failed to parse error response: $e")
+                }
+            }
+            resp
+        }
+    }
+
+    override suspend fun fetchCredentials(
+    ): PowerSyncCredentials = runWrappedSuspending {
+
+        check(supabaseClient.auth.sessionStatus.value is SessionStatus.Authenticated) {
+            "Supabase client is not authenticated"
+        }
+
+        // Use Supabase token for PowerSync
+        val session = supabaseClient.auth.currentSessionOrNull()
+            ?: error("Could not fetch Supabase credentials")
+
+        check(session.user != null) {
+            "No user data"
+        }
+
+        // userId is for debugging purposes only
+        PowerSyncCredentials(
+            endpoint = powerSyncEndpoint,
+            token = session.accessToken, // Use the access token to authenticate against PowerSync
+            userId = session.user!!.id,
+        )
+    }
+
+    override suspend fun uploadData(
+        database: PowerSyncDatabase,
+    ) = runWrappedSuspending {
+
+        val transaction = database.getNextCrudTransaction()
+            ?: return@runWrappedSuspending
+
+        try {
+            supabaseClient.postgrest.rpc(
+                function = "atomic_crud",
+                parameters = AtomicCrudInput(transaction),
+            )
+            transaction.complete(null)
+        } catch (e: Exception) {
+            if (errorCode != null && PostgresFatalCodes.isFatalError(errorCode.toString())) {
+                /**
+                 * Instead of blocking the queue with these errors,
+                 * discard the (rest of the) transaction.
+                 *
+                 * Note that these errors typically indicate a bug in the application.
+                 * If protecting against data loss is important, save the failing records
+                 * elsewhere instead of discarding, and/or notify the user.
+                 */
+                Logger.e("Data upload error: ${e.message ?: e}")
+                Logger.e("Discarding transaction: $transaction")
+                transaction.complete(null)
+                return@runWrappedSuspending
+            }
+
+            Logger.e("Data upload error - retrying transaction: $transaction, $e")
+            throw e
+        }
+    }
+}
