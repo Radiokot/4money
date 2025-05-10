@@ -32,7 +32,8 @@ fun moneyAppPowerSyncSchema() = Schema(
                 Column.text("code"),
                 Column.text("symbol"),
                 Column.integer("precision"),
-            )
+            ),
+            ignoreEmptyUpdates = true,
         ),
         Table(
             name = "accounts",
@@ -44,7 +45,8 @@ fun moneyAppPowerSyncSchema() = Schema(
                 // leading to frequent healing.
                 Column.text("position"),
                 Column.text("color_scheme"),
-            )
+            ),
+            ignoreEmptyUpdates = true,
         ),
         Table(
             name = "categories",
@@ -57,7 +59,8 @@ fun moneyAppPowerSyncSchema() = Schema(
                 // Real (float8) can't provide sufficient precision,
                 // leading to frequent healing.
                 Column.text("position"),
-            )
+            ),
+            ignoreEmptyUpdates = true,
         ),
         Table(
             name = "transfers",
@@ -68,7 +71,8 @@ fun moneyAppPowerSyncSchema() = Schema(
                 Column.text("destination_id"),
                 Column.text("destination_amount"),
                 Column.text("memo"),
-            )
+            ),
+            ignoreEmptyUpdates = true,
         ),
         Table(
             // In this table, base_currency_code is the id
@@ -76,7 +80,8 @@ fun moneyAppPowerSyncSchema() = Schema(
             name = "pairs",
             columns = listOf(
                 Column.text("price")
-            )
+            ),
+            ignoreEmptyUpdates = true,
         )
     )
 )

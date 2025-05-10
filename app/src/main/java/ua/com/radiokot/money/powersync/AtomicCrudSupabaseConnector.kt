@@ -45,6 +45,9 @@ import kotlinx.serialization.json.Json
  * A Supabase connector applying CRUD transactions atomically,
  * using [`atomic_crud`](https://gist.github.com/Radiokot/fbc8d1a7cf283d1f476938ca573ced82)
  * function which must be manually added to the DB functions.
+ *
+ * ⚠️ Empty updates (update with no data) are not supported,
+ * ensure that all the tables in the schema have `ignoreEmptyUpdates = true` param.
  */
 @OptIn(SupabaseInternal::class)
 class AtomicCrudSupabaseConnector(
@@ -73,6 +76,7 @@ class AtomicCrudSupabaseConnector(
     }
 
     @Serializable
+    @Suppress("unused")
     private class AtomicCrudInput(
         val operations: List<Operation>,
     ) {
@@ -81,6 +85,7 @@ class AtomicCrudSupabaseConnector(
         )
 
         @Serializable
+        @Suppress("unused")
         class Operation(
             val t: String,
             val id: String,
@@ -173,7 +178,7 @@ class AtomicCrudSupabaseConnector(
             if (errorCode != null && PostgresFatalCodes.isFatalError(errorCode.toString())) {
                 /**
                  * Instead of blocking the queue with these errors,
-                 * discard the (rest of the) transaction.
+                 * discard the transaction.
                  *
                  * Note that these errors typically indicate a bug in the application.
                  * If protecting against data loss is important, save the failing records
