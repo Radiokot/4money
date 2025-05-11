@@ -45,12 +45,14 @@ jobs:
 
       - name: Send files to Telegram
         run: |
+          changelog=$(cd fastlane/metadata/android/en-US/changelogs/ && cat "$(ls -rt | tail -n1)" | head -c 200)
           for file in ${{ matrix.result }}; do
             if [ -f "$file" ]; then
               echo "Uploading $file"
               curl --silent --output /dev/null --show-error --fail \
                 -F "document=@$file" \
-                -F chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+                -F "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+                -F "caption=$changelog" \
                 "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
             fi
           done

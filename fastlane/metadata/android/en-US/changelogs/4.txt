@@ -1,0 +1,2 @@
+Added:
+- Periodic background data synchronization
