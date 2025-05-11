@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.view.ViewAccountListItem
 import ua.com.radiokot.money.categories.data.CategoryRepository
@@ -120,20 +121,31 @@ class TransferCounterpartySelectionSheetViewModel(
                             val alreadySelectedCounterpartyIdString =
                                 alreadySelectedCounterpartyId.toString()
 
-                            buildList {
-                                accounts
-                                    .sorted()
-                                    .forEach { account ->
-                                        if (account.id != alreadySelectedCounterpartyIdString) {
-                                            add(
-                                                ViewAccountListItem.Account(
-                                                    account = account,
-                                                    isIncognito = isIncognito,
-                                                )
+                            accounts
+                                .sorted()
+                                .groupBy(Account::type)
+                                .flatMap { (type, accountsOfType) ->
+                                    buildList {
+                                        add(
+                                            ViewAccountListItem.Header(
+                                                title = type.name,
+                                                amount = null,
+                                                key = type.slug,
                                             )
+                                        )
+
+                                        accountsOfType.forEach { account ->
+                                            if (account.id != alreadySelectedCounterpartyIdString) {
+                                                add(
+                                                    ViewAccountListItem.Account(
+                                                        account = account,
+                                                        isIncognito = isIncognito
+                                                    )
+                                                )
+                                            }
                                         }
                                     }
-                            }
+                                }
                         }
                 else
                     flowOf(emptyList())

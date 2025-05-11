@@ -320,7 +320,7 @@ private fun AccountListPreview() {
 private fun HeaderItem(
     modifier: Modifier = Modifier,
     title: String,
-    amount: ViewAmount,
+    amount: ViewAmount?,
 ) {
     Row(
         modifier = modifier,
@@ -339,19 +339,21 @@ private fun HeaderItem(
                 .weight(1f),
         )
 
-        val locale = LocalConfiguration.current.locales[0]
-        val amountFormat = remember(locale) {
-            ViewAmountFormat(locale)
-        }
+        if (amount != null) {
+            val locale = LocalConfiguration.current.locales[0]
+            val amountFormat = remember(locale) {
+                ViewAmountFormat(locale)
+            }
 
-        BasicText(
-            text = amountFormat(amount),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = TextStyle(
-                fontSize = 18.sp,
-            ),
-        )
+            BasicText(
+                text = amountFormat(amount),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = TextStyle(
+                    fontSize = 18.sp,
+                ),
+            )
+        }
     }
 }
 

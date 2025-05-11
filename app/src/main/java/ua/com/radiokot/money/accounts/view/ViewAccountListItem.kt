@@ -33,7 +33,7 @@ sealed interface ViewAccountListItem {
 
     class Header(
         val title: String,
-        val amount: ViewAmount,
+        val amount: ViewAmount?,
         override val key: Any,
     ) : ViewAccountListItem {
         override val type = "header"

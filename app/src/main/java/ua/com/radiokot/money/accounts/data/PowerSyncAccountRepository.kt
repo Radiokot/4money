@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
@@ -98,10 +99,13 @@ class PowerSyncAccountRepository(
     }
 
     override suspend fun updatePosition(
+        withinType: Account.Type,
         accountToMoveId: String,
         accountToPlaceBeforeId: String?,
     ) {
-        val sortedAccounts = getAccounts().sorted()
+        val sortedAccounts = getAccounts()
+            .sorted()
+            .filter { it.type == withinType }
 
         val accountToMoveIndex = sortedAccounts
             .indexOfFirst { it.id == accountToMoveId }
@@ -170,7 +174,8 @@ class PowerSyncAccountRepository(
         log.debug {
             "updatePosition(): calculating new position" +
                     "\nfor=$accountToMove," +
-                    "\ntoPlaceBefore=${accountToPlaceBefore}"
+                    "\ntoPlaceBefore=${accountToPlaceBefore}," +
+                    "\nwithinType=$withinType"
         }
 
         // As accounts are ordered by descending position,
@@ -204,7 +209,8 @@ class PowerSyncAccountRepository(
         log.debug {
             "updatePosition(): updating:" +
                     "\naccount=$accountToMove," +
-                    "\nnewPosition=$newPosition"
+                    "\nnewPosition=$newPosition," +
+                    "\nwithinType=$withinType"
         }
 
         database.execute(
@@ -222,39 +228,50 @@ class PowerSyncAccountRepository(
 
     private suspend fun healPositionsIfNeeded(
         accounts: List<Account>,
-    ): Flow<List<Account>> {
-        if (positionHealer.arePositionsHealthy(accounts)) {
-            return flowOf(accounts)
-        }
-
-        log.debug {
-            "healPositionsIfNeeded(): start healing"
-        }
-
-        var updateCount = 0
-        database.writeTransaction { transaction ->
-            positionHealer.healPositions(
-                items = accounts,
-                updatePosition = { item, newPosition ->
-                    transaction.execute(
-                        sql = "UPDATE accounts SET position = ? WHERE id = ?",
-                        parameters = listOf(
-                            newPosition.toString(),
-                            item.id,
-                        )
-                    )
-                    updateCount++
+    ): Flow<List<Account>> =
+        accounts
+            .groupBy(Account::type)
+            .map { (type, accountsOfType) ->
+                if (positionHealer.arePositionsHealthy(accountsOfType)) {
+                    return@map true
                 }
-            )
-        }
 
-        log.debug {
-            "healPositionsIfNeeded(): healed successfully:" +
-                    "\nupdates=$updateCount"
-        }
+                log.debug {
+                    "healPositionsIfNeeded(): start healing:" +
+                            "\nwithinType=$type"
+                }
 
-        return emptyFlow()
-    }
+                var updateCount = 0
+                database.writeTransaction { transaction ->
+                    positionHealer.healPositions(
+                        items = accountsOfType,
+                        updatePosition = { item, newPosition ->
+                            transaction.execute(
+                                sql = "UPDATE accounts SET position = ? WHERE id = ?",
+                                parameters = listOf(
+                                    newPosition.toString(),
+                                    item.id,
+                                )
+                            )
+                            updateCount++
+                        }
+                    )
+                }
+
+                log.debug {
+                    "healPositionsIfNeeded(): healed successfully:" +
+                            "\nupdates=$updateCount," +
+                            "\nwithinType=$type"
+                }
+
+                return@map false
+            }
+            .let { positionHealth ->
+                if (positionHealth.any { !it })
+                    emptyFlow()
+                else
+                    flowOf(accounts)
+            }
 
     fun updateAccountBalanceBy(
         accountId: String,

@@ -38,6 +38,7 @@ interface AccountRepository {
     )
 
     suspend fun updatePosition(
+        withinType: Account.Type,
         accountToMoveId: String,
         accountToPlaceBeforeId: String?,
     )

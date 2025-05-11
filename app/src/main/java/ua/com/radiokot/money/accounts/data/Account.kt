@@ -34,8 +34,16 @@ class Account(
     val id: String = UUID.randomUUID().toString(),
 ) : Comparable<Account> {
 
+    private val reversePosition: Double
+        get() = -position
+
     override fun compareTo(other: Account): Int =
-        other.position.compareTo(this.position)
+        compareValuesBy(
+            this,
+            other,
+            Account::type,
+            Account::reversePosition,
+        )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

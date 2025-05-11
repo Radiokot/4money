@@ -65,39 +65,49 @@ class AccountsViewModel(
                 val primaryCurrency: Currency? = currencyRepository
                     .getCurrencyByCode(primaryCurrencyCode)
 
-                buildList {
-                    if (primaryCurrency != null) {
-                        val totalInPrimaryCurrency: BigInteger =
-                            accounts.fold(BigInteger.ZERO) { sum, account ->
-                                sum + (
-                                        currencyPairMap
-                                            .get(
-                                                base = account.currency,
-                                                quote = primaryCurrency,
-                                            )
-                                            ?.baseToQuote(account.balance)
-                                            ?: BigInteger.ZERO
-                                        )
+                accounts
+                    .sorted()
+                    .groupBy(Account::type)
+                    .flatMap { (type, accountsOfType) ->
+                        buildList {
+                            if (primaryCurrency != null) {
+                                val totalInPrimaryCurrency =
+                                    accountsOfType.fold(BigInteger.ZERO) { sum, account ->
+                                        sum + (
+                                                currencyPairMap
+                                                    .get(
+                                                        base = account.currency,
+                                                        quote = primaryCurrency,
+                                                    )
+                                                    ?.baseToQuote(account.balance)
+                                                    ?: BigInteger.ZERO
+                                                )
+                                    }
+                                add(
+                                    ViewAccountListItem.Header(
+                                        title = type.name,
+                                        amount = ViewAmount(
+                                            value = totalInPrimaryCurrency,
+                                            currency = primaryCurrency,
+                                        ),
+                                        key = type.slug,
+                                    )
+                                )
+                            } else {
+                                add(
+                                    ViewAccountListItem.Header(
+                                        title = type.name,
+                                        amount = null,
+                                        key = type.slug,
+                                    )
+                                )
                             }
 
-                        add(
-                            ViewAccountListItem.Header(
-                                title = "Accounts",
-                                amount = ViewAmount(
-                                    value = totalInPrimaryCurrency,
-                                    currency = primaryCurrency,
-                                ),
-                                key = "total",
-                            )
-                        )
-                    }
-
-                    accounts
-                        .sorted()
-                        .forEach { account ->
-                            add(ViewAccountListItem.Account(account))
+                            accountsOfType.forEach { account ->
+                                add(ViewAccountListItem.Account(account))
+                            }
                         }
-                }
+                    }
             }
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -174,9 +184,9 @@ class AccountsViewModel(
         itemToMove: ViewAccountListItem.Account,
         itemToPlaceBefore: ViewAccountListItem.Account?,
     ) {
-        val accountToMoveId = itemToMove.source?.id
+        val accountToMove = itemToMove.source
         val accountToPlaceBeforeId = itemToPlaceBefore?.source?.id
-        if (accountToMoveId == null || accountToPlaceBeforeId == null && itemToPlaceBefore != null) {
+        if (accountToMove == null || accountToPlaceBeforeId == null && itemToPlaceBefore != null) {
             log.warn {
                 "onAccountItemMoved(): missing account source(s)"
             }
@@ -187,12 +197,13 @@ class AccountsViewModel(
         updatePositionJob = viewModelScope.launch {
             log.debug {
                 "onAccountItemMoved(): moving:" +
-                        "\naccount=$accountToMoveId," +
+                        "\naccount=${accountToMove.id}," +
                         "\nbefore=$accountToPlaceBeforeId"
             }
 
             updateAccountPositionUseCase(
-                accountToMoveId = accountToMoveId,
+                withinType = accountToMove.type,
+                accountToMoveId = accountToMove.id,
                 accountToPlaceBeforeId = accountToPlaceBeforeId,
             )
                 .onFailure { error ->
