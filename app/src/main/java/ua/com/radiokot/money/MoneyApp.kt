@@ -20,7 +20,14 @@
 package ua.com.radiokot.money
 
 import android.app.Application
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Build
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.runBlocking
@@ -32,8 +39,9 @@ import org.slf4j.impl.HandroidLoggerAdapter
 import ua.com.radiokot.money.auth.authModule
 import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
-import ua.com.radiokot.money.colors.colorsModule
 import ua.com.radiokot.money.home.homeModule
+import ua.com.radiokot.money.powersync.BackgroundPowerSyncWorker
+import java.util.concurrent.TimeUnit
 
 class MoneyApp : Application() {
     private val log by lazyLogger("App")
@@ -54,6 +62,7 @@ class MoneyApp : Application() {
         }
 
         initSessionHolder()
+        initBackgroundSync()
     }
 
     private fun initLogging() {
@@ -63,6 +72,7 @@ class MoneyApp : Application() {
     }
 
     private fun initSessionHolder() {
+
         val supabaseSession = runBlocking {
             get<SupabaseClient>().run {
                 auth.loadFromStorage(
@@ -89,5 +99,28 @@ class MoneyApp : Application() {
                 supabaseUserSession = supabaseSession,
             )
         )
+    }
+
+    private fun initBackgroundSync() {
+
+        val workRequest = PeriodicWorkRequestBuilder<BackgroundPowerSyncWorker>(1, TimeUnit.HOURS)
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkRequest(
+                        networkRequest = NetworkRequest.Builder()
+                            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                            .build(),
+                        networkType = NetworkType.CONNECTED,
+                    )
+                    .build()
+            )
+            .build()
+
+        WorkManager.getInstance(this)
+            .enqueueUniquePeriodicWork(
+                "BackgroundSync",
+                ExistingPeriodicWorkPolicy.UPDATE,
+                workRequest,
+            )
     }
 }
