@@ -1,5 +1,6 @@
-<!-- This is the main shortcuts file.
-     There is also a debug version. -->
+<!-- This is the debug version shortcuts.
+     There is also the main file. -->
+<!--suppress AndroidDomInspection -->
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
     <shortcut
         android:enabled="true"
@@ -10,7 +11,7 @@
         <intent
             android:action="ua.com.radiokot.money.actions.ADD_OPERATION"
             android:targetClass="ua.com.radiokot.money.transfers.view.TransferShortcutActivity"
-            android:targetPackage="ua.com.radiokot.money" />
+            android:targetPackage="ua.com.radiokot.money.debug" />
     </shortcut>
 
     <shortcut
@@ -22,7 +23,7 @@
         <intent
             android:action="ua.com.radiokot.money.actions.ADD_INCOME"
             android:targetClass="ua.com.radiokot.money.transfers.view.TransferShortcutActivity"
-            android:targetPackage="ua.com.radiokot.money" />
+            android:targetPackage="ua.com.radiokot.money.debug" />
     </shortcut>
 
 
@@ -35,7 +36,7 @@
         <intent
             android:action="ua.com.radiokot.money.actions.ADD_EXPENSE"
             android:targetClass="ua.com.radiokot.money.transfers.view.TransferShortcutActivity"
-            android:targetPackage="ua.com.radiokot.money" />
+            android:targetPackage="ua.com.radiokot.money.debug" />
     </shortcut>
 </shortcuts>
 
