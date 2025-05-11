@@ -40,9 +40,6 @@ jobs:
       - name: Build ${{ matrix.name }}
         run: ./gradlew ${{ matrix.gradle-command }} --stacktrace
 
-      - name: Install curl
-        run: sudo apt-get update && sudo apt-get install -y curl
-
       - name: Send files to Telegram
         run: |
           changelog=$(cd fastlane/metadata/android/en-US/changelogs/ && cat "$(ls -rt | tail -n1)" | head -c 200)
