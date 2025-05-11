@@ -45,6 +45,7 @@ fun moneyAppPowerSyncSchema() = Schema(
                 // leading to frequent healing.
                 Column.text("position"),
                 Column.text("color_scheme"),
+                Column.text("type"),
             ),
             ignoreEmptyUpdates = true,
         ),

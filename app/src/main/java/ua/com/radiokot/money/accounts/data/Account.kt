@@ -30,6 +30,7 @@ class Account(
     val currency: Currency,
     val position: Double,
     val colorScheme: ItemColorScheme,
+    val type: Type,
     val id: String = UUID.randomUUID().toString(),
 ) : Comparable<Account> {
 
@@ -51,5 +52,22 @@ class Account(
 
     override fun toString(): String {
         return "Account(title='$title', id='$id')"
+    }
+
+    enum class Type {
+        Regular,
+        Savings,
+        ;
+
+        val slug: String =
+            name.lowercase()
+
+        companion object {
+            fun fromSlug(slug: String) = when (slug) {
+                Regular.slug -> Regular
+                Savings.slug -> Savings
+                else -> throw IllegalArgumentException("Unkown type slug '$slug'")
+            }
+        }
     }
 }
