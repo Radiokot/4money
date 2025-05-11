@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
-import ua.com.radiokot.money.accounts.logic.UpdateAccountPositionUseCase
+import ua.com.radiokot.money.accounts.logic.MoveAccountUseCase
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyRepository
@@ -46,8 +46,8 @@ import java.math.BigInteger
 class AccountsViewModel(
     accountRepository: AccountRepository,
     private val currencyRepository: CurrencyRepository,
-    private val currencyPreferences: CurrencyPreferences,
-    private val updateAccountPositionUseCase: UpdateAccountPositionUseCase,
+    currencyPreferences: CurrencyPreferences,
+    private val moveAccountUseCase: MoveAccountUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("AccountsVM")
@@ -183,12 +183,28 @@ class AccountsViewModel(
     fun onAccountItemMoved(
         itemToMove: ViewAccountListItem.Account,
         itemToPlaceBefore: ViewAccountListItem.Account?,
+        itemToPlaceAfter: ViewAccountListItem.Account?,
     ) {
         val accountToMove = itemToMove.source
-        val accountToPlaceBeforeId = itemToPlaceBefore?.source?.id
-        if (accountToMove == null || accountToPlaceBeforeId == null && itemToPlaceBefore != null) {
+        if (accountToMove == null) {
             log.warn {
-                "onAccountItemMoved(): missing account source(s)"
+                "onAccountItemMoved(): missing moved account source"
+            }
+            return
+        }
+
+        val accountToPlaceBefore: Account? = itemToPlaceBefore?.source
+        if (accountToPlaceBefore == null && itemToPlaceBefore != null) {
+            log.warn {
+                "onAccountItemMoved(): missing account to place before source"
+            }
+            return
+        }
+
+        val accountToPlaceAfter: Account? = itemToPlaceAfter?.source
+        if (accountToPlaceAfter == null && itemToPlaceAfter != null) {
+            log.warn {
+                "onAccountItemMoved(): missing account to place after source"
             }
             return
         }
@@ -197,14 +213,15 @@ class AccountsViewModel(
         updatePositionJob = viewModelScope.launch {
             log.debug {
                 "onAccountItemMoved(): moving:" +
-                        "\naccount=${accountToMove.id}," +
-                        "\nbefore=$accountToPlaceBeforeId"
+                        "\naccount=$accountToMove," +
+                        "\nbefore=$accountToPlaceBefore," +
+                        "\nafter=$accountToPlaceAfter"
             }
 
-            updateAccountPositionUseCase(
-                withinType = accountToMove.type,
-                accountToMoveId = accountToMove.id,
-                accountToPlaceBeforeId = accountToPlaceBeforeId,
+            moveAccountUseCase(
+                accountToMove = accountToMove,
+                accountToPlaceBefore = accountToPlaceBefore,
+                accountToPlaceAfter = accountToPlaceAfter,
             )
                 .onFailure { error ->
                     log.error(error) {

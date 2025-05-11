@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.launch
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
@@ -98,103 +97,102 @@ class PowerSyncAccountRepository(
             )
     }
 
-    override suspend fun updatePosition(
-        withinType: Account.Type,
-        accountToMoveId: String,
-        accountToPlaceBeforeId: String?,
+    override suspend fun move(
+        accountToMove: Account,
+        accountToPlaceBefore: Account?,
+        accountToPlaceAfter: Account?,
     ) {
         val sortedAccounts = getAccounts()
             .sorted()
-            .filter { it.type == withinType }
 
-        val accountToMoveIndex = sortedAccounts
-            .indexOfFirst { it.id == accountToMoveId }
-        val accountToMove = sortedAccounts[accountToMoveIndex]
+        val targetType = accountToPlaceBefore?.type
+            ?: accountToPlaceAfter?.type
+            ?: accountToMove.type
 
-        val accountToPlaceBeforeIndex =
-            if (accountToPlaceBeforeId != null)
-                sortedAccounts
-                    .indexOfFirst { it.id == accountToPlaceBeforeId }
-            else
-                null
-        val accountToPlaceBefore = accountToPlaceBeforeIndex?.let(sortedAccounts::get)
+        val isChangingType = accountToMove.type != targetType
 
-        if (accountToPlaceBeforeIndex == accountToMoveIndex + 1
-            || accountToPlaceBeforeIndex == null && accountToMoveIndex == sortedAccounts.size - 1
-        ) {
-            log.debug {
-                "updatePosition(): skipping as the account is already in place"
+        val sortedAccountsWithinTargetType = sortedAccounts
+            .filter { it.type == accountToMove.type }
+
+        if (!isChangingType) {
+
+            val accountToMoveIndexWithinTargetType =
+                sortedAccountsWithinTargetType.indexOf(accountToMove)
+
+            val accountToPlaceBeforeIndexWithinTargetType =
+                sortedAccountsWithinTargetType.indexOf(accountToPlaceBefore)
+
+            val accountToPlaceAfterIndexWithinTargetType =
+                sortedAccountsWithinTargetType.indexOf(accountToPlaceAfter)
+
+            if (accountToPlaceBeforeIndexWithinTargetType == accountToMoveIndexWithinTargetType + 1
+                || accountToPlaceAfterIndexWithinTargetType == accountToMoveIndexWithinTargetType - 1
+            ) {
+                log.debug {
+                    "move(): skipping as the account is already in place"
+                }
+
+                return
             }
 
-            return
-        }
+            // Avoid position recalculation when swapping neighbours within the same type,
+            // otherwise the fraction quickly becomes tiny (after tens of swaps).
+            if (accountToPlaceBeforeIndexWithinTargetType == accountToMoveIndexWithinTargetType + 2
+                || accountToPlaceAfterIndexWithinTargetType == accountToMoveIndexWithinTargetType - 2
+            ) {
+                val accountToSwapWith =
+                    if (accountToPlaceBeforeIndexWithinTargetType == accountToMoveIndexWithinTargetType + 2)
+                        sortedAccountsWithinTargetType[accountToMoveIndexWithinTargetType + 1]
+                    else
+                        sortedAccountsWithinTargetType[accountToMoveIndexWithinTargetType - 1]
 
-        // Avoid position recalculation when swapping neighbours,
-        // otherwise the fraction quickly becomes tiny (after tens of swaps).
-        if (accountToPlaceBeforeIndex == accountToMoveIndex + 2
-            || accountToPlaceBeforeIndex == null && accountToMoveIndex == sortedAccounts.size - 2
-            || accountToPlaceBeforeIndex == accountToMoveIndex - 1
-        ) {
-            val accountToSwapWith =
-                if (accountToPlaceBeforeIndex == null || accountToPlaceBeforeIndex > accountToMoveIndex)
-                    sortedAccounts[accountToMoveIndex + 1]
-                else
-                    sortedAccounts[accountToMoveIndex - 1]
+                log.debug {
+                    "move(): swapping positions within the same type:" +
+                            "\nswap=$accountToMove," +
+                            "\nwith=$accountToSwapWith"
+                }
 
-            log.debug {
-                "updatePosition(): swapping positions:" +
-                        "\nswap=$accountToMove," +
-                        "\nwith=$accountToSwapWith"
-            }
-
-            database.writeTransaction { transition ->
-                transition.execute(
-                    sql = UPDATE_POSITION_BY_ID,
-                    parameters = listOf(
-                        accountToSwapWith.position.toString(),
-                        accountToMove.id,
+                database.writeTransaction { transition ->
+                    transition.execute(
+                        sql = UPDATE_POSITION_BY_ID,
+                        parameters = listOf(
+                            accountToSwapWith.position.toString(),
+                            accountToMove.id,
+                        )
                     )
-                )
-                transition.execute(
-                    sql = UPDATE_POSITION_BY_ID,
-                    parameters = listOf(
-                        accountToMove.position.toString(),
-                        accountToSwapWith.id,
+                    transition.execute(
+                        sql = UPDATE_POSITION_BY_ID,
+                        parameters = listOf(
+                            accountToMove.position.toString(),
+                            accountToSwapWith.id,
+                        )
                     )
-                )
-            }
+                }
 
-            log.debug {
-                "updatePosition(): swapped successfully"
-            }
+                log.debug {
+                    "move(): swapped successfully"
+                }
 
-            return
+                return
+            }
         }
 
         log.debug {
-            "updatePosition(): calculating new position" +
+            "move(): calculating new position" +
                     "\nfor=$accountToMove," +
                     "\ntoPlaceBefore=${accountToPlaceBefore}," +
-                    "\nwithinType=$withinType"
+                    "\nwithinType=$targetType"
         }
 
         // As accounts are ordered by descending position,
         // placing before means assigning greater position value.
-        // The end (bottom) has position 0.0.
+        // The end (bottom) is 0.0.
         val lowerBound = accountToPlaceBefore?.position ?: 0.0
-        val upperBound =
-            if (accountToPlaceBefore == null)
-                sortedAccounts
-                    .last()
-                    .position
-            else
-                sortedAccounts
-                    .lastOrNull { it.position > accountToPlaceBefore.position }
-                    ?.position
-                    ?: Double.POSITIVE_INFINITY
+        // The start (top) is +∞.
+        val upperBound = accountToPlaceAfter?.position ?: Double.POSITIVE_INFINITY
 
         log.debug {
-            "updatePosition(): got bounds for new position:" +
+            "move(): got bounds for new position:" +
                     "\nlower=$lowerBound," +
                     "\nupper=$upperBound"
         }
@@ -207,22 +205,35 @@ class PowerSyncAccountRepository(
             .value
 
         log.debug {
-            "updatePosition(): updating:" +
+            "move(): updating:" +
                     "\naccount=$accountToMove," +
                     "\nnewPosition=$newPosition," +
-                    "\nwithinType=$withinType"
+                    "\ntargetType=$targetType," +
+                    "\nisChangingType=$isChangingType"
         }
 
-        database.execute(
-            sql = UPDATE_POSITION_BY_ID,
-            parameters = listOf(
-                newPosition.toString(),
-                accountToMove.id,
+        database.writeTransaction { transaction ->
+            transaction.execute(
+                sql = UPDATE_POSITION_BY_ID,
+                parameters = listOf(
+                    newPosition.toString(),
+                    accountToMove.id,
+                )
             )
-        )
+
+            if (isChangingType) {
+                transaction.execute(
+                    sql = UPDATE_TYPE_BY_ID,
+                    parameters = listOf(
+                        targetType.slug,
+                        accountToMove.id,
+                    )
+                )
+            }
+        }
 
         log.debug {
-            "updatePosition(): updated successfully"
+            "move(): moved successfully"
         }
     }
 
@@ -343,3 +354,6 @@ private const val SELECT_ACCOUNTS =
 private const val SELECT_ACCOUNT_BY_ID = "$SELECT_ACCOUNTS AND accounts.id = ?"
 
 private const val UPDATE_POSITION_BY_ID = "UPDATE accounts SET position = ? WHERE id = ?"
+
+private const val UPDATE_TYPE_BY_ID = "UPDATE accounts SET type = ? WHERE id = ?"
+

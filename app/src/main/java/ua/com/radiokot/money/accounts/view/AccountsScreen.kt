@@ -77,6 +77,7 @@ private fun AccountsScreen(
     onAccountItemMoved: (
         itemToMove: ViewAccountListItem.Account,
         itemToPlaceBefore: ViewAccountListItem.Account?,
+        itemToPlaceAfter: ViewAccountListItem.Account?,
     ) -> Unit,
     totalAmountPerCurrencyList: State<List<ViewAmount>>,
     totalAmount: State<ViewAmount?>,

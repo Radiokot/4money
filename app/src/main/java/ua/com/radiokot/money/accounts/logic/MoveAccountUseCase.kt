@@ -22,19 +22,20 @@ package ua.com.radiokot.money.accounts.logic
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 
-class UpdateAccountPositionUseCase(
+class MoveAccountUseCase(
     private val accountRepository: AccountRepository,
 ) {
+
     suspend operator fun invoke(
-        withinType: Account.Type,
-        accountToMoveId: String,
-        accountToPlaceBeforeId: String?,
+        accountToMove: Account,
+        accountToPlaceBefore: Account?,
+        accountToPlaceAfter: Account?,
     ): Result<Unit> = runCatching {
 
-        accountRepository.updatePosition(
-            withinType = withinType,
-            accountToMoveId = accountToMoveId,
-            accountToPlaceBeforeId = accountToPlaceBeforeId,
+        accountRepository.move(
+            accountToMove = accountToMove,
+            accountToPlaceBefore = accountToPlaceBefore,
+            accountToPlaceAfter = accountToPlaceAfter,
         )
     }
 }

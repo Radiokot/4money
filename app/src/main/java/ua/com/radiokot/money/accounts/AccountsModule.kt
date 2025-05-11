@@ -25,7 +25,7 @@ import org.koin.dsl.module
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
-import ua.com.radiokot.money.accounts.logic.UpdateAccountPositionUseCase
+import ua.com.radiokot.money.accounts.logic.MoveAccountUseCase
 import ua.com.radiokot.money.accounts.view.AccountActionSheetViewModel
 import ua.com.radiokot.money.accounts.view.AccountsViewModel
 import ua.com.radiokot.money.auth.logic.sessionScope
@@ -57,17 +57,17 @@ val accountsModule = module {
         } bind UpdateAccountBalanceUseCase::class
 
         factory {
-            UpdateAccountPositionUseCase(
+            MoveAccountUseCase(
                 accountRepository = get()
             )
-        } bind UpdateAccountPositionUseCase::class
+        } bind MoveAccountUseCase::class
 
         viewModel {
             AccountsViewModel(
                 accountRepository = get(),
                 currencyRepository = get(),
                 currencyPreferences = get(),
-                updateAccountPositionUseCase = get(),
+                moveAccountUseCase = get(),
             )
         } bind AccountsViewModel::class
 

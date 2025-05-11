@@ -127,6 +127,7 @@ fun MovableAccountList(
     onAccountItemMoved: (
         itemToMove: ViewAccountListItem.Account,
         itemToPlaceBefore: ViewAccountListItem.Account?,
+        itemToPlaceAfter: ViewAccountListItem.Account?,
     ) -> Unit,
 ) {
     val movableItemList = remember {
@@ -136,6 +137,9 @@ fun MovableAccountList(
         mutableStateOf<ViewAccountListItem.Account?>(null)
     }
     var itemToPlaceBefore by remember {
+        mutableStateOf<ViewAccountListItem.Account?>(null)
+    }
+    var itemToPlaceAfter by remember {
         mutableStateOf<ViewAccountListItem.Account?>(null)
     }
     var skipOriginalListUpdates by remember {
@@ -161,6 +165,8 @@ fun MovableAccountList(
                 movableItemList.removeAt(from.index),
             )
             itemToPlaceBefore = movableItemList.getOrNull(to.index + 1)
+                    as? ViewAccountListItem.Account
+            itemToPlaceAfter = movableItemList.getOrNull(to.index - 1)
                     as? ViewAccountListItem.Account
         },
     )
@@ -214,6 +220,7 @@ fun MovableAccountList(
                                             onAccountItemMoved(
                                                 itemToMove!!,
                                                 itemToPlaceBefore,
+                                                itemToPlaceAfter,
                                             )
                                         } else {
                                             skipOriginalListUpdates = 0

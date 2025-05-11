@@ -37,9 +37,9 @@ interface AccountRepository {
         newValue: BigInteger,
     )
 
-    suspend fun updatePosition(
-        withinType: Account.Type,
-        accountToMoveId: String,
-        accountToPlaceBeforeId: String?,
+    suspend fun move(
+        accountToMove: Account,
+        accountToPlaceBefore: Account?,
+        accountToPlaceAfter: Account?,
     )
 }
