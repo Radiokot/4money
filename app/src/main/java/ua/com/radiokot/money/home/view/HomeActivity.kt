@@ -70,13 +70,11 @@ import ua.com.radiokot.money.preferences.view.PreferencesScreenRoute
 import ua.com.radiokot.money.preferences.view.preferencesScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
 import ua.com.radiokot.money.stableClickable
-import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.history.view.ActivityScreenRoute
 import ua.com.radiokot.money.transfers.history.view.activityScreen
-import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetRoute
 import ua.com.radiokot.money.transfers.view.TransfersNavigator
 import ua.com.radiokot.money.transfers.view.transferCounterpartySelectionSheet
-import ua.com.radiokot.money.transfers.view.transferSheet
+import ua.com.radiokot.money.transfers.view.transferFlowSheet
 
 class HomeActivity : UserSessionScopeActivity() {
 
@@ -192,22 +190,8 @@ private fun HomeScreen(
                 },
             )
 
-            transferSheet(
-                onProceedToTransferCounterpartySelection = {
-                        alreadySelectedCounterpartyId: TransferCounterpartyId,
-                        selectSource: Boolean,
-                        showCategories: Boolean,
-                        showAccounts: Boolean,
-                    ->
-                    navController.navigate(
-                        route = TransferCounterpartySelectionSheetRoute(
-                            isForSource = selectSource,
-                            alreadySelectedCounterpartyId = alreadySelectedCounterpartyId,
-                            showCategories = showCategories,
-                            showAccounts = showAccounts,
-                        ),
-                    )
-                },
+            transferFlowSheet(
+                isIncognito = false,
                 onTransferDone = navController::navigateUp,
             )
 

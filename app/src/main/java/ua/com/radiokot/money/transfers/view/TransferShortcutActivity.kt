@@ -30,14 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
-import androidx.navigation.navOptions
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.koinInject
 import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.rememberMoneyAppNavController
-import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
 class TransferShortcutActivity : UserSessionScopeActivity() {
 
@@ -122,28 +120,8 @@ private fun TransferShortcutScreen(
             onSelected = transfersNavigator::proceedToTransfer,
         )
 
-        transferSheet(
-            onProceedToTransferCounterpartySelection = {
-                    alreadySelectedCounterpartyId: TransferCounterpartyId,
-                    selectSource: Boolean,
-                    showCategories: Boolean,
-                    showAccounts: Boolean,
-                ->
-                navController.navigate(
-                    route = TransferCounterpartySelectionSheetRoute(
-                        isForSource = selectSource,
-                        alreadySelectedCounterpartyId = alreadySelectedCounterpartyId,
-                        showCategories = showCategories,
-                        showAccounts = showAccounts,
-                        isIncognito = true,
-                    ),
-                    navOptions = navOptions {
-                        popUpTo<TransferSheetRoute> {
-                            inclusive = true
-                        }
-                    },
-                )
-            },
+        transferFlowSheet(
+            isIncognito = true,
             onTransferDone = navController::popBackStack,
         )
     }

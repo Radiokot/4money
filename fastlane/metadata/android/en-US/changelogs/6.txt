@@ -1,0 +1,5 @@
+Fixed:
+- Resetting transfer data when changing counterparty, if launched from a shortcut
+
+Changed:
+- Made transfer counterparty change snappier

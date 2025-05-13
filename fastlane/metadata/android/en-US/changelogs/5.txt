@@ -1,2 +1,0 @@
-Added:
-- Account categories (Regular and Savings)

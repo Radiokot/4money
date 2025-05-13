@@ -20,11 +20,16 @@
 package ua.com.radiokot.money.transfers.view
 
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.material.navigation.bottomSheet
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -87,99 +92,143 @@ data class TransferSheetRoute(
     )
 }
 
-fun NavGraphBuilder.transferSheet(
-    onProceedToTransferCounterpartySelection: (
-        alreadySelectedCounterpartyId: TransferCounterpartyId,
-        selectSource: Boolean,
-        showCategories: Boolean,
-        showAccounts: Boolean,
-    ) -> Unit,
+fun NavGraphBuilder.transferFlowSheet(
+    isIncognito: Boolean,
     onTransferDone: () -> Unit,
-) = bottomSheet<TransferSheetRoute> { entry ->
-    val arguments = entry.toRoute<TransferSheetRoute>()
-    val viewModel = koinViewModel<TransferSheetViewModel>()
-    val activity = checkNotNull(LocalActivity.current as? FragmentActivity) {
-        "This sheet needs activity as a parent"
-    }
+) = bottomSheet<TransferSheetRoute> { flowStartEntry ->
+    val flowNavController = rememberNavController()
 
-    DisposableEffect(activity) {
-        activity.supportFragmentManager.setFragmentResultListener(
-            DatePickerDialogFragment.DATE_REQUEST_KEY,
-            activity,
-        ) { _, bundle ->
-            viewModel.onDatePicked(
-                newDate = DatePickerDialogFragment.getLocalDate(bundle),
-            )
-        }
+    NavHost(
+        navController = flowNavController,
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        startDestination = flowStartEntry.toRoute<TransferSheetRoute>(),
+    ) {
 
-        onDispose {
-            activity.supportFragmentManager.clearFragmentResultListener(
-                DatePickerDialogFragment.DATE_REQUEST_KEY
-            )
-        }
-    }
+        composable<TransferSheetRoute> { entry ->
+            val route = entry.toRoute<TransferSheetRoute>()
+            val viewModel = koinViewModel<TransferSheetViewModel>()
+            val activity = checkNotNull(LocalActivity.current as? FragmentActivity) {
+                "This sheet needs activity as a parent"
+            }
 
-    LaunchedEffect(arguments) {
-        val selectedSourceId: TransferCounterpartyId? = TransferCounterpartySelectionResult
-            .getSelectedSourceCounterpartyId(
-                savedStateHandle = entry.savedStateHandle,
-            )
-        val selectedDestinationId: TransferCounterpartyId? = TransferCounterpartySelectionResult
-            .getSelectedDestinationCounterpartyId(
-                savedStateHandle = entry.savedStateHandle,
-            )
+            DisposableEffect(activity) {
+                activity.supportFragmentManager.setFragmentResultListener(
+                    DatePickerDialogFragment.DATE_REQUEST_KEY,
+                    activity,
+                ) { _, bundle ->
+                    viewModel.onDatePicked(
+                        newDate = DatePickerDialogFragment.getLocalDate(bundle),
+                    )
+                }
 
-        if (selectedSourceId != null || selectedDestinationId != null) {
-            viewModel.onCounterpartiesSelected(
-                newSourceId = selectedSourceId,
-                newDestinationId = selectedDestinationId,
-            )
-        } else {
-            viewModel.setParameters(
-                sourceId = arguments.sourceId,
-                destinationId = arguments.destinationId,
-                transferToEditId = arguments.transferToEditId,
-                sourceAmount = arguments.sourceAmount,
-                destinationAmount = arguments.destinationAmount,
-                memo = arguments.memo,
-                time = arguments.time,
-            )
-        }
+                onDispose {
+                    activity.supportFragmentManager.clearFragmentResultListener(
+                        DatePickerDialogFragment.DATE_REQUEST_KEY
+                    )
+                }
+            }
 
-        launch {
-            viewModel.events.collect { event ->
-                when (event) {
-                    TransferSheetViewModel.Event.TransferDone -> {
-                        onTransferDone()
-                    }
-
-                    is TransferSheetViewModel.Event.ProceedToDatePicker -> {
-                        DatePickerDialogFragment
-                            .newInstance(
-                                bundle = DatePickerDialogFragment.getBundle(
-                                    currentDate = event.currentDate,
-                                )
-                            )
-                            .showSingle(
-                                activity.supportFragmentManager,
-                                DatePickerDialogFragment.TAG
-                            )
-                    }
-
-                    is TransferSheetViewModel.Event.ProceedToCounterpartySelection -> {
-                        onProceedToTransferCounterpartySelection(
-                            event.alreadySelectedCounterpartyId,
-                            event.selectSource,
-                            event.showCategories,
-                            event.showAccounts,
+            LaunchedEffect(route) {
+                val selectedSourceId: TransferCounterpartyId? = TransferCounterpartySelectionResult
+                    .getSelectedSourceCounterpartyId(
+                        savedStateHandle = entry.savedStateHandle,
+                    )
+                val selectedDestinationId: TransferCounterpartyId? =
+                    TransferCounterpartySelectionResult
+                        .getSelectedDestinationCounterpartyId(
+                            savedStateHandle = entry.savedStateHandle,
                         )
+
+                if (selectedSourceId != null || selectedDestinationId != null) {
+                    viewModel.onCounterpartiesSelected(
+                        newSourceId = selectedSourceId,
+                        newDestinationId = selectedDestinationId,
+                    )
+                } else {
+                    viewModel.setParameters(
+                        sourceId = route.sourceId,
+                        destinationId = route.destinationId,
+                        transferToEditId = route.transferToEditId,
+                        sourceAmount = route.sourceAmount,
+                        destinationAmount = route.destinationAmount,
+                        memo = route.memo,
+                        time = route.time,
+                    )
+                }
+
+                launch {
+                    viewModel.events.collect { event ->
+                        when (event) {
+                            TransferSheetViewModel.Event.TransferDone -> {
+                                onTransferDone()
+                            }
+
+                            is TransferSheetViewModel.Event.ProceedToDatePicker -> {
+                                DatePickerDialogFragment
+                                    .newInstance(
+                                        bundle = DatePickerDialogFragment.getBundle(
+                                            currentDate = event.currentDate,
+                                        )
+                                    )
+                                    .showSingle(
+                                        activity.supportFragmentManager,
+                                        DatePickerDialogFragment.TAG
+                                    )
+                            }
+
+                            is TransferSheetViewModel.Event.ProceedToCounterpartySelection -> {
+                                flowNavController.navigate(
+                                    route = TransferCounterpartySelectionSheetRoute(
+                                        isForSource = event.selectSource,
+                                        alreadySelectedCounterpartyId = event.alreadySelectedCounterpartyId,
+                                        showCategories = event.showCategories,
+                                        showAccounts = event.showAccounts,
+                                    ),
+                                )
+                            }
+                        }
                     }
                 }
             }
+
+            TransferSheetRoot(
+                viewModel = viewModel,
+            )
+        }
+
+        composable<TransferCounterpartySelectionSheetRoute> { entry ->
+            val route = entry.toRoute<TransferCounterpartySelectionSheetRoute>()
+            val viewModel = koinViewModel<TransferCounterpartySelectionSheetViewModel>()
+
+            LaunchedEffect(route) {
+                viewModel.setParameters(
+                    isIncognito = isIncognito,
+                    isForSource = route.isForSource,
+                    showAccounts = route.showAccounts,
+                    showCategories = route.showCategories,
+                    alreadySelectedCounterpartyId = route.alreadySelectedCounterpartyId,
+                )
+
+                launch {
+                    viewModel.events.collect { event ->
+                        when (event) {
+                            is TransferCounterpartySelectionSheetViewModel.Event.Selected -> {
+                                event.result.setSelectedCounterpartyId(
+                                    savedStateHandle = flowNavController
+                                        .previousBackStackEntry
+                                        !!.savedStateHandle,
+                                )
+                                flowNavController.navigateUp()
+                            }
+                        }
+                    }
+                }
+            }
+
+            TransferCounterpartySelectionSheetRoot(
+                viewModel = viewModel,
+            )
         }
     }
-
-    TransferSheetRoot(
-        viewModel = viewModel,
-    )
 }
