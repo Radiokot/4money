@@ -1,0 +1,2 @@
+Changed:
+- Internals of the transfer dialog, which needs to be tested
