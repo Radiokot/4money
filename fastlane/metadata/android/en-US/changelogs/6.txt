@@ -1,3 +1,6 @@
+Added:
+- Bottom sheet dismiss by a swipe
+
 Fixed:
 - Resetting transfer data when changing counterparty, if launched from a shortcut
 
