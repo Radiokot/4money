@@ -70,10 +70,10 @@ fun MoneyAppModalBottomSheetLayout(
     // Only do it if not navigating to another sheet.
     LaunchedEffect(bottomSheetNavigator) {
         var lastShownBackStackEntry: NavBackStackEntry? = null
-        snapshotFlow { bottomSheetNavigator.navigatorSheetState.currentValue }
-            .collect { sheetState ->
+        snapshotFlow { bottomSheetNavigator.navigatorSheetState.targetValue }
+            .collect { targetSheetState ->
                 val currentBackStackEntry = moneyAppNavController.currentBackStackEntry
-                if (sheetState != ModalBottomSheetValue.Hidden) {
+                if (targetSheetState != ModalBottomSheetValue.Hidden) {
                     lastShownBackStackEntry = currentBackStackEntry
                 } else if (currentBackStackEntry == lastShownBackStackEntry) {
                     moneyAppNavController.popBackStack()
@@ -87,6 +87,7 @@ fun MoneyAppModalBottomSheetLayout(
             topStart = 16.dp,
             topEnd = 16.dp,
         ),
+        sheetGesturesEnabled = false,
         content = {},
         modifier = Modifier
             .fillMaxSize()
