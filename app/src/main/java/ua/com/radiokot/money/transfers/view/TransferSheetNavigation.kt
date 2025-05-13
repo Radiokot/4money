@@ -22,22 +22,36 @@ package ua.com.radiokot.money.transfers.view
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.material.navigation.bottomSheet
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navOptions
 import androidx.navigation.toRoute
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.koin.compose.viewmodel.koinViewModel
+import ua.com.radiokot.money.accounts.data.Account
+import ua.com.radiokot.money.categories.data.Category
+import ua.com.radiokot.money.routeIs
 import ua.com.radiokot.money.showSingle
 import ua.com.radiokot.money.transfers.data.Transfer
+import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import java.math.BigInteger
 
@@ -92,17 +106,139 @@ data class TransferSheetRoute(
     )
 }
 
+@Serializable
+class TransferFlowRoute
+private constructor(
+    private val categoryIdJson: String?,
+    private val accountIdJson: String?,
+    private val isIncome: Boolean?,
+    private val transferScreenRouteJson: String?,
+) {
+    val actualDataForGodsSake: Data by lazy {
+        when {
+            transferScreenRouteJson != null ->
+                Data.ReadyTransfer(
+                    route = Json.decodeFromString(transferScreenRouteJson),
+                )
+
+            categoryIdJson != null ->
+                Data.FromToCategory(
+                    id = Json.decodeFromString(categoryIdJson),
+                    isIncome = isIncome!!,
+                )
+
+            accountIdJson != null ->
+                Data.FromToAccount(
+                    id = Json.decodeFromString(accountIdJson),
+                    isIncome = isIncome,
+                )
+
+            else ->
+                error("Unknown parameter configuration")
+        }
+    }
+
+
+    constructor(
+        category: Category,
+    ) : this(
+        categoryIdJson = Json.encodeToString(TransferCounterparty.Category(category).id),
+        isIncome = category.isIncome,
+        accountIdJson = null,
+        transferScreenRouteJson = null,
+    )
+
+    constructor(
+        accountId: TransferCounterpartyId.Account,
+        isIncome: Boolean?,
+    ) : this(
+        accountIdJson = Json.encodeToString(accountId),
+        isIncome = isIncome,
+        categoryIdJson = null,
+        transferScreenRouteJson = null,
+    )
+
+    constructor(
+        transferToEdit: Transfer,
+    ) : this(
+        transferScreenRouteJson = Json.encodeToString(TransferSheetRoute(transferToEdit)),
+        accountIdJson = null,
+        categoryIdJson = null,
+        isIncome = null,
+    )
+
+    sealed interface Data {
+
+        class FromToCategory(
+            val id: TransferCounterpartyId.Category,
+            val isIncome: Boolean,
+        ) : Data
+
+        class FromToAccount(
+            val id: TransferCounterpartyId.Account,
+            val isIncome: Boolean?,
+        ) : Data
+
+        class ReadyTransfer(
+            val route: TransferSheetRoute,
+        ) : Data
+    }
+}
+
 fun NavGraphBuilder.transferFlowSheet(
     isIncognito: Boolean,
+    lastUsedAccountByCategory: Flow<Map<String, Account>>,
     onTransferDone: () -> Unit,
-) = bottomSheet<TransferSheetRoute> { flowStartEntry ->
+) = bottomSheet<TransferFlowRoute> { flowStartEntry ->
     val flowNavController = rememberNavController()
+    val flowStartRoute = flowStartEntry.toRoute<TransferFlowRoute>()
+
+    val startDestination: Any = remember(flowStartRoute) {
+        when (val flowStartData = flowStartRoute.actualDataForGodsSake) {
+
+            is TransferFlowRoute.Data.FromToAccount -> {
+                TransferCounterpartySelectionSheetRoute(
+                    isForSource = flowStartData.isIncome == true,
+                    alreadySelectedCounterpartyId = flowStartData.id,
+                    showCategories = flowStartData.isIncome != null,
+                )
+            }
+
+            is TransferFlowRoute.Data.FromToCategory -> {
+                val lastUsedAccount: Account? = runBlocking {
+                    lastUsedAccountByCategory.first()[flowStartData.id.categoryId]
+                }
+
+                if (lastUsedAccount != null)
+                    if (flowStartData.isIncome)
+                        TransferSheetRoute(
+                            sourceId = flowStartData.id,
+                            destinationId = TransferCounterparty.Account(lastUsedAccount).id,
+                        )
+                    else
+                        TransferSheetRoute(
+                            sourceId = TransferCounterparty.Account(lastUsedAccount).id,
+                            destinationId = flowStartData.id,
+                        )
+                else
+                    TransferCounterpartySelectionSheetRoute(
+                        isForSource = !flowStartData.isIncome,
+                        alreadySelectedCounterpartyId = flowStartData.id,
+                        showCategories = false,
+                        isIncognito = isIncognito,
+                    )
+            }
+
+            is TransferFlowRoute.Data.ReadyTransfer ->
+                flowStartData.route
+        }
+    }
 
     NavHost(
         navController = flowNavController,
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
-        startDestination = flowStartEntry.toRoute<TransferSheetRoute>(),
+        startDestination = startDestination,
     ) {
 
         composable<TransferSheetRoute> { entry ->
@@ -129,7 +265,7 @@ fun NavGraphBuilder.transferFlowSheet(
                 }
             }
 
-            LaunchedEffect(route) {
+            LaunchedEffect(entry) {
                 val selectedSourceId: TransferCounterpartyId? = TransferCounterpartySelectionResult
                     .getSelectedSourceCounterpartyId(
                         savedStateHandle = entry.savedStateHandle,
@@ -201,7 +337,7 @@ fun NavGraphBuilder.transferFlowSheet(
             val route = entry.toRoute<TransferCounterpartySelectionSheetRoute>()
             val viewModel = koinViewModel<TransferCounterpartySelectionSheetViewModel>()
 
-            LaunchedEffect(route) {
+            LaunchedEffect(entry) {
                 viewModel.setParameters(
                     isIncognito = isIncognito,
                     isForSource = route.isForSource,
@@ -214,12 +350,53 @@ fun NavGraphBuilder.transferFlowSheet(
                     viewModel.events.collect { event ->
                         when (event) {
                             is TransferCounterpartySelectionSheetViewModel.Event.Selected -> {
-                                event.result.setSelectedCounterpartyId(
-                                    savedStateHandle = flowNavController
-                                        .previousBackStackEntry
-                                        !!.savedStateHandle,
+
+                                val previousBackStackEntry =
+                                    flowNavController.previousBackStackEntry
+
+                                // In case the selection was requested by the transfer sheet,
+                                // pass it back through the saved state handle.
+                                if (previousBackStackEntry?.destination?.routeIs<TransferSheetRoute>() == true) {
+                                    event.result.setSelectedCounterpartyId(
+                                        savedStateHandle = previousBackStackEntry.savedStateHandle,
+                                    )
+                                    flowNavController.navigateUp()
+                                    return@collect
+                                }
+
+                                val popUpToCounterpartySelection = navOptions {
+                                    popUpTo<TransferCounterpartySelectionSheetRoute> {
+                                        inclusive = true
+                                    }
+                                }
+
+                                if (event.result.otherSelectedCounterpartyId == null) {
+                                    flowNavController.navigate(
+                                        route = TransferCounterpartySelectionSheetRoute(
+                                            isForSource = !event.result.isSelectedAsSource,
+                                            alreadySelectedCounterpartyId = event.result.selectedCounterparty.id,
+                                            showCategories = event.result.selectedCounterparty is TransferCounterparty.Account,
+                                            showAccounts = true,
+                                        ),
+                                        navOptions = popUpToCounterpartySelection,
+                                    )
+                                    return@collect
+                                }
+
+                                flowNavController.navigate(
+                                    route =
+                                    if (event.result.isSelectedAsSource)
+                                        TransferSheetRoute(
+                                            sourceId = event.result.selectedCounterparty.id,
+                                            destinationId = event.result.otherSelectedCounterpartyId,
+                                        )
+                                    else
+                                        TransferSheetRoute(
+                                            sourceId = event.result.otherSelectedCounterpartyId,
+                                            destinationId = event.result.selectedCounterparty.id,
+                                        ),
+                                    navOptions = popUpToCounterpartySelection,
                                 )
-                                flowNavController.navigateUp()
                             }
                         }
                     }
