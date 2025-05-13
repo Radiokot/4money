@@ -70,6 +70,8 @@ fun MoneyAppModalBottomSheetLayout(
     // Only do it if not navigating to another sheet.
     LaunchedEffect(bottomSheetNavigator) {
         var lastShownBackStackEntry: NavBackStackEntry? = null
+
+        // Target state is used so if the sheet has keyboard, it dismisses faster.
         snapshotFlow { bottomSheetNavigator.navigatorSheetState.targetValue }
             .collect { targetSheetState ->
                 val currentBackStackEntry = moneyAppNavController.currentBackStackEntry
@@ -87,6 +89,7 @@ fun MoneyAppModalBottomSheetLayout(
             topStart = 16.dp,
             topEnd = 16.dp,
         ),
+        // Gestures work awful with lists.
         sheetGesturesEnabled = false,
         content = {},
         modifier = Modifier
