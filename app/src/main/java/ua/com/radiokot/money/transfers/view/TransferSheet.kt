@@ -37,7 +37,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
@@ -90,12 +89,6 @@ fun TransferSheetRoot(
 ) {
     val source = viewModel.source.collectAsState().value
     val destination = viewModel.destination.collectAsState().value
-
-    // Yes, an invisible square.
-    // Without this tiny humble buddy,
-    // BottomSheetNavigator or ModalBottomSheetLayout go crazy
-    // whenever they find the sheet content empty 🤦🏻.
-    Spacer(Modifier.size(1.dp))
 
     TransferSheet(
         modifier = modifier,

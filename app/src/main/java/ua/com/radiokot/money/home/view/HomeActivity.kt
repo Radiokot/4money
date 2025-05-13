@@ -45,6 +45,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -71,8 +72,8 @@ import ua.com.radiokot.money.rememberMoneyAppNavController
 import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.transfers.history.view.ActivityScreenRoute
 import ua.com.radiokot.money.transfers.history.view.activityScreen
-import ua.com.radiokot.money.transfers.logic.GetLastUsedAccountsByCategoryUseCase
-import ua.com.radiokot.money.transfers.view.TransferFlowRoute
+import ua.com.radiokot.money.transfers.view.TransfersNavigator
+import ua.com.radiokot.money.transfers.view.transferCounterpartySelectionSheet
 import ua.com.radiokot.money.transfers.view.transferFlowSheet
 
 class HomeActivity : UserSessionScopeActivity() {
@@ -104,7 +105,13 @@ private fun HomeScreen(
     viewModel: HomeViewModel,
 ) {
     val navController = rememberMoneyAppNavController()
-    val getLastUsedAccountsByCategoryUseCase = koinInject<GetLastUsedAccountsByCategoryUseCase>()
+    val transfersNavigatorFactory = koinInject<TransfersNavigator.Factory>()
+    val transfersNavigator = remember(transfersNavigatorFactory, navController) {
+        transfersNavigatorFactory.create(
+            isIncognito = false,
+            navController = navController,
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -135,25 +142,13 @@ private fun HomeScreen(
             )
 
             categoriesScreen(
-                onProceedToTransfer = { category ->
-                    navController.navigate(
-                        route = TransferFlowRoute(
-                            category = category,
-                        )
-                    )
-                },
+                onProceedToTransfer = transfersNavigator::proceedToTransfer,
                 homeViewModel = viewModel,
             )
 
             activityScreen(
                 homeViewModel = viewModel,
-                onProceedToEditingTransfer = { transferToEdit ->
-                    navController.navigate(
-                        route = TransferFlowRoute(
-                            transferToEdit = transferToEdit,
-                        )
-                    )
-                },
+                onProceedToEditingTransfer = transfersNavigator::proceedToTransfer,
             )
 
             preferencesScreen()
@@ -161,11 +156,9 @@ private fun HomeScreen(
             accountActionSheet(
                 onBalanceUpdated = navController::navigateUp,
                 onProceedToExpense = { sourceAccountId ->
-                    navController.navigate(
-                        route = TransferFlowRoute(
-                            accountId = sourceAccountId,
-                            isIncome = false,
-                        ),
+                    transfersNavigator.proceedToTransfer(
+                        accountId = sourceAccountId,
+                        isIncome = false,
                         navOptions = navOptions {
                             popUpTo<AccountActionSheetRoute> {
                                 inclusive = true
@@ -174,11 +167,9 @@ private fun HomeScreen(
                     )
                 },
                 onProceedToIncome = { destinationAccountId ->
-                    navController.navigate(
-                        route = TransferFlowRoute(
-                            accountId = destinationAccountId,
-                            isIncome = true,
-                        ),
+                    transfersNavigator.proceedToTransfer(
+                        accountId = destinationAccountId,
+                        isIncome = true,
                         navOptions = navOptions {
                             popUpTo<AccountActionSheetRoute> {
                                 inclusive = true
@@ -187,11 +178,9 @@ private fun HomeScreen(
                     )
                 },
                 onProceedToTransfer = { sourceAccountId ->
-                    navController.navigate(
-                        route = TransferFlowRoute(
-                            accountId = sourceAccountId,
-                            isIncome = null,
-                        ),
+                    transfersNavigator.proceedToTransfer(
+                        accountId = sourceAccountId,
+                        isIncome = null,
                         navOptions = navOptions {
                             popUpTo<AccountActionSheetRoute> {
                                 inclusive = true
@@ -203,8 +192,11 @@ private fun HomeScreen(
 
             transferFlowSheet(
                 isIncognito = false,
-                lastUsedAccountByCategory = getLastUsedAccountsByCategoryUseCase(),
                 onTransferDone = navController::navigateUp,
+            )
+
+            transferCounterpartySelectionSheet(
+                onSelected = transfersNavigator::proceedToTransfer,
             )
         }
 

@@ -26,18 +26,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
-import androidx.navigation.navOptions
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.koinInject
 import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.rememberMoneyAppNavController
-import ua.com.radiokot.money.transfers.data.TransferCounterparty
-import ua.com.radiokot.money.transfers.logic.GetLastUsedAccountsByCategoryUseCase
 
 class TransferShortcutActivity : UserSessionScopeActivity() {
 
@@ -87,7 +85,13 @@ private fun TransferShortcutScreen(
     finishActivity: () -> Unit,
 ) {
     val navController = rememberMoneyAppNavController()
-    val getLastUsedAccountsByCategoryUseCase = koinInject<GetLastUsedAccountsByCategoryUseCase>()
+    val transfersNavigatorFactory = koinInject<TransfersNavigator.Factory>()
+    val transfersNavigator = remember(transfersNavigatorFactory, navController) {
+        transfersNavigatorFactory.create(
+            isIncognito = true,
+            navController = navController,
+        )
+    }
 
     LaunchedEffect(navController) {
         navController.currentBackStack.collectLatest { backStack ->
@@ -113,34 +117,11 @@ private fun TransferShortcutScreen(
             .fillMaxSize()
     ) {
         transferCounterpartySelectionSheet(
-            onSelected = { result ->
-                navController.navigate(
-                    route =
-                    when (val selectedCounterparty = result.selectedCounterparty){
-
-                        is TransferCounterparty.Account ->
-                            TransferFlowRoute(
-                                accountId = selectedCounterparty.id,
-                                isIncome = null,
-                            )
-
-                        is TransferCounterparty.Category ->
-                            TransferFlowRoute(
-                                category = selectedCounterparty.category,
-                            )
-                    },
-                    navOptions = navOptions {
-                        popUpTo<TransferCounterpartySelectionSheetRoute>{
-                            inclusive = true
-                        }
-                    }
-                )
-            },
+            onSelected = transfersNavigator::proceedToTransfer,
         )
 
         transferFlowSheet(
             isIncognito = true,
-            lastUsedAccountByCategory = getLastUsedAccountsByCategoryUseCase(),
             onTransferDone = navController::popBackStack,
         )
     }
