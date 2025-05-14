@@ -22,13 +22,13 @@ package ua.com.radiokot.money.transfers.view
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.material.navigation.bottomSheet
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
@@ -95,7 +95,7 @@ data class TransferSheetRoute(
 fun NavGraphBuilder.transferFlowSheet(
     isIncognito: Boolean,
     onTransferDone: () -> Unit,
-) = bottomSheet<TransferSheetRoute> { flowStartEntry ->
+) = dialog<TransferSheetRoute> { flowStartEntry ->
     val flowNavController = rememberNavController()
 
     NavHost(

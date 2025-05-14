@@ -32,7 +32,6 @@ import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.koinInject
-import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.rememberMoneyAppNavController
@@ -125,8 +124,4 @@ private fun TransferShortcutScreen(
             onTransferDone = navController::popBackStack,
         )
     }
-
-    MoneyAppModalBottomSheetLayout(
-        moneyAppNavController = navController,
-    )
 }

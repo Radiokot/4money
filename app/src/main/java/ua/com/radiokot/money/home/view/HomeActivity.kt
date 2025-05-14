@@ -57,7 +57,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
-import ua.com.radiokot.money.MoneyAppModalBottomSheetLayout
 import ua.com.radiokot.money.accounts.view.AccountActionSheetRoute
 import ua.com.radiokot.money.accounts.view.AccountsScreenRoute
 import ua.com.radiokot.money.accounts.view.accountActionSheet
@@ -231,10 +230,6 @@ private fun HomeScreen(
             }
         )
     }
-
-    MoneyAppModalBottomSheetLayout(
-        moneyAppNavController = navController,
-    )
 }
 
 @Composable

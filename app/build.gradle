@@ -88,7 +88,6 @@ ext {
     appcompatVersion = "1.7.0"
     composeBomVersion = "2025.02.00"
     navigationVersion = "2.8.8"
-    materialVersion = "1.8.0-beta03"
     pagingVersion = "3.3.6"
     activityVersion = "1.10.1"
     koinBomVersion = "4.0.2"
@@ -116,8 +115,6 @@ dependencies {
     implementation "androidx.compose.foundation:foundation-layout"
     debugImplementation "androidx.compose.ui:ui-tooling"
     implementation "androidx.compose.ui:ui-tooling-preview"
-    implementation "androidx.compose.material:material:$materialVersion"
-    implementation "androidx.compose.material:material-navigation:$materialVersion"
 
     implementation platform("io.insert-koin:koin-bom:$koinBomVersion")
     implementation "io.insert-koin:koin-android"

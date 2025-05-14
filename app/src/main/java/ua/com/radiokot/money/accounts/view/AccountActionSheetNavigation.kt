@@ -19,9 +19,9 @@
 
 package ua.com.radiokot.money.accounts.view
 
-import androidx.compose.material.navigation.bottomSheet
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -38,7 +38,7 @@ fun NavGraphBuilder.accountActionSheet(
     onProceedToIncome: (destinationAccountId: TransferCounterpartyId.Account) -> Unit,
     onProceedToExpense: (sourceAccountId: TransferCounterpartyId.Account) -> Unit,
     onProceedToTransfer: (sourceAccountId: TransferCounterpartyId.Account) -> Unit,
-) = bottomSheet<AccountActionSheetRoute> { entry ->
+) = dialog<AccountActionSheetRoute> { entry ->
 
     val accountId = entry.toRoute<AccountActionSheetRoute>()
         .accountId

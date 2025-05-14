@@ -19,23 +19,7 @@
 
 package ua.com.radiokot.money
 
-import androidx.compose.animation.core.AnimationConstants
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.navigation.BottomSheetNavigator
-import androidx.compose.material.navigation.ModalBottomSheetLayout
-import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -43,59 +27,7 @@ import kotlinx.serialization.serializer
 
 @Composable
 fun rememberMoneyAppNavController(): NavHostController {
-    val bottomSheetState = rememberModalBottomSheetState(
-        initialValue = ModalBottomSheetValue.Hidden,
-        skipHalfExpanded = true,
-        // The default spec causes significant delay 🤦🏻.
-        animationSpec = tween(durationMillis = AnimationConstants.DefaultDurationMillis / 2),
-    )
-
-    val bottomSheetNavigator = remember(bottomSheetState) {
-        BottomSheetNavigator(bottomSheetState)
-    }
-
-    return rememberNavController(
-        bottomSheetNavigator,
-    )
-}
-
-@Composable
-fun MoneyAppModalBottomSheetLayout(
-    moneyAppNavController: NavController,
-) {
-    val bottomSheetNavigator =
-        moneyAppNavController.navigatorProvider.getNavigator(BottomSheetNavigator::class.java)
-
-    // Pop back stack when hiding (click outside, drag) the current content.
-    // Only do it if not navigating to another sheet.
-    LaunchedEffect(bottomSheetNavigator) {
-        var lastShownBackStackEntry: NavBackStackEntry? = null
-
-        // Target state is used so if the sheet has keyboard, it dismisses faster.
-        snapshotFlow { bottomSheetNavigator.navigatorSheetState.targetValue }
-            .collect { targetSheetState ->
-                val currentBackStackEntry = moneyAppNavController.currentBackStackEntry
-                if (targetSheetState != ModalBottomSheetValue.Hidden) {
-                    lastShownBackStackEntry = currentBackStackEntry
-                } else if (currentBackStackEntry == lastShownBackStackEntry) {
-                    moneyAppNavController.popBackStack()
-                }
-            }
-    }
-
-    ModalBottomSheetLayout(
-        bottomSheetNavigator = bottomSheetNavigator,
-        sheetShape = RoundedCornerShape(
-            topStart = 16.dp,
-            topEnd = 16.dp,
-        ),
-        // Gestures work awful with lists.
-        sheetGesturesEnabled = false,
-        content = {},
-        modifier = Modifier
-            .fillMaxSize()
-            .imePadding()
-    )
+    return rememberNavController()
 }
 
 inline fun <reified RouteType> NavDestination.routeIs(): Boolean =
