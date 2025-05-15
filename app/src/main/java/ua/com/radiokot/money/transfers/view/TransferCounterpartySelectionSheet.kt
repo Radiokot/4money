@@ -49,6 +49,7 @@ private fun TransferCounterpartySelectionSheet(
     onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
 ) = BoxWithConstraints(
     modifier = modifier
+        .background(Color.White)
         .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
 ) {
     val maxSheetHeightDp =
@@ -69,9 +70,8 @@ private fun TransferCounterpartySelectionSheet(
             .heightIn(
                 max = maxSheetHeightDp,
             )
-            .background(Color.White)
             .padding(
-                vertical = 16.dp,
+                top = 16.dp,
             )
     )
 }

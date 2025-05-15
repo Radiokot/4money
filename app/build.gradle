@@ -98,6 +98,7 @@ ext {
     slf4jHandroidVersion = "2.0.13"
     kotlinSerializationJsonVersion = "1.8.0"
     workVersion = "2.10.1"
+    composeUnstyledVersion = "1.31.0"
 }
 
 dependencies {
@@ -135,6 +136,8 @@ dependencies {
 
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinSerializationJsonVersion"
     implementation "sh.calvin.reorderable:reorderable:2.4.3"
+
+    implementation "com.composables:core:$composeUnstyledVersion"
 
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$junitExtVersion"

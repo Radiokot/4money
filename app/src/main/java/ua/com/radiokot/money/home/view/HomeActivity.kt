@@ -23,11 +23,15 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.AnimationConstants
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -37,6 +41,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -44,9 +49,13 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -55,8 +64,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
+import com.composables.core.ModalBottomSheet
+import com.composables.core.Scrim
+import com.composables.core.Sheet
+import com.composables.core.SheetDetent.Companion.FullyExpanded
+import com.composables.core.SheetDetent.Companion.Hidden
+import com.composables.core.rememberModalBottomSheetState
+import kotlinx.coroutines.delay
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
+import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
 import ua.com.radiokot.money.accounts.view.AccountActionSheetRoute
 import ua.com.radiokot.money.accounts.view.AccountsScreenRoute
 import ua.com.radiokot.money.accounts.view.accountActionSheet
@@ -69,11 +86,13 @@ import ua.com.radiokot.money.preferences.view.PreferencesScreenRoute
 import ua.com.radiokot.money.preferences.view.preferencesScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
 import ua.com.radiokot.money.stableClickable
+import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.history.view.ActivityScreenRoute
 import ua.com.radiokot.money.transfers.history.view.activityScreen
+import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetRoute
 import ua.com.radiokot.money.transfers.view.TransfersNavigator
 import ua.com.radiokot.money.transfers.view.transferCounterpartySelectionSheet
-import ua.com.radiokot.money.transfers.view.transferFlowSheet
+import ua.com.radiokot.money.transfers.view.transferSheet
 
 class HomeActivity : UserSessionScopeActivity() {
 
@@ -189,8 +208,22 @@ private fun HomeScreen(
                 },
             )
 
-            transferFlowSheet(
-                isIncognito = false,
+            transferSheet(
+                onProceedToTransferCounterpartySelection = {
+                        alreadySelectedCounterpartyId: TransferCounterpartyId,
+                        selectSource: Boolean,
+                        showCategories: Boolean,
+                        showAccounts: Boolean,
+                    ->
+                    navController.navigate(
+                        route = TransferCounterpartySelectionSheetRoute(
+                            isForSource = selectSource,
+                            alreadySelectedCounterpartyId = alreadySelectedCounterpartyId,
+                            showCategories = showCategories,
+                            showAccounts = showAccounts,
+                        ),
+                    )
+                },
                 onTransferDone = navController::navigateUp,
             )
 
@@ -230,6 +263,10 @@ private fun HomeScreen(
             }
         )
     }
+
+    MoneyAppModalBottomSheetHost(
+        moneyAppNavController = navController,
+    )
 }
 
 @Composable

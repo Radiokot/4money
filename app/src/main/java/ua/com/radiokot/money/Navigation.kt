@@ -19,15 +19,129 @@
 
 package ua.com.radiokot.money
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.LocalOwnersProvider
 import androidx.navigation.compose.rememberNavController
+import com.composables.core.ModalBottomSheet
+import com.composables.core.Scrim
+import com.composables.core.Sheet
+import com.composables.core.SheetDetent
+import com.composables.core.rememberModalBottomSheetState
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.serializer
 
 @Composable
 fun rememberMoneyAppNavController(): NavHostController {
-    return rememberNavController()
+    val bottomSheetNavigator = remember {
+        BottomSheetNavigator()
+    }
+    return rememberNavController(
+        bottomSheetNavigator,
+    )
+}
+
+@Composable
+fun MoneyAppModalBottomSheetHost(
+    moneyAppNavController: NavController,
+) {
+    val bottomSheetNavigator = moneyAppNavController
+        .navigatorProvider
+        .getNavigator(BottomSheetNavigator::class.java)
+
+    val sheetState = rememberModalBottomSheetState(
+        initialDetent = SheetDetent.Hidden,
+        // Use normal speed once the IME padding issue is resolved
+        // https://github.com/composablehorizons/compose-unstyled/issues/74
+        animationSpec = tween(50),
+    )
+
+    LaunchedEffect(sheetState) {
+        bottomSheetNavigator
+            .backStack
+            .map(List<*>::isNotEmpty)
+            .distinctUntilChanged()
+            .collectLatest { isBackStackNotEmpty ->
+                if (isBackStackNotEmpty) {
+                    sheetState.targetDetent = SheetDetent.FullyExpanded
+                } else {
+                    sheetState.targetDetent = SheetDetent.Hidden
+                }
+            }
+    }
+
+    ModalBottomSheet(
+        state = sheetState,
+        onDismiss = bottomSheetNavigator::dismiss,
+    ) {
+        Scrim(
+            enter = fadeIn(),
+        )
+
+        val backStack by bottomSheetNavigator.backStack.collectAsState()
+
+        BackHandler(enabled = backStack.size > 1) {
+            backStack.last().also {
+                bottomSheetNavigator.popBackStack(it, false)
+                bottomSheetNavigator.onTransitionComplete(it)
+            }
+        }
+
+        Sheet(
+            modifier = Modifier
+                .fillMaxWidth()
+                .defaultMinSize(minWidth = 1.dp, minHeight = 1.dp)
+                .clip(
+                    RoundedCornerShape(
+                        topStart = 24.dp,
+                        topEnd = 24.dp,
+                    )
+                )
+                .imePadding()
+        ) {
+            val saveableStateHolder = rememberSaveableStateHolder()
+
+            backStack.lastOrNull()?.let { backStackEntry ->
+                key(backStackEntry) {
+                    val destination = backStackEntry.destination as BottomSheetNavigator.Destination
+
+                    backStackEntry.LocalOwnersProvider(saveableStateHolder) {
+                        destination.content(backStackEntry)
+                    }
+
+                    DisposableEffect(backStackEntry) {
+                        onDispose {
+                            bottomSheetNavigator.onTransitionComplete(backStackEntry)
+//                            if (backStack.isEmpty()) {
+//                                sheetState.jumpTo(SheetDetent.Hidden)
+//                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 inline fun <reified RouteType> NavDestination.routeIs(): Boolean =

@@ -22,12 +22,12 @@ package ua.com.radiokot.money.transfers.view
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.koin.compose.viewmodel.koinViewModel
+import ua.com.radiokot.money.bottomSheet
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
@@ -98,7 +98,7 @@ data class TransferCounterpartySelectionResult(
 
 fun NavGraphBuilder.transferCounterpartySelectionSheet(
     onSelected: (TransferCounterpartySelectionResult) -> Unit,
-) = dialog<TransferCounterpartySelectionSheetRoute> { entry ->
+) = bottomSheet<TransferCounterpartySelectionSheetRoute> { entry ->
     val route = entry.toRoute<TransferCounterpartySelectionSheetRoute>()
     val viewModel = koinViewModel<TransferCounterpartySelectionSheetViewModel>()
 
