@@ -23,8 +23,13 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.AnimationConstants
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -98,8 +103,15 @@ fun MoneyAppModalBottomSheetHost(
         state = sheetState,
         onDismiss = bottomSheetNavigator::dismiss,
     ) {
+        val scrimFadeAnimationSpec: SpringSpec<Float> = remember {
+            spring(
+                stiffness = Spring.StiffnessMedium,
+            )
+        }
+
         Scrim(
-            enter = fadeIn(),
+            enter = fadeIn(scrimFadeAnimationSpec),
+            exit = fadeOut(scrimFadeAnimationSpec),
         )
 
         val backStack by bottomSheetNavigator.backStack.collectAsState()
