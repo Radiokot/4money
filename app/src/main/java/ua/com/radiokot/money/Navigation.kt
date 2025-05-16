@@ -20,6 +20,9 @@
 package ua.com.radiokot.money
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.defaultMinSize
@@ -31,9 +34,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
@@ -119,24 +122,31 @@ fun MoneyAppModalBottomSheetHost(
                     )
                 )
                 .imePadding()
-        ) {
+        ) SheetContent@{
             val saveableStateHolder = rememberSaveableStateHolder()
 
-            backStack.lastOrNull()?.let { backStackEntry ->
-                key(backStackEntry) {
-                    val destination = backStackEntry.destination as BottomSheetNavigator.Destination
+            AnimatedContent(
+                targetState = backStack.lastOrNull()
+                    ?: return@SheetContent,
+                contentAlignment = Alignment.BottomCenter,
+                transitionSpec = {
+                    ContentTransform(
+                        targetContentEnter = fadeIn(),
+                        initialContentExit = ExitTransition.None,
+                        sizeTransform = null,
+                    )
+                },
+                label = "sheet-content-transition",
+            ) { topBackStackEntry ->
 
-                    backStackEntry.LocalOwnersProvider(saveableStateHolder) {
-                        destination.content(backStackEntry)
-                    }
+                topBackStackEntry.LocalOwnersProvider(saveableStateHolder) {
+                    (topBackStackEntry.destination as BottomSheetNavigator.Destination)
+                        .content(topBackStackEntry)
+                }
 
-                    DisposableEffect(backStackEntry) {
-                        onDispose {
-                            bottomSheetNavigator.onTransitionComplete(backStackEntry)
-//                            if (backStack.isEmpty()) {
-//                                sheetState.jumpTo(SheetDetent.Hidden)
-//                            }
-                        }
+                DisposableEffect(topBackStackEntry) {
+                    onDispose {
+                        bottomSheetNavigator.onTransitionComplete(topBackStackEntry)
                     }
                 }
             }
