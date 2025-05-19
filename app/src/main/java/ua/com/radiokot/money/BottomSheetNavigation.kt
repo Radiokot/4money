@@ -102,7 +102,10 @@ class BottomSheetNavigator : Navigator<BottomSheetNavigator.Destination>() {
     }
 
     fun onDismiss() {
-        popBackStack(backStack.value.first(), false)
+        backStack
+            .value
+            .firstOrNull()
+            ?.also { popBackStack(it, false) }
     }
 
     fun onTransitionComplete(entry: NavBackStackEntry) {
