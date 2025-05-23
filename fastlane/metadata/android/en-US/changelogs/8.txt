@@ -1,2 +1,0 @@
-Changed:
-- Internals of the bottom sheets, which needs to be tested

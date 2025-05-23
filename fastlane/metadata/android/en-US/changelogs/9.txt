@@ -1,0 +1,5 @@
+Added:
+- Fade animation for the sheet content change
+
+Fixed:
+- Account balance ending up incorrect when logging offline transfers on multiple devices
