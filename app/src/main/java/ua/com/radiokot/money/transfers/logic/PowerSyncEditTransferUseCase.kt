@@ -23,6 +23,7 @@ import com.powersync.PowerSyncDatabase
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
+import ua.com.radiokot.money.powersync.AtomicCrudSupabaseConnector
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.history.data.PowerSyncTransferHistoryRepository
@@ -60,6 +61,7 @@ class PowerSyncEditTransferUseCase(
                 destinationAmount = destinationAmount,
                 memo = memo,
                 time = timeToSet,
+                metadata = AtomicCrudSupabaseConnector.SPECIAL_TRANSACTION_TRANSFER_EDIT,
                 transaction = transaction,
             )
 

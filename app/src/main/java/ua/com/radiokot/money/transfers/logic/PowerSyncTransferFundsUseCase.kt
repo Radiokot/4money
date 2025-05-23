@@ -22,6 +22,7 @@ package ua.com.radiokot.money.transfers.logic
 import com.powersync.PowerSyncDatabase
 import kotlinx.datetime.LocalDate
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
+import ua.com.radiokot.money.powersync.AtomicCrudSupabaseConnector
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.data.TransfersPreferences
 import ua.com.radiokot.money.transfers.history.data.PowerSyncTransferHistoryRepository
@@ -91,6 +92,7 @@ class PowerSyncTransferFundsUseCase(
                 destinationAmount = destinationAmount,
                 memo = memo,
                 time = time,
+                metadata = AtomicCrudSupabaseConnector.SPECIAL_TRANSACTION_TRANSFER,
                 transaction = transaction,
             )
         }

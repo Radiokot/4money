@@ -239,6 +239,7 @@ class PowerSyncTransferHistoryRepository(
         destinationAmount: BigInteger,
         memo: String?,
         time: Instant,
+        metadata: String,
         transaction: PowerSyncTransaction,
         transferId: String = UUID.randomUUID().toString(),
     ) {
@@ -252,6 +253,7 @@ class PowerSyncTransferHistoryRepository(
                     "\nsourceAmount=$sourceAmount," +
                     "\ndestinationId=$destinationId," +
                     "\ndestinationAmount=$destinationAmount," +
+                    "\nmetadata=$metadata," +
                     "\nmemo=$memo"
         }
 
@@ -265,6 +267,7 @@ class PowerSyncTransferHistoryRepository(
                 destinationId.toString(),
                 destinationAmount.toString(),
                 memo,
+                metadata,
             )
         )
 
@@ -476,8 +479,9 @@ private const val SELECT_BY_ID =
  * 5. Destination ID
  * 6. Destination amount
  * 7. Memo
+ * 8. Metadata
  */
 private const val INSERT_OR_REPLACE_TRANSFER =
     "INSERT OR REPLACE INTO transfers " +
-            "(id, time, source_id, source_amount, destination_id, destination_amount, memo) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?)"
+            "(id, time, source_id, source_amount, destination_id, destination_amount, memo, _metadata) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"

@@ -74,6 +74,7 @@ fun moneyAppPowerSyncSchema() = Schema(
                 Column.text("memo"),
             ),
             ignoreEmptyUpdates = true,
+            trackMetadata = true,
         ),
         Table(
             // In this table, base_currency_code is the id

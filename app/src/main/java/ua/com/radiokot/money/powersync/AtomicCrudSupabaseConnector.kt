@@ -38,8 +38,11 @@ import io.github.jan.supabase.postgrest.rpc
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.plugin
 import io.ktor.client.statement.bodyAsText
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * A Supabase connector applying CRUD transactions atomically,
@@ -107,6 +110,35 @@ class AtomicCrudSupabaseConnector(
         }
     }
 
+    @Serializable
+    @Suppress("unused")
+    private class TransferInput(
+        @SerialName("id")
+        val id: String,
+        @SerialName("source_id")
+        val sourceId: String,
+        @SerialName("source_amount")
+        val sourceAmount: String,
+        @SerialName("destination_id")
+        val destinationId: String,
+        @SerialName("destination_amount")
+        val destinationAmount: String,
+        @SerialName("memo")
+        val memo: String?,
+        @SerialName("time")
+        val time: String,
+    ) {
+        constructor(crudEntry: CrudEntry) : this(
+            id = crudEntry.id,
+            sourceId = crudEntry.opData?.get("source_id")!!,
+            sourceAmount = crudEntry.opData?.get("source_amount")!!,
+            destinationId = crudEntry.opData?.get("destination_id")!!,
+            destinationAmount = crudEntry.opData?.get("destination_amount")!!,
+            memo = crudEntry.opData?.get("memo"),
+            time = crudEntry.opData?.get("time")!!,
+        )
+    }
+
     init {
         require(supabaseClient.pluginManager.getPluginOrNull(Auth) != null) {
             "The Auth plugin must be installed on the Supabase client"
@@ -169,10 +201,12 @@ class AtomicCrudSupabaseConnector(
             ?: return@runWrappedSuspending
 
         try {
-            supabaseClient.postgrest.rpc(
-                function = "atomic_crud",
-                parameters = AtomicCrudInput(transaction),
-            )
+            if (!tryToUploadSpecialTransaction(transaction)) {
+                supabaseClient.postgrest.rpc(
+                    function = "atomic_crud",
+                    parameters = AtomicCrudInput(transaction),
+                )
+            }
             transaction.complete(null)
         } catch (e: Exception) {
             if (errorCode != null && PostgresFatalCodes.isFatalError(errorCode.toString())) {
@@ -193,5 +227,66 @@ class AtomicCrudSupabaseConnector(
             Logger.e("Data upload error - retrying transaction: $transaction, $e")
             throw e
         }
+    }
+
+    /**
+     * @return **true** if the transaction was uploaded in a special way,
+     * **false** if it is not special and must be uploaded with the default strategy.
+     */
+    private suspend fun tryToUploadSpecialTransaction(
+        transaction: CrudTransaction,
+    ): Boolean {
+
+        val transfersCrudEntry: CrudEntry? = transaction.crud
+            .find { it.table == "transfers" }
+
+        // If the default strategy is used to sync multiple transfers from/to the same account
+        // done offline, then the last synced transfer overwrites other's balance changes.
+        // To prevent this, account balance changes must occur on the server at the moment of sync,
+        // which is done inside the following RPC functions.
+        when {
+            transfersCrudEntry != null
+                    && transfersCrudEntry.op == UpdateType.PUT
+                    && transfersCrudEntry.metadata == SPECIAL_TRANSACTION_TRANSFER
+            -> {
+                supabaseClient.postgrest.rpc(
+                    function = "transfer",
+                    parameters = TransferInput(transfersCrudEntry),
+                )
+                return true
+            }
+
+            transfersCrudEntry != null
+                    && transfersCrudEntry.op == UpdateType.PUT
+                    && transfersCrudEntry.metadata == SPECIAL_TRANSACTION_TRANSFER_EDIT
+            -> {
+                supabaseClient.postgrest.rpc(
+                    function = "transfer_edit",
+                    parameters = TransferInput(transfersCrudEntry),
+                )
+                return true
+            }
+
+            transfersCrudEntry != null
+                    && transfersCrudEntry.op == UpdateType.DELETE
+            -> {
+                supabaseClient.postgrest.rpc(
+                    function = "transfer_revert",
+                    parameters = JsonObject(
+                        mapOf(
+                            "id" to JsonPrimitive(transfersCrudEntry.id),
+                        )
+                    ),
+                )
+                return true
+            }
+        }
+
+        return false
+    }
+
+    companion object {
+        const val SPECIAL_TRANSACTION_TRANSFER = "transfer"
+        const val SPECIAL_TRANSACTION_TRANSFER_EDIT = "transfer_edit"
     }
 }
