@@ -51,96 +51,104 @@ class PowerSyncCategoryRepository(
     private val categoryPositionHealer = SternBrocotTreeDescPositionHealer(Category::position)
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val incomeCategoriesSharedFlow =
-        database
-            .watch(
-                sql = SELECT_CATEGORIES_BY_INCOME,
-                parameters = listOf("1"),
-                mapper = ::toCategory,
-            )
-            .flatMapLatest(::healPositionsIfNeeded)
-            .flowOn(Dispatchers.Default)
-            .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
+    private val incomeCategoriesSharedFlow = database
+        .watch(
+            sql = SELECT_CATEGORIES_BY_INCOME,
+            parameters = listOf("1"),
+            mapper = ::toCategory,
+        )
+        .flatMapLatest(::healPositionsIfNeeded)
+        .flowOn(Dispatchers.Default)
+        .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
 
-    private val expenseCategoriesSharedFlow =
-        database
-            .watch(
-                sql = SELECT_CATEGORIES_BY_INCOME,
-                parameters = listOf("0"),
-                mapper = ::toCategory,
-            )
-            .flatMapLatest(::healPositionsIfNeeded)
-            .flowOn(Dispatchers.Default)
-            .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
+    private val expenseCategoriesSharedFlow = database
+        .watch(
+            sql = SELECT_CATEGORIES_BY_INCOME,
+            parameters = listOf("0"),
+            mapper = ::toCategory,
+        )
+        .flatMapLatest(::healPositionsIfNeeded)
+        .flowOn(Dispatchers.Default)
+        .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
 
-    override suspend fun getCategories(isIncome: Boolean): List<Category> =
+    override suspend fun getCategories(
+        isIncome: Boolean,
+    ): List<Category> =
         if (isIncome)
             incomeCategoriesSharedFlow.first()
         else
             expenseCategoriesSharedFlow.first()
 
-    override fun getCategoriesFlow(isIncome: Boolean): Flow<List<Category>> =
+    override fun getCategoriesFlow(
+        isIncome: Boolean,
+    ): Flow<List<Category>> =
         if (isIncome)
             incomeCategoriesSharedFlow
         else
             expenseCategoriesSharedFlow
 
-    override fun getCategoryFlow(categoryId: String): Flow<Category> =
-        database
-            .watch(
-                sql = SELECT_CATEGORY_BY_ID,
-                parameters = listOf(
-                    categoryId,
-                ),
-                mapper = ::toCategory
-            )
-            .mapNotNull(List<Category>::firstOrNull)
+    override fun getCategoryFlow(
+        categoryId: String,
+    ): Flow<Category> = database
+        .watch(
+            sql = SELECT_CATEGORY_BY_ID,
+            parameters = listOf(
+                categoryId,
+            ),
+            mapper = ::toCategory
+        )
+        .mapNotNull(List<Category>::firstOrNull)
 
-    override fun getSubcategoriesFlow(categoryId: String): Flow<List<Subcategory>> =
-        database
-            .watch(
-                sql = SELECT_SUBCATEGORIES_BY_PARENT_ID,
-                parameters = listOf(
-                    categoryId,
-                ),
-                mapper = ::toSubcategory,
-            )
+    override fun getSubcategoriesFlow(
+        categoryId: String,
+    ): Flow<List<Subcategory>> = database
+        .watch(
+            sql = SELECT_SUBCATEGORIES_BY_PARENT_ID,
+            parameters = listOf(
+                categoryId,
+            ),
+            mapper = ::toSubcategory,
+        )
 
-    override fun getSubcategoriesByCategoriesFlow(): Flow<Map<Category, List<Subcategory>>> =
-        database
-            .watch(
-                sql = SELECT_CATEGORIES_THEN_SUBCATEGORIES,
-                mapper = { sqlCursor ->
-                    val parentCategoryId = sqlCursor.getString(9)
-                    if (parentCategoryId == null)
-                        toCategory(sqlCursor)
-                    else
-                        Subcategory(
-                            id = sqlCursor.getString(4)!!, // Hell.
-                            title = sqlCursor.getString(5)!!.trim(),
-                            categoryId = parentCategoryId,
-                        )
-                }
-            )
-            .map { categoriesAndSubcategories ->
-                buildMap<Category, MutableList<Subcategory>> {
-                    val categoriesById = mutableMapOf<String, Category>()
-                    categoriesAndSubcategories.forEach { categoryOrSubcategory ->
-                        if (categoryOrSubcategory is Category) {
-                            categoriesById[categoryOrSubcategory.id] = categoryOrSubcategory
-                            put(categoryOrSubcategory, mutableListOf())
-                        } else if (categoryOrSubcategory is Subcategory) {
-                            getValue(categoriesById.getValue(categoryOrSubcategory.categoryId))
-                                .add(categoryOrSubcategory)
-                        }
+    private val subcategoriesByCategorySharedFlow = database
+        .watch(
+            sql = SELECT_CATEGORIES_THEN_SUBCATEGORIES,
+            mapper = { sqlCursor ->
+                val parentCategoryId = sqlCursor.getString(9)
+                if (parentCategoryId == null)
+                    toCategory(sqlCursor)
+                else
+                    Subcategory(
+                        id = sqlCursor.getString(4)!!, // Hell.
+                        title = sqlCursor.getString(5)!!.trim(),
+                        categoryId = parentCategoryId,
+                    )
+            }
+        )
+        .map { categoriesAndSubcategories ->
+            buildMap<Category, MutableList<Subcategory>> {
+                val categoriesById = mutableMapOf<String, Category>()
+                categoriesAndSubcategories.forEach { categoryOrSubcategory ->
+                    if (categoryOrSubcategory is Category) {
+                        categoriesById[categoryOrSubcategory.id] = categoryOrSubcategory
+                        put(categoryOrSubcategory, mutableListOf())
+                    } else if (categoryOrSubcategory is Subcategory) {
+                        getValue(categoriesById.getValue(categoryOrSubcategory.categoryId))
+                            .add(categoryOrSubcategory)
                     }
                 }
             }
-            .flowOn(Dispatchers.Default)
+        }
+        .flowOn(Dispatchers.Default)
+        .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
+
+    override fun getSubcategoriesByCategoriesFlow(): Flow<Map<Category, List<Subcategory>>> =
+        subcategoriesByCategorySharedFlow
 
     private suspend fun healPositionsIfNeeded(
         categories: List<Category>,
     ): Flow<List<Category>> {
+
         if (categoryPositionHealer.arePositionsHealthy(categories)) {
             return flowOf(categories)
         }
@@ -174,7 +182,10 @@ class PowerSyncCategoryRepository(
         return emptyFlow()
     }
 
-    private fun toCategory(sqlCursor: SqlCursor): Category = sqlCursor.run {
+    private fun toCategory(
+        sqlCursor: SqlCursor,
+    ): Category = with(sqlCursor) {
+
         var column = 0
 
         val currency = Currency(
@@ -199,7 +210,10 @@ class PowerSyncCategoryRepository(
         )
     }
 
-    private fun toSubcategory(sqlCursor: SqlCursor): Subcategory = sqlCursor.run {
+    private fun toSubcategory(
+        sqlCursor: SqlCursor,
+    ): Subcategory = with(sqlCursor) {
+
         var column = 0
 
         Subcategory(

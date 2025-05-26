@@ -53,15 +53,14 @@ class PowerSyncAccountRepository(
     private val positionHealer = SternBrocotTreeDescPositionHealer(Account::position)
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val accountsSharedFlow =
-        database
-            .watch(
-                sql = SELECT_ACCOUNTS,
-                mapper = ::toAccount,
-            )
-            .flatMapLatest(::healPositionsIfNeeded)
-            .flowOn(Dispatchers.Default)
-            .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
+    private val accountsSharedFlow = database
+        .watch(
+            sql = SELECT_ACCOUNTS,
+            mapper = ::toAccount,
+        )
+        .flatMapLatest(::healPositionsIfNeeded)
+        .flowOn(Dispatchers.Default)
+        .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
 
     override suspend fun getAccounts(): List<Account> =
         accountsSharedFlow.first()
@@ -69,24 +68,29 @@ class PowerSyncAccountRepository(
     override fun getAccountsFlow(): Flow<List<Account>> =
         accountsSharedFlow
 
-    override suspend fun getAccount(accountId: String): Account? =
-        database
-            .getOptional(
-                sql = SELECT_ACCOUNT_BY_ID,
-                parameters = listOf(accountId),
-                mapper = ::toAccount,
-            )
+    override suspend fun getAccount(
+        accountId: String,
+    ): Account? = database
+        .getOptional(
+            sql = SELECT_ACCOUNT_BY_ID,
+            parameters = listOf(accountId),
+            mapper = ::toAccount,
+        )
 
-    override fun getAccountFlow(accountId: String): Flow<Account> =
-        database
-            .watch(
-                sql = SELECT_ACCOUNT_BY_ID,
-                parameters = listOf(accountId),
-                mapper = ::toAccount,
-            )
-            .mapNotNull(List<Account>::firstOrNull)
+    override fun getAccountFlow(
+        accountId: String,
+    ): Flow<Account> = database
+        .watch(
+            sql = SELECT_ACCOUNT_BY_ID,
+            parameters = listOf(accountId),
+            mapper = ::toAccount,
+        )
+        .mapNotNull(List<Account>::firstOrNull)
 
-    override suspend fun updateBalance(accountId: String, newValue: BigInteger) {
+    override suspend fun updateBalance(
+        accountId: String,
+        newValue: BigInteger,
+    ) {
         database
             .execute(
                 sql = "UPDATE accounts SET balance = ? WHERE id = ?",
@@ -239,50 +243,49 @@ class PowerSyncAccountRepository(
 
     private suspend fun healPositionsIfNeeded(
         accounts: List<Account>,
-    ): Flow<List<Account>> =
-        accounts
-            .groupBy(Account::type)
-            .map { (type, accountsOfType) ->
-                if (positionHealer.arePositionsHealthy(accountsOfType)) {
-                    return@map true
-                }
+    ): Flow<List<Account>> = accounts
+        .groupBy(Account::type)
+        .map { (type, accountsOfType) ->
+            if (positionHealer.arePositionsHealthy(accountsOfType)) {
+                return@map true
+            }
 
-                log.debug {
-                    "healPositionsIfNeeded(): start healing:" +
-                            "\nwithinType=$type"
-                }
+            log.debug {
+                "healPositionsIfNeeded(): start healing:" +
+                        "\nwithinType=$type"
+            }
 
-                var updateCount = 0
-                database.writeTransaction { transaction ->
-                    positionHealer.healPositions(
-                        items = accountsOfType,
-                        updatePosition = { item, newPosition ->
-                            transaction.execute(
-                                sql = "UPDATE accounts SET position = ? WHERE id = ?",
-                                parameters = listOf(
-                                    newPosition.toString(),
-                                    item.id,
-                                )
+            var updateCount = 0
+            database.writeTransaction { transaction ->
+                positionHealer.healPositions(
+                    items = accountsOfType,
+                    updatePosition = { item, newPosition ->
+                        transaction.execute(
+                            sql = "UPDATE accounts SET position = ? WHERE id = ?",
+                            parameters = listOf(
+                                newPosition.toString(),
+                                item.id,
                             )
-                            updateCount++
-                        }
-                    )
-                }
-
-                log.debug {
-                    "healPositionsIfNeeded(): healed successfully:" +
-                            "\nupdates=$updateCount," +
-                            "\nwithinType=$type"
-                }
-
-                return@map false
+                        )
+                        updateCount++
+                    }
+                )
             }
-            .let { positionHealth ->
-                if (positionHealth.any { !it })
-                    emptyFlow()
-                else
-                    flowOf(accounts)
+
+            log.debug {
+                "healPositionsIfNeeded(): healed successfully:" +
+                        "\nupdates=$updateCount," +
+                        "\nwithinType=$type"
             }
+
+            return@map false
+        }
+        .let { positionHealth ->
+            if (positionHealth.any { !it })
+                emptyFlow()
+            else
+                flowOf(accounts)
+        }
 
     fun updateAccountBalanceBy(
         accountId: String,
@@ -317,7 +320,10 @@ class PowerSyncAccountRepository(
         )
     }
 
-    private fun toAccount(sqlCursor: SqlCursor): Account = sqlCursor.run {
+    private fun toAccount(
+        sqlCursor: SqlCursor,
+    ): Account = with(sqlCursor) {
+
         var column = 0
 
         val currency = Currency(
