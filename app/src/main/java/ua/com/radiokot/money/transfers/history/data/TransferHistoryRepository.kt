@@ -21,7 +21,6 @@ package ua.com.radiokot.money.transfers.history.data
 
 import androidx.paging.PagingSource
 import ua.com.radiokot.money.transfers.data.Transfer
-import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
 interface TransferHistoryRepository {
 
@@ -29,23 +28,19 @@ interface TransferHistoryRepository {
      * @return list of records within the period in reverse chronological order,
      * additionally limited by [cursor] and [limit].
      *
-     * @param sourceId if it is a category ID, then the result also includes transfers
-     * from related subcategories
-     * @param destinationId if it is a category ID, then the result also includes transfers
-     * to related subcategories
+     * @param counterpartyIds if set, only transfers related to those counterparties are returned,
+     * including ones within subcategories of given categories.
      */
     suspend fun getTransferHistoryPage(
         cursor: TransferHistoryPage.Cursor?,
         limit: Int,
         withinPeriod: HistoryPeriod,
-        sourceId: TransferCounterpartyId?,
-        destinationId: TransferCounterpartyId?,
+        counterpartyIds: Set<String>?,
     ): TransferHistoryPage
 
     fun getTransferHistoryPagingSource(
-        period: HistoryPeriod,
-        sourceId: TransferCounterpartyId?,
-        destinationId: TransferCounterpartyId?,
+        withinPeriod: HistoryPeriod,
+        counterpartyIds: Set<String>?,
     ): PagingSource<TransferHistoryPage.Cursor, Transfer>
 
     suspend fun getTransfer(transferId: String): Transfer

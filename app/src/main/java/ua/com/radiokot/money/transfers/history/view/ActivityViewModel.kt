@@ -76,9 +76,8 @@ class ActivityViewModel(
                 pagingSourceFactory =
                 {
                     transferHistoryRepository.getTransferHistoryPagingSource(
-                        sourceId = null,
-                        destinationId = null,
-                        period = period,
+                        withinPeriod = period,
+                        counterpartyIds = null,
                     )
                 },
             )

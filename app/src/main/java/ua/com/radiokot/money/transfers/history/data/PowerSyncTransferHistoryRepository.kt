@@ -66,9 +66,40 @@ class PowerSyncTransferHistoryRepository(
         cursor: TransferHistoryPage.Cursor?,
         limit: Int,
         withinPeriod: HistoryPeriod,
-        sourceId: TransferCounterpartyId?,
-        destinationId: TransferCounterpartyId?,
-    ): TransferHistoryPage = withContext(Dispatchers.IO) {
+        counterpartyIds: Set<String>?,
+    ): TransferHistoryPage = withContext(Dispatchers.Default) {
+
+        val counterpartiesById = getCounterpartiesById()
+
+        val counterpartiesCondition: String? =
+            if (counterpartyIds == null)
+                null
+            else
+                buildString {
+                    val counterpartyIdSetString = counterpartiesById
+                        .values
+                        .mapNotNull { counterparty ->
+                            if (counterparty.id.toString() in counterpartyIds
+                                || counterparty is TransferCounterparty.Category
+                                && counterparty.subcategory != null
+                                && counterparty.category.id in counterpartyIds
+                            )
+                                "'${counterparty.id}'"
+                            else
+                                null
+                        }
+                        .joinToString(
+                            separator = ",",
+                            prefix = "(",
+                            postfix = ")",
+                        )
+
+                    append("(transfers.source_id IN ")
+                    append(counterpartyIdSetString)
+                    append(" OR transfers.destination_id IN ")
+                    append(counterpartyIdSetString)
+                    append(')')
+                }
 
         val timeCondition = buildString {
             append("$UNIX_TIME >= ${withinPeriod.startTimeInclusive.epochSeconds} ")
@@ -95,70 +126,32 @@ class PowerSyncTransferHistoryRepository(
 
         val limitCondition = "LIMIT $limit "
 
-        val records: List<TransferHistoryRecord> = when {
-            sourceId == null && destinationId == null ->
-                database.getAll(
-                    sql = buildString {
-                        append(SELECT_TRANSFERS)
-                        append(" WHERE ")
-                        append(timeCondition)
-                        append(orderCondition)
-                        append(limitCondition)
-                    },
-                    parameters = listOf(),
-                    mapper = ::toTransferHistoryRecord,
-                )
-
-            sourceId != null && destinationId == null ->
-                database.getAll(
-                    sql = buildString {
-                        append(SELECT_TRANSFERS_FOR_SOURCE)
+        val transfers = database
+            .getAll(
+                sql = buildString {
+                    append(SELECT_TRANSFERS)
+                    append(" WHERE ")
+                    if (counterpartiesCondition != null) {
+                        append(counterpartiesCondition)
                         append(" AND ")
-                        append(timeCondition)
-                        append(orderCondition)
-                        append(limitCondition)
-                    },
-                    parameters = listOf(
-                        sourceId.toString(),
-                        sourceId.toString(),
-                    ),
-                    mapper = ::toTransferHistoryRecord,
-                )
-
-            sourceId == null && destinationId != null ->
-                database.getAll(
-                    sql = buildString {
-                        append(SELECT_TRANSFERS_FOR_DESTINATION)
-                        append(" AND ")
-                        append(timeCondition)
-                        append(orderCondition)
-                        append(limitCondition)
-                    },
-                    parameters = listOf(
-                        destinationId.toString(),
-                        destinationId.toString(),
-                        limit.toLong(),
-                    ),
-                    mapper = ::toTransferHistoryRecord,
-                )
-
-            else ->
-                throw IllegalArgumentException("Can only filter by either source or destination")
-        }
-
-        val counterpartyById = getCounterpartiesById()
-        val transfers = records
+                    }
+                    append(timeCondition)
+                    append(orderCondition)
+                    append(limitCondition)
+                },
+                parameters = listOf(),
+                mapper = { sqlCursor ->
+                    toTransfer(
+                        sqlCursor = sqlCursor,
+                        counterpartiesById = counterpartiesById,
+                    )
+                },
+            )
             .run {
                 if (cursor?.isAfter == true)
-                    sortedByDescending(TransferHistoryRecord::time)
+                    sortedByDescending(Transfer::time)
                 else
                     this
-            }
-            .map { record ->
-                toTransfer(
-                    record = record,
-                    counterpartyById = counterpartyById,
-                )
             }
 
         return@withContext TransferHistoryPage(
@@ -187,50 +180,61 @@ class PowerSyncTransferHistoryRepository(
     }
 
     override fun getTransferHistoryPagingSource(
-        period: HistoryPeriod,
-        sourceId: TransferCounterpartyId?,
-        destinationId: TransferCounterpartyId?,
+        withinPeriod: HistoryPeriod,
+        counterpartyIds: Set<String>?,
     ) = object : PagingSource<TransferHistoryPage.Cursor, Transfer>() {
 
-        override fun getRefreshKey(state: PagingState<TransferHistoryPage.Cursor, Transfer>): TransferHistoryPage.Cursor? =
-            state
-                .anchorPosition
-                ?.let(state::closestPageToPosition)
-                ?.data
-                ?.firstOrNull()
-                ?.time
-                ?.let { newestTransferTime ->
-                    TransferHistoryPage.Cursor(
-                        timeExclusive = newestTransferTime.plus(1.seconds),
-                        isBefore = true,
-                    )
-                }
+        init {
+            createdPagingSources += WeakReference(this)
+        }
 
-        override suspend fun load(params: LoadParams<TransferHistoryPage.Cursor>): LoadResult<TransferHistoryPage.Cursor, Transfer> =
+        override fun getRefreshKey(
+            state: PagingState<TransferHistoryPage.Cursor, Transfer>,
+        ): TransferHistoryPage.Cursor? = state
+            .anchorPosition
+            ?.let(state::closestPageToPosition)
+            ?.data
+            ?.firstOrNull()
+            ?.time
+            ?.let { newestTransferTime ->
+                TransferHistoryPage.Cursor(
+                    timeExclusive = newestTransferTime.plus(1.seconds),
+                    isBefore = true,
+                )
+            }
+
+        override suspend fun load(
+            params: LoadParams<TransferHistoryPage.Cursor>,
+        ): LoadResult<TransferHistoryPage.Cursor, Transfer> =
+
             getTransferHistoryPage(
                 cursor = params.key,
                 limit = params.loadSize,
-                withinPeriod = period,
-                sourceId = sourceId,
-                destinationId = destinationId,
+                withinPeriod = withinPeriod,
+                counterpartyIds = counterpartyIds,
             ).toLoadResultPage()
-    }.also { createdPagingSources += WeakReference(it) }
+    }
 
-    override suspend fun getTransfer(transferId: String): Transfer =
-        database
+    override suspend fun getTransfer(
+        transferId: String,
+    ): Transfer {
+
+        val counterpartiesById = getCounterpartiesById()
+
+        return database
             .get(
                 sql = SELECT_BY_ID,
                 parameters = listOf(
                     transferId,
                 ),
-                mapper = ::toTransferHistoryRecord
+                mapper = { sqlCursor ->
+                    toTransfer(
+                        sqlCursor = sqlCursor,
+                        counterpartiesById = counterpartiesById,
+                    )
+                }
             )
-            .let { transferHistoryRecord ->
-                toTransfer(
-                    record = transferHistoryRecord,
-                    counterpartyById = getCounterpartiesById(),
-                )
-            }
+    }
 
     fun addOrUpdateTransfer(
         sourceId: TransferCounterpartyId,
@@ -276,7 +280,7 @@ class PowerSyncTransferHistoryRepository(
                 .watch(
                     sql = SELECT_BY_ID,
                     parameters = listOf(transferId),
-                    mapper = ::toTransferHistoryRecord,
+                    mapper = (SqlCursor::columnCount),
                 )
                 .first()
         }
@@ -344,8 +348,7 @@ class PowerSyncTransferHistoryRepository(
                 ),
                 limit = 1,
                 cursor = null,
-                sourceId = null,
-                destinationId = null,
+                counterpartyIds = null,
             )
                 .data
                 .firstOrNull()
@@ -355,6 +358,7 @@ class PowerSyncTransferHistoryRepository(
     }
 
     private suspend fun getCounterpartiesById(): Map<String, TransferCounterparty> {
+
         val subcategoriesByCategories = categoryRepository
             .getSubcategoriesByCategoriesFlow()
             .first()
@@ -380,40 +384,38 @@ class PowerSyncTransferHistoryRepository(
         }
     }
 
-    private fun toTransferHistoryRecord(sqlCursor: SqlCursor) = with(sqlCursor) {
+    private fun toTransfer(
+        sqlCursor: SqlCursor,
+        counterpartiesById: Map<String, TransferCounterparty>,
+    ): Transfer = with(sqlCursor) {
         var column = 0
 
-        TransferHistoryRecord(
-            id = getString(column)!!,
-            time = DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET
-                .parse(
-                    getString(++column)!!
-                        // 🤦🏻
-                        .replace(' ', 'T')
-                )
-                .toInstantUsingOffset(),
-            sourceId = getString(++column)!!,
-            sourceAmount = BigInteger(getString(++column)!!.trim()),
-            destinationId = getString(++column)!!,
-            destinationAmount = BigInteger(getString(++column)!!.trim()),
-            memo = getString(++column)?.trim(),
+        val id = getString(column)!!
+        val time = DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET
+            .parse(
+                getString(++column)!!
+                    // 🤦🏻
+                    .replace(' ', 'T')
+            )
+            .toInstantUsingOffset()
+        val sourceId = getString(++column)!!
+        val sourceAmount = BigInteger(getString(++column)!!.trim())
+        val destinationId = getString(++column)!!
+        val destinationAmount = BigInteger(getString(++column)!!.trim())
+        val memo = getString(++column)?.trim()
+
+        Transfer(
+            id = id,
+            source = counterpartiesById[sourceId]
+                ?: error("Source $sourceId not found"),
+            sourceAmount = sourceAmount,
+            destination = counterpartiesById[destinationId]
+                ?: error("Destination $sourceId not found"),
+            destinationAmount = destinationAmount,
+            time = time,
+            memo = memo,
         )
     }
-
-    private fun toTransfer(
-        record: TransferHistoryRecord,
-        counterpartyById: Map<String, TransferCounterparty>,
-    ): Transfer = Transfer(
-        id = record.id,
-        source = counterpartyById[record.sourceId]
-            ?: error("Source ${record.sourceId} not found"),
-        sourceAmount = record.sourceAmount,
-        destination = counterpartyById[record.destinationId]
-            ?: error("Destination ${record.sourceId} not found"),
-        destinationAmount = record.destinationAmount,
-        time = record.time,
-        memo = record.memo,
-    )
 
     private fun TransferHistoryPage.toLoadResultPage() = LoadResult.Page(
         data = data,
@@ -438,30 +440,6 @@ private const val SELECT_TRANSFERS =
             "transfers.destination_id, transfers.destination_amount, transfers.memo, " +
             "unixepoch(transfers.time) AS $UNIX_TIME " +
             "FROM transfers"
-
-
-private const val SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY =
-    "SELECT categories.id FROM categories WHERE categories.parent_id = ?"
-
-/**
- * Params:
- * 1. Source ID
- * 2. Source ID once again
- */
-private const val SELECT_TRANSFERS_FOR_SOURCE =
-    "$SELECT_TRANSFERS " +
-            "WHERE (transfers.source_id = ? OR transfers.source_id in " +
-            "($SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY)) "
-
-/**
- * Params:
- * 1. Destination ID
- * 2. Destination ID once again
- */
-private const val SELECT_TRANSFERS_FOR_DESTINATION =
-    "$SELECT_TRANSFERS " +
-            "WHERE (transfers.destination_id = ? OR transfers.destination_id in " +
-            "($SELECT_SUBCATEGORIES_IDS_FOR_CATEGORY)) "
 
 /**
  * Params:
