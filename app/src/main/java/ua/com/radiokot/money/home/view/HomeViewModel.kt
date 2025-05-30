@@ -82,14 +82,33 @@ class HomeViewModel(
         }
     }
 
-    override fun filterActivityByCounterparty(counterparty: TransferCounterparty) {
+    override fun filterActivityByCounterparty(
+        counterparty: TransferCounterparty,
+    ) {
         val counterparties = setOf(counterparty)
 
         log.debug {
             "filterActivityByCounterparty(): setting counterparties: " +
-                    "\ncounterparties=$counterparties"
+                    "\nupdatedCounterparties=$counterparties"
         }
 
         _activityFilterTransferCounterparties.value = counterparties
+    }
+
+    override fun removeCounterpartyFromActivityFilter(
+        counterparty: TransferCounterparty,
+    ) {
+        _activityFilterTransferCounterparties.update { counterparties ->
+            counterparties
+                ?.minus(counterparties)
+                ?.takeIf(Set<*>::isNotEmpty)
+                .also {
+                    log.debug {
+                        "removeCounterpartyFromActivityFilter(): removing counterparty: " +
+                                "\ncounterparty=$counterparty" +
+                                "\nupdatedCounterparties=$it"
+                    }
+                }
+        }
     }
 }

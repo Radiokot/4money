@@ -32,12 +32,15 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
@@ -68,6 +71,12 @@ class ActivityViewModel(
     private val localTimeZone = TimeZone.currentSystemDefault()
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
+    val isBackHandlerEnabled: StateFlow<Boolean> =
+        activityFilterViewModelDelegate.activityFilterTransferCounterparties
+            .map { counterparties ->
+                !counterparties.isNullOrEmpty()
+            }
+            .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     private val transferHistoryPagerFlow: Flow<Pager<*, Transfer>> =
         combine(
@@ -198,6 +207,21 @@ class ActivityViewModel(
                     }
                 }
         }
+    }
+
+    fun onBack() {
+
+        if (!isBackHandlerEnabled.value) {
+            log.warn {
+                "onBack(): ignoring as handler is disabled"
+            }
+            return
+        }
+
+        activityFilterViewModelDelegate
+            .activityFilterTransferCounterparties
+            .value
+            ?.forEach(activityFilterViewModelDelegate::removeCounterpartyFromActivityFilter)
     }
 
     sealed interface Event {

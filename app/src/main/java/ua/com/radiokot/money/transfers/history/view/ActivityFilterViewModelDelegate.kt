@@ -27,4 +27,5 @@ interface ActivityFilterViewModelDelegate : ActivityFilterViewModel {
     val activityFilterTransferCounterparties: StateFlow<Set<TransferCounterparty>?>
 
     fun filterActivityByCounterparty(counterparty: TransferCounterparty)
+    fun removeCounterpartyFromActivityFilter(counterparty: TransferCounterparty)
 }
