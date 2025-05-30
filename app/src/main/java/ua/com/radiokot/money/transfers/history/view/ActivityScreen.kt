@@ -24,18 +24,24 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.view.TransferList
+import ua.com.radiokot.money.transfers.view.ViewTransferCounterparty
 import ua.com.radiokot.money.transfers.view.ViewTransferListItem
 
 @Composable
@@ -50,8 +56,9 @@ fun ActivityScreenRoot(
     onPeriodClicked = {},
     onPreviousPeriodClicked = viewModel::onPreviousHistoryStatsPeriodClicked,
     onNextPeriodClicked = viewModel::onNextHistoryStatsPeriodClicked,
-    isBackHandlerEnabled = viewModel.isBackHandlerEnabled,
+    isBackHandlerEnabled = viewModel.isBackHandlerEnabled.collectAsStateWithLifecycle(),
     onBack = viewModel::onBack,
+    counterparties = viewModel.activityFilterCounterparties.collectAsStateWithLifecycle(),
     modifier = modifier,
 )
 
@@ -62,10 +69,11 @@ private fun ActivityScreen(
     onTransferItemClicked: (ViewTransferListItem.Transfer) -> Unit,
     onTransferItemLongClicked: (ViewTransferListItem.Transfer) -> Unit,
     period: State<HistoryPeriod>,
+    counterparties: State<List<ViewTransferCounterparty>>,
     onPeriodClicked: () -> Unit,
     onNextPeriodClicked: () -> Unit,
     onPreviousPeriodClicked: () -> Unit,
-    isBackHandlerEnabled: StateFlow<Boolean>,
+    isBackHandlerEnabled: State<Boolean>,
     onBack: () -> Unit,
 ) = Column(
     modifier = modifier,
@@ -83,6 +91,37 @@ private fun ActivityScreen(
             )
     )
 
+    val areCounterpartiesShown by remember {
+        derivedStateOf {
+            counterparties.value.isNotEmpty()
+        }
+    }
+
+    if (areCounterpartiesShown) {
+        BasicText(
+            text = buildString {
+                counterparties.value.forEachIndexed { i, counterparty ->
+                    append(counterparty.title)
+                    if (i != counterparties.value.size - 1) {
+                        append(", ")
+                    }
+                }
+            },
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontStyle = FontStyle.Italic,
+                textAlign = TextAlign.Center,
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 8.dp,
+                )
+        )
+    }
+
     val transferListState = remember(period.value) {
         LazyListState()
     }
@@ -99,7 +138,7 @@ private fun ActivityScreen(
     )
 
     BackHandler(
-        enabled = isBackHandlerEnabled.collectAsState().value,
+        enabled = isBackHandlerEnabled.value,
         onBack = onBack,
     )
 }
