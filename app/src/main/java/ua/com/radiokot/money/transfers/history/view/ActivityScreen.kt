@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import ua.com.radiokot.money.home.view.HomeViewModel
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.view.TransferList
 import ua.com.radiokot.money.transfers.view.ViewTransferListItem
@@ -40,15 +39,14 @@ import ua.com.radiokot.money.transfers.view.ViewTransferListItem
 fun ActivityScreenRoot(
     modifier: Modifier = Modifier,
     viewModel: ActivityViewModel,
-    homeViewModel: HomeViewModel,
 ) = ActivityScreen(
     itemPagingFlow = viewModel.transferItemPagingFlow,
     onTransferItemClicked = viewModel::onTransferItemClicked,
     onTransferItemLongClicked = viewModel::onTransferItemLongClicked,
-    period = homeViewModel.period.collectAsStateWithLifecycle(),
+    period = viewModel.historyStatsPeriod.collectAsStateWithLifecycle(),
     onPeriodClicked = {},
-    onPreviousPeriodClicked = homeViewModel::onPreviousPeriodClicked,
-    onNextPeriodClicked = homeViewModel::onNextPeriodClicked,
+    onPreviousPeriodClicked = viewModel::onPreviousHistoryStatsPeriodClicked,
+    onNextPeriodClicked = viewModel::onNextHistoryStatsPeriodClicked,
     modifier = modifier,
 )
 

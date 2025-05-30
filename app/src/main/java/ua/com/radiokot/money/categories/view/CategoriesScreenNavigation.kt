@@ -38,8 +38,8 @@ data class CategoriesScreenRoute(
 )
 
 fun NavGraphBuilder.categoriesScreen(
-    onProceedToTransfer: (category: Category) -> Unit,
     homeViewModel: HomeViewModel,
+    onProceedToTransfer: (category: Category) -> Unit,
 ) = composable<CategoriesScreenRoute> { entry ->
 
     val isIncognito = entry.toRoute<CategoriesScreenRoute>()
@@ -64,7 +64,6 @@ fun NavGraphBuilder.categoriesScreen(
 
     CategoriesScreenRoot(
         viewModel = viewModel,
-        homeViewModel = homeViewModel,
         modifier = Modifier
             .fillMaxSize()
     )

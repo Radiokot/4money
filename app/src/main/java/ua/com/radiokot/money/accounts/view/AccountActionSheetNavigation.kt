@@ -21,12 +21,12 @@ package ua.com.radiokot.money.accounts.view
 
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import ua.com.radiokot.money.bottomSheet
+import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
 @Serializable
@@ -39,6 +39,7 @@ fun NavGraphBuilder.accountActionSheet(
     onProceedToIncome: (destinationAccountId: TransferCounterpartyId.Account) -> Unit,
     onProceedToExpense: (sourceAccountId: TransferCounterpartyId.Account) -> Unit,
     onProceedToTransfer: (sourceAccountId: TransferCounterpartyId.Account) -> Unit,
+    onProceedToFilteredActivity: (accountCounterparty: TransferCounterparty.Account) -> Unit,
 ) = bottomSheet<AccountActionSheetRoute> { entry ->
 
     val accountId = entry.toRoute<AccountActionSheetRoute>()
@@ -67,6 +68,10 @@ fun NavGraphBuilder.accountActionSheet(
 
                     is AccountActionSheetViewModel.Event.ProceedToTransfer -> {
                         onProceedToTransfer(event.sourceAccountId)
+                    }
+
+                    is AccountActionSheetViewModel.Event.ProceedToFilteredActivity -> {
+                        onProceedToFilteredActivity(event.accountCounterparty)
                     }
                 }
             }

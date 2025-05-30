@@ -41,6 +41,7 @@ import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import java.math.BigInteger
 
@@ -151,6 +152,23 @@ class AccountActionSheetViewModel(
         )
     }
 
+    fun onActivityClicked() {
+        if (mode.value != ViewAccountActionSheetMode.Actions) {
+            log.debug {
+                "onActivityClicked(): ignoring as not in actions mode"
+            }
+            return
+        }
+
+        _events.tryEmit(
+            Event.ProceedToFilteredActivity(
+                accountCounterparty = TransferCounterparty.Account(
+                    account = account,
+                )
+            )
+        )
+    }
+
     fun onNewBalanceInputValueParsed(newValue: BigInteger) {
         log.debug {
             "onNewBalanceInputValueParsed(): updating balance input value: " +
@@ -208,6 +226,10 @@ class AccountActionSheetViewModel(
 
         class ProceedToTransfer(
             val sourceAccountId: TransferCounterpartyId.Account,
+        ) : Event
+
+        class ProceedToFilteredActivity(
+            val accountCounterparty: TransferCounterparty.Account,
         ) : Event
 
         object BalanceUpdated : Event

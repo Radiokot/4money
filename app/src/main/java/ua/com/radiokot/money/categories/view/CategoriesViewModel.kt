@@ -42,17 +42,18 @@ import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
-import ua.com.radiokot.money.home.view.HomeViewModel
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.transfers.history.view.HistoryStatsPeriodViewModel
 import java.math.BigInteger
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CategoriesViewModel(
-    homeViewModel: HomeViewModel,
+    historyStatsPeriodViewModel: HistoryStatsPeriodViewModel,
     getCategoryStatsUseCase: GetCategoryStatsUseCase,
     private val currencyRepository: CurrencyRepository,
-    private val currencyPreferences: CurrencyPreferences,
-) : ViewModel() {
+    currencyPreferences: CurrencyPreferences,
+) : ViewModel(),
+    HistoryStatsPeriodViewModel by historyStatsPeriodViewModel {
 
     private val log by lazyLogger("CategoriesVM")
     private val _isIncome: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -61,7 +62,7 @@ class CategoriesViewModel(
     val events = _events.asSharedFlow()
 
     private val incomeCategoryStats: Flow<List<CategoryStats>> =
-        homeViewModel.period.flatMapLatest { period ->
+        historyStatsPeriod.flatMapLatest { period ->
             getCategoryStatsUseCase(
                 isIncome = true,
                 period = period,
@@ -74,7 +75,7 @@ class CategoriesViewModel(
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val expenseCategoryStats: Flow<List<CategoryStats>> =
-        homeViewModel.period.flatMapLatest { period ->
+        historyStatsPeriod.flatMapLatest { period ->
             getCategoryStatsUseCase(
                 isIncome = false,
                 period = period,

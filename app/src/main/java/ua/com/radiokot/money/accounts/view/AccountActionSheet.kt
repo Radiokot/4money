@@ -20,7 +20,6 @@
 package ua.com.radiokot.money.accounts.view
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -50,7 +49,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -59,7 +57,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ua.com.radiokot.money.categories.view.ViewCategoryListItemPreviewParameterProvider
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.uikit.AmountInputField
@@ -85,6 +82,7 @@ fun AccountActionSheetRoot(
         onTransferClicked = viewModel::onTransferClicked,
         onIncomeClicked = viewModel::onIncomeClicked,
         onExpenseClicked = viewModel::onExpenseClicked,
+        onActivityClicked = viewModel::onActivityClicked,
         modifier = modifier,
     )
 }
@@ -101,6 +99,7 @@ private fun AccountActionSheet(
     onTransferClicked: () -> Unit,
     onIncomeClicked: () -> Unit,
     onExpenseClicked: () -> Unit,
+    onActivityClicked: () -> Unit,
 ) = BoxWithConstraints(
     modifier = modifier
         .background(Color(0xFFF9FBE7))
@@ -127,11 +126,8 @@ private fun AccountActionSheet(
             ViewAmountFormat(locale)
         }
 
-        var headerHeight = 0
-
         Column(
             modifier = Modifier
-                .onSizeChanged { headerHeight = it.height }
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -179,6 +175,7 @@ private fun AccountActionSheet(
                     onTransferClicked = onTransferClicked,
                     onIncomeClicked = onIncomeClicked,
                     onExpenseClicked = onExpenseClicked,
+                    onActivityClicked = onActivityClicked,
                 )
 
             ViewAccountActionSheetMode.Balance ->
@@ -200,7 +197,6 @@ private fun AccountActionSheet(
 private fun AccountActionSheetPreview(
 ) = Column {
     val amount = ViewAmountPreviewParameterProvider().values.first()
-    val categories = ViewCategoryListItemPreviewParameterProvider().values.toList()
 
     ViewAccountActionSheetMode.entries.forEach { mode ->
         BasicText(
@@ -221,6 +217,7 @@ private fun AccountActionSheetPreview(
             onTransferClicked = {},
             onIncomeClicked = {},
             onExpenseClicked = {},
+            onActivityClicked = {},
         )
     }
 }
@@ -231,6 +228,7 @@ private fun ActionsModeContent(
     onTransferClicked: () -> Unit,
     onIncomeClicked: () -> Unit,
     onExpenseClicked: () -> Unit,
+    onActivityClicked: () -> Unit,
 ) = Column(
     verticalArrangement = Arrangement.spacedBy(16.dp),
     modifier = Modifier
@@ -251,19 +249,19 @@ private fun ActionsModeContent(
         TextButton(
             text = "⚖️ Balance",
             modifier = Modifier
-                .then(
-                    remember {
-                        Modifier.clickable { onBalanceClicked() }
-                    }
-                )
                 .weight(1f)
+                .stableClickable(
+                    onClick = onBalanceClicked,
+                )
         )
 
         TextButton(
             text = "📃 Activity",
-            isEnabled = false,
             modifier = Modifier
                 .weight(1f)
+                .stableClickable(
+                    onClick = onActivityClicked,
+                )
         )
     }
 
@@ -274,10 +272,8 @@ private fun ActionsModeContent(
             text = "📩 Income",
             modifier = Modifier
                 .weight(1f)
-                .then(
-                    remember {
-                        Modifier.clickable { onIncomeClicked() }
-                    }
+                .stableClickable(
+                    onClick = onIncomeClicked,
                 )
         )
 
@@ -285,10 +281,8 @@ private fun ActionsModeContent(
             text = "📨 Expense",
             modifier = Modifier
                 .weight(1f)
-                .then(
-                    remember {
-                        Modifier.clickable { onExpenseClicked() }
-                    }
+                .stableClickable(
+                    onClick = onExpenseClicked,
                 )
         )
 
@@ -296,12 +290,10 @@ private fun ActionsModeContent(
             text = "↔️ Transfer",
             isEnabled = true,
             modifier = Modifier
-                .then(
-                    remember {
-                        Modifier.clickable { onTransferClicked() }
-                    }
-                )
                 .weight(1f)
+                .stableClickable(
+                    onClick = onTransferClicked,
+                )
         )
     }
 

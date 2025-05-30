@@ -52,8 +52,12 @@ val transfersHistoryModule = module {
 
         viewModel { parameters ->
             ActivityViewModel(
-                homeViewModel = checkNotNull(parameters.getOrNull()) {
-                    "HomeViewModel must be provided through the parameters " +
+                historyStatsPeriodViewModel = checkNotNull(parameters.getOrNull()) {
+                    "HistoryStatsPeriodViewModel must be provided through the parameters " +
+                            "to share the same instance"
+                },
+                activityFilterViewModelDelegate = checkNotNull(parameters.getOrNull()){
+                    "ActivityFilterViewModelDelegate must be provided through the parameters " +
                             "to share the same instance"
                 },
                 transferHistoryRepository = get(),

@@ -44,7 +44,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
-import ua.com.radiokot.money.home.view.HomeViewModel
 import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.view.PeriodBar
@@ -54,18 +53,17 @@ import java.math.BigInteger
 fun CategoriesScreenRoot(
     modifier: Modifier = Modifier,
     viewModel: CategoriesViewModel,
-    homeViewModel: HomeViewModel,
 ) = CategoriesScreen(
     isIncome = viewModel.isIncome.collectAsStateWithLifecycle(),
-    period = homeViewModel.period.collectAsStateWithLifecycle(),
+    period = viewModel.historyStatsPeriod.collectAsStateWithLifecycle(),
     totalAmount = viewModel.totalAmount.collectAsStateWithLifecycle(),
     incomeCategoryItemList = viewModel.incomeCategoryItemList.collectAsStateWithLifecycle(),
     expenseCategoryItemList = viewModel.expenseCategoryItemList.collectAsStateWithLifecycle(),
     onTitleClicked = viewModel::onTitleClicked,
     onCategoryItemClicked = viewModel::onCategoryItemClicked,
     onPeriodClicked = {},
-    onPreviousPeriodClicked = homeViewModel::onPreviousPeriodClicked,
-    onNextPeriodClicked = homeViewModel::onNextPeriodClicked,
+    onPreviousPeriodClicked = viewModel::onPreviousHistoryStatsPeriodClicked,
+    onNextPeriodClicked = viewModel::onNextHistoryStatsPeriodClicked,
     modifier = modifier,
 )
 

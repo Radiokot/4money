@@ -55,8 +55,8 @@ val categoriesModule = module {
 
         viewModel { parameters ->
             CategoriesViewModel(
-                homeViewModel = checkNotNull(parameters.getOrNull()) {
-                    "HomeViewModel must be provided through the parameters " +
+                historyStatsPeriodViewModel = checkNotNull(parameters.getOrNull()) {
+                    "HistoryStatsPeriodViewModel must be provided through the parameters " +
                             "to share the same instance"
                 },
                 getCategoryStatsUseCase = get(),

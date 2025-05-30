@@ -33,6 +33,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -45,7 +46,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import ua.com.radiokot.money.eventSharedFlow
-import ua.com.radiokot.money.home.view.HomeViewModel
 import ua.com.radiokot.money.isSameDayAs
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.Transfer
@@ -56,10 +56,13 @@ import ua.com.radiokot.money.transfers.view.ViewTransferListItem
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActivityViewModel(
-    homeViewModel: HomeViewModel,
+    historyStatsPeriodViewModel: HistoryStatsPeriodViewModel,
+    private val activityFilterViewModelDelegate: ActivityFilterViewModelDelegate,
     private val transferHistoryRepository: TransferHistoryRepository,
     private val revertTransferUseCase: RevertTransferUseCase,
-) : ViewModel() {
+) : ViewModel(),
+    HistoryStatsPeriodViewModel by historyStatsPeriodViewModel,
+    ActivityFilterViewModel by activityFilterViewModelDelegate {
 
     private val log by lazyLogger("ActivityVM")
     private val localTimeZone = TimeZone.currentSystemDefault()
@@ -67,21 +70,29 @@ class ActivityViewModel(
     val events = _events.asSharedFlow()
 
     private val transferHistoryPagerFlow: Flow<Pager<*, Transfer>> =
-        homeViewModel.period.mapLatest { period ->
-            Pager(
-                config = PagingConfig(
-                    pageSize = 20,
-                    enablePlaceholders = false,
-                ),
-                pagingSourceFactory =
-                {
-                    transferHistoryRepository.getTransferHistoryPagingSource(
-                        withinPeriod = period,
-                        counterpartyIds = null,
-                    )
-                },
-            )
-        }
+        combine(
+            historyStatsPeriod,
+            activityFilterViewModelDelegate.activityFilterTransferCounterparties,
+            transform = ::Pair
+        )
+            .mapLatest { (period, counterparties) ->
+                Pager(
+                    config = PagingConfig(
+                        pageSize = 20,
+                        enablePlaceholders = false,
+                    ),
+                    pagingSourceFactory =
+                    {
+                        transferHistoryRepository.getTransferHistoryPagingSource(
+                            withinPeriod = period,
+                            counterpartyIds = counterparties
+                                ?.mapTo(mutableSetOf()) { counterparty ->
+                                    counterparty.id.toString()
+                                },
+                        )
+                    },
+                )
+            }
 
     val transferItemPagingFlow: Flow<PagingData<ViewTransferListItem>> =
         transferHistoryPagerFlow

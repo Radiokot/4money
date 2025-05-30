@@ -42,8 +42,10 @@ fun NavGraphBuilder.activityScreen(
 ) = composable<ActivityScreenRoute> {
 
     val activity: Activity? = LocalActivity.current
-    val viewModel: ActivityViewModel = koinViewModel() {
-        parametersOf(homeViewModel)
+    val viewModel: ActivityViewModel = koinViewModel {
+        parametersOf(
+            homeViewModel,
+        )
     }
 
     LaunchedEffect(viewModel) {
@@ -75,7 +77,6 @@ fun NavGraphBuilder.activityScreen(
 
     ActivityScreenRoot(
         viewModel = viewModel,
-        homeViewModel = homeViewModel,
         modifier = Modifier
             .fillMaxSize()
     )
