@@ -1,2 +1,0 @@
-Added:
-- Ability to see particular account activity
