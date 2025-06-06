@@ -19,7 +19,7 @@
 
 package ua.com.radiokot.money.transfers.history.data
 
-import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
 import ua.com.radiokot.money.transfers.data.Transfer
 
 class TransferHistoryPage(
@@ -28,7 +28,7 @@ class TransferHistoryPage(
     val previousPageCursor: Cursor?,
 ) {
     class Cursor(
-        val timeExclusive: Instant,
+        val timeExclusive: LocalDateTime,
         val isBefore: Boolean,
     ) {
         val isAfter = !isBefore

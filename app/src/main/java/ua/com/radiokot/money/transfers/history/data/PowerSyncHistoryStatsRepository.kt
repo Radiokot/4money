@@ -42,8 +42,8 @@ class PowerSyncHistoryStatsRepository(
                 else
                     SELECT_FOR_EXPENSE_CATEGORIES,
                 parameters = listOf(
-                    period.startTimeInclusive.toString(),
-                    period.endTimeExclusive.toString(),
+                    period.startInclusive.toString(),
+                    period.endExclusive.toString(),
                 ),
                 mapper = { sqlCursor ->
                     // Sum subcategories into parent.
@@ -66,28 +66,28 @@ class PowerSyncHistoryStatsRepository(
             .flowOn(Dispatchers.Default)
 }
 
-private const val PARSED_TIME =
-    "datetime(transfers.time) AS parsed_time"
+private const val DATETIME =
+    "datetime(transfers.time) AS datetime"
 
-private const val PARSED_TIME_IN_PERIOD =
-    "parsed_time >= datetime(?) AND parsed_time < datetime(?)"
+private const val DATETIME_IN_PERIOD =
+    "datetime >= datetime(?) AND datetime < datetime(?)"
 
 private const val SELECT_FOR_INCOME_CATEGORIES =
     "SELECT transfers.source_id, transfers.source_amount, " +
             "categories.parent_category_id, " +
-            "$PARSED_TIME " +
+            "$DATETIME " +
             "FROM transfers, categories " +
             "WHERE transfers.source_id in " +
             "(SELECT categories.id FROM categories WHERE categories.is_income = 1) " +
             "AND transfers.source_id = categories.id " +
-            "AND $PARSED_TIME_IN_PERIOD"
+            "AND $DATETIME_IN_PERIOD"
 
 private const val SELECT_FOR_EXPENSE_CATEGORIES =
     "SELECT transfers.destination_id, transfers.destination_amount, " +
             "categories.parent_category_id, " +
-            "$PARSED_TIME " +
+            "$DATETIME " +
             "FROM transfers, categories " +
             "WHERE transfers.destination_id in " +
             "(SELECT categories.id FROM categories WHERE categories.is_income = 0) " +
             "AND transfers.destination_id = categories.id " +
-            "AND $PARSED_TIME_IN_PERIOD"
+            "AND $DATETIME_IN_PERIOD"

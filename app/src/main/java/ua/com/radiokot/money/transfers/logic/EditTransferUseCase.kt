@@ -19,8 +19,7 @@
 
 package ua.com.radiokot.money.transfers.logic
 
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import java.math.BigInteger
 
@@ -39,7 +38,6 @@ interface EditTransferUseCase {
         destinationId: TransferCounterpartyId,
         destinationAmount: BigInteger,
         memo: String?,
-        date: LocalDate,
-        exactTime: Instant?,
+        dateTime: LocalDateTime,
     ): Result<Unit>
 }

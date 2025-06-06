@@ -20,8 +20,8 @@
 package ua.com.radiokot.money.transfers.logic
 
 import com.powersync.PowerSyncDatabase
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.powersync.AtomicCrudSupabaseConnector
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
@@ -42,15 +42,10 @@ class PowerSyncEditTransferUseCase(
         destinationId: TransferCounterpartyId,
         destinationAmount: BigInteger,
         memo: String?,
-        date: LocalDate,
-        exactTime: Instant?,
+        dateTime: LocalDateTime,
     ): Result<Unit> = runCatching {
 
         val transfer = transferHistoryRepository.getTransfer(transferId)
-        val timeToSet = exactTime
-            ?: transferHistoryRepository.getTimeForTransfer(
-                date = date,
-            )
 
         database.writeTransaction { transaction ->
             transferHistoryRepository.addOrUpdateTransfer(
@@ -60,7 +55,7 @@ class PowerSyncEditTransferUseCase(
                 destinationId = destinationId,
                 destinationAmount = destinationAmount,
                 memo = memo,
-                time = timeToSet,
+                dateTime = dateTime,
                 metadata = AtomicCrudSupabaseConnector.SPECIAL_TRANSACTION_TRANSFER_EDIT,
                 transaction = transaction,
             )

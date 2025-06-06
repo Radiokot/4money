@@ -19,7 +19,7 @@
 
 package ua.com.radiokot.money.transfers.logic
 
-import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import java.math.BigInteger
 
@@ -35,7 +35,7 @@ interface TransferFundsUseCase {
      * @param destinationAmount what amount is produced with this transfer for the destination.
      * If [destinationId] is an account, the amount is added to its balance
      * @param memo a text note to add to the transfer
-     * @param date a day to log the transfer
+     * @param dateTime a local date and time at which the transfer occurred
      */
     suspend operator fun invoke(
         sourceId: TransferCounterpartyId,
@@ -43,6 +43,6 @@ interface TransferFundsUseCase {
         destinationId: TransferCounterpartyId,
         destinationAmount: BigInteger,
         memo: String?,
-        date: LocalDate,
+        dateTime: LocalDateTime,
     ): Result<Unit>
 }

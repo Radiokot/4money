@@ -33,13 +33,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.format.DateTimeComponents
-import kotlinx.datetime.plus
+import kotlinx.datetime.format
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.lazyLogger
@@ -102,19 +100,19 @@ class PowerSyncTransferHistoryRepository(
                 }
 
         val timeCondition = buildString {
-            append("$UNIX_TIME >= ${withinPeriod.startTimeInclusive.epochSeconds} ")
-            append("AND $UNIX_TIME < ${withinPeriod.endTimeExclusive.epochSeconds} ")
+            append("$DATETIME >= datetime('${withinPeriod.startInclusive}') ")
+            append("AND $DATETIME < datetime('${withinPeriod.endExclusive}') ")
             when {
                 cursor?.isBefore == true ->
-                    append("AND $UNIX_TIME < ${cursor.timeExclusive.epochSeconds} ")
+                    append("AND $DATETIME < datetime('${cursor.timeExclusive}') ")
 
                 cursor?.isAfter == true ->
-                    append("AND $UNIX_TIME > ${cursor.timeExclusive.epochSeconds} ")
+                    append("AND $DATETIME > datetime('${cursor.timeExclusive}') ")
             }
         }
 
         val orderCondition = buildString {
-            append("ORDER BY $UNIX_TIME ")
+            append("ORDER BY $DATETIME ")
             when {
                 cursor?.isAfter == true ->
                     append("ASC ")
@@ -149,7 +147,7 @@ class PowerSyncTransferHistoryRepository(
             )
             .run {
                 if (cursor?.isAfter == true)
-                    sortedByDescending(Transfer::time)
+                    sortedByDescending(Transfer::dateTime)
                 else
                     this
             }
@@ -158,7 +156,7 @@ class PowerSyncTransferHistoryRepository(
             data = transfers,
             nextPageCursor = transfers
                 .lastOrNull()
-                ?.time
+                ?.dateTime
                 ?.takeUnless { transfers.size < limit }
                 ?.let { oldestTransferTime ->
                     TransferHistoryPage.Cursor(
@@ -169,7 +167,7 @@ class PowerSyncTransferHistoryRepository(
             previousPageCursor = transfers
                 .firstOrNull()
                 ?.takeUnless { cursor == null || cursor.isAfter && transfers.size < limit }
-                ?.time
+                ?.dateTime
                 ?.let { newestTransferTime ->
                     TransferHistoryPage.Cursor(
                         timeExclusive = newestTransferTime,
@@ -195,10 +193,13 @@ class PowerSyncTransferHistoryRepository(
             ?.let(state::closestPageToPosition)
             ?.data
             ?.firstOrNull()
-            ?.time
+            ?.dateTime
             ?.let { newestTransferTime ->
                 TransferHistoryPage.Cursor(
-                    timeExclusive = newestTransferTime.plus(1.seconds),
+                    timeExclusive = newestTransferTime
+                        .toInstant(TimeZone.UTC)
+                        .plus(1.seconds)
+                        .toLocalDateTime(TimeZone.UTC),
                     isBefore = true,
                 )
             }
@@ -242,17 +243,17 @@ class PowerSyncTransferHistoryRepository(
         destinationId: TransferCounterpartyId,
         destinationAmount: BigInteger,
         memo: String?,
-        time: Instant,
+        dateTime: LocalDateTime,
         metadata: String,
         transaction: PowerSyncTransaction,
         transferId: String = UUID.randomUUID().toString(),
     ) {
-        val timeString = time.toDbTimeString()
+        val dateTimeString = dateTime.toDbString()
 
         log.debug {
             "addOrUpdateTransfer(): executing:" +
                     "\nid=$transferId," +
-                    "\ntime=$timeString," +
+                    "\ndateTime=$dateTimeString," +
                     "\nsourceId=$sourceId," +
                     "\nsourceAmount=$sourceAmount," +
                     "\ndestinationId=$destinationId," +
@@ -265,7 +266,7 @@ class PowerSyncTransferHistoryRepository(
             sql = INSERT_OR_REPLACE_TRANSFER,
             parameters = listOf(
                 transferId,
-                timeString,
+                dateTimeString,
                 sourceId.toString(),
                 sourceAmount.toString(),
                 destinationId.toString(),
@@ -336,27 +337,6 @@ class PowerSyncTransferHistoryRepository(
         }
     }
 
-    /**
-     * @return exact time to be set for a transfer
-     * that must be logged at the given [date]
-     */
-    suspend fun getTimeForTransfer(date: LocalDate): Instant {
-        val lastTransferOfTheDay: Transfer? =
-            getTransferHistoryPage(
-                withinPeriod = HistoryPeriod.Day(
-                    localDay = date,
-                ),
-                limit = 1,
-                cursor = null,
-                counterpartyIds = null,
-            )
-                .data
-                .firstOrNull()
-
-        return (lastTransferOfTheDay?.time ?: date.atStartOfDayIn(TimeZone.currentSystemDefault()))
-            .plus(1, DateTimeUnit.SECOND)
-    }
-
     private suspend fun getCounterpartiesById(): Map<String, TransferCounterparty> {
 
         val subcategoriesByCategories = categoryRepository
@@ -391,13 +371,7 @@ class PowerSyncTransferHistoryRepository(
         var column = 0
 
         val id = getString(column)!!
-        val time = DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET
-            .parse(
-                getString(++column)!!
-                    // 🤦🏻
-                    .replace(' ', 'T')
-            )
-            .toInstantUsingOffset()
+        val dateTime = LocalDateTime.fromDbString(getString(++column)!!)
         val sourceId = getString(++column)!!
         val sourceAmount = BigInteger(getString(++column)!!.trim())
         val destinationId = getString(++column)!!
@@ -412,7 +386,7 @@ class PowerSyncTransferHistoryRepository(
             destination = counterpartiesById[destinationId]
                 ?: error("Destination $sourceId not found"),
             destinationAmount = destinationAmount,
-            time = time,
+            dateTime = dateTime,
             memo = memo,
         )
     }
@@ -423,22 +397,26 @@ class PowerSyncTransferHistoryRepository(
         nextKey = nextPageCursor,
     )
 
-    /**
-     * @return ISO-8601 datetime with T, without millis,
-     * with explicitly specified UTC timezone (Z).
-     * For example, 2025-02-22T08:37:23Z.
-     */
-    private fun Instant.toDbTimeString(): String =
-        Instant.fromEpochSeconds(epochSeconds).toString()
+    private fun LocalDateTime.toDbString() =
+        format(LocalDateTime.Formats.ISO)
+            .replace('T', ' ')
+            // Trim millis.
+            .substringBeforeLast('.')
+
+    private fun LocalDateTime.Companion.fromDbString(dateTimeString: String) =
+        parse(
+            input = dateTimeString
+                .replace(' ', 'T'),
+            format = LocalDateTime.Formats.ISO
+        )
 }
 
-private const val UNIX_TIME = "unix_time"
+private const val DATETIME = "datetime"
 
 private const val SELECT_TRANSFERS =
-    "SELECT transfers.id, transfers.time, " +
+    "SELECT transfers.id, datetime(transfers.time) AS $DATETIME, " +
             "transfers.source_id, transfers.source_amount, " +
-            "transfers.destination_id, transfers.destination_amount, transfers.memo, " +
-            "unixepoch(transfers.time) AS $UNIX_TIME " +
+            "transfers.destination_id, transfers.destination_amount, transfers.memo " +
             "FROM transfers"
 
 /**
@@ -451,7 +429,7 @@ private const val SELECT_BY_ID =
 /**
  * Params:
  * 1. Transfer ID
- * 2. Time string
+ * 2. Date-time string
  * 3. Source ID
  * 4. Source amount
  * 5. Destination ID

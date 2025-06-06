@@ -113,10 +113,9 @@ class ActivityViewModel(
 
                 pagingData
                     .map<Transfer, Pair<ViewTransferListItem, LocalDate>> { transfer ->
-                        val transferLocalDate = transfer.getLocalDateAt(localTimeZone)
                         val transferListItem =
                             ViewTransferListItem.Transfer.fromTransfer(transfer)
-                        transferListItem to transferLocalDate
+                        transferListItem to transfer.dateTime.date
                     }
                     .insertSeparators { previousItemDatePair, nextItemDatePair ->
                         val previousLocalDate = previousItemDatePair?.second

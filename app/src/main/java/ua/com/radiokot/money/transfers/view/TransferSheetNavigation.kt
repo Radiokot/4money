@@ -26,7 +26,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.koin.compose.viewmodel.koinViewModel
@@ -44,7 +44,7 @@ data class TransferSheetRoute(
     private val sourceAmountString: String?,
     private val destinationAmountString: String?,
     val memo: String?,
-    private val timeEpochSeconds: Long?,
+    private val dateTimeString: String?,
 ) {
     val sourceId: TransferCounterpartyId
         get() = Json.decodeFromString(sourceIdJson)
@@ -58,8 +58,8 @@ data class TransferSheetRoute(
     val destinationAmount: BigInteger?
         get() = destinationAmountString?.toBigInteger()
 
-    val time: Instant?
-        get() = timeEpochSeconds?.let(Instant::fromEpochSeconds)
+    val dateTime: LocalDateTime?
+        get() = dateTimeString?.let(LocalDateTime::parse)
 
     constructor(
         sourceId: TransferCounterpartyId,
@@ -71,7 +71,7 @@ data class TransferSheetRoute(
         sourceAmountString = null,
         destinationAmountString = null,
         memo = null,
-        timeEpochSeconds = null,
+        dateTimeString = null,
     )
 
     constructor(
@@ -83,7 +83,7 @@ data class TransferSheetRoute(
         sourceAmountString = transferToEdit.sourceAmount.toString(),
         destinationAmountString = transferToEdit.destinationAmount.toString(),
         memo = transferToEdit.memo,
-        timeEpochSeconds = transferToEdit.time.epochSeconds,
+        dateTimeString = transferToEdit.dateTime.toString(),
     )
 }
 
@@ -142,7 +142,7 @@ fun NavGraphBuilder.transferSheet(
                 sourceAmount = arguments.sourceAmount,
                 destinationAmount = arguments.destinationAmount,
                 memo = arguments.memo,
-                time = arguments.time,
+                dateTime = arguments.dateTime,
             )
         }
 

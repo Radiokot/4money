@@ -21,80 +21,100 @@ package ua.com.radiokot.money.transfers.history.data
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import java.time.Year
 
 sealed interface HistoryPeriod {
 
-    val startTimeInclusive: Instant
-    val endTimeExclusive: Instant
+    val startInclusive: LocalDateTime
+    val endExclusive: LocalDateTime
 
     fun getNext(): HistoryPeriod?
     fun getPrevious(): HistoryPeriod?
 
-    operator fun contains(time: Instant): Boolean =
-        time >= startTimeInclusive && time < endTimeExclusive
+    operator fun contains(dateTime: LocalDateTime): Boolean =
+        dateTime >= startInclusive && dateTime < endExclusive
 
     class Day(
-        private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
-        val localDay: LocalDate = Clock.System.now().toLocalDateTime(timeZone).date,
+        val localDay: LocalDate = Clock.System
+            .now()
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date,
     ) : HistoryPeriod {
 
         private val nextDay = localDay.plus(1, DateTimeUnit.DAY)
 
-        override val startTimeInclusive: Instant =
-            localDay.atStartOfDayIn(timeZone)
+        override val startInclusive: LocalDateTime =
+            LocalDateTime(
+                date = localDay,
+                time = LocalTime.fromSecondOfDay(0),
+            )
 
-        override val endTimeExclusive: Instant =
-            nextDay.atStartOfDayIn(timeZone)
+        override val endExclusive: LocalDateTime =
+            LocalDateTime(
+                date = localDay.plus(1, DateTimeUnit.DAY),
+                time = LocalTime.fromSecondOfDay(0),
+            )
 
         override fun getNext() = Day(
-            timeZone = timeZone,
             localDay = nextDay,
         )
 
         override fun getPrevious() = Day(
-            timeZone = timeZone,
             localDay = localDay.minus(1, DateTimeUnit.DAY),
         )
     }
 
     class Month(
-        private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
-        val localMonth: LocalDate = Clock.System.now().toLocalDateTime(timeZone).date,
+        val localMonth: LocalDate = Clock.System
+            .now()
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date,
     ) : HistoryPeriod {
 
         private val firstDay = localMonth.minus(localMonth.dayOfMonth - 1, DateTimeUnit.DAY)
         private val fistDayOfNextMonth = firstDay.plus(1, DateTimeUnit.MONTH)
 
-        override val startTimeInclusive: Instant =
-            firstDay.atStartOfDayIn(timeZone)
+        override val startInclusive: LocalDateTime =
+            LocalDateTime(
+                date = firstDay,
+                time = LocalTime.fromSecondOfDay(0),
+            )
 
-        override val endTimeExclusive: Instant =
-            fistDayOfNextMonth.atStartOfDayIn(timeZone)
+        override val endExclusive: LocalDateTime =
+            LocalDateTime(
+                date = fistDayOfNextMonth,
+                time = LocalTime.fromSecondOfDay(0),
+            )
 
         override fun getNext() = Month(
-            timeZone = timeZone,
             localMonth = fistDayOfNextMonth,
         )
 
         override fun getPrevious() = Month(
-            timeZone = timeZone,
             localMonth = firstDay.minus(1, DateTimeUnit.MONTH),
         )
     }
 
     object Since70th : HistoryPeriod {
-        override val startTimeInclusive: Instant =
-            Instant.fromEpochMilliseconds(0)
 
-        override val endTimeExclusive: Instant =
-            Instant.DISTANT_FUTURE
+        override val startInclusive: LocalDateTime =
+            LocalDateTime(
+                date = LocalDate.fromEpochDays(0),
+                time = LocalTime.fromSecondOfDay(0),
+            )
+
+        override val endExclusive: LocalDateTime =
+            LocalDateTime(
+                date = LocalDate(Year.MAX_VALUE, 12, 31),
+                time = LocalTime.fromSecondOfDay(0),
+            )
 
         override fun getNext(): HistoryPeriod? =
             null

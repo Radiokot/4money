@@ -40,9 +40,11 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import ua.com.radiokot.money.accounts.data.AccountRepository
@@ -52,7 +54,6 @@ import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.eventSharedFlow
-import ua.com.radiokot.money.isSameDayAs
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
@@ -76,8 +77,11 @@ class TransferSheetViewModel(
     val destinationAmountValue = _destinationAmountValue.asStateFlow()
     private val _memo: MutableStateFlow<String> = MutableStateFlow("")
     val memo = _memo.asStateFlow()
-    private val _date: MutableStateFlow<ViewDate> = MutableStateFlow(ViewDate.today())
-    val date = _date.asStateFlow()
+    private val dateTime: MutableStateFlow<LocalDateTime> = MutableStateFlow(
+        Clock.System
+            .now()
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+    )
     private val subcategoryToSelect: MutableStateFlow<Subcategory?> = MutableStateFlow(null)
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
@@ -86,7 +90,6 @@ class TransferSheetViewModel(
     private val requestedDestinationCounterpartyId: MutableStateFlow<TransferCounterpartyId?> =
         MutableStateFlow(null)
     private var transferToEditId: String? = null
-    private var requestedTime: Instant? = null
 
     private var sourceCounterparty: TransferCounterparty? = null
     private val sourceCounterpartySharedFlow: SharedFlow<TransferCounterparty> =
@@ -178,6 +181,11 @@ class TransferSheetViewModel(
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
+    val date: StateFlow<ViewDate> =
+        dateTime
+            .map { ViewDate(it.date) }
+            .stateIn(viewModelScope, SharingStarted.Lazily, ViewDate.today())
+
     // Reset amounts if counterparty currency changes.
     init {
         viewModelScope.launch {
@@ -212,7 +220,7 @@ class TransferSheetViewModel(
         sourceAmount: BigInteger?,
         destinationAmount: BigInteger?,
         memo: String?,
-        time: Instant?,
+        dateTime: LocalDateTime?,
     ) {
         log.debug {
             "setParameters(): setting:" +
@@ -222,7 +230,7 @@ class TransferSheetViewModel(
                     "\nsourceAmount=$sourceAmount," +
                     "\ndestinationAmount=$destinationAmount," +
                     "\nmemo=$memo," +
-                    "\ntime=$time"
+                    "\ntime=$dateTime"
         }
 
         requestedSourceCounterpartyId.tryEmit(sourceId)
@@ -232,12 +240,7 @@ class TransferSheetViewModel(
         sourceAmount?.also(_sourceAmountValue::tryEmit)
         destinationAmount?.also(_destinationAmountValue::tryEmit)
         memo?.also(_memo::tryEmit)
-        time
-            ?.also { requestedTime = it }
-            ?.toLocalDateTime(TimeZone.currentSystemDefault())
-            ?.date
-            ?.let(::ViewDate)
-            ?.also(_date::tryEmit)
+        dateTime?.also(this.dateTime::tryEmit)
     }
 
     fun onCounterpartiesSelected(
@@ -356,17 +359,20 @@ class TransferSheetViewModel(
         _events.tryEmit(Event.ProceedToDatePicker(currentDate))
     }
 
-    fun onDatePicked(newDate: LocalDate) {
-        log.debug {
-            "onDatePicked(): updating date:" +
-                    "\nnewDate=$newDate"
+    fun onDatePicked(
+        newDate: LocalDate,
+    ) {
+        dateTime.update { currentDateTime ->
+            LocalDateTime(
+                date = newDate,
+                time = currentDateTime.time,
+            ).also {
+                log.debug {
+                    "onDatePicked(): updating date:" +
+                            "\nnewDateTime=$it"
+                }
+            }
         }
-
-        _date.tryEmit(
-            ViewDate(
-                localDate = newDate,
-            )
-        )
     }
 
     fun onSaveClicked() {
@@ -401,15 +407,7 @@ class TransferSheetViewModel(
         val memo = memo.value
             .trim()
             .takeIf(String::isNotEmpty)
-        val date = date.value.localDate
-        // If the date was not modified, keep the existing transfer time.
-        val exactTime = requestedTime
-            ?.takeIf { requestedTime ->
-                requestedTime
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                    .date
-                    .isSameDayAs(date)
-            }
+        val dateTime = dateTime.value
 
         editTransferJob?.cancel()
         editTransferJob = viewModelScope.launch {
@@ -421,8 +419,7 @@ class TransferSheetViewModel(
                         "\ndestination=$destination," +
                         "\ndestinationAmount=$destinationAmount," +
                         "\nmemo=$memo," +
-                        "\ndate=$date," +
-                        "\nexactTime=$exactTime"
+                        "\ndateTime=$dateTime"
             }
 
             editTransferUseCase(
@@ -431,8 +428,7 @@ class TransferSheetViewModel(
                 sourceAmount = sourceAmount,
                 destinationId = destination.id,
                 destinationAmount = destinationAmount,
-                date = date,
-                exactTime = exactTime,
+                dateTime = dateTime,
                 memo = memo,
             )
                 .onFailure { error ->
@@ -465,7 +461,7 @@ class TransferSheetViewModel(
         val memo = memo.value
             .trim()
             .takeIf(String::isNotEmpty)
-        val date = date.value.localDate
+        val dateTime = dateTime.value
 
         transferJob?.cancel()
         transferJob = viewModelScope.launch {
@@ -476,7 +472,7 @@ class TransferSheetViewModel(
                         "\ndestination=$destination," +
                         "\ndestinationAmount=$destinationAmount," +
                         "\nmemo=$memo," +
-                        "\ndate=$date"
+                        "\ndateTime=$dateTime"
             }
 
             transferFundsUseCase(
@@ -484,7 +480,7 @@ class TransferSheetViewModel(
                 sourceAmount = sourceAmount,
                 destinationId = destination.id,
                 destinationAmount = destinationAmount,
-                date = date,
+                dateTime = dateTime,
                 memo = memo,
             )
                 .onFailure { error ->
