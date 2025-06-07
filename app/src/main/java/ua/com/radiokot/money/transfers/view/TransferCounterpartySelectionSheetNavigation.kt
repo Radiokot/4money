@@ -32,7 +32,7 @@ import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
 @Serializable
-class TransferCounterpartySelectionSheetRoute(
+data class TransferCounterpartySelectionSheetRoute(
     val isIncognito: Boolean,
     val isForSource: Boolean?,
     val showAccounts: Boolean,
