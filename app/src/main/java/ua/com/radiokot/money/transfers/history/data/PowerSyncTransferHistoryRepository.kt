@@ -29,6 +29,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -283,6 +284,7 @@ class PowerSyncTransferHistoryRepository(
                     parameters = listOf(transferId),
                     mapper = (SqlCursor::columnCount),
                 )
+                .drop(1)
                 .first()
         }
     }
