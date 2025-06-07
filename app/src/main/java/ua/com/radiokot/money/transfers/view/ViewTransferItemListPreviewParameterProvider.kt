@@ -58,6 +58,7 @@ class ViewTransferItemListPreviewParameterProvider :
                     secondaryAmount = BigInteger("10000"),
                     type = ViewTransferListItem.Transfer.Type.Expense,
                     memo = "My memo with long long content which most probably won't fit a single line of text",
+                    dateTime = 1,
                     source = null,
                 ),
                 ViewTransferListItem.Transfer(
@@ -82,6 +83,7 @@ class ViewTransferItemListPreviewParameterProvider :
                     secondaryAmount = BigInteger("217000"),
                     type = ViewTransferListItem.Transfer.Type.Expense,
                     memo = null,
+                    dateTime = 2,
                     source = null,
                 )
             )

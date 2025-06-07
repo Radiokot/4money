@@ -45,6 +45,11 @@ sealed interface ViewTransferListItem {
         val secondaryAmount: BigInteger,
         val type: Type,
         val memo: String?,
+        /**
+         * Although it is not shown in the list item,
+         * the same transfer with updated date must be treated as a different one.
+         */
+        val dateTime: Any,
         val source: ua.com.radiokot.money.transfers.data.Transfer?,
         override val key: Any = source?.hashCode() ?: Random.nextInt(),
     ) : ViewTransferListItem {
@@ -61,6 +66,7 @@ sealed interface ViewTransferListItem {
             if (secondaryAmount != other.secondaryAmount) return false
             if (type != other.type) return false
             if (memo != other.memo) return false
+            if (dateTime != other.dateTime) return false
             if (key != other.key) return false
 
             return true
@@ -73,6 +79,7 @@ sealed interface ViewTransferListItem {
             result = 31 * result + secondaryAmount.hashCode()
             result = 31 * result + type.hashCode()
             result = 31 * result + (memo?.hashCode() ?: 0)
+            result = 31 * result + dateTime.hashCode()
             result = 31 * result + key.hashCode()
             return result
         }
@@ -96,6 +103,7 @@ sealed interface ViewTransferListItem {
                         secondaryAmount = transfer.destinationAmount,
                         type = Type.Income,
                         memo = transfer.memo,
+                        dateTime = transfer.dateTime,
                         source = transfer,
                     )
                 } else {
@@ -111,6 +119,7 @@ sealed interface ViewTransferListItem {
                         else
                             Type.Other,
                         memo = transfer.memo,
+                        dateTime = transfer.dateTime,
                         source = transfer,
                     )
                 }
