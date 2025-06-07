@@ -51,7 +51,12 @@
         <activity
             android:name=".transfers.view.TransferShortcutActivity"
             android:exported="true"
-            android:windowSoftInputMode="adjustNothing"
-            android:theme="@style/TransparentActivity" />
+            android:theme="@style/TransparentActivity"
+            android:windowSoftInputMode="adjustNothing" />
+
+        <activity
+            android:name=".accounts.view.EditAccountActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustNothing" />
     </application>
 </manifest>

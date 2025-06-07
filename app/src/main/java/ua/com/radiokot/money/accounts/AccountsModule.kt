@@ -28,6 +28,7 @@ import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
 import ua.com.radiokot.money.accounts.logic.MoveAccountUseCase
 import ua.com.radiokot.money.accounts.view.AccountActionSheetViewModel
 import ua.com.radiokot.money.accounts.view.AccountsViewModel
+import ua.com.radiokot.money.accounts.view.EditAccountViewModel
 import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.categoriesModule
 import ua.com.radiokot.money.currency.currencyModule
@@ -77,5 +78,13 @@ val accountsModule = module {
                 updateAccountBalanceUseCase = get(),
             )
         } bind AccountActionSheetViewModel::class
+
+        viewModel {
+            EditAccountViewModel(
+                currencyRepository = get(),
+                currencyPreferences = get(),
+                itemColorSchemeRepository = get(),
+            )
+        } bind EditAccountViewModel::class
     }
 }
