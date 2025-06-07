@@ -201,8 +201,8 @@ class HardcodedItemColorSchemeRepository : ItemColorSchemeRepository {
             ),
             ItemColorScheme(
                 name = "Turquoise4",
-                primary = 0xFFEEFDF5,
-                onPrimary = 0xFF3FA56F,
+                primary = 0xFF3FA56F,
+                onPrimary = 0xFFEEFDF5,
             ),
             ItemColorScheme(
                 name = "Turquoise5",
