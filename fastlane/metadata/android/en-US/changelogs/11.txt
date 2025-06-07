@@ -1,2 +1,3 @@
-Changed:
-- Internal database structure. Older version stopped working
+Fixed:
+- Seeing incorrect date when editing the same transfer multiple times in a row
+- Not always seeing the updated content after editing a transfer
