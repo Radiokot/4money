@@ -48,6 +48,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -56,11 +58,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
@@ -384,35 +388,16 @@ private fun AccountItem(
 ) = Row(
     modifier = modifier,
 ) {
-    val colorBoxShape = remember {
-        RoundedCornerShape(12.dp)
-    }
 
-    BoxWithConstraints(
-        contentAlignment = Alignment.Center,
+    AccountLogo(
+        accountTitle = item.title,
+        colorScheme = item.colorScheme,
+        shape = remember {
+            RoundedCornerShape(12.dp)
+        },
         modifier = Modifier
             .size(38.dp)
-            .background(
-                color = item.primaryColor,
-                shape = colorBoxShape,
-            )
-    ) {
-        val fontSizeSp = (maxWidth * 0.5f).value.sp / LocalDensity.current.fontScale
-        val firstSymbol = remember(item.title) {
-            val firstCodepoint = item.title.codePoints()
-                .findFirst()
-                .orElse(8230) // …
-            String(intArrayOf(firstCodepoint), 0, 1)
-        }
-
-        BasicText(
-            text = firstSymbol,
-            style = TextStyle(
-                color = item.onPrimaryColor,
-                fontSize = fontSizeSp,
-            )
-        )
-    }
+    )
 
     Spacer(modifier = Modifier.width(12.dp))
 
@@ -458,4 +443,35 @@ private fun AccountItem(
             )
         }
     }
+}
+
+@Composable
+fun AccountLogo(
+    modifier: Modifier = Modifier,
+    accountTitle: CharSequence,
+    colorScheme: ItemColorScheme,
+    shape: Shape = RoundedCornerShape(12.dp),
+) = BoxWithConstraints(
+    contentAlignment = Alignment.Center,
+    modifier = modifier
+        .background(
+            color = Color(colorScheme.primary),
+            shape = shape,
+        )
+) {
+    val fontSizeSp = (maxWidth * 0.5f).value.sp / LocalDensity.current.fontScale
+    val firstSymbol = remember(accountTitle) {
+        val firstCodepoint = accountTitle.codePoints()
+            .findFirst()
+            .orElse(8230) // …
+        String(intArrayOf(firstCodepoint), 0, 1)
+    }
+
+    BasicText(
+        text = firstSymbol,
+        style = TextStyle(
+            color = Color(colorScheme.onPrimary),
+            fontSize = fontSizeSp,
+        )
+    )
 }

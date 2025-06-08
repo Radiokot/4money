@@ -21,9 +21,11 @@ package ua.com.radiokot.money.accounts.view
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -34,7 +36,7 @@ import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyRepository
-import ua.com.radiokot.money.currency.view.ViewCurrency
+import ua.com.radiokot.money.eventSharedFlow
 
 class EditAccountViewModel(
     private val currencyRepository: CurrencyRepository,
@@ -43,8 +45,8 @@ class EditAccountViewModel(
 ) : ViewModel() {
 
     val isNewAccount: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    private val _name: MutableStateFlow<String> = MutableStateFlow("")
-    val name = _name.asStateFlow()
+    private val _title: MutableStateFlow<String> = MutableStateFlow("")
+    val title = _title.asStateFlow()
     private val _colorScheme: MutableStateFlow<ItemColorScheme> = MutableStateFlow(
         itemColorSchemeRepository.getItemColorSchemesByName().getValue("Green3")
     )
@@ -58,20 +60,72 @@ class EditAccountViewModel(
             )
             ?: currencyRepository.getCurrencies().first()
     })
+    private val _events: MutableSharedFlow<Event> = eventSharedFlow()
+    val events = _events.asSharedFlow()
 
-    val currency: StateFlow<ViewCurrency> =
+    val currencyCode: StateFlow<String> =
         _currency
-            .map(::ViewCurrency)
-            .stateIn(viewModelScope, SharingStarted.Eagerly, ViewCurrency(_currency.value))
+            .map { it.code }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, _currency.value.code)
+
+    val isCurrencyChangeEnabled: StateFlow<Boolean> =
+        isNewAccount
 
     val isSaveEnabled: StateFlow<Boolean> =
-        _name
-            .map { name ->
-                name.isNotBlank()
+        _title
+            .map { title ->
+                title.isNotBlank()
             }
             .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    fun onNameChanged(newValue: String) {
-        _name.value = newValue
+    fun onTitleChanged(newValue: String) {
+        _title.value = newValue
+    }
+
+    fun onTypeClicked() {
+        _events.tryEmit(
+            Event.ProceedToAccountTypeSelection(
+                currentType = _type.value,
+            )
+        )
+    }
+
+    fun onColorClicked() {
+        _events.tryEmit(
+            Event.ProceedToColorSchemeSelection(
+                currentColorScheme = _colorScheme.value,
+            )
+        )
+    }
+
+    fun onCurrencyClicked() {
+        _events.tryEmit(
+            Event.ProceedToCurrencySelection(
+                currentCurrency = _currency.value,
+            )
+        )
+    }
+
+    fun onSaveClicked() {
+
+        if (!isSaveEnabled.value) {
+            return
+        }
+
+    }
+
+    sealed interface Event {
+
+        class ProceedToAccountTypeSelection(
+            val currentType: Account.Type,
+        ) : Event
+
+        class ProceedToColorSchemeSelection(
+            val currentColorScheme: ItemColorScheme,
+        ) : Event
+
+        class ProceedToCurrencySelection(
+            val currentCurrency: Currency,
+        ) : Event
     }
 }
