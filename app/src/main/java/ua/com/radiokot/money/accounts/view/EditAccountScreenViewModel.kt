@@ -38,13 +38,14 @@ import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.eventSharedFlow
 
-class EditAccountViewModel(
+class EditAccountScreenViewModel(
+    private val parameters: Parameters,
     private val currencyRepository: CurrencyRepository,
     private val currencyPreferences: CurrencyPreferences,
     private val itemColorSchemeRepository: ItemColorSchemeRepository,
 ) : ViewModel() {
 
-    val isNewAccount: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    val isNewAccount: Boolean = parameters.accountToEditId == null
     private val _title: MutableStateFlow<String> = MutableStateFlow("")
     val title = _title.asStateFlow()
     private val _colorScheme: MutableStateFlow<ItemColorScheme> = MutableStateFlow(
@@ -68,7 +69,7 @@ class EditAccountViewModel(
             .map { it.code }
             .stateIn(viewModelScope, SharingStarted.Eagerly, _currency.value.code)
 
-    val isCurrencyChangeEnabled: StateFlow<Boolean> =
+    val isCurrencyChangeEnabled: Boolean =
         isNewAccount
 
     val isSaveEnabled: StateFlow<Boolean> =
@@ -90,12 +91,21 @@ class EditAccountViewModel(
         )
     }
 
-    fun onColorClicked() {
+    fun onLogoClicked() {
         _events.tryEmit(
-            Event.ProceedToColorSchemeSelection(
+            Event.ProceedToLogoCustomization(
+                currentTitle = _title.value,
                 currentColorScheme = _colorScheme.value,
             )
         )
+    }
+
+    fun onNewColorSchemeSelected(
+        newColorSchemeName: String,
+    ) {
+        _colorScheme.value = itemColorSchemeRepository
+            .getItemColorSchemesByName()
+            .getValue(newColorSchemeName)
     }
 
     fun onCurrencyClicked() {
@@ -120,7 +130,8 @@ class EditAccountViewModel(
             val currentType: Account.Type,
         ) : Event
 
-        class ProceedToColorSchemeSelection(
+        class ProceedToLogoCustomization(
+            val currentTitle: String,
             val currentColorScheme: ItemColorScheme,
         ) : Event
 
@@ -128,4 +139,8 @@ class EditAccountViewModel(
             val currentCurrency: Currency,
         ) : Event
     }
+
+    class Parameters(
+        val accountToEditId: String?,
+    )
 }

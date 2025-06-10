@@ -24,11 +24,12 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
-import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
 import ua.com.radiokot.money.accounts.logic.MoveAccountUseCase
+import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
 import ua.com.radiokot.money.accounts.view.AccountActionSheetViewModel
+import ua.com.radiokot.money.accounts.view.AccountLogoScreenViewModel
 import ua.com.radiokot.money.accounts.view.AccountsViewModel
-import ua.com.radiokot.money.accounts.view.EditAccountViewModel
+import ua.com.radiokot.money.accounts.view.EditAccountScreenViewModel
 import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.categoriesModule
 import ua.com.radiokot.money.currency.currencyModule
@@ -80,11 +81,23 @@ val accountsModule = module {
         } bind AccountActionSheetViewModel::class
 
         viewModel {
-            EditAccountViewModel(
+            EditAccountScreenViewModel(
+                parameters = requireNotNull(getOrNull()) {
+                    "EditAccountScreenViewModel.Parameters are required"
+                },
                 currencyRepository = get(),
                 currencyPreferences = get(),
                 itemColorSchemeRepository = get(),
             )
-        } bind EditAccountViewModel::class
+        } bind EditAccountScreenViewModel::class
+
+        viewModel {
+            AccountLogoScreenViewModel(
+                parameters = requireNotNull(getOrNull()) {
+                    "AccountLogoScreenViewModel.Parameters are required"
+                },
+                itemColorSchemeRepository = get(),
+            )
+        }
     }
 }

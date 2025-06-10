@@ -19,22 +19,14 @@
 
 package ua.com.radiokot.money.colors
 
-import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
-import ua.com.radiokot.money.colors.view.ColorSchemeSelectionViewModel
 
 val colorsModule = module {
 
     single {
         HardcodedItemColorSchemeRepository()
     } bind ItemColorSchemeRepository::class
-
-    viewModel {
-        ColorSchemeSelectionViewModel(
-            itemColorSchemeRepository = get(),
-        )
-    }
 }

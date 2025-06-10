@@ -32,7 +32,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,16 +44,7 @@ import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.stableClickable
 
 @Composable
-fun ColorSchemeSelectionScreenRoot(
-    viewModel: ColorSchemeSelectionViewModel,
-) = ColorSchemeSelectionScreen(
-    colorSchemeList = viewModel.colorSchemeList.collectAsState(),
-    selectedColorScheme = viewModel.selectedColorScheme.collectAsState(),
-    onColorSchemeClicked = viewModel::onColorSchemeClicked,
-)
-
-@Composable
-private fun ColorSchemeSelectionScreen(
+fun ColorSchemePicker(
     modifier: Modifier = Modifier,
     colorSchemeList: State<List<ItemColorScheme>>,
     selectedColorScheme: State<ItemColorScheme>,
@@ -108,14 +98,16 @@ private fun ColorSchemeSelectionScreen(
 }
 
 @Preview(
-    widthDp = 200,
+    apiLevel = 34,
 )
 @Composable
-private fun ColorSchemeSelectionScreenPreview() {
+private fun Preview(
+
+) {
 
     val itemColorSchemeRepository = HardcodedItemColorSchemeRepository()
 
-    ColorSchemeSelectionScreen(
+    ColorSchemePicker(
         colorSchemeList = itemColorSchemeRepository.getItemColorSchemes().let(::mutableStateOf),
         selectedColorScheme = itemColorSchemeRepository.getItemColorSchemes()[7].let(::mutableStateOf),
         onColorSchemeClicked = {},

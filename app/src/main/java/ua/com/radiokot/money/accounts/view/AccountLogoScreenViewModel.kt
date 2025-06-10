@@ -17,15 +17,19 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.colors.view
+package ua.com.radiokot.money.accounts.view
 
 import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
+import ua.com.radiokot.money.eventSharedFlow
 
-class ColorSchemeSelectionViewModel(
+class AccountLogoScreenViewModel(
+    parameters: Parameters,
     itemColorSchemeRepository: ItemColorSchemeRepository,
 ) : ViewModel() {
 
@@ -33,10 +37,43 @@ class ColorSchemeSelectionViewModel(
         MutableStateFlow(itemColorSchemeRepository.getItemColorSchemes())
     val colorSchemeList = _colorSchemeList.asStateFlow()
     private val _selectedColorScheme: MutableStateFlow<ItemColorScheme> =
-        MutableStateFlow(itemColorSchemeRepository.getItemColorSchemes().first())
+        MutableStateFlow(
+            itemColorSchemeRepository
+                .getItemColorSchemesByName()
+                .getValue(parameters.initialColorSchemeName)
+        )
     val selectedColorScheme = _selectedColorScheme.asStateFlow()
+    private val _events: MutableSharedFlow<Event> = eventSharedFlow()
+    val events = _events.asSharedFlow()
+    val accountTitle = parameters.accountTitle
 
     fun onColorSchemeClicked(colorScheme: ItemColorScheme) {
         _selectedColorScheme.value = colorScheme
     }
+
+    fun onCloseClicked() {
+        _events.tryEmit(Event.Close)
+    }
+
+    fun onSaveClicked() {
+        _events.tryEmit(
+            Event.Done(
+                colorScheme = _selectedColorScheme.value,
+            )
+        )
+    }
+
+    sealed interface Event {
+
+        object Close : Event
+
+        class Done(
+            val colorScheme: ItemColorScheme,
+        ) : Event
+    }
+
+    class Parameters(
+        val accountTitle: String,
+        val initialColorSchemeName: String,
+    )
 }
