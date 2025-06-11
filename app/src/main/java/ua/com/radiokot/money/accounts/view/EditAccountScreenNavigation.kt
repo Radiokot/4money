@@ -32,22 +32,31 @@ import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.data.Currency
 
+
+private const val SAVED_STATE_KEY_SELECTED_COLOR_SCHEME = "selected-color-scheme"
+private const val SAVED_STATE_KEY_SELECTED_CURRENCY = "selected-currency"
+
 @Serializable
 data class EditAccountScreenRoute(
     val accountToEditId: String?,
 ) {
     companion object {
-        const val SAVED_STATE_KEY_COLOR_SCHEME_NAME = "color-scheme-name"
 
-        fun setNewColorSchemeName(
-            newColorSchemeName: String,
+        fun setSelectedColorScheme(
+            selectedColorScheme: ItemColorScheme,
             navController: NavController,
-        ) {
-            navController
-                .currentBackStackEntry
-                ?.savedStateHandle
-                ?.set(SAVED_STATE_KEY_COLOR_SCHEME_NAME, newColorSchemeName)
-        }
+        ) = navController
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(SAVED_STATE_KEY_SELECTED_COLOR_SCHEME, selectedColorScheme)
+
+        fun setSelectedCurrency(
+            selectedCurrency: Currency,
+            navController: NavController,
+        ) = navController
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(SAVED_STATE_KEY_SELECTED_CURRENCY, selectedCurrency)
     }
 }
 
@@ -89,12 +98,22 @@ fun NavGraphBuilder.editAccountScreen(
 
     LaunchedEffect(route) {
         entry.savedStateHandle
-            .getStateFlow<String?>(
-                key = EditAccountScreenRoute.SAVED_STATE_KEY_COLOR_SCHEME_NAME,
+            .getStateFlow<ItemColorScheme?>(
+                key = SAVED_STATE_KEY_SELECTED_COLOR_SCHEME,
                 initialValue = null,
             )
             .filterNotNull()
-            .collect(viewModel::onNewColorSchemeSelected)
+            .collect(viewModel::onColorSchemeSelected)
+    }
+
+    LaunchedEffect(route) {
+        entry.savedStateHandle
+            .getStateFlow<Currency?>(
+                key = SAVED_STATE_KEY_SELECTED_CURRENCY,
+                initialValue = null,
+            )
+            .filterNotNull()
+            .collect(viewModel::onCurrencySelected)
     }
 
     EditAccountScreenRoot(

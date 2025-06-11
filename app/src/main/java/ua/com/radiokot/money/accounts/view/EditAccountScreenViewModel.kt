@@ -38,10 +38,10 @@ import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.map
 
 class EditAccountScreenViewModel(
-    private val parameters: Parameters,
+    parameters: Parameters,
     private val currencyRepository: CurrencyRepository,
     private val currencyPreferences: CurrencyPreferences,
-    private val itemColorSchemeRepository: ItemColorSchemeRepository,
+    itemColorSchemeRepository: ItemColorSchemeRepository,
 ) : ViewModel() {
 
     private val log by lazyLogger("EditAccountScreenVM")
@@ -96,19 +96,15 @@ class EditAccountScreenViewModel(
         )
     }
 
-    fun onNewColorSchemeSelected(
-        newColorSchemeName: String,
+    fun onColorSchemeSelected(
+        newColorScheme: ItemColorScheme,
     ) {
-        _colorScheme.value = itemColorSchemeRepository
-            .getItemColorSchemesByName()
-            .getValue(newColorSchemeName)
-            .also {
-                log.debug {
-                    "onNewColorSchemeSelected(): changing color scheme:" +
-                            "\nnewColorSchemeName = $newColorSchemeName," +
-                            "\ncolorScheme=$it"
-                }
-            }
+        log.debug {
+            "onColorSchemeSelected(): changing color scheme:" +
+                    "\nnewColorScheme=$newColorScheme"
+        }
+
+        _colorScheme.value = newColorScheme
     }
 
     fun onCurrencyClicked() {
@@ -117,6 +113,17 @@ class EditAccountScreenViewModel(
                 currentCurrency = _currency.value,
             )
         )
+    }
+
+    fun onCurrencySelected(
+        newCurrency: Currency,
+    ) {
+        log.debug {
+            "onCurrencySelected(): changing currency:" +
+                    "\nnewCurrency=$newCurrency"
+        }
+
+        _currency.value = newCurrency
     }
 
     fun onSaveClicked() {

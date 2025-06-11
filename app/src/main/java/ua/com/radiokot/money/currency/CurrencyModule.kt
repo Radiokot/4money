@@ -21,6 +21,7 @@ package ua.com.radiokot.money.currency
 
 import android.content.Context
 import org.koin.android.ext.koin.androidApplication
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.auth.logic.sessionScope
@@ -28,6 +29,7 @@ import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyPreferencesOnPrefs
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.currency.data.PowerSyncCurrencyRepository
+import ua.com.radiokot.money.currency.view.CurrencySelectionScreenViewModel
 import ua.com.radiokot.money.powersync.powerSyncModule
 
 val currencyModule = module {
@@ -50,5 +52,14 @@ val currencyModule = module {
                 database = get(),
             )
         } bind CurrencyRepository::class
+
+        viewModel {
+            CurrencySelectionScreenViewModel(
+                parameters = requireNotNull(getOrNull()) {
+                    "CurrencySelectionScreenViewModel.Parameters are required"
+                },
+                currencyRepository = get(),
+            )
+        } bind CurrencySelectionScreenViewModel::class
     }
 }

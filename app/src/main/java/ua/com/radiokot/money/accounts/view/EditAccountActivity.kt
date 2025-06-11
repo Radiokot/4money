@@ -22,23 +22,19 @@ package ua.com.radiokot.money.accounts.view
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.navigation.compose.NavHost
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
+import ua.com.radiokot.money.currency.view.CurrencySelectionScreenRoute
+import ua.com.radiokot.money.currency.view.currencySelectionScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
-import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Local
 
 class EditAccountActivity : UserSessionScopeActivity() {
 
@@ -91,7 +87,12 @@ private fun Content(
                 )
             },
             onProceedToCurrencySelection = { currentCurrency ->
-                // TODO
+                softwareKeyboardController?.hide()
+                navController.navigate(
+                    CurrencySelectionScreenRoute(
+                        selectedCurrencyCode = currentCurrency.code,
+                    ),
+                )
             },
         )
 
@@ -101,11 +102,24 @@ private fun Content(
             },
             onDone = { colorScheme ->
                 navController.popBackStack()
-                EditAccountScreenRoute.setNewColorSchemeName(
-                    newColorSchemeName = colorScheme.name,
+                EditAccountScreenRoute.setSelectedColorScheme(
+                    selectedColorScheme = colorScheme,
                     navController = navController,
                 )
             },
+        )
+
+        currencySelectionScreen(
+            onClose = {
+                navController.popBackStack()
+            },
+            onDone = { currency ->
+                navController.popBackStack()
+                EditAccountScreenRoute.setSelectedCurrency(
+                    selectedCurrency = currency,
+                    navController = navController,
+                )
+            }
         )
     }
 }

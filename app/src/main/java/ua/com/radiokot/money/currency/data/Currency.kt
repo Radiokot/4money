@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.currency.data
 
+import java.io.Serializable
 import java.util.UUID
 
 class Currency(
@@ -43,7 +44,8 @@ class Currency(
      * A unique identifier of the record.
      */
     val id: String = UUID.randomUUID().toString(),
-) {
+) : Serializable {
+
     init {
         require(code.isNotEmpty()) {
             "Code must not be empty"

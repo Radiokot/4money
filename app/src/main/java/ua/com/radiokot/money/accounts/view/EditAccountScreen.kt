@@ -180,7 +180,7 @@ private fun EditAccountScreen(
         )
 
         if (isCurrencyChangeEnabled) {
-            Text(text = "🔽")
+            Text(text = "▶️")
         }
     }
 
@@ -210,7 +210,7 @@ private fun EditAccountScreen(
                 .weight(1f)
         )
 
-        Text(text = "🔽")
+        Text(text = "▶️")
     }
 
     Spacer(modifier = Modifier.height(24.dp))

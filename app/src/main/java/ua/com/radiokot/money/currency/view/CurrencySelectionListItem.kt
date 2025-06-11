@@ -17,32 +17,45 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.colors.data
+package ua.com.radiokot.money.currency.view
 
 import androidx.compose.runtime.Immutable
-import java.io.Serializable
+import ua.com.radiokot.money.currency.data.Currency
+import kotlin.random.Random
 
 @Immutable
-class ItemColorScheme(
-    val name: String,
-    val primary: Long,
-    val onPrimary: Long,
-) : Serializable {
+class CurrencySelectionListItem(
+    val code: String,
+    val symbol: String,
+    val isSelected: Boolean,
+    val source: Currency?,
+    val key: Any = source?.hashCode() ?: Random.nextInt(),
+) {
+    constructor(
+        currency: Currency,
+        isSelected: Boolean,
+    ) : this(
+        code = currency.code,
+        symbol = currency.symbol,
+        isSelected = isSelected,
+        source = currency,
+    )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is ItemColorScheme) return false
+        if (other !is CurrencySelectionListItem) return false
 
-        if (name != other.name) return false
+        if (code != other.code) return false
+        if (symbol != other.symbol) return false
+        if (isSelected != other.isSelected) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return name.hashCode()
-    }
-
-    override fun toString(): String {
-        return "ItemColorScheme(name='$name')"
+        var result = code.hashCode()
+        result = 31 * result + symbol.hashCode()
+        result = 31 * result + isSelected.hashCode()
+        return result
     }
 }
