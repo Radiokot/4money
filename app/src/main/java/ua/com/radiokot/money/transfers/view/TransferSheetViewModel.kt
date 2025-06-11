@@ -59,6 +59,7 @@ import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.logic.EditTransferUseCase
 import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
+import ua.com.radiokot.money.map
 import java.math.BigInteger
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -183,8 +184,7 @@ class TransferSheetViewModel(
 
     val date: StateFlow<ViewDate> =
         dateTime
-            .map { ViewDate(it.date) }
-            .stateIn(viewModelScope, SharingStarted.Lazily, ViewDate.today())
+            .map(viewModelScope, ::ViewDate)
 
     // Reset amounts if counterparty currency changes.
     init {

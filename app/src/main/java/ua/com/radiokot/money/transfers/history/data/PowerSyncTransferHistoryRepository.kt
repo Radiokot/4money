@@ -35,16 +35,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
+import ua.com.radiokot.money.plus
 import java.lang.ref.WeakReference
 import java.math.BigInteger
 import java.util.UUID
@@ -197,10 +195,7 @@ class PowerSyncTransferHistoryRepository(
             ?.dateTime
             ?.let { newestTransferTime ->
                 TransferHistoryPage.Cursor(
-                    timeExclusive = newestTransferTime
-                        .toInstant(TimeZone.UTC)
-                        .plus(1.seconds)
-                        .toLocalDateTime(TimeZone.UTC),
+                    timeExclusive = newestTransferTime + 1.seconds,
                     isBefore = true,
                 )
             }

@@ -23,12 +23,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.colors.data.ItemColorScheme
@@ -38,6 +35,7 @@ import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.map
 
 class EditAccountScreenViewModel(
     private val parameters: Parameters,
@@ -68,18 +66,14 @@ class EditAccountScreenViewModel(
 
     val currencyCode: StateFlow<String> =
         _currency
-            .map { it.code }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, _currency.value.code)
+            .map(viewModelScope, Currency::code)
 
     val isCurrencyChangeEnabled: Boolean =
         isNewAccount
 
     val isSaveEnabled: StateFlow<Boolean> =
         _title
-            .map { title ->
-                title.isNotBlank()
-            }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+            .map(viewModelScope, String::isNotBlank)
 
     fun onTitleChanged(newValue: String) {
         _title.value = newValue

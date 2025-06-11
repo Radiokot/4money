@@ -23,6 +23,7 @@ import androidx.compose.runtime.Immutable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
@@ -51,6 +52,18 @@ class ViewDate(
             else ->
                 null
         }
+    )
+
+    constructor(
+        localDateTime: LocalDateTime,
+        today: LocalDate = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date,
+        yesterday: LocalDate = today.minus(1, DateTimeUnit.DAY),
+    ) : this(
+        localDate = localDateTime.date,
+        today = today,
+        yesterday = yesterday
     )
 
     override fun equals(other: Any?): Boolean {
