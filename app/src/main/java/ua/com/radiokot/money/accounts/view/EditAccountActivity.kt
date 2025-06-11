@@ -22,13 +22,20 @@ package ua.com.radiokot.money.accounts.view
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.navigation.compose.NavHost
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.rememberMoneyAppNavController
+import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Local
 
 class EditAccountActivity : UserSessionScopeActivity() {
 
@@ -54,12 +61,15 @@ private fun Content(
 
 ) {
     val navController = rememberMoneyAppNavController()
+    val softwareKeyboardController = LocalSoftwareKeyboardController.current
 
     NavHost(
         navController = navController,
         startDestination = EditAccountScreenRoute(
             accountToEditId = null,
         ),
+        enterTransition = { fadeIn(tween(150)) },
+        exitTransition = { fadeOut(tween(150)) },
         modifier = Modifier
             .fillMaxSize(),
     ) {
@@ -69,6 +79,7 @@ private fun Content(
                 // TODO
             },
             onProceedToLogoCustomization = { currentTitle, currentColorScheme ->
+                softwareKeyboardController?.hide()
                 navController.navigate(
                     AccountLogoScreenRoute(
                         accountTitle = currentTitle,
@@ -86,13 +97,11 @@ private fun Content(
                 navController.popBackStack()
             },
             onDone = { colorScheme ->
-                navController
-                    .previousBackStackEntry
-                    ?.savedStateHandle?.set(
-                        EditAccountScreenRoute.SAVED_STATE_KEY_COLOR_SCHEME_NAME,
-                        colorScheme.name,
-                    )
                 navController.popBackStack()
+                EditAccountScreenRoute.setNewColorSchemeName(
+                    newColorSchemeName = colorScheme.name,
+                    navController = navController,
+                )
             },
         )
     }

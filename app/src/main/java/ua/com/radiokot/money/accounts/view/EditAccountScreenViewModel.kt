@@ -37,6 +37,7 @@ import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.eventSharedFlow
+import ua.com.radiokot.money.lazyLogger
 
 class EditAccountScreenViewModel(
     private val parameters: Parameters,
@@ -45,6 +46,7 @@ class EditAccountScreenViewModel(
     private val itemColorSchemeRepository: ItemColorSchemeRepository,
 ) : ViewModel() {
 
+    private val log by lazyLogger("EditAccountScreenVM")
     val isNewAccount: Boolean = parameters.accountToEditId == null
     private val _title: MutableStateFlow<String> = MutableStateFlow("")
     val title = _title.asStateFlow()
@@ -106,6 +108,13 @@ class EditAccountScreenViewModel(
         _colorScheme.value = itemColorSchemeRepository
             .getItemColorSchemesByName()
             .getValue(newColorSchemeName)
+            .also {
+                log.debug {
+                    "onNewColorSchemeSelected(): changing color scheme:" +
+                            "\nnewColorSchemeName = $newColorSchemeName," +
+                            "\ncolorScheme=$it"
+                }
+            }
     }
 
     fun onCurrencyClicked() {

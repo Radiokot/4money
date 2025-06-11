@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.accounts.view
 
 import androidx.compose.runtime.LaunchedEffect
+import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
@@ -37,6 +38,16 @@ data class EditAccountScreenRoute(
 ) {
     companion object {
         const val SAVED_STATE_KEY_COLOR_SCHEME_NAME = "color-scheme-name"
+
+        fun setNewColorSchemeName(
+            newColorSchemeName: String,
+            navController: NavController,
+        ) {
+            navController
+                .currentBackStackEntry
+                ?.savedStateHandle
+                ?.set(SAVED_STATE_KEY_COLOR_SCHEME_NAME, newColorSchemeName)
+        }
     }
 }
 
