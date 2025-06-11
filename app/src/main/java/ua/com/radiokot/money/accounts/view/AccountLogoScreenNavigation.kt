@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.accounts.view
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -37,7 +38,18 @@ data class AccountLogoScreenRoute(
 fun NavGraphBuilder.accountLogoScreen(
     onClose: () -> Unit,
     onDone: (colorScheme: ItemColorScheme) -> Unit,
-) = composable<AccountLogoScreenRoute> { entry ->
+) = composable<AccountLogoScreenRoute>(
+    enterTransition = {
+        slideIntoContainer(
+            towards = AnimatedContentTransitionScope.SlideDirection.Companion.Start,
+        )
+    },
+    exitTransition = {
+        slideOutOfContainer(
+            towards = AnimatedContentTransitionScope.SlideDirection.Companion.End,
+        )
+    },
+) { entry ->
 
     val route: AccountLogoScreenRoute = entry.toRoute()
     val viewModel: AccountLogoScreenViewModel = koinViewModel {
