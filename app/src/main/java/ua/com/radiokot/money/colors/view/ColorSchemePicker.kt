@@ -19,6 +19,11 @@
 
 package ua.com.radiokot.money.colors.view
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +38,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,47 +56,65 @@ fun ColorSchemePicker(
     selectedColorScheme: State<ItemColorScheme>,
     onColorSchemeClicked: (ItemColorScheme) -> Unit,
     contentPadding: PaddingValues = PaddingValues(8.dp),
-) = LazyVerticalGrid(
-    columns = GridCells.Fixed(6),
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-    verticalArrangement = Arrangement.spacedBy(8.dp),
-    contentPadding = contentPadding,
-    modifier = modifier,
 ) {
+    val selectionIndicatorEnterTransition = remember {
+        scaleIn(
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+            )
+        )
+    }
+    val selectionIndicatorExitTransition = remember {
+        scaleOut()
+    }
 
-    items(
-        items = colorSchemeList.value,
-        key = ItemColorScheme::name,
-    ) { colorScheme ->
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(6),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = contentPadding,
+        modifier = modifier,
+    ) {
 
-        BoxWithConstraints {
-            val circleSize = min(maxWidth, maxHeight)
+        items(
+            items = colorSchemeList.value,
+            key = ItemColorScheme::name,
+        ) { colorScheme ->
 
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(circleSize)
-                    .background(
-                        color = Color(colorScheme.primary),
-                        shape = CircleShape,
-                    )
-                    .stableClickable(
-                        onClick = {
-                            onColorSchemeClicked(colorScheme)
-                        },
-                    )
-            ) {
+            BoxWithConstraints {
+                val circleSize = min(maxWidth, maxHeight)
 
-                if (selectedColorScheme.value == colorScheme) {
-                    Box(
-                        modifier = Modifier
-                            .size(circleSize * 0.8f)
-                            .border(
-                                width = circleSize * 0.08f,
-                                color = Color(colorScheme.onPrimary),
-                                shape = CircleShape,
-                            )
-                    )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(circleSize)
+                        .background(
+                            color = Color(colorScheme.primary),
+                            shape = CircleShape,
+                        )
+                        .stableClickable(
+                            onClick = {
+                                onColorSchemeClicked(colorScheme)
+                            },
+                        )
+                ) {
+
+                    AnimatedVisibility(
+                        visible = selectedColorScheme.value == colorScheme,
+                        enter = selectionIndicatorEnterTransition,
+                        exit = selectionIndicatorExitTransition,
+                        label = "selection-indicator",
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(circleSize * 0.8f)
+                                .border(
+                                    width = circleSize * 0.08f,
+                                    color = Color(colorScheme.onPrimary),
+                                    shape = CircleShape,
+                                )
+                        )
+                    }
                 }
             }
         }

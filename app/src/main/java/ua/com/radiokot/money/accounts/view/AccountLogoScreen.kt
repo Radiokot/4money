@@ -19,6 +19,11 @@
 
 package ua.com.radiokot.money.accounts.view
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -118,12 +123,31 @@ private fun AccountLogoScreen(
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    AccountLogo(
-        accountTitle = accountTitle, colorScheme = selectedColorScheme.value,
+    val logoTransitionSpec = remember {
+
+        fun AnimatedContentTransitionScope<ItemColorScheme>.() =
+            ContentTransform(
+                targetContentEnter = fadeIn(),
+                initialContentExit = ExitTransition.KeepUntilTransitionsFinished,
+                sizeTransform = null,
+            )
+    }
+
+    AnimatedContent(
+        targetState = selectedColorScheme.value,
+        transitionSpec = logoTransitionSpec,
+        label = "logo",
         modifier = Modifier
-            .size(72.dp)
             .align(Alignment.CenterHorizontally)
-    )
+    ) { colorScheme ->
+
+        AccountLogo(
+            accountTitle = accountTitle,
+            colorScheme = colorScheme,
+            modifier = Modifier
+                .size(72.dp)
+        )
+    }
 
     Spacer(modifier = Modifier.height(8.dp))
 

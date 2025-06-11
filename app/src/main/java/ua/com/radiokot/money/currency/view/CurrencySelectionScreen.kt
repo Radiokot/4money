@@ -24,6 +24,8 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.clickable
@@ -121,7 +123,11 @@ private fun CurrencySelectionScreen(
         fun AnimatedContentTransitionScope<Boolean>.() =
             if (targetState) {
                 ContentTransform(
-                    targetContentEnter = scaleIn(),
+                    targetContentEnter = scaleIn(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                        )
+                    ),
                     initialContentExit = ExitTransition.KeepUntilTransitionsFinished,
                     sizeTransform = null,
                 )
