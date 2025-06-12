@@ -126,6 +126,17 @@ class EditAccountScreenViewModel(
         _currency.value = newCurrency
     }
 
+    fun onTypeSelected(
+        newType: Account.Type,
+    ) {
+        log.debug {
+            "onTypeSelected(): changing type:" +
+                    "\nnewType=$newType"
+        }
+
+        _type.value = newType
+    }
+
     fun onSaveClicked() {
 
         if (!isSaveEnabled.value) {

@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.navigation.compose.NavHost
+import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.currency.view.CurrencySelectionScreenRoute
@@ -75,7 +76,11 @@ private fun Content(
 
         editAccountScreen(
             onProceedToAccountTypeSelection = { currentType ->
-                // TODO
+                navController.navigate(
+                    AccountTypeSelectionSheetRoute(
+                        selectedType = currentType,
+                    )
+                )
             },
             onProceedToLogoCustomization = { currentTitle, currentColorScheme ->
                 softwareKeyboardController?.hide()
@@ -121,5 +126,19 @@ private fun Content(
                 )
             }
         )
+
+        accountTypeSelectionSheet(
+            onDone = { type ->
+                navController.popBackStack()
+                EditAccountScreenRoute.setSelectedType(
+                    selectedType = type,
+                    navController = navController,
+                )
+            }
+        )
     }
+
+    MoneyAppModalBottomSheetHost(
+        moneyAppNavController = navController,
+    )
 }

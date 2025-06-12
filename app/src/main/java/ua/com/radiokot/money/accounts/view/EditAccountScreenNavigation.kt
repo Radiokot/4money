@@ -35,6 +35,7 @@ import ua.com.radiokot.money.currency.data.Currency
 
 private const val SAVED_STATE_KEY_SELECTED_COLOR_SCHEME = "selected-color-scheme"
 private const val SAVED_STATE_KEY_SELECTED_CURRENCY = "selected-currency"
+private const val SAVED_STATE_KEY_SELECTED_TYPE = "selected-type"
 
 @Serializable
 data class EditAccountScreenRoute(
@@ -57,6 +58,14 @@ data class EditAccountScreenRoute(
             .currentBackStackEntry
             ?.savedStateHandle
             ?.set(SAVED_STATE_KEY_SELECTED_CURRENCY, selectedCurrency)
+
+        fun setSelectedType(
+            selectedType: Account.Type,
+            navController: NavController,
+        ) = navController
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(SAVED_STATE_KEY_SELECTED_TYPE, selectedType)
     }
 }
 
@@ -114,6 +123,16 @@ fun NavGraphBuilder.editAccountScreen(
             )
             .filterNotNull()
             .collect(viewModel::onCurrencySelected)
+    }
+
+    LaunchedEffect(route) {
+        entry.savedStateHandle
+            .getStateFlow<Account.Type?>(
+                key = SAVED_STATE_KEY_SELECTED_TYPE,
+                initialValue = null,
+            )
+            .filterNotNull()
+            .collect(viewModel::onTypeSelected)
     }
 
     EditAccountScreenRoot(
