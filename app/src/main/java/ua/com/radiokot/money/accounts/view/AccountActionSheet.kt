@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.accounts.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -76,13 +77,14 @@ fun AccountActionSheetRoot(
         accountDetails = accountDetailsState.value ?: return,
         mode = modeState.value,
         balanceInputValue = viewModel.balanceInputValue.collectAsState(),
-        onBalanceClicked = viewModel::onBalanceClicked,
-        onNewBalanceInputValueParsed = viewModel::onNewBalanceInputValueParsed,
-        onBalanceInputSubmit = viewModel::onBalanceInputSubmit,
-        onTransferClicked = viewModel::onTransferClicked,
-        onIncomeClicked = viewModel::onIncomeClicked,
-        onExpenseClicked = viewModel::onExpenseClicked,
-        onActivityClicked = viewModel::onActivityClicked,
+        onBalanceClicked = remember { viewModel::onBalanceClicked },
+        onNewBalanceInputValueParsed = remember { viewModel::onNewBalanceInputValueParsed },
+        onBalanceInputSubmit = remember { viewModel::onBalanceInputSubmit },
+        onTransferClicked = remember { viewModel::onTransferClicked },
+        onIncomeClicked = remember { viewModel::onIncomeClicked },
+        onExpenseClicked = remember { viewModel::onExpenseClicked },
+        onActivityClicked = remember { viewModel::onActivityClicked },
+        onEditClicked = remember { viewModel::onEditClicked },
         modifier = modifier,
     )
 }
@@ -100,6 +102,7 @@ private fun AccountActionSheet(
     onIncomeClicked: () -> Unit,
     onExpenseClicked: () -> Unit,
     onActivityClicked: () -> Unit,
+    onEditClicked: () -> Unit,
 ) = BoxWithConstraints(
     modifier = modifier
         .background(Color(0xFFF9FBE7))
@@ -160,7 +163,7 @@ private fun AccountActionSheet(
                     .padding(
                         horizontal = 16.dp,
                     )
-                    .stableClickable(
+                    .clickable(
                         onClick = onBalanceClicked,
                     )
             )
@@ -176,6 +179,7 @@ private fun AccountActionSheet(
                     onIncomeClicked = onIncomeClicked,
                     onExpenseClicked = onExpenseClicked,
                     onActivityClicked = onActivityClicked,
+                    onEditClicked = onEditClicked,
                 )
 
             ViewAccountActionSheetMode.Balance ->
@@ -192,6 +196,7 @@ private fun AccountActionSheet(
 
 @Composable
 @Preview(
+    apiLevel = 34,
     heightDp = 2000,
 )
 private fun AccountActionSheetPreview(
@@ -218,6 +223,7 @@ private fun AccountActionSheetPreview(
             onIncomeClicked = {},
             onExpenseClicked = {},
             onActivityClicked = {},
+            onEditClicked = {},
         )
     }
 }
@@ -229,6 +235,7 @@ private fun ActionsModeContent(
     onIncomeClicked: () -> Unit,
     onExpenseClicked: () -> Unit,
     onActivityClicked: () -> Unit,
+    onEditClicked: () -> Unit,
 ) = Column(
     verticalArrangement = Arrangement.spacedBy(16.dp),
     modifier = Modifier
@@ -241,16 +248,18 @@ private fun ActionsModeContent(
     ) {
         TextButton(
             text = "✏️ Edit",
-            isEnabled = false,
             modifier = Modifier
                 .weight(1f)
+                .clickable(
+                    onClick = onEditClicked,
+                )
         )
 
         TextButton(
             text = "⚖️ Balance",
             modifier = Modifier
                 .weight(1f)
-                .stableClickable(
+                .clickable(
                     onClick = onBalanceClicked,
                 )
         )
@@ -259,7 +268,7 @@ private fun ActionsModeContent(
             text = "📃 Activity",
             modifier = Modifier
                 .weight(1f)
-                .stableClickable(
+                .clickable(
                     onClick = onActivityClicked,
                 )
         )
@@ -272,7 +281,7 @@ private fun ActionsModeContent(
             text = "📩 Income",
             modifier = Modifier
                 .weight(1f)
-                .stableClickable(
+                .clickable(
                     onClick = onIncomeClicked,
                 )
         )
@@ -281,7 +290,7 @@ private fun ActionsModeContent(
             text = "📨 Expense",
             modifier = Modifier
                 .weight(1f)
-                .stableClickable(
+                .clickable(
                     onClick = onExpenseClicked,
                 )
         )
@@ -291,7 +300,7 @@ private fun ActionsModeContent(
             isEnabled = true,
             modifier = Modifier
                 .weight(1f)
-                .stableClickable(
+                .clickable(
                     onClick = onTransferClicked,
                 )
         )
@@ -340,7 +349,7 @@ private fun BalanceModeContent(
     TextButton(
         text = "Save",
         modifier = Modifier
-            .stableClickable(
+            .clickable(
                 onClick = onBalanceInputSubmit,
             )
     )

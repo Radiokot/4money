@@ -236,10 +236,20 @@ class AccountsViewModel(
         }
     }
 
+    fun onAddClicked() {
+        log.debug {
+            "onAddClicked(): proceeding to adding new account"
+        }
+
+        _events.tryEmit(Event.ProceedToAccountAdd)
+    }
+
     sealed interface Event {
 
         class ProceedToAccountActions(
             val account: Account,
         ) : Event
+
+        object ProceedToAccountAdd : Event
     }
 }

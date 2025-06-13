@@ -36,6 +36,7 @@ data class AccountsScreenRoute(
 
 fun NavGraphBuilder.accountsScreen(
     onProceedToAccountActions: (account: Account) -> Unit,
+    onProceedToAccountAdd: () -> Unit,
 ) = composable<AccountsScreenRoute> { entry ->
 
     val isIncognito = entry.toRoute<AccountsScreenRoute>()
@@ -47,6 +48,10 @@ fun NavGraphBuilder.accountsScreen(
             when (event) {
                 is AccountsViewModel.Event.ProceedToAccountActions -> {
                     onProceedToAccountActions(event.account)
+                }
+
+                is AccountsViewModel.Event.ProceedToAccountAdd -> {
+                    onProceedToAccountAdd()
                 }
             }
         }

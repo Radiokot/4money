@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
@@ -55,6 +57,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
+import ua.com.radiokot.money.uikit.TextButton
 
 @Composable
 fun AccountsScreenRoot(
@@ -67,6 +70,7 @@ fun AccountsScreenRoot(
     onAccountItemMoved = viewModel::onAccountItemMoved,
     totalAmountPerCurrencyList = viewModel.totalAmountsPerCurrency.collectAsState(),
     totalAmount = viewModel.totalAmount.collectAsState(),
+    onAddClicked = remember { viewModel::onAddClicked },
 )
 
 @Composable
@@ -81,11 +85,9 @@ private fun AccountsScreen(
     ) -> Unit,
     totalAmountPerCurrencyList: State<List<ViewAmount>>,
     totalAmount: State<ViewAmount?>,
+    onAddClicked: () -> Unit,
 ) = Column(
     modifier = modifier
-        .padding(
-            top = 16.dp,
-        ),
 ) {
 
     val pages: List<Page> = remember {
@@ -101,60 +103,86 @@ private fun AccountsScreen(
     val coroutineScope = rememberCoroutineScope()
 
     Row(
-        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .padding(
+                horizontal = 22.dp,
+                vertical = 16.dp,
+            )
     ) {
-        if (Page.All in pages) {
-            val pageIndex = pages.indexOf(Page.All)
-            BasicText(
-                text = "Accounts",
-                style = TextStyle(
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    textDecoration =
-                    if (pagerState.currentPage == pageIndex)
-                        TextDecoration.Underline
-                    else
-                        null,
-                ),
-                modifier = Modifier
-                    .clickable {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(
-                                page = pageIndex,
-                            )
+        TextButton(
+            text = "💨",
+            padding = PaddingValues(6.dp),
+            modifier = Modifier
+                .drawWithContent {
+                    // Keep this button only for space.
+                }
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+            modifier = Modifier
+                .weight(1f)
+        ) {
+            if (Page.All in pages) {
+                val pageIndex = pages.indexOf(Page.All)
+                BasicText(
+                    text = "Accounts",
+                    style = TextStyle(
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold,
+                        textDecoration =
+                        if (pagerState.currentPage == pageIndex)
+                            TextDecoration.Underline
+                        else
+                            null,
+                    ),
+                    modifier = Modifier
+                        .clickable {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(
+                                    page = pageIndex,
+                                )
+                            }
                         }
-                    }
-            )
+                )
+            }
+
+            if (Page.Total in pages) {
+                val pageIndex = pages.indexOf(Page.Total)
+                BasicText(
+                    text = "Total",
+                    style = TextStyle(
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold,
+                        textDecoration =
+                        if (pagerState.currentPage == pageIndex)
+                            TextDecoration.Underline
+                        else
+                            null,
+                    ),
+                    modifier = Modifier
+                        .clickable {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(
+                                    page = pageIndex,
+                                )
+                            }
+                        }
+                )
+            }
         }
 
-        if (Page.Total in pages) {
-            val pageIndex = pages.indexOf(Page.Total)
-            BasicText(
-                text = "Total",
-                style = TextStyle(
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    textDecoration =
-                    if (pagerState.currentPage == pageIndex)
-                        TextDecoration.Underline
-                    else
-                        null,
-                ),
-                modifier = Modifier
-                    .clickable {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(
-                                page = pageIndex,
-                            )
-                        }
-                    }
-            )
-        }
+        TextButton(
+            text = "➕",
+            padding = PaddingValues(6.dp),
+            modifier = Modifier
+                .clickable(
+                    onClick = onAddClicked,
+                )
+        )
     }
-
-    Spacer(modifier = Modifier.height(12.dp))
 
     HorizontalPager(
         state = pagerState,

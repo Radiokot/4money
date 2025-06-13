@@ -85,6 +85,7 @@ val accountsModule = module {
                 parameters = requireNotNull(getOrNull()) {
                     "EditAccountScreenViewModel.Parameters are required"
                 },
+                accountRepository = get(),
                 currencyRepository = get(),
                 currencyPreferences = get(),
                 itemColorSchemeRepository = get(),

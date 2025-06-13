@@ -169,6 +169,21 @@ class AccountActionSheetViewModel(
         )
     }
 
+    fun onEditClicked() {
+        if (mode.value != ViewAccountActionSheetMode.Actions) {
+            log.debug {
+                "onEditClicked(): ignoring as not in actions mode"
+            }
+            return
+        }
+
+        _events.tryEmit(
+            Event.ProceedToEdit(
+                accountId = account.id,
+            )
+        )
+    }
+
     fun onNewBalanceInputValueParsed(newValue: BigInteger) {
         log.debug {
             "onNewBalanceInputValueParsed(): updating balance input value: " +
@@ -226,6 +241,10 @@ class AccountActionSheetViewModel(
 
         class ProceedToTransfer(
             val sourceAccountId: TransferCounterpartyId.Account,
+        ) : Event
+
+        class ProceedToEdit(
+            val accountId: String,
         ) : Event
 
         class ProceedToFilteredActivity(

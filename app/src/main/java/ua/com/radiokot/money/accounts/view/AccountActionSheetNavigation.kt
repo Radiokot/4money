@@ -40,6 +40,7 @@ fun NavGraphBuilder.accountActionSheet(
     onProceedToExpense: (sourceAccountId: TransferCounterpartyId.Account) -> Unit,
     onProceedToTransfer: (sourceAccountId: TransferCounterpartyId.Account) -> Unit,
     onProceedToFilteredActivity: (accountCounterparty: TransferCounterparty.Account) -> Unit,
+    onProceedToEdit: (accountId: String) -> Unit,
 ) = bottomSheet<AccountActionSheetRoute> { entry ->
 
     val accountId = entry.toRoute<AccountActionSheetRoute>()
@@ -68,6 +69,10 @@ fun NavGraphBuilder.accountActionSheet(
 
                     is AccountActionSheetViewModel.Event.ProceedToTransfer -> {
                         onProceedToTransfer(event.sourceAccountId)
+                    }
+
+                    is AccountActionSheetViewModel.Event.ProceedToEdit ->{
+                        onProceedToEdit(event.accountId)
                     }
 
                     is AccountActionSheetViewModel.Event.ProceedToFilteredActivity -> {

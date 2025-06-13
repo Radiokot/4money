@@ -50,23 +50,39 @@ class EditAccountActivity : UserSessionScopeActivity() {
 
         setContent {
             UserSessionScope {
-                Content()
+                Content(
+                    accountToEditId = intent.getStringExtra(EXTRA_ACCOUNT_TO_EDIT_ID),
+                    finishActivity = ::finish,
+                )
             }
+        }
+    }
+
+    companion object {
+        private const val EXTRA_ACCOUNT_TO_EDIT_ID = "account-to-edit-id"
+
+        fun getBundle(
+            accountToEditId: String?,
+        ) = Bundle().apply {
+            putString(
+                EXTRA_ACCOUNT_TO_EDIT_ID,
+                accountToEditId,
+            )
         }
     }
 }
 
 @Composable
 private fun Content(
-
+    accountToEditId: String?,
+    finishActivity: () -> Unit,
 ) {
     val navController = rememberMoneyAppNavController()
     val softwareKeyboardController = LocalSoftwareKeyboardController.current
-
     NavHost(
         navController = navController,
         startDestination = EditAccountScreenRoute(
-            accountToEditId = null,
+            accountToEditId = accountToEditId,
         ),
         enterTransition = { fadeIn(tween(150)) },
         exitTransition = { fadeOut(tween(150)) },
@@ -99,6 +115,8 @@ private fun Content(
                     ),
                 )
             },
+            onClose = finishActivity,
+            onDone = finishActivity,
         )
 
         accountLogoScreen(

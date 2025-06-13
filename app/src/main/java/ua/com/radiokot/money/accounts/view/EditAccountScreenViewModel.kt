@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.accounts.data.Account
+import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
@@ -39,27 +40,42 @@ import ua.com.radiokot.money.map
 
 class EditAccountScreenViewModel(
     parameters: Parameters,
+    private val accountRepository: AccountRepository,
     private val currencyRepository: CurrencyRepository,
     private val currencyPreferences: CurrencyPreferences,
     itemColorSchemeRepository: ItemColorSchemeRepository,
 ) : ViewModel() {
 
     private val log by lazyLogger("EditAccountScreenVM")
-    val isNewAccount: Boolean = parameters.accountToEditId == null
-    private val _title: MutableStateFlow<String> = MutableStateFlow("")
+    private val accountToEdit: Account? = runBlocking {
+        if (parameters.accountToEditId != null) {
+            accountRepository.getAccount(parameters.accountToEditId)
+                ?: error("Account to edit not found")
+        } else {
+            null
+        }
+    }
+    val isNewAccount: Boolean = accountToEdit == null
+    private val _title: MutableStateFlow<String> = MutableStateFlow(
+        accountToEdit?.title ?: ""
+    )
     val title = _title.asStateFlow()
     private val _colorScheme: MutableStateFlow<ItemColorScheme> = MutableStateFlow(
-        itemColorSchemeRepository.getItemColorSchemesByName().getValue("Green3")
+        accountToEdit?.colorScheme
+            ?: itemColorSchemeRepository.getItemColorSchemesByName().getValue("Green3")
     )
     val colorScheme = _colorScheme.asStateFlow()
-    private val _type: MutableStateFlow<Account.Type> = MutableStateFlow(Account.Type.Regular)
+    private val _type: MutableStateFlow<Account.Type> = MutableStateFlow(
+        accountToEdit?.type ?: Account.Type.Regular
+    )
     val type = _type.asStateFlow()
     private val _currency: MutableStateFlow<Currency> = MutableStateFlow(runBlocking {
-        currencyRepository
-            .getCurrencyByCode(
-                code = currencyPreferences.primaryCurrencyCode.value
-            )
-            ?: currencyRepository.getCurrencies().first()
+        accountToEdit?.currency
+            ?: (currencyRepository
+                .getCurrencyByCode(
+                    code = currencyPreferences.primaryCurrencyCode.value
+                )
+                ?: currencyRepository.getCurrencies().first())
     })
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
@@ -145,6 +161,10 @@ class EditAccountScreenViewModel(
 
     }
 
+    fun onCloseClicked() {
+        _events.tryEmit(Event.Close)
+    }
+
     sealed interface Event {
 
         class ProceedToAccountTypeSelection(
@@ -159,6 +179,8 @@ class EditAccountScreenViewModel(
         class ProceedToCurrencySelection(
             val currentCurrency: Currency,
         ) : Event
+
+        object Close : Event
     }
 
     class Parameters(

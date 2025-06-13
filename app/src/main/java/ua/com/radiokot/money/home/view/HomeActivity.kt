@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.home.view
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -48,6 +49,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,6 +62,7 @@ import org.koin.compose.koinInject
 import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
 import ua.com.radiokot.money.accounts.view.AccountActionSheetRoute
 import ua.com.radiokot.money.accounts.view.AccountsScreenRoute
+import ua.com.radiokot.money.accounts.view.EditAccountActivity
 import ua.com.radiokot.money.accounts.view.accountActionSheet
 import ua.com.radiokot.money.accounts.view.accountsScreen
 import ua.com.radiokot.money.auth.logic.UserSessionScope
@@ -114,6 +117,7 @@ private fun HomeScreen(
             navController = navController,
         )
     }
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -139,6 +143,16 @@ private fun HomeScreen(
                         route = AccountActionSheetRoute(
                             accountId = account.id,
                         ),
+                    )
+                },
+                onProceedToAccountAdd = {
+                    context.startActivity(
+                        Intent(context, EditAccountActivity::class.java)
+                            .putExtras(
+                                EditAccountActivity.getBundle(
+                                    accountToEditId = null,
+                                )
+                            )
                     )
                 }
             )
@@ -202,6 +216,17 @@ private fun HomeScreen(
                             }
                         }
                     )
+                },
+                onProceedToEdit = { accountId ->
+                    context.startActivity(
+                        Intent(context, EditAccountActivity::class.java)
+                            .putExtras(
+                                EditAccountActivity.getBundle(
+                                    accountToEditId = accountId,
+                                )
+                            )
+                    )
+                    navController.navigateUp()
                 }
             )
 
@@ -355,7 +380,9 @@ private fun BottomNavigationEntry(
     )
 }
 
-@Preview
+@Preview(
+    apiLevel = 34,
+)
 @Composable
 private fun BottomNavigation2Preview(
 

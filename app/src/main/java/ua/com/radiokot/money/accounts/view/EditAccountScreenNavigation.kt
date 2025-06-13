@@ -76,6 +76,8 @@ fun NavGraphBuilder.editAccountScreen(
         currentColorScheme: ItemColorScheme,
     ) -> Unit,
     onProceedToCurrencySelection: (currentCurrency: Currency) -> Unit,
+    onClose: () -> Unit,
+    onDone: () -> Unit,
 ) = composable<EditAccountScreenRoute> { entry ->
 
     val route: EditAccountScreenRoute = entry.toRoute()
@@ -101,6 +103,9 @@ fun NavGraphBuilder.editAccountScreen(
 
                 is EditAccountScreenViewModel.Event.ProceedToCurrencySelection ->
                     onProceedToCurrencySelection(event.currentCurrency)
+
+                EditAccountScreenViewModel.Event.Close ->
+                    onClose()
             }
         }
     }

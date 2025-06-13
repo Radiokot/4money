@@ -75,6 +75,7 @@ private fun EditAccountScreen(
     onCurrencyClicked: () -> Unit,
     type: State<Account.Type>,
     onTypeClicked: () -> Unit,
+    onCloseClicked: () -> Unit,
 ) = Column(
     modifier = Modifier
         .windowInsetsPadding(
@@ -104,6 +105,9 @@ private fun EditAccountScreen(
             text = "❌",
             padding = buttonPadding,
             modifier = Modifier
+                .clickable(
+                    onClick = onCloseClicked,
+                )
         )
 
         Text(
@@ -299,6 +303,7 @@ fun EditAccountScreenRoot(
         onCurrencyClicked = remember { viewModel::onCurrencyClicked },
         type = viewModel.type.collectAsState(),
         onTypeClicked = remember { viewModel::onTypeClicked },
+        onCloseClicked = remember { viewModel::onCloseClicked },
     )
 }
 
@@ -325,5 +330,6 @@ private fun EditAccountScreenPreview(
         onCurrencyClicked = {},
         type = Account.Type.Savings.let(::mutableStateOf),
         onTypeClicked = {},
+        onCloseClicked = {},
     )
 }
