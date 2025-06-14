@@ -1,0 +1,3 @@
+Added:
+- Ability to edit accounts (title, color, type)
+- Ability to add (but not delete) accounts
