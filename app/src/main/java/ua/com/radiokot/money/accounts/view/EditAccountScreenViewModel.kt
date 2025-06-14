@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
+import ua.com.radiokot.money.accounts.logic.AddAccountUseCase
 import ua.com.radiokot.money.accounts.logic.EditAccountUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
@@ -49,6 +50,7 @@ class EditAccountScreenViewModel(
     private val currencyPreferences: CurrencyPreferences,
     itemColorSchemeRepository: ItemColorSchemeRepository,
     private val editAccountUseCase: EditAccountUseCase,
+    private val addAccountUseCase: AddAccountUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("EditAccountScreenVM")
@@ -168,6 +170,8 @@ class EditAccountScreenViewModel(
             editAccount(
                 accountId = accountToEdit.id,
             )
+        } else {
+            addAccount()
         }
     }
 
@@ -205,6 +209,47 @@ class EditAccountScreenViewModel(
                 .onSuccess {
                     log.debug {
                         "editAccount(): account edited"
+                    }
+
+                    _events.emit(Event.Done)
+                }
+        }
+    }
+
+    private var addJob: Job? = null
+    private fun addAccount() {
+
+        addJob?.cancel()
+        addJob = viewModelScope.launch {
+
+            val title = _title.value
+            val type = _type.value
+            val currency = _currency.value
+            val colorScheme = _colorScheme.value
+
+            log.debug {
+                "addAccount(): adding:" +
+                        "\ntitle=$title," +
+                        "\ntype=$type," +
+                        "\ncurrency=$currency," +
+                        "\ncolorScheme=$colorScheme"
+            }
+
+            addAccountUseCase
+                .invoke(
+                    title=title,
+                    currency=currency,
+                    type=type,
+                    colorScheme=colorScheme,
+                )
+                .onFailure { error ->
+                    log.error(error) {
+                        "addAccount(): failed to add account"
+                    }
+                }
+                .onSuccess {
+                    log.debug {
+                        "addAccount(): account added"
                     }
 
                     _events.emit(Event.Done)

@@ -322,6 +322,57 @@ class PowerSyncAccountRepository(
         )
     }
 
+    fun addAccount(
+        title: String,
+        currency: Currency,
+        type: Account.Type,
+        colorScheme: ItemColorScheme,
+        transaction: PowerSyncTransaction,
+    ): Account {
+
+        val accountToPlaceBefore = runBlocking {
+            getAccounts()
+                .sorted()
+                .firstOrNull { it.type == type }
+        }
+
+        val position = SternBrocotTreeSearch()
+            .goBetween(
+                lowerBound = accountToPlaceBefore?.position ?: 0.0,
+                upperBound = Double.POSITIVE_INFINITY,
+            )
+            .value
+
+        val account = Account(
+            title = title,
+            balance = BigInteger.ZERO,
+            currency = currency,
+            colorScheme = colorScheme,
+            type = type,
+            position = position,
+        )
+
+        transaction.execute(
+            sql = INSERT_ACCOUNT,
+            parameters = listOf(
+                account.id,
+                account.title,
+                account.balance.toString(),
+                account.currency.id,
+                account.position,
+                account.colorScheme.name,
+                account.type.slug,
+            )
+        )
+
+        log.debug {
+            "addAccount(): added:" +
+                    "\naccount=$account"
+        }
+
+        return account
+    }
+
     fun updateAccount(
         accountId: String,
         newTitle: String,
@@ -433,3 +484,18 @@ private const val UPDATE_ACCOUNT_BY_ID =
             "type = ?, " +
             "color_scheme = ? " +
             "WHERE id = ? "
+
+/**
+ * Params:
+ * 1. ID
+ * 2. Title
+ * 3. Balance string
+ * 4. Currency ID
+ * 5. Position string
+ * 6. Color scheme name
+ * 7. Type slug
+ */
+private const val INSERT_ACCOUNT =
+    "INSERT INTO accounts " +
+            "(id, title, balance, currency_id, position, color_scheme, type) " +
+            "VALUES(?, ?, ?, ?, ?, ?, ?)"

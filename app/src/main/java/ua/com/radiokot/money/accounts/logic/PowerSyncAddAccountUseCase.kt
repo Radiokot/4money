@@ -23,26 +23,27 @@ import com.powersync.PowerSyncDatabase
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.currency.data.Currency
 
-class PowerSyncEditAccountUseCase(
+class PowerSyncAddAccountUseCase(
     private val database: PowerSyncDatabase,
     private val accountRepository: PowerSyncAccountRepository,
-) : EditAccountUseCase {
+) : AddAccountUseCase {
 
     override suspend fun invoke(
-        accountId: String,
-        newTitle: String,
-        newType: Account.Type,
-        newColorScheme: ItemColorScheme,
+        title: String,
+        currency: Currency,
+        type: Account.Type,
+        colorScheme: ItemColorScheme,
     ): Result<Unit> = runCatching {
 
         database.writeTransaction { transaction ->
 
-            accountRepository.updateAccount(
-                accountId = accountId,
-                newTitle = newTitle,
-                newType = newType,
-                newColorScheme = newColorScheme,
+            accountRepository.addAccount(
+                title = title,
+                currency = currency,
+                type = type,
+                colorScheme = colorScheme,
                 transaction = transaction,
             )
         }

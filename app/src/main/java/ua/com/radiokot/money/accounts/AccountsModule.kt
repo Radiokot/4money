@@ -24,8 +24,10 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
+import ua.com.radiokot.money.accounts.logic.AddAccountUseCase
 import ua.com.radiokot.money.accounts.logic.EditAccountUseCase
 import ua.com.radiokot.money.accounts.logic.MoveAccountUseCase
+import ua.com.radiokot.money.accounts.logic.PowerSyncAddAccountUseCase
 import ua.com.radiokot.money.accounts.logic.PowerSyncEditAccountUseCase
 import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
 import ua.com.radiokot.money.accounts.view.AccountActionSheetViewModel
@@ -69,9 +71,16 @@ val accountsModule = module {
         factory {
             PowerSyncEditAccountUseCase(
                 database = get(),
-                powerSyncAccountRepository = get(),
+                accountRepository = get(),
             )
         } bind EditAccountUseCase::class
+
+        factory {
+            PowerSyncAddAccountUseCase(
+                database = get(),
+                accountRepository = get(),
+            )
+        } bind AddAccountUseCase::class
 
         viewModel {
             AccountsViewModel(
@@ -99,6 +108,7 @@ val accountsModule = module {
                 currencyPreferences = get(),
                 itemColorSchemeRepository = get(),
                 editAccountUseCase = get(),
+                addAccountUseCase = get(),
             )
         } bind EditAccountScreenViewModel::class
 
