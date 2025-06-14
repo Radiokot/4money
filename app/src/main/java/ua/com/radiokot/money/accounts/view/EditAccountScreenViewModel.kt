@@ -21,14 +21,17 @@ package ua.com.radiokot.money.accounts.view
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
+import ua.com.radiokot.money.accounts.logic.EditAccountUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
@@ -37,6 +40,7 @@ import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.map
+import ua.com.radiokot.money.transfers.view.TransferSheetViewModel.Event
 
 class EditAccountScreenViewModel(
     parameters: Parameters,
@@ -44,6 +48,7 @@ class EditAccountScreenViewModel(
     private val currencyRepository: CurrencyRepository,
     private val currencyPreferences: CurrencyPreferences,
     itemColorSchemeRepository: ItemColorSchemeRepository,
+    private val editAccountUseCase: EditAccountUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("EditAccountScreenVM")
@@ -159,6 +164,52 @@ class EditAccountScreenViewModel(
             return
         }
 
+        if (accountToEdit != null) {
+            editAccount(
+                accountId = accountToEdit.id,
+            )
+        }
+    }
+
+    private var editJob: Job? = null
+    private fun editAccount(
+        accountId: String,
+    ) {
+        editJob?.cancel()
+        editJob = viewModelScope.launch {
+
+            val title = _title.value
+            val type = _type.value
+            val colorScheme = _colorScheme.value
+
+            log.debug {
+                "editAccount(): editing:" +
+                        "\naccountId=$accountId," +
+                        "\ntitle=$title," +
+                        "\ntype=$type," +
+                        "\ncolorScheme=$colorScheme"
+            }
+
+            editAccountUseCase
+                .invoke(
+                    accountId = accountId,
+                    newTitle = title,
+                    newType = type,
+                    newColorScheme = colorScheme,
+                )
+                .onFailure { error ->
+                    log.error(error) {
+                        "editAccount(): failed to edit account"
+                    }
+                }
+                .onSuccess {
+                    log.debug {
+                        "editAccount(): account edited"
+                    }
+
+                    _events.emit(Event.Done)
+                }
+        }
     }
 
     fun onCloseClicked() {
@@ -181,6 +232,8 @@ class EditAccountScreenViewModel(
         ) : Event
 
         object Close : Event
+
+        object Done : Event
     }
 
     class Parameters(

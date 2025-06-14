@@ -106,6 +106,9 @@ fun NavGraphBuilder.editAccountScreen(
 
                 EditAccountScreenViewModel.Event.Close ->
                     onClose()
+
+                EditAccountScreenViewModel.Event.Done ->
+                    onDone()
             }
         }
     }

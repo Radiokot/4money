@@ -35,6 +35,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.runBlocking
+import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
@@ -320,6 +322,61 @@ class PowerSyncAccountRepository(
         )
     }
 
+    fun updateAccount(
+        accountId: String,
+        newTitle: String,
+        newType: Account.Type,
+        newColorScheme: ItemColorScheme,
+        transaction: PowerSyncTransaction,
+    ) {
+        val accountToUpdate = runBlocking {
+            getAccount(accountId)
+                ?: error("Account to update not found")
+        }
+
+        transaction.execute(
+            sql = UPDATE_ACCOUNT_BY_ID,
+            parameters = listOf(
+                newTitle,
+                newType.slug,
+                newColorScheme.name,
+                accountToUpdate.id,
+            )
+        )
+
+        if (newType != accountToUpdate.type) {
+
+            val accountToPlaceBefore = runBlocking {
+                getAccounts()
+                    .sorted()
+                    .firstOrNull { it.type == newType }
+            }
+
+            val newPosition = SternBrocotTreeSearch()
+                .goBetween(
+                    lowerBound = accountToPlaceBefore?.position ?: 0.0,
+                    upperBound = Double.POSITIVE_INFINITY,
+                )
+                .value
+
+            transaction.execute(
+                sql = UPDATE_POSITION_BY_ID,
+                parameters = listOf(
+                    newPosition.toString(),
+                    accountToUpdate.id,
+                )
+            )
+
+            log.debug {
+                "updateAccount(): also updated position on type change:" +
+                        "\noldPosition=${accountToUpdate.position}," +
+                        "\noldType=${accountToUpdate.type}," +
+                        "\nnewPosition=$newPosition," +
+                        "\nnewType=$newType"
+            }
+        }
+    }
+
     private fun toAccount(
         sqlCursor: SqlCursor,
     ): Account = with(sqlCursor) {
@@ -363,3 +420,16 @@ private const val UPDATE_POSITION_BY_ID = "UPDATE accounts SET position = ? WHER
 
 private const val UPDATE_TYPE_BY_ID = "UPDATE accounts SET type = ? WHERE id = ?"
 
+/**
+ * Params:
+ * 1. Title
+ * 2. Type slug
+ * 3. Color scheme name
+ * 4. ID
+ */
+private const val UPDATE_ACCOUNT_BY_ID =
+    "UPDATE accounts SET " +
+            "title = ?, " +
+            "type = ?, " +
+            "color_scheme = ? " +
+            "WHERE id = ? "
