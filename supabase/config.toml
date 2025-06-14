@@ -1,0 +1,11 @@
+[functions.update-pairs]
+enabled = true
+verify_jwt = true
+import_map = "./functions/update-pairs/deno.json"
+entrypoint = "./functions/update-pairs/index.ts"
+
+[functions.signature-auth-challenge]
+enabled = true
+verify_jwt = false
+import_map = "./functions/signature-auth-challenge/deno.json"
+entrypoint = "./functions/signature-auth-challenge/index.ts"
