@@ -9,3 +9,9 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/signature-auth-challenge/deno.json"
 entrypoint = "./functions/signature-auth-challenge/index.ts"
+
+[functions.signature-auth]
+enabled = true
+verify_jwt = false
+import_map = "./functions/signature-auth/deno.json"
+entrypoint = "./functions/signature-auth/index.ts"
