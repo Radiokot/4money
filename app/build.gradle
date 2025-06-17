@@ -78,6 +78,11 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+    packagingOptions {
+        // Problems caused by Bouncy castle
+        exclude 'META-INF/versions/**'
+    }
 }
 
 ext {
