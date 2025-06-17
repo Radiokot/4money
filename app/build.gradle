@@ -100,6 +100,7 @@ ext {
     workVersion = "2.10.1"
     composeUnstyledVersion = "1.31.0"
     bip39Version = "1.0.9"
+    bouncycastleVersion = "2.73.7"
 }
 
 dependencies {
@@ -139,6 +140,7 @@ dependencies {
     implementation "sh.calvin.reorderable:reorderable:2.4.3"
     implementation "cash.z.ecc.android:kotlin-bip39:$bip39Version"
     implementation "com.composables:core:$composeUnstyledVersion"
+    implementation "org.bouncycastle:bcprov-lts8on:$bouncycastleVersion"
 
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$junitExtVersion"
