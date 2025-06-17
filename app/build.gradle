@@ -99,6 +99,7 @@ ext {
     kotlinSerializationJsonVersion = "1.8.0"
     workVersion = "2.10.1"
     composeUnstyledVersion = "1.31.0"
+    bip39Version = "1.0.9"
 }
 
 dependencies {
@@ -136,7 +137,7 @@ dependencies {
 
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinSerializationJsonVersion"
     implementation "sh.calvin.reorderable:reorderable:2.4.3"
-
+    implementation "cash.z.ecc.android:kotlin-bip39:$bip39Version"
     implementation "com.composables:core:$composeUnstyledVersion"
 
     testImplementation "junit:junit:$junitVersion"
