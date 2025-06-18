@@ -1,12 +1,3 @@
-package ua.com.radiokot.money.auth.logic
-
-import cash.z.ecc.android.bip39.Mnemonics
-import cash.z.ecc.android.bip39.toSeed
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert
-import org.junit.Test
-import ua.com.radiokot.money.auth.data.PhraseAuthData
-
 /* Copyright 2025 Oleg Koretsky
 
    This file is part of the 4Money,
@@ -25,7 +16,17 @@ import ua.com.radiokot.money.auth.data.PhraseAuthData
    You should have received a copy of the GNU General Public License
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
-class PhraseAuthTest {
+
+package ua.com.radiokot.money.auth.logic
+
+import cash.z.ecc.android.bip39.Mnemonics
+import cash.z.ecc.android.bip39.toSeed
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert
+import org.junit.Test
+import ua.com.radiokot.money.auth.data.SignatureAuthData
+
+class Ed25519AuthTest {
 
     @Test
     fun authenticateAndVerifySuccessfully() {
@@ -36,7 +37,7 @@ class PhraseAuthTest {
         val challenge = "You, sir, are a fish!"
 
         val output = runBlocking {
-            PhraseAuth.authenticate(
+            Ed25519Auth.authenticate(
                 phraseSeed = seed,
                 authChallenge = challenge,
             )
@@ -62,8 +63,12 @@ class PhraseAuthTest {
             challenge,
             output.challenge,
         )
+        Assert.assertEquals(
+            Ed25519Auth.ALGORITHM,
+            output.algorithm,
+        )
         Assert.assertTrue(
-            runBlocking { PhraseAuth.verify(output) }
+            runBlocking { Ed25519Auth.verify(output) }
         )
     }
 
@@ -72,7 +77,7 @@ class PhraseAuthTest {
     )
     fun failAuthentication_IfSeedSizeIsWrong() {
         runBlocking {
-            PhraseAuth.authenticate(
+            Ed25519Auth.authenticate(
                 phraseSeed = byteArrayOf(1, 2, 3),
                 authChallenge = "challenge",
             )
@@ -80,15 +85,32 @@ class PhraseAuthTest {
     }
 
     @Test
-    fun failVerification_IfSignatureMismatch() {
+    fun verifyInvalid_IfSignatureInvalid() {
         Assert.assertFalse(runBlocking {
-            PhraseAuth.verify(
-                data = PhraseAuthData(
+            Ed25519Auth.verify(
+                data = SignatureAuthData(
                     publicKeyHex = "221bf436021133aa79da5c1bea7b04b78a0a7b9b9d2760bd19ae68ae3dd435ee",
                     challenge = "oiiaioiiiai",
-                    signatureHex = "1860a5f3273bc30725991ff835f08185de617e2a6c6cf1f87d3436d6446b6209d8cb84f6e09651e213b51a54dbd4c5508d1432b3290b4d162ef865bd0af76e02"
+                    signatureHex = "1860a5f3273bc30725991ff835f08185de617e2a6c6cf1f87d3436d6446b6209d8cb84f6e09651e213b51a54dbd4c5508d1432b3290b4d162ef865bd0af76e02",
+                    algorithm = Ed25519Auth.ALGORITHM,
                 )
             )
         })
+    }
+
+    @Test(
+        expected = IllegalArgumentException::class,
+    )
+    fun failVerification_IfAlgorithmMismatch() {
+        runBlocking {
+            Ed25519Auth.verify(
+                data = SignatureAuthData(
+                    publicKeyHex = "221bf436021133aa79da5c1bea7b04b78a0a7b9b9d2760bd19ae68ae3dd435ee",
+                    challenge = "You, sir, are a fish!",
+                    signatureHex = "1860a5f3273bc30725991ff835f08185de617e2a6c6cf1f87d3436d6446b6209d8cb84f6e09651e213b51a54dbd4c5508d1432b3290b4d162ef865bd0af76e02",
+                    algorithm = "RSA",
+                )
+            )
+        }
     }
 }

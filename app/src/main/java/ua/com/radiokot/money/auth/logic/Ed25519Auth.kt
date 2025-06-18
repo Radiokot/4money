@@ -27,12 +27,19 @@ import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
 import org.bouncycastle.crypto.signers.Ed25519Signer
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import ua.com.radiokot.money.auth.data.PhraseAuthData
+import ua.com.radiokot.money.auth.data.SignatureAuthData
 import java.security.Security
 
+/**
+ * Provides auth functions based on ED25519-SHA512 signatures.
+ */
 @OptIn(ExperimentalStdlibApi::class)
-object PhraseAuth {
+object Ed25519Auth {
 
+    /**
+     * @return [SignatureAuthData] having the challenge
+     * signed with a private key derived from the [phraseSeed].
+     */
     suspend fun authenticate(
         phraseSeed: ByteArray,
         authChallenge: String,
@@ -59,19 +66,27 @@ object PhraseAuth {
         }
 
 
-        PhraseAuthData(
+        SignatureAuthData(
             publicKeyHex = publicKeyParameters
                 .encoded
                 .toHexString(),
             challenge = authChallenge,
             signatureHex = signature
                 .toHexString(),
+            algorithm = ALGORITHM,
         )
     }
 
+    /**
+     * @return **true** if the data just has the correct signature (challenge is not parsed)
+     */
     suspend fun verify(
-        data: PhraseAuthData,
+        data: SignatureAuthData,
     ): Boolean = withContext(Dispatchers.Default) {
+
+        require(data.algorithm == ALGORITHM) {
+            "The data contains a signature from a different algorithm"
+        }
 
         val publicKey = Ed25519PublicKeyParameters(data.publicKeyHex.decodeHex().toByteArray())
 
@@ -90,4 +105,6 @@ object PhraseAuth {
             Security.addProvider(BouncyCastleProvider())
         }
     }
+
+    const val ALGORITHM = "ED25519-SHA512"
 }

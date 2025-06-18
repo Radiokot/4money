@@ -19,8 +19,29 @@
 
 package ua.com.radiokot.money.auth.data
 
-class PhraseAuthData(
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class SignatureAuthData(
+    /**
+     * The encoded public key corresponding to the private key used to sign the [challenge].
+     */
+    @SerialName("pubkeyHex")
     val publicKeyHex: String,
+
+    /**
+     * Signed [challenge] received from the server.
+     */
+    @SerialName("challenge")
     val challenge: String,
+
+    /**
+     * The encoded signature of the [challenge].
+     */
+    @SerialName("signatureHex")
     val signatureHex: String,
+
+    @SerialName("algorithm")
+    val algorithm: String,
 )

@@ -133,11 +133,12 @@ dependencies {
     implementation "com.powersync:core:$powersyncVersion"
     implementation "com.powersync:connector-supabase:$powersyncVersion"
 
+    implementation "io.github.jan-tennert.supabase:functions-kt:$supabaseVersion"
     implementation "io.github.jan-tennert.supabase:postgrest-kt:$supabaseVersion"
 
     implementation "io.github.oshai:kotlin-logging-jvm:$kotlinLoggingVersion"
     implementation "com.gitlab.mvysny.slf4j:slf4j-handroid:$slf4jHandroidVersion"
-    implementation("org.slf4j:slf4j-api:$slf4jApiVersion"){
+    implementation("org.slf4j:slf4j-api:$slf4jApiVersion") {
         exclude group: "org.slf4j", module: "slf4j-api"
     }
 
