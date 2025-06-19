@@ -26,11 +26,11 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.lazyLogger
 
-class AuthenticateUseCase(
+class SignInWithCredentialsUseCase(
     private val supabaseClient: SupabaseClient,
     private val userSessionHolder: UserSessionHolder,
 ) {
-    private val log by lazyLogger("AuthenticateUC")
+    private val log by lazyLogger("SignInWithCredentialsUC")
 
     suspend fun start(
         login: String,

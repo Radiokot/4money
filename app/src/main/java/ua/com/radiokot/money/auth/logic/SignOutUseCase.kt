@@ -28,6 +28,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * On success, [supabaseClient] is signed out,
+ * [userSessionHolder] is cleared,
+ * [database] is cleared and closed.
+ */
 @OptIn(DelicateCoroutinesApi::class)
 class SignOutUseCase(
     private val supabaseClient: SupabaseClient,

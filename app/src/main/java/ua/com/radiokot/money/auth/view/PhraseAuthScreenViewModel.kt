@@ -38,13 +38,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import ua.com.radiokot.money.auth.logic.AuthenticateWithPhraseUseCase
+import ua.com.radiokot.money.auth.logic.SignInWithPhraseUseCase
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PhraseAuthScreenViewModel(
-    private val authenticateWithPhraseUseCase: AuthenticateWithPhraseUseCase,
+    private val signInWithPhraseUseCase: SignInWithPhraseUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("PhraseAuthScreenVM")
@@ -102,7 +102,7 @@ class PhraseAuthScreenViewModel(
                 "signIn(): signing in"
             }
 
-            authenticateWithPhraseUseCase
+            signInWithPhraseUseCase
                 .invoke(
                     phraseSeed = phraseSeed,
                 )

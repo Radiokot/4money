@@ -31,7 +31,7 @@ import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.lazyLogger
 
 /**
- * Authenticates using the seed phrase,
+ * Signs in using the seed phrase,
  * utilizing edge functions for signature auth.
  *
  * If no user exists with this phrase, it is created.
@@ -40,12 +40,12 @@ import ua.com.radiokot.money.lazyLogger
  *
  * @see [Ed25519Auth]
  */
-class AuthenticateWithPhraseUseCase(
+class SignInWithPhraseUseCase(
     private val supabaseClient: SupabaseClient,
     private val userSessionHolder: UserSessionHolder,
 ) {
 
-    private val log by lazyLogger("AuthenticateWithPhraseUC")
+    private val log by lazyLogger("SignInWithPhraseUC")
 
     /**
      * @param phraseSeed a 64 byte long seed derived from the seed phrase.

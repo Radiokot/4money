@@ -32,8 +32,8 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.R
-import ua.com.radiokot.money.auth.logic.AuthenticateUseCase
-import ua.com.radiokot.money.auth.logic.AuthenticateWithPhraseUseCase
+import ua.com.radiokot.money.auth.logic.SignInWithCredentialsUseCase
+import ua.com.radiokot.money.auth.logic.SignInWithPhraseUseCase
 import ua.com.radiokot.money.auth.logic.KoinScopeUserSessionHolder
 import ua.com.radiokot.money.auth.logic.SignOutUseCase
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
@@ -78,28 +78,28 @@ val authModule = module {
     } bind UserSessionHolder::class
 
     factory {
-        AuthenticateUseCase(
+        SignInWithCredentialsUseCase(
             supabaseClient = get(),
             userSessionHolder = get(),
         )
-    } bind AuthenticateUseCase::class
+    } bind SignInWithCredentialsUseCase::class
 
     factory {
-        AuthenticateWithPhraseUseCase(
+        SignInWithPhraseUseCase(
             supabaseClient = get(),
             userSessionHolder = get(),
         )
-    } bind AuthenticateWithPhraseUseCase::class
+    } bind SignInWithPhraseUseCase::class
 
     viewModel {
         TempAuthScreenViewModel(
-            authUseCase = get(),
+            signInUseCase = get(),
         )
     } bind TempAuthScreenViewModel::class
 
     viewModel {
         PhraseAuthScreenViewModel(
-            authenticateWithPhraseUseCase = get(),
+            signInWithPhraseUseCase = get(),
         )
     } bind PhraseAuthScreenViewModel::class
 

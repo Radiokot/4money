@@ -27,11 +27,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.BuildConfig
-import ua.com.radiokot.money.auth.logic.AuthenticateUseCase
+import ua.com.radiokot.money.auth.logic.SignInWithCredentialsUseCase
 import ua.com.radiokot.money.eventSharedFlow
 
 class TempAuthScreenViewModel(
-    private val authUseCase: AuthenticateUseCase,
+    private val signInUseCase: SignInWithCredentialsUseCase,
 ) : ViewModel() {
 
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
@@ -45,7 +45,7 @@ class TempAuthScreenViewModel(
     private fun startAuth() {
         authStartJob?.cancel()
         authStartJob = viewModelScope.launch {
-            authUseCase
+            signInUseCase
                 .start(
                     // TODO Use actual credential.
                     login = BuildConfig.AUTH_TEMP_CREDENTIAL,
@@ -53,11 +53,11 @@ class TempAuthScreenViewModel(
                 )
                 .onSuccess { result ->
                     when (result) {
-                        AuthenticateUseCase.StartResult.Done -> {
+                        SignInWithCredentialsUseCase.StartResult.Done -> {
                             onAuthorizedSuccessfully()
                         }
 
-                        AuthenticateUseCase.StartResult.Started -> {
+                        SignInWithCredentialsUseCase.StartResult.Started -> {
                             // Ok.
                         }
                     }
@@ -83,7 +83,7 @@ class TempAuthScreenViewModel(
     private fun finishAuth(resultIntent: Intent) {
         authFinishJob?.cancel()
         authFinishJob = viewModelScope.launch {
-            authUseCase
+            signInUseCase
                 .finish(resultIntent)
                 .onSuccess { isAuthorized ->
                     if (isAuthorized) {
