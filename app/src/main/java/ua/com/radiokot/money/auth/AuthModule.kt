@@ -23,6 +23,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.FlowType
 import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.logging.LogLevel
 import io.github.jan.supabase.postgrest.Postgrest
 import org.koin.android.ext.koin.androidContext
@@ -32,9 +33,11 @@ import org.koin.dsl.module
 import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.R
 import ua.com.radiokot.money.auth.logic.AuthenticateUseCase
+import ua.com.radiokot.money.auth.logic.AuthenticateWithPhraseUseCase
 import ua.com.radiokot.money.auth.logic.KoinScopeUserSessionHolder
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
-import ua.com.radiokot.money.auth.view.AuthViewModel
+import ua.com.radiokot.money.auth.view.PhraseAuthScreenViewModel
+import ua.com.radiokot.money.auth.view.TempAuthScreenViewModel
 
 val authModule = module {
 
@@ -50,6 +53,7 @@ val authModule = module {
                     LogLevel.ERROR
 
             install(Postgrest)
+            install(Functions)
             install(Auth) {
                 flowType = FlowType.PKCE
                 scheme = androidContext().getString(R.string.uri_scheme)
@@ -78,9 +82,22 @@ val authModule = module {
         )
     } bind AuthenticateUseCase::class
 
+    factory {
+        AuthenticateWithPhraseUseCase(
+            supabaseClient = get(),
+            userSessionHolder = get(),
+        )
+    } bind AuthenticateWithPhraseUseCase::class
+
     viewModel {
-        AuthViewModel(
+        TempAuthScreenViewModel(
             authUseCase = get(),
         )
-    } bind AuthViewModel::class
+    } bind TempAuthScreenViewModel::class
+
+    viewModel {
+        PhraseAuthScreenViewModel(
+            authenticateWithPhraseUseCase = get(),
+        )
+    } bind PhraseAuthScreenViewModel::class
 }

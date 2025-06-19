@@ -20,10 +20,11 @@
 package ua.com.radiokot.money.auth.logic
 
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.annotations.SupabaseInternal
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionSource
 import io.github.jan.supabase.functions.functions
-import io.ktor.client.call.body
+import io.github.jan.supabase.safeBody
 import io.ktor.client.statement.bodyAsText
 import ua.com.radiokot.money.auth.data.SignatureAuthData
 import ua.com.radiokot.money.auth.data.UserSession
@@ -49,6 +50,7 @@ class AuthenticateWithPhraseUseCase(
     /**
      * @param phraseSeed a 64 byte long seed derived from the seed phrase.
      */
+    @OptIn(SupabaseInternal::class)
     suspend operator fun invoke(
         phraseSeed: ByteArray,
     ): Result<Unit> = runCatching {
@@ -90,7 +92,7 @@ class AuthenticateWithPhraseUseCase(
                     function = "signature-auth",
                     body = authData,
                 )
-                .body()
+                .safeBody()
         } catch (e: Exception) {
 
             log.error(e) {

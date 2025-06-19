@@ -30,7 +30,7 @@ import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.auth.logic.AuthenticateUseCase
 import ua.com.radiokot.money.eventSharedFlow
 
-class AuthViewModel(
+class TempAuthScreenViewModel(
     private val authUseCase: AuthenticateUseCase,
 ) : ViewModel() {
 
@@ -65,8 +65,8 @@ class AuthViewModel(
                 .onFailure { error ->
                     error.printStackTrace()
                     _events.emit(
-                        Event.ShowFloatingError(
-                            Error.GeneralFailure
+                        Event.ShowAuthError(
+                            technicalReason = error::class.simpleName ?: error.toString(),
                         )
                     )
                 }
@@ -93,8 +93,8 @@ class AuthViewModel(
                 .onFailure { error ->
                     error.printStackTrace()
                     _events.emit(
-                        Event.ShowFloatingError(
-                            Error.GeneralFailure
+                        Event.ShowAuthError(
+                            technicalReason = error::class.simpleName ?: error.toString()
                         )
                     )
                 }
@@ -102,18 +102,20 @@ class AuthViewModel(
     }
 
     private suspend fun onAuthorizedSuccessfully() {
-        _events.emit(Event.GoToMainScreen)
+        _events.emit(Event.Done)
+    }
+
+    fun onPhraseClicked() {
+        _events.tryEmit(Event.ProceedToPhraseAuth)
     }
 
     sealed interface Event {
-        object GoToMainScreen : Event
+        object Done : Event
 
-        class ShowFloatingError(
-            val error: Error,
+        object ProceedToPhraseAuth : Event
+
+        class ShowAuthError(
+            val technicalReason: String,
         ) : Event
-    }
-
-    sealed interface Error {
-        object GeneralFailure : Error
     }
 }

@@ -21,94 +21,61 @@ package ua.com.radiokot.money.auth.view
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-import org.koin.androidx.viewmodel.ext.android.viewModel
+import androidx.navigation.compose.NavHost
+import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.home.view.HomeActivity
-import ua.com.radiokot.money.uikit.TextButton
+import ua.com.radiokot.money.rememberMoneyAppNavController
 
 class AuthActivity : ComponentActivity() {
-    private val viewModel: AuthViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            AuthScreenRoot(
-                viewModel = viewModel,
-            )
-        }
-
-        lifecycleScope.launch {
-            subscribeToEvents()
-        }
-    }
-
-    private suspend fun subscribeToEvents(
-    ): Nothing = viewModel.events.collect { event ->
-        when (event) {
-            AuthViewModel.Event.GoToMainScreen -> {
-                startActivity(Intent(this, HomeActivity::class.java))
-                finish()
+            UserSessionScope {
+                Content(
+                    goHome = {
+                        startActivity(
+                            Intent(this, HomeActivity::class.java)
+                        )
+                        finishAffinity()
+                    },
+                )
             }
-
-            is AuthViewModel.Event.ShowFloatingError ->
-                Toast.makeText(this, "Error: ${event.error::class.simpleName}", Toast.LENGTH_SHORT)
-                    .show()
         }
     }
+}
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        Log.d(
-            "AuthActivity",
-            "onNewIntent(): received_new_intent:" +
-                    "\nintent=$intent"
+@Composable
+private fun Content(
+    goHome: () -> Unit,
+) {
+    val navController = rememberMoneyAppNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = TempAuthScreenRoute,
+        enterTransition = { fadeIn(tween(150)) },
+        exitTransition = { fadeOut(tween(150)) },
+    ) {
+        tempAuth(
+            onProceedToPhraseAuth = {
+                navController.navigate(
+                    route = PhraseAuthScreenRoute,
+                )
+            },
+            onDone = goHome,
         )
-        viewModel.onNewIntent(intent)
+
+        phraseAuth(
+            onClose = navController::navigateUp,
+            onDone = goHome,
+        )
     }
 }
-
-@Composable
-private fun AuthScreenRoot(
-    viewModel: AuthViewModel,
-) = AuthScreen(
-    onAuthenticateClicked = viewModel::onAuthenticateClicked,
-)
-
-@Composable
-private fun AuthScreen(
-    onAuthenticateClicked: () -> Unit,
-) = Box(
-    contentAlignment = Alignment.Center,
-    modifier = Modifier
-        .safeDrawingPadding()
-        .padding(16.dp)
-        .fillMaxSize()
-) {
-    TextButton(
-        text = "Authenticate",
-        modifier = Modifier
-            .clickable { onAuthenticateClicked() }
-    )
-}
-
-@Composable
-@Preview
-private fun AuthScreenPreview() = AuthScreen(
-    onAuthenticateClicked = {},
-)
