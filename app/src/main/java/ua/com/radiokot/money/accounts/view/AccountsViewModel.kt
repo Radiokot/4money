@@ -68,6 +68,9 @@ class AccountsViewModel(
                 accounts
                     .sorted()
                     .groupBy(Account::type)
+                    .also {
+                        println(it)
+                    }
                     .flatMap { (type, accountsOfType) ->
                         buildList {
                             if (primaryCurrency != null) {
