@@ -35,7 +35,9 @@ import ua.com.radiokot.money.R
 import ua.com.radiokot.money.auth.logic.AuthenticateUseCase
 import ua.com.radiokot.money.auth.logic.AuthenticateWithPhraseUseCase
 import ua.com.radiokot.money.auth.logic.KoinScopeUserSessionHolder
+import ua.com.radiokot.money.auth.logic.SignOutUseCase
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
+import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.auth.view.PhraseAuthScreenViewModel
 import ua.com.radiokot.money.auth.view.TempAuthScreenViewModel
 
@@ -100,4 +102,15 @@ val authModule = module {
             authenticateWithPhraseUseCase = get(),
         )
     } bind PhraseAuthScreenViewModel::class
+
+    sessionScope {
+
+        factory {
+            SignOutUseCase(
+                supabaseClient = get(),
+                userSessionHolder = get(),
+                database = get(),
+            )
+        } bind SignOutUseCase::class
+    }
 }

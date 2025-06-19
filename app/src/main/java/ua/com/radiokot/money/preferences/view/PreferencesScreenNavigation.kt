@@ -21,6 +21,7 @@ package ua.com.radiokot.money.preferences.view
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraphBuilder
@@ -30,17 +31,24 @@ import org.koin.compose.viewmodel.koinViewModel
 const val PreferencesScreenRoute = "preferences"
 
 fun NavGraphBuilder.preferencesScreen(
+    onSignedOut: () -> Unit,
+) = composable(PreferencesScreenRoute) {
 
-) {
-    composable(route = PreferencesScreenRoute) {
+    val viewModel = koinViewModel<PreferencesScreenViewModel>()
 
-        val viewModel = koinViewModel<PreferencesScreenViewModel>()
-
-        PreferencesScreenRoot(
-            viewModel = viewModel,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        )
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                PreferencesScreenViewModel.Event.SignedOut ->
+                    onSignedOut()
+            }
+        }
     }
+
+    PreferencesScreenRoot(
+        viewModel = viewModel,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    )
 }

@@ -32,6 +32,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.auth.authModule
+import ua.com.radiokot.money.auth.logic.sessionScope
 
 @OptIn(DelicateCoroutinesApi::class)
 val powerSyncModule = module {
@@ -39,19 +40,22 @@ val powerSyncModule = module {
 
     singleOf(::moneyAppPowerSyncSchema) bind Schema::class
 
-    single {
-        PowerSyncDatabase(
-            factory = DatabaseDriverFactory(androidApplication()),
-            schema = get(),
-        ).apply {
-            GlobalScope.launch {
-                connect(
-                    connector = AtomicCrudSupabaseConnector(
-                        supabaseClient = get(),
-                        powerSyncEndpoint = BuildConfig.POWERSYNC_URL,
+    sessionScope {
+
+        scoped {
+            PowerSyncDatabase(
+                factory = DatabaseDriverFactory(androidApplication()),
+                schema = get(),
+            ).apply {
+                GlobalScope.launch {
+                    connect(
+                        connector = AtomicCrudSupabaseConnector(
+                            supabaseClient = get(),
+                            powerSyncEndpoint = BuildConfig.POWERSYNC_URL,
+                        )
                     )
-                )
+                }
             }
-        }
-    } bind Queries::class
+        } bind Queries::class
+    }
 }

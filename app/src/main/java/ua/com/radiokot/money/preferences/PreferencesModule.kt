@@ -37,6 +37,8 @@ val preferencesModule = module {
         viewModel {
             PreferencesScreenViewModel(
                 currencyPreferences = get(),
+                session = get(),
+                signOutUseCase = get(),
             )
         } bind PreferencesScreenViewModel::class
     }

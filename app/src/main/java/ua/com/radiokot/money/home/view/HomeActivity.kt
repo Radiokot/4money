@@ -98,6 +98,7 @@ class HomeActivity : UserSessionScopeActivity() {
             UserSessionScope {
                 HomeScreen(
                     viewModel = viewModel,
+                    goToAuth = ::goToAuth,
                 )
             }
         }
@@ -108,6 +109,7 @@ class HomeActivity : UserSessionScopeActivity() {
 @Composable
 private fun HomeScreen(
     viewModel: HomeViewModel,
+    goToAuth: () -> Unit,
 ) {
     val navController = rememberMoneyAppNavController()
     val transfersNavigatorFactory = koinInject<TransfersNavigator.Factory>()
@@ -167,7 +169,9 @@ private fun HomeScreen(
                 onProceedToEditingTransfer = transfersNavigator::proceedToTransfer,
             )
 
-            preferencesScreen()
+            preferencesScreen(
+                onSignedOut = goToAuth,
+            )
 
             accountActionSheet(
                 onBalanceUpdated = navController::navigateUp,
@@ -211,7 +215,7 @@ private fun HomeScreen(
                     navController.navigate(
                         route = ActivityScreenRoute,
                         navOptions = navOptions {
-                            popUpTo<AccountsScreenRoute>() {
+                            popUpTo<AccountsScreenRoute> {
                                 inclusive = true
                             }
                         }

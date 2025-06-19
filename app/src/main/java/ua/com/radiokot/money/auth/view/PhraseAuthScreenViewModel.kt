@@ -114,7 +114,6 @@ class PhraseAuthScreenViewModel(
                     _events.tryEmit(Event.Done)
                 }
                 .onFailure { error ->
-
                     log.error(error) {
                         "signIn(): failed to sign in"
                     }

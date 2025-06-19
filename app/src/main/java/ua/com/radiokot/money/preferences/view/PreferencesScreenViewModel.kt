@@ -21,24 +21,36 @@ package ua.com.radiokot.money.preferences.view
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import ua.com.radiokot.money.auth.data.UserSession
+import ua.com.radiokot.money.auth.logic.SignOutUseCase
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
+import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 
 class PreferencesScreenViewModel(
     private val currencyPreferences: CurrencyPreferences,
+    private val session: UserSession,
+    private val signOutUseCase: SignOutUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("PreferencesScreenVM")
     private val _primaryCurrencyCodeValue: MutableStateFlow<String> =
         MutableStateFlow(currencyPreferences.primaryCurrencyCode.value)
     val primaryCurrencyCodeValue = _primaryCurrencyCodeValue.asStateFlow()
+    val userId: StateFlow<String> = MutableStateFlow(session.userInfo.id)
+    private val _events: MutableSharedFlow<Event> = eventSharedFlow()
+    val events = _events.asSharedFlow()
 
     val isSaveCurrencyPreferencesEnabled: StateFlow<Boolean> =
         combine(
@@ -65,5 +77,40 @@ class PreferencesScreenViewModel(
         }
 
         currencyPreferences.primaryCurrencyCode.value = primaryCurrencyCodeValue.value
+    }
+
+    fun onSignOutClicked() {
+        signOut()
+    }
+
+    private var signOutJob: Job? = null
+    private fun signOut() {
+
+        signOutJob?.cancel()
+        signOutJob = viewModelScope.launch {
+            log.debug {
+                "signOut: signing out"
+            }
+
+            signOutUseCase
+                .invoke()
+                .onSuccess {
+                    log.debug {
+                        "signOut(): successfully signed out"
+                    }
+
+                    _events.tryEmit(Event.SignedOut)
+                }
+                .onFailure { error ->
+                    log.error(error) {
+                        "signOut(): failed to sign out"
+                    }
+                }
+        }
+    }
+
+    sealed interface Event {
+
+        object SignedOut : Event
     }
 }

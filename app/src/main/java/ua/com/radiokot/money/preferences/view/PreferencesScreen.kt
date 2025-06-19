@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.preferences.view
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -44,7 +46,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.uikit.TextButton
 
 @Composable
@@ -54,6 +55,8 @@ private fun PreferencesScreen(
     onPrimaryCurrencyCodeChanged: (String) -> Unit,
     isSaveCurrencyPreferencesEnabled: State<Boolean>,
     onSaveCurrencyPreferencesClicked: () -> Unit,
+    userId: State<String>,
+    onSignOutClicked: () -> Unit,
 ) = Column(
     modifier = modifier
         .verticalScroll(
@@ -100,9 +103,43 @@ private fun PreferencesScreen(
         text = "Save",
         isEnabled = isSaveCurrencyPreferencesEnabled.value,
         modifier = Modifier
-            .fillMaxWidth(1f)
-            .stableClickable(
+            .fillMaxWidth()
+            .clickable(
                 onClick = onSaveCurrencyPreferencesClicked,
+                enabled = isSaveCurrencyPreferencesEnabled.value,
+            )
+    )
+
+    Spacer(modifier = Modifier.height(40.dp))
+
+    BasicText(
+        text = "User",
+        style = TextStyle(
+            fontSize = 16.sp,
+            fontWeight = FontWeight(500)
+        ),
+    )
+
+    Spacer(modifier = Modifier.height(18.dp))
+
+    BasicText(
+        text = "Identifier",
+    )
+
+    Spacer(modifier = Modifier.height(6.dp))
+
+    BasicText(
+        text = userId.value,
+    )
+
+    Spacer(modifier = Modifier.height(18.dp))
+
+    TextButton(
+        text = "Sign out",
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                onClick = onSignOutClicked,
             )
     )
 }
@@ -114,12 +151,16 @@ fun PreferencesScreenRoot(
 ) = PreferencesScreen(
     modifier = modifier,
     primaryCurrencyCode = viewModel.primaryCurrencyCodeValue.collectAsState(),
-    onPrimaryCurrencyCodeChanged = viewModel::onPrimaryCurrencyCodeChanged,
+    onPrimaryCurrencyCodeChanged = remember { viewModel::onPrimaryCurrencyCodeChanged },
     isSaveCurrencyPreferencesEnabled = viewModel.isSaveCurrencyPreferencesEnabled.collectAsState(),
-    onSaveCurrencyPreferencesClicked = viewModel::onSaveCurrencyPreferencesClicked,
+    onSaveCurrencyPreferencesClicked = remember { viewModel::onSaveCurrencyPreferencesClicked },
+    onSignOutClicked = remember { viewModel::onSignOutClicked },
+    userId = viewModel.userId.collectAsState(),
 )
 
-@Preview
+@Preview(
+    apiLevel = 34,
+)
 @Composable
 private fun PreferencesScreenPreview(
 ) = PreferencesScreen(
@@ -127,4 +168,6 @@ private fun PreferencesScreenPreview(
     onPrimaryCurrencyCodeChanged = {},
     isSaveCurrencyPreferencesEnabled = true.let(::mutableStateOf),
     onSaveCurrencyPreferencesClicked = {},
+    userId = "uid".let(::mutableStateOf),
+    onSignOutClicked = {},
 )
