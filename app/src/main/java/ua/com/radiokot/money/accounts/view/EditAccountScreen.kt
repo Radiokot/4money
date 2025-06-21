@@ -58,7 +58,7 @@ import com.composeunstyled.Text
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
-import ua.com.radiokot.money.stableClickable
+import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.uikit.TextButton
 
 @Composable
@@ -272,15 +272,15 @@ private fun AccountLogoAndTitleRow(
         )
     }
 
-    AccountLogo(
-        accountTitle = title.value,
+    ItemLogo(
+        title = title.value,
         colorScheme = colorScheme.value,
         modifier = Modifier
             .padding(
                 start = 16.dp,
             )
             .size(42.dp)
-            .stableClickable(
+            .clickable(
                 onClick = onLogoClicked,
             )
     )

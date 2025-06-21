@@ -33,13 +33,10 @@ class ViewCategoryListItem(
     val title: String,
     val amount: ViewAmount,
     val isIncognito: Boolean,
-    colorScheme: ItemColorScheme,
+    val colorScheme: ItemColorScheme,
     val source: Category? = null,
     val key: Any = source?.hashCode() ?: Random.nextInt(),
 ) {
-
-    val primaryColor = Color(colorScheme.primary)
-    val onPrimaryColor = Color(colorScheme.onPrimary)
 
     constructor(
         category: Category,
@@ -63,8 +60,7 @@ class ViewCategoryListItem(
         if (title != other.title) return false
         if (amount != other.amount) return false
         if (isIncognito != other.isIncognito) return false
-        if (primaryColor != other.primaryColor) return false
-        if (onPrimaryColor != other.onPrimaryColor) return false
+        if (colorScheme != other.colorScheme) return false
         if (key != other.key) return false
 
         return true
@@ -74,8 +70,7 @@ class ViewCategoryListItem(
         var result = title.hashCode()
         result = 31 * result + amount.hashCode()
         result = 31 * result + isIncognito.hashCode()
-        result = 31 * result + primaryColor.hashCode()
-        result = 31 * result + onPrimaryColor.hashCode()
+        result = 31 * result + colorScheme.hashCode()
         result = 31 * result + key.hashCode()
         return result
     }

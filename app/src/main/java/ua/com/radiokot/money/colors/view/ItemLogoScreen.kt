@@ -53,7 +53,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composeunstyled.Text
-import ua.com.radiokot.money.accounts.view.AccountLogo
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemLogoType
@@ -149,8 +148,8 @@ private fun ItemLogoScreen(
             .align(Alignment.CenterHorizontally)
     ) { colorScheme ->
 
-        AccountLogo(
-            accountTitle = itemTitle,
+        ItemLogo(
+            title = itemTitle,
             colorScheme = colorScheme,
             modifier = Modifier
                 .size(72.dp)
