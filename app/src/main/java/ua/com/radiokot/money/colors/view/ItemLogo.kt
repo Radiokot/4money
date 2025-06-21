@@ -19,8 +19,15 @@
 
 package ua.com.radiokot.money.colors.view
 
+import android.icu.text.BreakIterator
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -31,8 +38,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 
 @Composable
@@ -50,19 +59,61 @@ fun ItemLogo(
         )
 ) {
     val fontSizeSp = (maxWidth * 0.5f).value.sp / LocalDensity.current.fontScale
-    val firstSymbol = remember(title) {
-        val firstCodepoint = title
-            .codePoints()
-            .findFirst()
-            .orElse(8230) // …
-        String(intArrayOf(firstCodepoint), 0, 1)
+
+    val firstGrapheme = remember(title) {
+
+        val firstGraphemeEndIndex =
+            BreakIterator.getCharacterInstance().run {
+                setText(title)
+                next()
+            }
+
+        if (firstGraphemeEndIndex > 0)
+            title.substring(0, firstGraphemeEndIndex)
+        else
+            "…"
     }
 
     BasicText(
-        text = firstSymbol,
+        text = firstGrapheme,
         style = TextStyle(
             color = Color(colorScheme.onPrimary),
             fontSize = fontSizeSp,
         )
     )
+}
+
+@Preview(
+    apiLevel = 34,
+)
+@Composable
+private fun Preview(
+
+) {
+    LazyVerticalGrid(
+        columns = GridCells.FixedSize(40.dp),
+        modifier = Modifier
+            .widthIn(
+                max = 120.dp,
+            )
+    ) {
+        items(
+            items = listOf(
+                "Ole",
+                "😸",
+                "\uD83D\uDC77\uD83C\uDFFB\u200D♀\uFE0F", // Woman construction worker
+                "\uD83D\uDC69\u200D\uD83D\uDD2C", // Woman chemist,
+                "",
+            )
+        ) { title ->
+            ItemLogo(
+                title = title,
+                colorScheme = HardcodedItemColorSchemeRepository()
+                    .getItemColorSchemesByName()["Turquoise4"]!!,
+                modifier = Modifier
+                    .size(42.dp)
+                    .padding(1.dp)
+            )
+        }
+    }
 }

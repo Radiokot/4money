@@ -24,7 +24,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
@@ -69,7 +68,7 @@ fun CategoryGrid(
 @Composable
 @Preview(
     apiLevel = 34,
-    widthDp = 160,
+    widthDp = 200,
 )
 private fun CategoryGridPreview(
 ) {
@@ -147,16 +146,3 @@ private fun CategoryListItem(
         )
     }
 }
-
-@Composable
-@Preview(
-    apiLevel = 34,
-    widthDp = 80,
-)
-private fun CategoryListItemPreview(
-    @PreviewParameter(ViewCategoryListItemPreviewParameterProvider::class) item: ViewCategoryListItem,
-) = CategoryListItem(
-    item = item,
-    modifier = Modifier
-        .fillMaxWidth()
-)

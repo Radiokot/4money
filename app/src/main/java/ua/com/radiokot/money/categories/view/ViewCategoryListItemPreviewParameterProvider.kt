@@ -37,7 +37,7 @@ class ViewCategoryListItemPreviewParameterProvider :
             ViewCategoryListItem(
                 title = "Sales",
                 amount = ViewAmount(
-                    value = BigInteger.ZERO,
+                    value = BigInteger("410"),
                     currency = ViewCurrency(
                         symbol = "$",
                         precision = 2,
@@ -75,9 +75,9 @@ class ViewCategoryListItemPreviewParameterProvider :
                 isIncognito = false,
             ),
             ViewCategoryListItem(
-                title = "😽 Грушá",
+                title = "😽 Грушá with long name",
                 amount = ViewAmount(
-                    value = BigInteger.ZERO,
+                    value = BigInteger("5"),
                     currency = ViewCurrency(
                         symbol = "c",
                         precision = 0,
@@ -87,11 +87,11 @@ class ViewCategoryListItemPreviewParameterProvider :
                 isIncognito = false,
             ),
             ViewCategoryListItem(
-                title = "Something long with long name",
+                title = "Incognito",
                 amount = ViewAmount(
                     value = BigInteger.ZERO,
                     currency = ViewCurrency(
-                        symbol = "b",
+                        symbol = "\$T",
                         precision = 0,
                     )
                 ),
