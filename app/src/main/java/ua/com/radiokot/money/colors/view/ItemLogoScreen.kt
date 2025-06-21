@@ -17,7 +17,7 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.accounts.view
+package ua.com.radiokot.money.colors.view
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -53,15 +53,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composeunstyled.Text
+import ua.com.radiokot.money.accounts.view.AccountLogo
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
-import ua.com.radiokot.money.colors.view.ColorSchemePicker
+import ua.com.radiokot.money.colors.data.ItemLogoType
 import ua.com.radiokot.money.uikit.TextButton
 
 @Composable
-private fun AccountLogoScreen(
+private fun ItemLogoScreen(
     modifier: Modifier = Modifier,
-    accountTitle: String,
+    logoType: ItemLogoType,
+    itemTitle: String,
     colorSchemeList: State<List<ItemColorScheme>>,
     selectedColorScheme: State<ItemColorScheme>,
     onColorSchemeClicked: (ItemColorScheme) -> Unit,
@@ -102,7 +104,13 @@ private fun AccountLogoScreen(
         )
 
         Text(
-            text = "Account logo",
+            text = when (logoType) {
+                ItemLogoType.Account ->
+                    "Account logo"
+
+                ItemLogoType.Category ->
+                    "Category logo"
+            },
             fontSize = 16.sp,
             modifier = Modifier
                 .weight(1f)
@@ -142,7 +150,7 @@ private fun AccountLogoScreen(
     ) { colorScheme ->
 
         AccountLogo(
-            accountTitle = accountTitle,
+            accountTitle = itemTitle,
             colorScheme = colorScheme,
             modifier = Modifier
                 .size(72.dp)
@@ -163,12 +171,13 @@ private fun AccountLogoScreen(
 }
 
 @Composable
-fun AccountLogoScreenRoot(
+fun ItemLogoScreenRoot(
     modifier: Modifier = Modifier,
-    viewModel: AccountLogoScreenViewModel,
+    viewModel: ItemLogoScreenViewModel,
 ) {
-    AccountLogoScreen(
-        accountTitle = viewModel.accountTitle,
+    ItemLogoScreen(
+        logoType = viewModel.logoType,
+        itemTitle = viewModel.itemTitle,
         colorSchemeList = viewModel.colorSchemeList.collectAsState(),
         selectedColorScheme = viewModel.selectedColorScheme.collectAsState(),
         onColorSchemeClicked = remember { viewModel::onColorSchemeClicked },
@@ -185,8 +194,9 @@ fun AccountLogoScreenRoot(
 private fun Preview(
 
 ) {
-    AccountLogoScreen(
-        accountTitle = "🤗",
+    ItemLogoScreen(
+        logoType = ItemLogoType.Account,
+        itemTitle = "🤗",
         colorSchemeList = HardcodedItemColorSchemeRepository()
             .getItemColorSchemes()
             .let(::mutableStateOf),

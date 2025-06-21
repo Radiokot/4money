@@ -17,7 +17,7 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.accounts.view
+package ua.com.radiokot.money.colors.view
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.runtime.LaunchedEffect
@@ -28,17 +28,19 @@ import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemLogoType
 
 @Serializable
-data class AccountLogoScreenRoute(
-    val accountTitle: String,
+data class ItemLogoScreenRoute(
+    val logoType: ItemLogoType,
+    val itemTitle: String,
     val initialColorSchemeName: String,
 )
 
-fun NavGraphBuilder.accountLogoScreen(
+fun NavGraphBuilder.itemLogoScreen(
     onClose: () -> Unit,
     onDone: (colorScheme: ItemColorScheme) -> Unit,
-) = composable<AccountLogoScreenRoute>(
+) = composable<ItemLogoScreenRoute>(
     enterTransition = {
         slideIntoContainer(
             towards = AnimatedContentTransitionScope.SlideDirection.Companion.Start,
@@ -51,11 +53,12 @@ fun NavGraphBuilder.accountLogoScreen(
     },
 ) { entry ->
 
-    val route: AccountLogoScreenRoute = entry.toRoute()
-    val viewModel: AccountLogoScreenViewModel = koinViewModel {
+    val route: ItemLogoScreenRoute = entry.toRoute()
+    val viewModel: ItemLogoScreenViewModel = koinViewModel {
         parametersOf(
-            AccountLogoScreenViewModel.Parameters(
-                accountTitle = route.accountTitle,
+            ItemLogoScreenViewModel.Parameters(
+                logoType = route.logoType,
+                itemTitle = route.itemTitle,
                 initialColorSchemeName = route.initialColorSchemeName,
             )
         )
@@ -64,10 +67,10 @@ fun NavGraphBuilder.accountLogoScreen(
     LaunchedEffect(route) {
         viewModel.events.collect { event ->
             when (event) {
-                AccountLogoScreenViewModel.Event.Close ->
+                ItemLogoScreenViewModel.Event.Close ->
                     onClose()
 
-                is AccountLogoScreenViewModel.Event.Done ->
+                is ItemLogoScreenViewModel.Event.Done ->
                     onDone(
                         event.colorScheme,
                     )
@@ -75,7 +78,7 @@ fun NavGraphBuilder.accountLogoScreen(
         }
     }
 
-    AccountLogoScreenRoot(
+    ItemLogoScreenRoot(
         viewModel = viewModel,
     )
 }

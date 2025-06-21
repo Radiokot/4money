@@ -17,7 +17,7 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.accounts.view
+package ua.com.radiokot.money.colors.view
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,9 +26,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemLogoType
 import ua.com.radiokot.money.eventSharedFlow
 
-class AccountLogoScreenViewModel(
+class ItemLogoScreenViewModel(
     parameters: Parameters,
     itemColorSchemeRepository: ItemColorSchemeRepository,
 ) : ViewModel() {
@@ -45,7 +46,8 @@ class AccountLogoScreenViewModel(
     val selectedColorScheme = _selectedColorScheme.asStateFlow()
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
-    val accountTitle = parameters.accountTitle
+    val logoType = parameters.logoType
+    val itemTitle = parameters.itemTitle
 
     fun onColorSchemeClicked(colorScheme: ItemColorScheme) {
         _selectedColorScheme.value = colorScheme
@@ -73,7 +75,8 @@ class AccountLogoScreenViewModel(
     }
 
     class Parameters(
-        val accountTitle: String,
+        val logoType: ItemLogoType,
+        val itemTitle: String,
         val initialColorSchemeName: String,
     )
 }

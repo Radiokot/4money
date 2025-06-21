@@ -31,7 +31,6 @@ import ua.com.radiokot.money.accounts.logic.PowerSyncAddAccountUseCase
 import ua.com.radiokot.money.accounts.logic.PowerSyncEditAccountUseCase
 import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
 import ua.com.radiokot.money.accounts.view.AccountActionSheetViewModel
-import ua.com.radiokot.money.accounts.view.AccountLogoScreenViewModel
 import ua.com.radiokot.money.accounts.view.AccountsViewModel
 import ua.com.radiokot.money.accounts.view.EditAccountScreenViewModel
 import ua.com.radiokot.money.auth.logic.sessionScope
@@ -111,14 +110,5 @@ val accountsModule = module {
                 addAccountUseCase = get(),
             )
         } bind EditAccountScreenViewModel::class
-
-        viewModel {
-            AccountLogoScreenViewModel(
-                parameters = requireNotNull(getOrNull()) {
-                    "AccountLogoScreenViewModel.Parameters are required"
-                },
-                itemColorSchemeRepository = get(),
-            )
-        }
     }
 }

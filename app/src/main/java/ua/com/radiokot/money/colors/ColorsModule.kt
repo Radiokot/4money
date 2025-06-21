@@ -19,14 +19,29 @@
 
 package ua.com.radiokot.money.colors
 
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
+import ua.com.radiokot.money.colors.view.ItemLogoScreenViewModel
 
 val colorsModule = module {
 
     single {
         HardcodedItemColorSchemeRepository()
     } bind ItemColorSchemeRepository::class
+
+    sessionScope {
+
+        viewModel {
+            ItemLogoScreenViewModel(
+                parameters = requireNotNull(getOrNull()) {
+                    "ItemLogoScreenViewModel.Parameters are required"
+                },
+                itemColorSchemeRepository = get(),
+            )
+        }
+    }
 }

@@ -33,6 +33,9 @@ import androidx.navigation.compose.NavHost
 import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
+import ua.com.radiokot.money.colors.data.ItemLogoType
+import ua.com.radiokot.money.colors.view.ItemLogoScreenRoute
+import ua.com.radiokot.money.colors.view.itemLogoScreen
 import ua.com.radiokot.money.currency.view.CurrencySelectionScreenRoute
 import ua.com.radiokot.money.currency.view.currencySelectionScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
@@ -101,8 +104,9 @@ private fun Content(
             onProceedToLogoCustomization = { currentTitle, currentColorScheme ->
                 softwareKeyboardController?.hide()
                 navController.navigate(
-                    AccountLogoScreenRoute(
-                        accountTitle = currentTitle,
+                    ItemLogoScreenRoute(
+                        logoType = ItemLogoType.Account,
+                        itemTitle = currentTitle,
                         initialColorSchemeName = currentColorScheme.name,
                     ),
                 )
@@ -119,7 +123,7 @@ private fun Content(
             onDone = finishActivity,
         )
 
-        accountLogoScreen(
+        itemLogoScreen(
             onClose = {
                 navController.popBackStack()
             },
