@@ -1,5 +1,6 @@
 package ua.com.radiokot.money.categories.view
 
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,13 +28,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
-import ua.com.radiokot.money.stableClickable
 
 @Composable
 fun CategoryGrid(
     modifier: Modifier = Modifier,
     itemList: State<List<ViewCategoryListItem>>,
     onItemClicked: (ViewCategoryListItem) -> Unit,
+    onItemLongClicked: (ViewCategoryListItem) -> Unit,
 ) {
     val gridState = rememberLazyGridState()
     val space = 6.dp
@@ -56,9 +57,9 @@ fun CategoryGrid(
             CategoryListItem(
                 item = item,
                 modifier = Modifier
-                    .stableClickable(
-                        key = item.key,
+                    .combinedClickable(
                         onClick = { onItemClicked(item) },
+                        onLongClick = { onItemLongClicked(item) },
                     )
             )
         }
@@ -78,6 +79,7 @@ private fun CategoryGridPreview(
             .toList()
             .let(::mutableStateOf),
         onItemClicked = {},
+        onItemLongClicked = {},
         modifier = Modifier
             .fillMaxWidth()
     )

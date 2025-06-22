@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -111,8 +112,8 @@ fun TransferCounterpartySelectionSheetRoot(
             viewModel.expenseCategoryListItems.collectAsStateWithLifecycle()
         else
             null,
-        onAccountItemClicked = viewModel::onAccountItemClicked,
-        onCategoryItemClicked = viewModel::onCategoryItemClicked,
+        onAccountItemClicked = remember { viewModel::onAccountItemClicked },
+        onCategoryItemClicked = remember { viewModel::onCategoryItemClicked },
         modifier = modifier,
     )
 }

@@ -26,7 +26,7 @@ import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
 import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
-import ua.com.radiokot.money.categories.view.CategoriesViewModel
+import ua.com.radiokot.money.categories.view.CategoriesScreenViewModel
 import ua.com.radiokot.money.categories.view.EditCategoryScreenViewModel
 import ua.com.radiokot.money.colors.colorsModule
 import ua.com.radiokot.money.currency.currencyModule
@@ -55,7 +55,7 @@ val categoriesModule = module {
         } bind GetCategoryStatsUseCase::class
 
         viewModel { parameters ->
-            CategoriesViewModel(
+            CategoriesScreenViewModel(
                 historyStatsPeriodViewModel = checkNotNull(parameters.getOrNull()) {
                     "HistoryStatsPeriodViewModel must be provided through the parameters " +
                             "to share the same instance"
@@ -64,7 +64,7 @@ val categoriesModule = module {
                 currencyRepository = get(),
                 currencyPreferences = get(),
             )
-        } bind CategoriesViewModel::class
+        } bind CategoriesScreenViewModel::class
 
         viewModel {
             EditCategoryScreenViewModel(

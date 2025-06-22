@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.categories.view
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,7 +45,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
-import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.view.PeriodBar
 import java.math.BigInteger
@@ -52,18 +52,19 @@ import java.math.BigInteger
 @Composable
 fun CategoriesScreenRoot(
     modifier: Modifier = Modifier,
-    viewModel: CategoriesViewModel,
+    viewModel: CategoriesScreenViewModel,
 ) = CategoriesScreen(
     isIncome = viewModel.isIncome.collectAsStateWithLifecycle(),
     period = viewModel.historyStatsPeriod.collectAsStateWithLifecycle(),
     totalAmount = viewModel.totalAmount.collectAsStateWithLifecycle(),
     incomeCategoryItemList = viewModel.incomeCategoryItemList.collectAsStateWithLifecycle(),
     expenseCategoryItemList = viewModel.expenseCategoryItemList.collectAsStateWithLifecycle(),
-    onTitleClicked = viewModel::onTitleClicked,
-    onCategoryItemClicked = viewModel::onCategoryItemClicked,
+    onTitleClicked = remember { viewModel::onTitleClicked },
+    onCategoryItemClicked = remember { viewModel::onCategoryItemClicked },
+    onCategoryItemLongClicked = remember { viewModel::onCategoryItemLongClicked },
     onPeriodClicked = {},
-    onPreviousPeriodClicked = viewModel::onPreviousHistoryStatsPeriodClicked,
-    onNextPeriodClicked = viewModel::onNextHistoryStatsPeriodClicked,
+    onPreviousPeriodClicked = remember { viewModel::onPreviousHistoryStatsPeriodClicked },
+    onNextPeriodClicked = remember { viewModel::onNextHistoryStatsPeriodClicked },
     modifier = modifier,
 )
 
@@ -77,6 +78,7 @@ private fun CategoriesScreen(
     expenseCategoryItemList: State<List<ViewCategoryListItem>>,
     onTitleClicked: () -> Unit,
     onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
+    onCategoryItemLongClicked: (ViewCategoryListItem) -> Unit,
     onPeriodClicked: () -> Unit,
     onNextPeriodClicked: () -> Unit,
     onPreviousPeriodClicked: () -> Unit,
@@ -111,7 +113,7 @@ private fun CategoriesScreen(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .stableClickable(
+            .clickable(
                 onClick = onTitleClicked,
             )
     )
@@ -143,7 +145,7 @@ private fun CategoriesScreen(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .stableClickable(
+            .clickable(
                 onClick = onTitleClicked,
             )
             .padding(
@@ -158,6 +160,7 @@ private fun CategoriesScreen(
         else
             expenseCategoryItemList,
         onItemClicked = onCategoryItemClicked,
+        onItemLongClicked = onCategoryItemLongClicked,
         modifier = Modifier
             .fillMaxWidth()
             .weight(1f)
@@ -186,6 +189,7 @@ private fun CategoriesScreenPreview(
         expenseCategoryItemList = mutableStateOf(categories),
         onTitleClicked = {},
         onCategoryItemClicked = {},
+        onCategoryItemLongClicked = {},
         onPreviousPeriodClicked = {},
         onNextPeriodClicked = {},
         onPeriodClicked = {},

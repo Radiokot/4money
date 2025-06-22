@@ -47,7 +47,7 @@ import ua.com.radiokot.money.transfers.history.view.HistoryStatsPeriodViewModel
 import java.math.BigInteger
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CategoriesViewModel(
+class CategoriesScreenViewModel(
     historyStatsPeriodViewModel: HistoryStatsPeriodViewModel,
     getCategoryStatsUseCase: GetCategoryStatsUseCase,
     private val currencyRepository: CurrencyRepository,
@@ -55,7 +55,7 @@ class CategoriesViewModel(
 ) : ViewModel(),
     HistoryStatsPeriodViewModel by historyStatsPeriodViewModel {
 
-    private val log by lazyLogger("CategoriesVM")
+    private val log by lazyLogger("CategoriesScreenVM")
     private val _isIncome: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isIncome = _isIncome.asStateFlow()
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
@@ -155,9 +155,32 @@ class CategoriesViewModel(
         )
     }
 
+    fun onCategoryItemLongClicked(item: ViewCategoryListItem) {
+        val category = item.source
+        if (category == null) {
+            log.warn {
+                "onCategoryItemLongClicked(): missing category source"
+            }
+            return
+        }
+
+        log.debug {
+            "onCategoryItemLongClicked(): proceeding to actions:" +
+                    "\ncategory=$category"
+        }
+
+        _events.tryEmit(
+            Event.ProceedToCategoryActions(category)
+        )
+    }
+
     sealed interface Event {
 
         class ProceedToTransfer(
+            val category: Category,
+        ) : Event
+
+        class ProceedToCategoryActions(
             val category: Category,
         ) : Event
     }

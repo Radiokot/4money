@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.data.Currency
 
@@ -40,6 +41,12 @@ data class EditCategoryScreenRoute(
     val categoryToEditId: String?,
     val isIncome: Boolean,
 ) {
+
+    constructor(categoryToEdit: Category) : this(
+        categoryToEditId = categoryToEdit.id,
+        isIncome = categoryToEdit.isIncome,
+    )
+
     companion object {
 
         fun setSelectedColorScheme(

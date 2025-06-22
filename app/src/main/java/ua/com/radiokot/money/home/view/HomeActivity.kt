@@ -69,6 +69,8 @@ import ua.com.radiokot.money.accounts.view.accountsScreen
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.categories.view.CategoriesScreenRoute
+import ua.com.radiokot.money.categories.view.EditCategoryActivity
+import ua.com.radiokot.money.categories.view.EditCategoryScreenRoute
 import ua.com.radiokot.money.categories.view.categoriesScreen
 import ua.com.radiokot.money.preferences.view.PreferencesScreenRoute
 import ua.com.radiokot.money.preferences.view.preferencesScreen
@@ -165,6 +167,19 @@ private fun HomeScreen(
             categoriesScreen(
                 homeViewModel = viewModel,
                 onProceedToTransfer = transfersNavigator::proceedToTransfer,
+                onProceedToCategoryActions = { category ->
+                    // TODO: Open the sheet having the Edit option
+                    context.startActivity(
+                        Intent(context, EditCategoryActivity::class.java)
+                            .putExtras(
+                                EditCategoryActivity.getBundle(
+                                    route = EditCategoryScreenRoute(
+                                        categoryToEdit = category,
+                                    ),
+                                )
+                            )
+                    )
+                }
             )
 
             activityScreen(

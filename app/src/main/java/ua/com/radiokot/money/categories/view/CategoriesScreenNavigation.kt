@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -40,24 +39,25 @@ data class CategoriesScreenRoute(
 fun NavGraphBuilder.categoriesScreen(
     homeViewModel: HomeViewModel,
     onProceedToTransfer: (category: Category) -> Unit,
+    onProceedToCategoryActions: (category: Category) -> Unit,
 ) = composable<CategoriesScreenRoute> { entry ->
 
     val isIncognito = entry.toRoute<CategoriesScreenRoute>()
         .isIncognito
-    val viewModel = koinViewModel<CategoriesViewModel> {
+    val viewModel = koinViewModel<CategoriesScreenViewModel> {
         parametersOf(
             homeViewModel,
         )
     }
 
     LaunchedEffect(isIncognito) {
-        launch {
-            viewModel.events.collect { event ->
-                when (event) {
-                    is CategoriesViewModel.Event.ProceedToTransfer -> {
-                        onProceedToTransfer(event.category)
-                    }
-                }
+        viewModel.events.collect { event ->
+            when (event) {
+                is CategoriesScreenViewModel.Event.ProceedToTransfer ->
+                    onProceedToTransfer(event.category)
+
+                is CategoriesScreenViewModel.Event.ProceedToCategoryActions ->
+                    onProceedToCategoryActions(event.category)
             }
         }
     }
