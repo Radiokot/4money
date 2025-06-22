@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.CategoryRepository
+import ua.com.radiokot.money.categories.logic.EditCategoryUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
@@ -46,6 +47,7 @@ class EditCategoryScreenViewModel(
     private val currencyRepository: CurrencyRepository,
     private val currencyPreferences: CurrencyPreferences,
     itemColorSchemeRepository: ItemColorSchemeRepository,
+    private val editCategoryUseCase: EditCategoryUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("EditCategoryScreenVM")
@@ -148,7 +150,7 @@ class EditCategoryScreenViewModel(
 
         if (categoryToEdit != null) {
             editCategory(
-                accountId = categoryToEdit.id,
+                categoryId = categoryToEdit.id,
             )
         } else {
             addCategory()
@@ -157,7 +159,7 @@ class EditCategoryScreenViewModel(
 
     private var editJob: Job? = null
     private fun editCategory(
-        accountId: String,
+        categoryId: String,
     ) {
         editJob?.cancel()
         editJob = viewModelScope.launch {
@@ -167,30 +169,29 @@ class EditCategoryScreenViewModel(
 
             log.debug {
                 "editCategory(): editing:" +
-                        "\naccountId=$accountId," +
+                        "\ncategoryId=$categoryId," +
                         "\ntitle=$title," +
                         "\ncolorScheme=$colorScheme"
             }
 
-//            editAccountUseCase
-//                .invoke(
-//                    accountId = accountId,
-//                    newTitle = title,
-//                    newType = type,
-//                    newColorScheme = colorScheme,
-//                )
-//                .onFailure { error ->
-//                    log.error(error) {
-//                        "editCategory(): failed to edit category"
-//                    }
-//                }
-//                .onSuccess {
-//                    log.debug {
-//                        "editCategory(): category edited"
-//                    }
-//
-//                    _events.emit(Event.Done)
-//                }
+            editCategoryUseCase
+                .invoke(
+                    categoryId = categoryId,
+                    newTitle = title,
+                    newColorScheme = colorScheme,
+                )
+                .onFailure { error ->
+                    log.error(error) {
+                        "editCategory(): failed to edit category"
+                    }
+                }
+                .onSuccess {
+                    log.debug {
+                        "editCategory(): category edited"
+                    }
+
+                    _events.emit(Event.Done)
+                }
         }
     }
 

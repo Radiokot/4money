@@ -21,6 +21,7 @@ package ua.com.radiokot.money.categories.data
 
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
+import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,6 +36,8 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.runBlocking
+import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
@@ -89,7 +92,7 @@ class PowerSyncCategoryRepository(
 
     override suspend fun getCategory(
         categoryId: String,
-    ): Category?=  database
+    ): Category? = database
         .getOptional(
             sql = SELECT_CATEGORY_BY_ID,
             parameters = listOf(
@@ -193,6 +196,27 @@ class PowerSyncCategoryRepository(
         return emptyFlow()
     }
 
+    fun updateCategory(
+        categoryId: String,
+        newTitle: String,
+        newColorScheme: ItemColorScheme,
+        transaction: PowerSyncTransaction,
+    ) {
+        val categoryToUpdate = runBlocking {
+            getCategory(categoryId)
+                ?: error("Category to update not found")
+        }
+
+        transaction.execute(
+            sql = UPDATE_CATEGORY_BY_ID,
+            parameters = listOf(
+                newTitle,
+                newColorScheme.name,
+                categoryToUpdate.id,
+            )
+        )
+    }
+
     private fun toCategory(
         sqlCursor: SqlCursor,
     ): Category = with(sqlCursor) {
@@ -280,3 +304,15 @@ private const val SELECT_CATEGORIES_THEN_SUBCATEGORIES =
     "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
             "WHERE $CURRENCY_MATCHES_CATEGORY " +
             "ORDER BY categories.parent_category_id ASC"
+
+/**
+ * Params:
+ * 1. Title
+ * 2. Color scheme name
+ * 3. ID
+ */
+private const val UPDATE_CATEGORY_BY_ID =
+    "UPDATE categories SET " +
+            "title = ?, " +
+            "color_scheme = ? " +
+            "WHERE id = ? "
