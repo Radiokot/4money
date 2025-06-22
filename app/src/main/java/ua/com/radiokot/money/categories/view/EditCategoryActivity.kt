@@ -17,7 +17,7 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.accounts.view
+package ua.com.radiokot.money.categories.view
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -31,7 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.navigation.compose.NavHost
 import kotlinx.serialization.json.Json
-import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
+import ua.com.radiokot.money.accounts.view.EditAccountScreenRoute
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.colors.data.ItemLogoType
@@ -41,7 +41,7 @@ import ua.com.radiokot.money.currency.view.CurrencySelectionScreenRoute
 import ua.com.radiokot.money.currency.view.currencySelectionScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
 
-class EditAccountActivity : UserSessionScopeActivity() {
+class EditCategoryActivity : UserSessionScopeActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,11 +64,12 @@ class EditAccountActivity : UserSessionScopeActivity() {
         }
     }
 
+
     companion object {
         private const val EXTRA_ROUTE_JSON = "route-json"
 
         fun getBundle(
-            route: EditAccountScreenRoute,
+            route: EditCategoryScreenRoute,
         ) = Bundle().apply {
             putString(
                 EXTRA_ROUTE_JSON,
@@ -80,7 +81,7 @@ class EditAccountActivity : UserSessionScopeActivity() {
 
 @Composable
 private fun Content(
-    route: EditAccountScreenRoute,
+    route: EditCategoryScreenRoute,
     finishActivity: () -> Unit,
 ) {
     val navController = rememberMoneyAppNavController()
@@ -95,14 +96,7 @@ private fun Content(
             .fillMaxSize(),
     ) {
 
-        editAccountScreen(
-            onProceedToAccountTypeSelection = { currentType ->
-                navController.navigate(
-                    AccountTypeSelectionSheetRoute(
-                        selectedType = currentType,
-                    )
-                )
-            },
+        editCategoryScreen(
             onProceedToLogoCustomization = { currentTitle, currentColorScheme ->
                 softwareKeyboardController?.hide()
                 navController.navigate(
@@ -128,7 +122,7 @@ private fun Content(
         itemLogoScreen(
             onClose = navController::navigateUp,
             onDone = { colorScheme ->
-                navController.popBackStack()
+                navController.navigateUp()
                 EditAccountScreenRoute.setSelectedColorScheme(
                     selectedColorScheme = colorScheme,
                     navController = navController,
@@ -146,19 +140,5 @@ private fun Content(
                 )
             }
         )
-
-        accountTypeSelectionSheet(
-            onDone = { type ->
-                navController.navigateUp()
-                EditAccountScreenRoute.setSelectedType(
-                    selectedType = type,
-                    navController = navController,
-                )
-            }
-        )
     }
-
-    MoneyAppModalBottomSheetHost(
-        moneyAppNavController = navController,
-    )
 }

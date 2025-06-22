@@ -87,6 +87,17 @@ class PowerSyncCategoryRepository(
         else
             expenseCategoriesSharedFlow
 
+    override suspend fun getCategory(
+        categoryId: String,
+    ): Category?=  database
+        .getOptional(
+            sql = SELECT_CATEGORY_BY_ID,
+            parameters = listOf(
+                categoryId,
+            ),
+            mapper = ::toCategory,
+        )
+
     override fun getCategoryFlow(
         categoryId: String,
     ): Flow<Category> = database

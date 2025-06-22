@@ -63,6 +63,7 @@ import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
 import ua.com.radiokot.money.accounts.view.AccountActionSheetRoute
 import ua.com.radiokot.money.accounts.view.AccountsScreenRoute
 import ua.com.radiokot.money.accounts.view.EditAccountActivity
+import ua.com.radiokot.money.accounts.view.EditAccountScreenRoute
 import ua.com.radiokot.money.accounts.view.accountActionSheet
 import ua.com.radiokot.money.accounts.view.accountsScreen
 import ua.com.radiokot.money.auth.logic.UserSessionScope
@@ -152,7 +153,9 @@ private fun HomeScreen(
                         Intent(context, EditAccountActivity::class.java)
                             .putExtras(
                                 EditAccountActivity.getBundle(
-                                    accountToEditId = null,
+                                    route = EditAccountScreenRoute(
+                                        accountToEditId = null,
+                                    ),
                                 )
                             )
                     )
@@ -226,7 +229,9 @@ private fun HomeScreen(
                         Intent(context, EditAccountActivity::class.java)
                             .putExtras(
                                 EditAccountActivity.getBundle(
-                                    accountToEditId = accountId,
+                                    route = EditAccountScreenRoute(
+                                        accountToEditId = accountId,
+                                    ),
                                 )
                             )
                     )

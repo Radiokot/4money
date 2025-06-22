@@ -27,6 +27,7 @@ import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
 import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
 import ua.com.radiokot.money.categories.view.CategoriesViewModel
+import ua.com.radiokot.money.categories.view.EditCategoryScreenViewModel
 import ua.com.radiokot.money.colors.colorsModule
 import ua.com.radiokot.money.currency.currencyModule
 import ua.com.radiokot.money.transfers.history.transfersHistoryModule
@@ -64,5 +65,17 @@ val categoriesModule = module {
                 currencyPreferences = get(),
             )
         } bind CategoriesViewModel::class
+
+        viewModel {
+            EditCategoryScreenViewModel(
+                parameters = checkNotNull(getOrNull()) {
+                    "EditCategoryScreenViewModel.Parameters are required"
+                },
+                categoryRepository = get(),
+                currencyPreferences = get(),
+                currencyRepository = get(),
+                itemColorSchemeRepository = get(),
+            )
+        } bind EditCategoryScreenViewModel::class
     }
 }

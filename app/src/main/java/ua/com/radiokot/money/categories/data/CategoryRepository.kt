@@ -27,6 +27,8 @@ interface CategoryRepository {
 
     fun getCategoriesFlow(isIncome: Boolean): Flow<List<Category>>
 
+    suspend fun getCategory(categoryId: String): Category?
+
     fun getCategoryFlow(categoryId: String): Flow<Category>
 
     fun getSubcategoriesFlow(categoryId: String): Flow<List<Subcategory>>
