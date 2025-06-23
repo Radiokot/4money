@@ -42,6 +42,7 @@ import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.util.SternBrocotTreeDescPositionHealer
+import ua.com.radiokot.money.util.SternBrocotTreeSearch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PowerSyncCategoryRepository(
@@ -217,6 +218,49 @@ class PowerSyncCategoryRepository(
         )
     }
 
+    fun addCategory(
+        title: String,
+        currency: Currency,
+        isIncome: Boolean,
+        colorScheme: ItemColorScheme,
+        transaction: PowerSyncTransaction,
+    ): Category {
+        val categoryToPlaceBefore: Category? = runBlocking {
+            getCategories(isIncome)
+                .minOrNull()
+        }
+
+        val position = SternBrocotTreeSearch()
+            .goBetween(
+                lowerBound = categoryToPlaceBefore?.position ?: 0.0,
+                upperBound = Double.POSITIVE_INFINITY,
+            )
+            .value
+
+        val category = Category(
+            title = title,
+            currency = currency,
+            isIncome = isIncome,
+            colorScheme = colorScheme,
+            position = position,
+        )
+
+        transaction.execute(
+            sql = INSERT_CATEGORY,
+            parameters = listOf(
+                category.id,
+                category.title,
+                category.currency.id,
+                null,
+                category.isIncome,
+                category.colorScheme.name,
+                category.position,
+            )
+        )
+
+        return category
+    }
+
     private fun toCategory(
         sqlCursor: SqlCursor,
     ): Category = with(sqlCursor) {
@@ -316,3 +360,18 @@ private const val UPDATE_CATEGORY_BY_ID =
             "title = ?, " +
             "color_scheme = ? " +
             "WHERE id = ? "
+
+/**
+ * Params:
+ * 1. ID
+ * 2. Title
+ * 3. Currency ID
+ * 4. Parent category ID
+ * 5. Is income boolean
+ * 6. Color scheme name
+ * 7. Position string
+ */
+private const val INSERT_CATEGORY =
+    "INSERT INTO categories " +
+            "(id, title, currency_id, parent_category_id, is_income, color_scheme, position) " +
+            "VALUES(?, ?, ?, ?, ?, ?, ?)"

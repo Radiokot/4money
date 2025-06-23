@@ -25,8 +25,10 @@ import org.koin.dsl.module
 import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
+import ua.com.radiokot.money.categories.logic.AddCategoryUseCase
 import ua.com.radiokot.money.categories.logic.EditCategoryUseCase
 import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
+import ua.com.radiokot.money.categories.logic.PowerSyncAddCategoryUseCase
 import ua.com.radiokot.money.categories.logic.PowerSyncEditCategoryUseCase
 import ua.com.radiokot.money.categories.view.CategoriesScreenViewModel
 import ua.com.radiokot.money.categories.view.EditCategoryScreenViewModel
@@ -75,6 +77,13 @@ val categoriesModule = module {
             )
         } bind EditCategoryUseCase::class
 
+        factory {
+            PowerSyncAddCategoryUseCase(
+                database = get(),
+                categoryRepository = get(),
+            )
+        } bind AddCategoryUseCase::class
+
         viewModel {
             EditCategoryScreenViewModel(
                 parameters = checkNotNull(getOrNull()) {
@@ -85,6 +94,7 @@ val categoriesModule = module {
                 currencyRepository = get(),
                 itemColorSchemeRepository = get(),
                 editCategoryUseCase = get(),
+                addCategoryUseCase = get(),
             )
         } bind EditCategoryScreenViewModel::class
     }

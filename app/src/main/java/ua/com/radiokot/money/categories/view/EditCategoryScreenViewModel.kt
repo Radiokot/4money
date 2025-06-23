@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.CategoryRepository
+import ua.com.radiokot.money.categories.logic.AddCategoryUseCase
 import ua.com.radiokot.money.categories.logic.EditCategoryUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
@@ -48,6 +49,7 @@ class EditCategoryScreenViewModel(
     private val currencyPreferences: CurrencyPreferences,
     itemColorSchemeRepository: ItemColorSchemeRepository,
     private val editCategoryUseCase: EditCategoryUseCase,
+    private val addCategoryUseCase: AddCategoryUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("EditCategoryScreenVM")
@@ -214,24 +216,25 @@ class EditCategoryScreenViewModel(
                         "\nisIncome=$isIncome"
             }
 
-//            addAccountUseCase
-//                .invoke(
-//                    title = title,
-//                    currency = currency,
-//                    colorScheme = colorScheme,
-//                )
-//                .onFailure { error ->
-//                    log.error(error) {
-//                        "addCategory(): failed to add category"
-//                    }
-//                }
-//                .onSuccess {
-//                    log.debug {
-//                        "addCategory(): category added"
-//                    }
-//
-//                    _events.emit(Event.Done)
-//                }
+            addCategoryUseCase
+                .invoke(
+                    title = title,
+                    currency = currency,
+                    isIncome = isIncome,
+                    colorScheme = colorScheme,
+                )
+                .onFailure { error ->
+                    log.error(error) {
+                        "addCategory(): failed to add category"
+                    }
+                }
+                .onSuccess {
+                    log.debug {
+                        "addCategory(): category added"
+                    }
+
+                    _events.emit(Event.Done)
+                }
         }
     }
 
