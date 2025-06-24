@@ -1,0 +1,5 @@
+Added:
+- Ability to edit categories (title, color)
+- Ability to add (but not delete) categories
+- Ability to sign in with a mnemonic phrase
+- Ability to sign out from the More screen
