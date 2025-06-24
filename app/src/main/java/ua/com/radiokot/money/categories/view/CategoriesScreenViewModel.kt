@@ -174,6 +174,21 @@ class CategoriesScreenViewModel(
         )
     }
 
+    fun onAddClicked() {
+        val isIncome = isIncome.value
+
+        log.debug {
+            "onAddClicked(): proceeding to adding:" +
+                    "\nisIncome=$isIncome"
+        }
+
+        _events.tryEmit(
+            Event.ProceedToCategoryAdd(
+                isIncome = isIncome,
+            )
+        )
+    }
+
     sealed interface Event {
 
         class ProceedToTransfer(
@@ -182,6 +197,10 @@ class CategoriesScreenViewModel(
 
         class ProceedToCategoryActions(
             val category: Category,
+        ) : Event
+
+        class ProceedToCategoryAdd(
+            val isIncome: Boolean,
         ) : Event
     }
 }

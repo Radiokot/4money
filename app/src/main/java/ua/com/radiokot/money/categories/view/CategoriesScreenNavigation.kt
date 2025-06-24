@@ -40,6 +40,7 @@ fun NavGraphBuilder.categoriesScreen(
     homeViewModel: HomeViewModel,
     onProceedToTransfer: (category: Category) -> Unit,
     onProceedToCategoryActions: (category: Category) -> Unit,
+    onProceedToCategoryAdd: (isIncome: Boolean) -> Unit,
 ) = composable<CategoriesScreenRoute> { entry ->
 
     val isIncognito = entry.toRoute<CategoriesScreenRoute>()
@@ -58,6 +59,9 @@ fun NavGraphBuilder.categoriesScreen(
 
                 is CategoriesScreenViewModel.Event.ProceedToCategoryActions ->
                     onProceedToCategoryActions(event.category)
+
+                is CategoriesScreenViewModel.Event.ProceedToCategoryAdd ->
+                    onProceedToCategoryAdd(event.isIncome)
             }
         }
     }

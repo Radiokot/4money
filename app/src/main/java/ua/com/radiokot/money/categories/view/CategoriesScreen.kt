@@ -65,6 +65,7 @@ fun CategoriesScreenRoot(
     onPeriodClicked = {},
     onPreviousPeriodClicked = remember { viewModel::onPreviousHistoryStatsPeriodClicked },
     onNextPeriodClicked = remember { viewModel::onNextHistoryStatsPeriodClicked },
+    onAddClicked = remember { viewModel::onAddClicked },
     modifier = modifier,
 )
 
@@ -82,6 +83,7 @@ private fun CategoriesScreen(
     onPeriodClicked: () -> Unit,
     onNextPeriodClicked: () -> Unit,
     onPreviousPeriodClicked: () -> Unit,
+    onAddClicked: () -> Unit,
 ) = Column(
     modifier = modifier
         .padding(
@@ -161,6 +163,8 @@ private fun CategoriesScreen(
             expenseCategoryItemList,
         onItemClicked = onCategoryItemClicked,
         onItemLongClicked = onCategoryItemLongClicked,
+        isAddShown = true,
+        onAddClicked = onAddClicked,
         modifier = Modifier
             .fillMaxWidth()
             .weight(1f)
@@ -193,5 +197,6 @@ private fun CategoriesScreenPreview(
         onPreviousPeriodClicked = {},
         onNextPeriodClicked = {},
         onPeriodClicked = {},
+        onAddClicked = {},
     )
 }

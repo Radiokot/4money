@@ -179,7 +179,20 @@ private fun HomeScreen(
                                 )
                             )
                     )
-                }
+                },
+                onProceedToCategoryAdd = { isIncome ->
+                    context.startActivity(
+                        Intent(context, EditCategoryActivity::class.java)
+                            .putExtras(
+                                EditCategoryActivity.getBundle(
+                                    route = EditCategoryScreenRoute(
+                                        categoryToEditId = null,
+                                        isIncome = isIncome,
+                                    ),
+                                )
+                            )
+                    )
+                },
             )
 
             activityScreen(

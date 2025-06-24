@@ -1,7 +1,10 @@
 package ua.com.radiokot.money.categories.view
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -20,12 +23,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.composeunstyled.Text
 import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 
@@ -35,6 +41,8 @@ fun CategoryGrid(
     itemList: State<List<ViewCategoryListItem>>,
     onItemClicked: (ViewCategoryListItem) -> Unit,
     onItemLongClicked: (ViewCategoryListItem) -> Unit,
+    isAddShown: Boolean,
+    onAddClicked: () -> Unit,
 ) {
     val gridState = rememberLazyGridState()
     val space = 6.dp
@@ -63,6 +71,17 @@ fun CategoryGrid(
                     )
             )
         }
+
+        if (isAddShown) {
+            item {
+                AddItem(
+                    modifier = Modifier
+                        .clickable(
+                            onClick = onAddClicked,
+                        )
+                )
+            }
+        }
     }
 }
 
@@ -80,6 +99,8 @@ private fun CategoryGridPreview(
             .let(::mutableStateOf),
         onItemClicked = {},
         onItemLongClicked = {},
+        isAddShown = true,
+        onAddClicked = {},
         modifier = Modifier
             .fillMaxWidth()
     )
@@ -114,7 +135,7 @@ private fun CategoryListItem(
         colorScheme = item.colorScheme,
         shape = CircleShape,
         modifier = Modifier
-            .size(52.dp)
+            .size(LOGO_SIZE_DP.dp)
     )
 
     Spacer(modifier = Modifier.height(4.dp))
@@ -148,3 +169,45 @@ private fun CategoryListItem(
         )
     }
 }
+
+@Composable
+private fun AddItem(
+    modifier: Modifier = Modifier,
+) = Column(
+    horizontalAlignment = Alignment.CenterHorizontally,
+    modifier = modifier,
+) {
+
+    Text(
+        text = "",
+        modifier = Modifier
+            .drawWithContent { }
+    )
+
+    Spacer(modifier = Modifier.height(4.dp))
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(LOGO_SIZE_DP.dp)
+            .border(
+                width = 1.dp,
+                color = Color.DarkGray,
+                shape = CircleShape,
+            )
+    ) {
+        Text(
+            text = "➕",
+        )
+    }
+
+    Spacer(modifier = Modifier.height(4.dp))
+
+    Text(
+        text = "",
+        modifier = Modifier
+            .drawWithContent { }
+    )
+}
+
+private const val LOGO_SIZE_DP = 52
