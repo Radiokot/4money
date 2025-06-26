@@ -101,7 +101,7 @@ private fun Content(
                 softwareKeyboardController?.hide()
                 navController.navigate(
                     ItemLogoScreenRoute(
-                        logoType = ItemLogoType.Account,
+                        logoType = ItemLogoType.Category,
                         itemTitle = currentTitle,
                         initialColorSchemeName = currentColorScheme.name,
                     ),
