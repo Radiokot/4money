@@ -23,25 +23,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -55,15 +50,16 @@ import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.map
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.logic.EditTransferUseCase
 import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
-import ua.com.radiokot.money.map
 import java.math.BigInteger
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TransferSheetViewModel(
+    private val parameters: Parameters,
     private val accountRepository: AccountRepository,
     private val categoryRepository: CategoryRepository,
     private val transferFundsUseCase: TransferFundsUseCase,
@@ -71,59 +67,45 @@ class TransferSheetViewModel(
 ) : ViewModel() {
 
     private val log by lazyLogger("TransferSheetVM")
-    private val _sourceAmountValue: MutableStateFlow<BigInteger> = MutableStateFlow(BigInteger.ZERO)
+    private val _sourceCounterparty: MutableStateFlow<TransferCounterparty> =
+        MutableStateFlow(runBlocking {
+            parameters.sourceId.toCounterparty()
+        })
+    private val _destinationCounterparty: MutableStateFlow<TransferCounterparty> =
+        MutableStateFlow(runBlocking {
+            parameters.destinationId.toCounterparty()
+        })
+    private val _sourceAmountValue: MutableStateFlow<BigInteger> =
+        MutableStateFlow(parameters.sourceAmount ?: BigInteger.ZERO)
     val sourceAmountValue = _sourceAmountValue.asStateFlow()
     private val _destinationAmountValue: MutableStateFlow<BigInteger> =
-        MutableStateFlow(BigInteger.ZERO)
+        MutableStateFlow(parameters.destinationAmount ?: BigInteger.ZERO)
     val destinationAmountValue = _destinationAmountValue.asStateFlow()
-    private val _memo: MutableStateFlow<String> = MutableStateFlow("")
+    private val _memo: MutableStateFlow<String> =
+        MutableStateFlow(parameters.memo ?: "")
     val memo = _memo.asStateFlow()
-    private val dateTime: MutableStateFlow<LocalDateTime> = MutableStateFlow(
-        Clock.System
-            .now()
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-    )
-    private val subcategoryToSelect: MutableStateFlow<Subcategory?> = MutableStateFlow(null)
+    private val dateTime: MutableStateFlow<LocalDateTime> =
+        MutableStateFlow(
+            parameters.dateTime
+                ?: Clock.System
+                    .now()
+                    .toLocalDateTime(TimeZone.currentSystemDefault())
+        )
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
-    private val requestedSourceCounterpartyId: MutableStateFlow<TransferCounterpartyId?> =
-        MutableStateFlow(null)
-    private val requestedDestinationCounterpartyId: MutableStateFlow<TransferCounterpartyId?> =
-        MutableStateFlow(null)
-    private var transferToEditId: String? = null
 
-    private var sourceCounterparty: TransferCounterparty? = null
-    private val sourceCounterpartySharedFlow: SharedFlow<TransferCounterparty> =
-        requestedSourceCounterpartyId
-            .filterNotNull()
-            .flatMapLatestToCounterparty()
-            .onEach(::sourceCounterparty::set)
-            .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
+    val source: StateFlow<ViewTransferCounterparty> =
+        _sourceCounterparty
+            .map(viewModelScope, ViewTransferCounterparty::fromCounterparty)
 
-    private var destinationCounterparty: TransferCounterparty? = null
-    private val destinationCounterpartySharedFlow: SharedFlow<TransferCounterparty> =
-        requestedDestinationCounterpartyId
-            .filterNotNull()
-            .flatMapLatestToCounterparty()
-            .onEach(::destinationCounterparty::set)
-            .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
-
-    val source: StateFlow<ViewTransferCounterparty?> =
-        sourceCounterpartySharedFlow
-            .filterNotNull()
-            .map(ViewTransferCounterparty::fromCounterparty)
-            .stateIn(viewModelScope, SharingStarted.Lazily, null)
-
-    val destination: StateFlow<ViewTransferCounterparty?> =
-        destinationCounterpartySharedFlow
-            .filterNotNull()
-            .map(ViewTransferCounterparty::fromCounterparty)
-            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+    val destination: StateFlow<ViewTransferCounterparty> =
+        _destinationCounterparty
+            .map(viewModelScope, ViewTransferCounterparty::fromCounterparty)
 
     val subcategoryItemList: StateFlow<List<ViewSelectableSubcategoryListItem>> =
         combine(
-            sourceCounterpartySharedFlow,
-            destinationCounterpartySharedFlow,
+            _sourceCounterparty,
+            _destinationCounterparty,
             transform = ::Pair
         )
             .flatMapLatest { (source, destination) ->
@@ -150,8 +132,8 @@ class TransferSheetViewModel(
 
     val subcategoriesColorScheme: StateFlow<ItemColorScheme?> =
         combine(
-            sourceCounterpartySharedFlow,
-            destinationCounterpartySharedFlow,
+            _sourceCounterparty,
+            _destinationCounterparty,
             transform = ::Pair
         )
             .map { (source, destination) ->
@@ -165,9 +147,13 @@ class TransferSheetViewModel(
 
     val isSourceInputShown: StateFlow<Boolean> =
         // Only require source input if currencies are different.
-        source.combine(destination, ::Pair)
+        combine(
+            source,
+            destination,
+            transform = ::Pair
+        )
             .map { (source, destination) ->
-                source?.currency != destination?.currency
+                source.currency != destination.currency
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
@@ -192,11 +178,11 @@ class TransferSheetViewModel(
             var currentSourceCurrency: ViewCurrency? = null
             source.collect { updatedSource ->
                 if (currentSourceCurrency != null
-                    && updatedSource?.currency != currentSourceCurrency
+                    && updatedSource.currency != currentSourceCurrency
                 ) {
                     _sourceAmountValue.emit(BigInteger.ZERO)
                 }
-                currentSourceCurrency = updatedSource?.currency
+                currentSourceCurrency = updatedSource.currency
             }
         }
 
@@ -204,57 +190,37 @@ class TransferSheetViewModel(
             var currentDestinationCurrency: ViewCurrency? = null
             destination.collect { updatedDestination ->
                 if (currentDestinationCurrency != null
-                    && updatedDestination?.currency != currentDestinationCurrency
+                    && updatedDestination.currency != currentDestinationCurrency
                 ) {
                     _destinationAmountValue.emit(BigInteger.ZERO)
                 }
-                currentDestinationCurrency = updatedDestination?.currency
+                currentDestinationCurrency = updatedDestination.currency
             }
         }
-    }
-
-    fun setParameters(
-        sourceId: TransferCounterpartyId,
-        destinationId: TransferCounterpartyId,
-        transferToEditId: String?,
-        sourceAmount: BigInteger?,
-        destinationAmount: BigInteger?,
-        memo: String?,
-        dateTime: LocalDateTime?,
-    ) {
-        log.debug {
-            "setParameters(): setting:" +
-                    "\nsourceId=$sourceId," +
-                    "\ndestinationId=$destinationId," +
-                    "\ntransferToEditId=$transferToEditId," +
-                    "\nsourceAmount=$sourceAmount," +
-                    "\ndestinationAmount=$destinationAmount," +
-                    "\nmemo=$memo," +
-                    "\ntime=$dateTime"
-        }
-
-        requestedSourceCounterpartyId.tryEmit(sourceId)
-        requestedDestinationCounterpartyId.tryEmit(destinationId)
-
-        this.transferToEditId = transferToEditId
-        sourceAmount?.also(_sourceAmountValue::tryEmit)
-        destinationAmount?.also(_destinationAmountValue::tryEmit)
-        memo?.also(_memo::tryEmit)
-        dateTime?.also(this.dateTime::tryEmit)
     }
 
     fun onCounterpartiesSelected(
         newSourceId: TransferCounterpartyId?,
         newDestinationId: TransferCounterpartyId?,
-    ) {
-        log.debug {
-            "onCounterpartiesSelected(): updating:" +
-                    "\nnewSourceId=$newSourceId," +
-                    "\nnewDestinationId=$newDestinationId"
+    ) = viewModelScope.launch {
+
+        if (newSourceId != null && newSourceId != _sourceCounterparty.value.id) {
+            _sourceCounterparty.value = newSourceId.toCounterparty().also {
+                log.debug {
+                    "onCounterpartiesSelected(): updating source:" +
+                            "\nnewSource=$it"
+                }
+            }
         }
 
-        newSourceId?.also(requestedSourceCounterpartyId::tryEmit)
-        newDestinationId?.also(requestedDestinationCounterpartyId::tryEmit)
+        if (newDestinationId != null && newDestinationId != _destinationCounterparty.value.id) {
+            _destinationCounterparty.value = newDestinationId.toCounterparty().also {
+                log.debug {
+                    "onCounterpartiesSelected(): updating destination:" +
+                            "\nnewDestination=$it"
+                }
+            }
+        }
     }
 
     fun onNewSourceAmountValueParsed(value: BigInteger) {
@@ -280,10 +246,8 @@ class TransferSheetViewModel(
     }
 
     fun onSourceClicked() {
-        val source = sourceCounterparty
-            ?: error("Source counterparty must be set at this point")
-        val destination = destinationCounterparty
-            ?: error("Destination counterparty must be set at this point")
+        val sourceCounterparty = _sourceCounterparty.value
+        val destinationCounterparty = _destinationCounterparty.value
 
         log.debug {
             "onSourceClicked(): requesting to select source"
@@ -291,19 +255,17 @@ class TransferSheetViewModel(
 
         _events.tryEmit(
             Event.ProceedToCounterpartySelection(
-                alreadySelectedCounterpartyId = destination.id,
+                alreadySelectedCounterpartyId = destinationCounterparty.id,
                 selectSource = true,
-                showCategories = source is TransferCounterparty.Category,
-                showAccounts = source is TransferCounterparty.Account,
+                showCategories = sourceCounterparty is TransferCounterparty.Category,
+                showAccounts = sourceCounterparty is TransferCounterparty.Account,
             )
         )
     }
 
     fun onDestinationClicked() {
-        val source = sourceCounterparty
-            ?: error("Source counterparty must be set at this point")
-        val destination = destinationCounterparty
-            ?: error("Destination counterparty must be set at this point")
+        val sourceCounterparty = _sourceCounterparty.value
+        val destinationCounterparty = _destinationCounterparty.value
 
         log.debug {
             "onDestinationClicked(): requesting to select destination"
@@ -311,10 +273,10 @@ class TransferSheetViewModel(
 
         _events.tryEmit(
             Event.ProceedToCounterpartySelection(
-                alreadySelectedCounterpartyId = source.id,
+                alreadySelectedCounterpartyId = sourceCounterparty.id,
                 selectSource = false,
-                showCategories = destination is TransferCounterparty.Category,
-                showAccounts = destination is TransferCounterparty.Account,
+                showCategories = destinationCounterparty is TransferCounterparty.Category,
+                showAccounts = destinationCounterparty is TransferCounterparty.Account,
             )
         )
     }
@@ -328,9 +290,13 @@ class TransferSheetViewModel(
             return
         }
 
+        val sourceCategoryCounterparty: TransferCounterparty.Category? =
+            _sourceCounterparty.value as? TransferCounterparty.Category
+        val destinationCategoryCounterparty: TransferCounterparty.Category? =
+            _destinationCounterparty.value as? TransferCounterparty.Category
         val currentSelectedSubcategory =
-            ((sourceCounterparty as? TransferCounterparty.Category)?.subcategory)
-                ?: ((destinationCounterparty as? TransferCounterparty.Category)?.subcategory)
+            (sourceCategoryCounterparty?.subcategory)
+                ?: (destinationCategoryCounterparty?.subcategory)
 
         if (currentSelectedSubcategory != clickedSubcategory) {
             log.debug {
@@ -338,13 +304,37 @@ class TransferSheetViewModel(
                         "\nselected=$clickedSubcategory"
             }
 
-            subcategoryToSelect.tryEmit(clickedSubcategory)
+            if (sourceCategoryCounterparty != null) {
+                _sourceCounterparty.value =
+                    TransferCounterparty.Category(
+                        category = sourceCategoryCounterparty.category,
+                        subcategory = clickedSubcategory,
+                    )
+            } else if (destinationCategoryCounterparty != null) {
+                _destinationCounterparty.value =
+                    TransferCounterparty.Category(
+                        category = destinationCategoryCounterparty.category,
+                        subcategory = clickedSubcategory,
+                    )
+            }
         } else {
             log.debug {
                 "onSubcategoryItemClicked(): unselecting subcategory"
             }
 
-            subcategoryToSelect.tryEmit(null)
+            if (sourceCategoryCounterparty != null) {
+                _sourceCounterparty.value =
+                    TransferCounterparty.Category(
+                        category = sourceCategoryCounterparty.category,
+                        subcategory = null,
+                    )
+            } else if (destinationCategoryCounterparty != null) {
+                _destinationCounterparty.value =
+                    TransferCounterparty.Category(
+                        category = destinationCategoryCounterparty.category,
+                        subcategory = null,
+                    )
+            }
         }
     }
 
@@ -383,7 +373,7 @@ class TransferSheetViewModel(
             return
         }
 
-        if (transferToEditId != null) {
+        if (parameters.transferToEditId != null) {
             editTransfer()
         } else {
             transferFunds()
@@ -392,12 +382,10 @@ class TransferSheetViewModel(
 
     private var editTransferJob: Job? = null
     private fun editTransfer() {
-        val transferId = transferToEditId
+        val transferId = parameters.transferToEditId
             ?: error("Transfer to edit ID must be set for this to be called")
-        val source = sourceCounterparty
-            ?: error("Source counterparty must be set at this point")
-        val destination = destinationCounterparty
-            ?: error("Destination counterparty must be set at this point")
+        val sourceCounterparty = _sourceCounterparty.value
+        val destinationCounterparty = _destinationCounterparty.value
         val destinationAmount = destinationAmountValue.value
         val sourceAmount =
             if (isSourceInputShown.value)
@@ -414,9 +402,9 @@ class TransferSheetViewModel(
             log.debug {
                 "editTransfer(): editing:" +
                         "\ntransferId=$transferId," +
-                        "\nsource=$source," +
+                        "\nsource=$sourceCounterparty," +
                         "\nsourceAmount=$sourceAmount," +
-                        "\ndestination=$destination," +
+                        "\ndestination=$destinationCounterparty," +
                         "\ndestinationAmount=$destinationAmount," +
                         "\nmemo=$memo," +
                         "\ndateTime=$dateTime"
@@ -424,9 +412,9 @@ class TransferSheetViewModel(
 
             editTransferUseCase(
                 transferId = transferId,
-                sourceId = source.id,
+                sourceId = sourceCounterparty.id,
                 sourceAmount = sourceAmount,
-                destinationId = destination.id,
+                destinationId = destinationCounterparty.id,
                 destinationAmount = destinationAmount,
                 dateTime = dateTime,
                 memo = memo,
@@ -448,10 +436,8 @@ class TransferSheetViewModel(
 
     private var transferJob: Job? = null
     private fun transferFunds() {
-        val source = sourceCounterparty
-            ?: error("Source counterparty must be set at this point")
-        val destination = destinationCounterparty
-            ?: error("Destination counterparty must be set at this point")
+        val sourceCounterparty = _sourceCounterparty.value
+        val destinationCounterparty = _destinationCounterparty.value
         val destinationAmount = destinationAmountValue.value
         val sourceAmount =
             if (isSourceInputShown.value)
@@ -467,18 +453,18 @@ class TransferSheetViewModel(
         transferJob = viewModelScope.launch {
             log.debug {
                 "transferFunds(): transferring:" +
-                        "\nsource=$source," +
+                        "\nsource=$sourceCounterparty," +
                         "\nsourceAmount=$sourceAmount," +
-                        "\ndestination=$destination," +
+                        "\ndestination=$destinationCounterparty," +
                         "\ndestinationAmount=$destinationAmount," +
                         "\nmemo=$memo," +
                         "\ndateTime=$dateTime"
             }
 
             transferFundsUseCase(
-                sourceId = source.id,
+                sourceId = sourceCounterparty.id,
                 sourceAmount = sourceAmount,
-                destinationId = destination.id,
+                destinationId = destinationCounterparty.id,
                 destinationAmount = destinationAmount,
                 dateTime = dateTime,
                 memo = memo,
@@ -498,28 +484,28 @@ class TransferSheetViewModel(
         }
     }
 
-    private fun Flow<TransferCounterpartyId>.flatMapLatestToCounterparty() =
-        flatMapLatest { id ->
-            when (id) {
-                is TransferCounterpartyId.Account ->
-                    accountRepository
-                        .getAccountFlow(id.accountId)
-                        .map(TransferCounterparty::Account)
+    private suspend fun TransferCounterpartyId.toCounterparty(
 
-                is TransferCounterpartyId.Category ->
+    ): TransferCounterparty = when (this) {
+
+        is TransferCounterpartyId.Account ->
+            TransferCounterparty.Account(
+                account = accountRepository
+                    .getAccount(accountId)!!,
+            )
+
+        is TransferCounterpartyId.Category ->
+            TransferCounterparty.Category(
+                category = categoryRepository
+                    .getCategory(categoryId)!!,
+                subcategory =
+                if (subcategoryId != null)
                     categoryRepository
-                        .getCategoryFlow(id.categoryId)
-                        // Reset subcategory to select when the counterparty changes.
-                        .onStart { subcategoryToSelect.emit(null) }
-                        .combine(subcategoryToSelect, ::Pair)
-                        .map { (category, subcategoryToSelect) ->
-                            TransferCounterparty.Category(
-                                category = category,
-                                subcategory = subcategoryToSelect,
-                            )
-                        }
-            }
-        }
+                        .getSubcategory(subcategoryId)!!
+                else
+                    null
+            )
+    }
 
     sealed interface Event {
 
@@ -542,4 +528,14 @@ class TransferSheetViewModel(
             val showAccounts: Boolean,
         ) : Event
     }
+
+    class Parameters(
+        val sourceId: TransferCounterpartyId,
+        val destinationId: TransferCounterpartyId,
+        val transferToEditId: String?,
+        val sourceAmount: BigInteger?,
+        val destinationAmount: BigInteger?,
+        val memo: String?,
+        val dateTime: LocalDateTime?,
+    )
 }

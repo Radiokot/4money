@@ -34,7 +34,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.colors.data.ItemColorScheme
@@ -55,64 +54,48 @@ class PowerSyncCategoryRepository(
     private val categoryPositionHealer = SternBrocotTreeDescPositionHealer(Category::position)
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val incomeCategoriesSharedFlow = database
+    private val categoriesSharedFlow = database
         .watch(
-            sql = SELECT_CATEGORIES_BY_INCOME,
-            parameters = listOf("1"),
+            sql = SELECT_CATEGORIES,
             mapper = ::toCategory,
         )
-        .flatMapLatest(::healPositionsIfNeeded)
-        .flowOn(Dispatchers.Default)
-        .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
-
-    private val expenseCategoriesSharedFlow = database
-        .watch(
-            sql = SELECT_CATEGORIES_BY_INCOME,
-            parameters = listOf("0"),
-            mapper = ::toCategory,
-        )
-        .flatMapLatest(::healPositionsIfNeeded)
         .flowOn(Dispatchers.Default)
         .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
 
     override suspend fun getCategories(
         isIncome: Boolean,
     ): List<Category> =
-        if (isIncome)
-            incomeCategoriesSharedFlow.first()
-        else
-            expenseCategoriesSharedFlow.first()
+        categoriesSharedFlow
+            .first()
+            .filter { it.isIncome == isIncome }
 
     override fun getCategoriesFlow(
         isIncome: Boolean,
     ): Flow<List<Category>> =
-        if (isIncome)
-            incomeCategoriesSharedFlow
-        else
-            expenseCategoriesSharedFlow
+        categoriesSharedFlow
+            .map { allCategories ->
+                allCategories.filter { it.isIncome == isIncome }
+            }
+            .flatMapLatest(::healPositionsIfNeeded)
 
     override suspend fun getCategory(
         categoryId: String,
-    ): Category? = database
-        .getOptional(
-            sql = SELECT_CATEGORY_BY_ID,
-            parameters = listOf(
-                categoryId,
-            ),
-            mapper = ::toCategory,
-        )
+    ): Category? =
+        categoriesSharedFlow
+            .first()
+            .find { it.id == categoryId }
 
-    override fun getCategoryFlow(
-        categoryId: String,
-    ): Flow<Category> = database
-        .watch(
-            sql = SELECT_CATEGORY_BY_ID,
-            parameters = listOf(
-                categoryId,
-            ),
-            mapper = ::toCategory
-        )
-        .mapNotNull(List<Category>::firstOrNull)
+    override suspend fun getSubcategory(
+        subcategoryId: String,
+    ): Subcategory? =
+        database
+            .getOptional(
+                sql = SELECT_SUBCATEGORY_BY_ID,
+                parameters = listOf(
+                    subcategoryId,
+                ),
+                mapper = ::toSubcategory,
+            )
 
     override fun getSubcategoriesFlow(
         categoryId: String,
@@ -317,24 +300,10 @@ private const val SUBCATEGORY_FIELDS_FROM_CATEGORIES =
 private const val CURRENCY_MATCHES_CATEGORY =
     "categories.currency_id = currencies.id"
 
-/**
- * Params:
- * 1. 1 for income, 0 for expense
- */
-private const val SELECT_CATEGORIES_BY_INCOME =
+private const val SELECT_CATEGORIES =
     "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
             "WHERE categories.parent_category_id IS NULL " +
-            "AND $CURRENCY_MATCHES_CATEGORY " +
-            "AND categories.is_income = ?"
-
-/**
- * Params:
- * 1. Category ID
- */
-private const val SELECT_CATEGORY_BY_ID =
-    "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
-            "WHERE categories.id = ? " +
-            "AND $CURRENCY_MATCHES_CATEGORY"
+            "AND $CURRENCY_MATCHES_CATEGORY "
 
 /**
  * Params:
@@ -343,6 +312,14 @@ private const val SELECT_CATEGORY_BY_ID =
 private const val SELECT_SUBCATEGORIES_BY_PARENT_ID =
     "SELECT $SUBCATEGORY_FIELDS_FROM_CATEGORIES " +
             "WHERE categories.parent_category_id = ?"
+
+/**
+ * Params:
+ * 1. Subcategory ID
+ */
+private const val SELECT_SUBCATEGORY_BY_ID =
+    "SELECT $SUBCATEGORY_FIELDS_FROM_CATEGORIES " +
+            "WHERE categories.id = ?"
 
 private const val SELECT_CATEGORIES_THEN_SUBCATEGORIES =
     "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +

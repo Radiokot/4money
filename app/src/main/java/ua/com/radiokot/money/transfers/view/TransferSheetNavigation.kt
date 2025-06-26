@@ -30,6 +30,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import ua.com.radiokot.money.bottomSheet
 import ua.com.radiokot.money.showSingle
 import ua.com.radiokot.money.transfers.data.Transfer
@@ -96,8 +97,21 @@ fun NavGraphBuilder.transferSheet(
     ) -> Unit,
     onTransferDone: () -> Unit,
 ) = bottomSheet<TransferSheetRoute> { entry ->
-    val arguments = entry.toRoute<TransferSheetRoute>()
-    val viewModel = koinViewModel<TransferSheetViewModel>()
+
+    val route = entry.toRoute<TransferSheetRoute>()
+    val viewModel = koinViewModel<TransferSheetViewModel> {
+        parametersOf(
+            TransferSheetViewModel.Parameters(
+                sourceId = route.sourceId,
+                destinationId = route.destinationId,
+                transferToEditId = route.transferToEditId,
+                sourceAmount = route.sourceAmount,
+                destinationAmount = route.destinationAmount,
+                memo = route.memo,
+                dateTime = route.dateTime,
+            )
+        )
+    }
     val activity = checkNotNull(LocalActivity.current as? FragmentActivity) {
         "This sheet needs activity as a parent"
     }
@@ -119,7 +133,7 @@ fun NavGraphBuilder.transferSheet(
         }
     }
 
-    LaunchedEffect(arguments) {
+    LaunchedEffect(route) {
         val selectedSourceId: TransferCounterpartyId? = TransferCounterpartySelectionResult
             .getSelectedSourceCounterpartyId(
                 savedStateHandle = entry.savedStateHandle,
@@ -133,16 +147,6 @@ fun NavGraphBuilder.transferSheet(
             viewModel.onCounterpartiesSelected(
                 newSourceId = selectedSourceId,
                 newDestinationId = selectedDestinationId,
-            )
-        } else {
-            viewModel.setParameters(
-                sourceId = arguments.sourceId,
-                destinationId = arguments.destinationId,
-                transferToEditId = arguments.transferToEditId,
-                sourceAmount = arguments.sourceAmount,
-                destinationAmount = arguments.destinationAmount,
-                memo = arguments.memo,
-                dateTime = arguments.dateTime,
             )
         }
 

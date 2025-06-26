@@ -104,6 +104,9 @@ val transfersModule = module {
 
         viewModel {
             TransferSheetViewModel(
+                parameters = requireNotNull(getOrNull()) {
+                    "TransferSheetViewModel.Parameters are required"
+                },
                 accountRepository = get(),
                 categoryRepository = get(),
                 transferFundsUseCase = get(),

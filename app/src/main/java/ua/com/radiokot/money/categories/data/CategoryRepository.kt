@@ -29,7 +29,7 @@ interface CategoryRepository {
 
     suspend fun getCategory(categoryId: String): Category?
 
-    fun getCategoryFlow(categoryId: String): Flow<Category>
+    suspend fun getSubcategory(subcategoryId: String): Subcategory?
 
     fun getSubcategoriesFlow(categoryId: String): Flow<List<Subcategory>>
 

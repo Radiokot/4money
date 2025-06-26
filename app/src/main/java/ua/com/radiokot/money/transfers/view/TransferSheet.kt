@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -77,7 +78,6 @@ import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
-import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.uikit.AmountInputField
 import ua.com.radiokot.money.uikit.TextButton
 import java.math.BigInteger
@@ -87,31 +87,26 @@ fun TransferSheetRoot(
     modifier: Modifier = Modifier,
     viewModel: TransferSheetViewModel,
 ) {
-    val source = viewModel.source.collectAsState().value
-    val destination = viewModel.destination.collectAsState().value
-
     TransferSheet(
         modifier = modifier,
         isSourceInputShown = viewModel.isSourceInputShown.collectAsState().value,
-        source = source
-            ?: return,
+        source = viewModel.source.collectAsState().value,
         sourceAmountValue = viewModel.sourceAmountValue.collectAsState(),
-        onNewSourceAmountValueParsed = viewModel::onNewSourceAmountValueParsed,
-        destination = destination
-            ?: return,
+        onNewSourceAmountValueParsed = remember { viewModel::onNewSourceAmountValueParsed },
+        destination = viewModel.destination.collectAsState().value,
         destinationAmountValue = viewModel.destinationAmountValue.collectAsState(),
-        onNewDestinationAmountValueParsed = viewModel::onNewDestinationAmountValueParsed,
+        onNewDestinationAmountValueParsed = remember { viewModel::onNewDestinationAmountValueParsed },
         memo = viewModel.memo.collectAsStateWithLifecycle(),
         date = viewModel.date.collectAsStateWithLifecycle(),
-        onMemoUpdated = viewModel::onMemoUpdated,
+        onMemoUpdated = remember { viewModel::onMemoUpdated },
         subcategoryItemList = viewModel.subcategoryItemList.collectAsState(),
         subcategoriesColorScheme = viewModel.subcategoriesColorScheme.collectAsState(),
-        onSubcategoryItemClicked = viewModel::onSubcategoryItemClicked,
+        onSubcategoryItemClicked = remember { viewModel::onSubcategoryItemClicked },
         isSaveEnabled = viewModel.isSaveEnabled.collectAsState(),
-        onSaveClicked = viewModel::onSaveClicked,
-        onDateClicked = viewModel::onDateClicked,
-        onSourceClicked = viewModel::onSourceClicked,
-        onDestinationClicked = viewModel::onDestinationClicked,
+        onSaveClicked = remember { viewModel::onSaveClicked },
+        onDateClicked = remember { viewModel::onDateClicked },
+        onSourceClicked = remember { viewModel::onSourceClicked },
+        onDestinationClicked = remember { viewModel::onDestinationClicked },
     )
 }
 
@@ -197,7 +192,7 @@ private fun TransferSheet(
                     .weight(1f)
                     .fillMaxHeight()
                     .background(sourcePrimaryColor)
-                    .stableClickable(
+                    .clickable(
                         onClick = onSourceClicked,
                     )
                     .padding(
@@ -218,7 +213,7 @@ private fun TransferSheet(
                     .weight(1f)
                     .fillMaxHeight()
                     .background(destinationPrimaryColor)
-                    .stableClickable(
+                    .clickable(
                         onClick = onDestinationClicked,
                     )
                     .padding(
@@ -345,7 +340,7 @@ private fun TransferSheet(
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .stableClickable(
+                .clickable(
                     onClick = onDateClicked,
                 )
                 .padding(
@@ -407,7 +402,7 @@ private fun TransferSheet(
             text = "Save",
             isEnabled = isSaveEnabled.value,
             modifier = Modifier
-                .stableClickable(
+                .clickable(
                     onClick = onSaveClicked,
                 )
                 .fillMaxWidth()
@@ -423,6 +418,7 @@ private fun TransferSheet(
 @Composable
 @Preview(
     heightDp = 2000,
+    apiLevel = 34,
 )
 private fun TransferSheetPreview(
 ) = Column {
