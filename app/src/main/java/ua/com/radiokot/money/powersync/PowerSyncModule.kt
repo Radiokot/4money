@@ -20,9 +20,12 @@
 package ua.com.radiokot.money.powersync
 
 import com.powersync.DatabaseDriverFactory
+import com.powersync.ExperimentalPowerSyncAPI
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.Queries
 import com.powersync.db.schema.Schema
+import com.powersync.sync.ConnectionMethod
+import com.powersync.sync.SyncOptions
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -34,7 +37,10 @@ import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.auth.authModule
 import ua.com.radiokot.money.auth.logic.sessionScope
 
-@OptIn(DelicateCoroutinesApi::class)
+@OptIn(
+    DelicateCoroutinesApi::class,
+    ExperimentalPowerSyncAPI::class,
+)
 val powerSyncModule = module {
     includes(authModule)
 
@@ -52,6 +58,10 @@ val powerSyncModule = module {
                         connector = AtomicCrudSupabaseConnector(
                             supabaseClient = get(),
                             powerSyncEndpoint = BuildConfig.POWERSYNC_URL,
+                        ),
+                        options = SyncOptions(
+                            method = ConnectionMethod.WebSocket(),
+                            userAgent = "4Money/${BuildConfig.VERSION_NAME}",
                         )
                     )
                 }

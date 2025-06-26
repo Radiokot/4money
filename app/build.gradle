@@ -96,7 +96,7 @@ ext {
     pagingVersion = "3.3.6"
     activityVersion = "1.10.1"
     koinBomVersion = "4.0.2"
-    powersyncVersion = "1.1.1"
+    powersyncVersion = "1.2.0"
     supabaseVersion = "3.1.4"
     kotlinLoggingVersion = "7.0.3"
     slf4jApiVersion = "2.0.16"
