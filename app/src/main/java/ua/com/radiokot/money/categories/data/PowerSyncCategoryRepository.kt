@@ -42,6 +42,7 @@ import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.util.SternBrocotTreeDescPositionHealer
 import ua.com.radiokot.money.util.SternBrocotTreeSearch
+import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PowerSyncCategoryRepository(
@@ -197,6 +198,7 @@ class PowerSyncCategoryRepository(
                 newTitle,
                 newColorScheme.name,
                 categoryToUpdate.id,
+                categoryToUpdate.position,
             )
         )
     }
@@ -242,6 +244,52 @@ class PowerSyncCategoryRepository(
         )
 
         return category
+    }
+
+    fun updateSubcategories(
+        parentCategory: Category,
+        subcategories: List<SubcategoryToUpdate>,
+        transaction: PowerSyncTransaction,
+    ) {
+        val sternBrocotTree = SternBrocotTreeSearch()
+
+        subcategories
+            .reversed()
+            .forEach { subcategoryToUpdate ->
+
+                val position = sternBrocotTree.goRight()
+
+                when (subcategoryToUpdate) {
+                    is SubcategoryToUpdate.New -> {
+
+                        transaction.execute(
+                            sql = INSERT_CATEGORY,
+                            parameters = listOf(
+                                UUID.randomUUID().toString(),
+                                subcategoryToUpdate.title,
+                                parentCategory.currency.id,
+                                parentCategory.id,
+                                parentCategory.isIncome,
+                                parentCategory.colorScheme.name,
+                                position,
+                            )
+                        )
+                    }
+
+                    is SubcategoryToUpdate.Existing -> {
+
+                        transaction.execute(
+                            sql = UPDATE_CATEGORY_BY_ID,
+                            parameters = listOf(
+                                subcategoryToUpdate.newTitle,
+                                parentCategory.colorScheme.name,
+                                position,
+                                subcategoryToUpdate.id,
+                            )
+                        )
+                    }
+                }
+            }
     }
 
     private fun toCategory(
@@ -330,12 +378,14 @@ private const val SELECT_CATEGORIES_THEN_SUBCATEGORIES =
  * Params:
  * 1. Title
  * 2. Color scheme name
- * 3. ID
+ * 3. Position
+ * 4. ID
  */
 private const val UPDATE_CATEGORY_BY_ID =
     "UPDATE categories SET " +
             "title = ?, " +
-            "color_scheme = ? " +
+            "color_scheme = ?, " +
+            "position = ? " +
             "WHERE id = ? "
 
 /**
@@ -346,7 +396,7 @@ private const val UPDATE_CATEGORY_BY_ID =
  * 4. Parent category ID
  * 5. Is income boolean
  * 6. Color scheme name
- * 7. Position string
+ * 7. Position
  */
 private const val INSERT_CATEGORY =
     "INSERT INTO categories " +

@@ -17,19 +17,30 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.categories.logic
+package ua.com.radiokot.money.categories.data
 
-import ua.com.radiokot.money.categories.data.SubcategoryToUpdate
-import ua.com.radiokot.money.colors.data.ItemColorScheme
-import ua.com.radiokot.money.currency.data.Currency
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-interface AddCategoryUseCase {
+@Serializable
+sealed interface SubcategoryToUpdate {
 
-    suspend operator fun invoke(
-        title: String,
-        currency: Currency,
-        isIncome: Boolean,
-        colorScheme: ItemColorScheme,
-        subcategories: List<SubcategoryToUpdate>,
-    ): Result<Unit>
+    @Serializable
+    @SerialName("new")
+    class New(
+        val title: String,
+    ) : SubcategoryToUpdate
+
+    @Serializable
+    @SerialName("existing")
+    class Existing(
+        val id: String,
+        val newTitle: String,
+    ) : SubcategoryToUpdate {
+
+        constructor(subcategory: Subcategory) : this(
+            id = subcategory.id,
+            newTitle = subcategory.title,
+        )
+    }
 }

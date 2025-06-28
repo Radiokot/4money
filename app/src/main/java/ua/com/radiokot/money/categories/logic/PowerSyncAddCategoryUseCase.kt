@@ -20,8 +20,8 @@
 package ua.com.radiokot.money.categories.logic
 
 import com.powersync.PowerSyncDatabase
-import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
+import ua.com.radiokot.money.categories.data.SubcategoryToUpdate
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.data.Currency
 
@@ -35,15 +35,22 @@ class PowerSyncAddCategoryUseCase(
         currency: Currency,
         isIncome: Boolean,
         colorScheme: ItemColorScheme,
+        subcategories: List<SubcategoryToUpdate>,
     ): Result<Unit> = runCatching {
 
         database.writeTransaction { transaction ->
 
-            categoryRepository.addCategory(
+            val addedCategory = categoryRepository.addCategory(
                 title = title,
                 currency = currency,
                 isIncome = isIncome,
                 colorScheme = colorScheme,
+                transaction = transaction,
+            )
+
+            categoryRepository.updateSubcategories(
+                parentCategory = addedCategory,
+                subcategories = subcategories,
                 transaction = transaction,
             )
         }
