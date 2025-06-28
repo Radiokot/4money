@@ -32,6 +32,7 @@ import ua.com.radiokot.money.categories.logic.PowerSyncAddCategoryUseCase
 import ua.com.radiokot.money.categories.logic.PowerSyncEditCategoryUseCase
 import ua.com.radiokot.money.categories.view.CategoriesScreenViewModel
 import ua.com.radiokot.money.categories.view.EditCategoryScreenViewModel
+import ua.com.radiokot.money.categories.view.EditSubcategoryScreenViewModel
 import ua.com.radiokot.money.colors.colorsModule
 import ua.com.radiokot.money.currency.currencyModule
 import ua.com.radiokot.money.transfers.history.transfersHistoryModule
@@ -97,5 +98,14 @@ val categoriesModule = module {
                 addCategoryUseCase = get(),
             )
         } bind EditCategoryScreenViewModel::class
+
+        viewModel {
+            EditSubcategoryScreenViewModel(
+                parameters = checkNotNull(getOrNull()) {
+                    "EditSubcategoryScreenViewModel.Parameters are required"
+                },
+                itemColorSchemeRepository = get(),
+            )
+        } bind EditSubcategoryScreenViewModel::class
     }
 }

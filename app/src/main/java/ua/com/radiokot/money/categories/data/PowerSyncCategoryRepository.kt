@@ -120,6 +120,7 @@ class PowerSyncCategoryRepository(
                     Subcategory(
                         id = sqlCursor.getString(4)!!, // Hell.
                         title = sqlCursor.getString(5)!!.trim(),
+                        position = sqlCursor.getDouble(8)!!, // Holy molly.
                         categoryId = parentCategoryId,
                     )
             }
@@ -248,48 +249,44 @@ class PowerSyncCategoryRepository(
 
     fun updateSubcategories(
         parentCategory: Category,
-        subcategories: List<SubcategoryToUpdate>,
+        subcategories: Collection<SubcategoryToUpdate>,
         transaction: PowerSyncTransaction,
     ) {
-        val sternBrocotTree = SternBrocotTreeSearch()
+        subcategories.forEach { subcategoryToUpdate ->
 
-        subcategories
-            .reversed()
-            .forEach { subcategoryToUpdate ->
+            val position = subcategoryToUpdate.index + 1.0
 
-                val position = sternBrocotTree.goRight()
+            when (subcategoryToUpdate) {
+                is SubcategoryToUpdate.New -> {
 
-                when (subcategoryToUpdate) {
-                    is SubcategoryToUpdate.New -> {
-
-                        transaction.execute(
-                            sql = INSERT_CATEGORY,
-                            parameters = listOf(
-                                UUID.randomUUID().toString(),
-                                subcategoryToUpdate.title,
-                                parentCategory.currency.id,
-                                parentCategory.id,
-                                parentCategory.isIncome,
-                                parentCategory.colorScheme.name,
-                                position,
-                            )
+                    transaction.execute(
+                        sql = INSERT_CATEGORY,
+                        parameters = listOf(
+                            UUID.randomUUID().toString(),
+                            subcategoryToUpdate.title,
+                            parentCategory.currency.id,
+                            parentCategory.id,
+                            parentCategory.isIncome,
+                            parentCategory.colorScheme.name,
+                            position,
                         )
-                    }
+                    )
+                }
 
-                    is SubcategoryToUpdate.Existing -> {
+                is SubcategoryToUpdate.Existing -> {
 
-                        transaction.execute(
-                            sql = UPDATE_CATEGORY_BY_ID,
-                            parameters = listOf(
-                                subcategoryToUpdate.newTitle,
-                                parentCategory.colorScheme.name,
-                                position,
-                                subcategoryToUpdate.id,
-                            )
+                    transaction.execute(
+                        sql = UPDATE_CATEGORY_BY_ID,
+                        parameters = listOf(
+                            subcategoryToUpdate.title,
+                            parentCategory.colorScheme.name,
+                            position,
+                            subcategoryToUpdate.id,
                         )
-                    }
+                    )
                 }
             }
+        }
     }
 
     private fun toCategory(
@@ -329,6 +326,7 @@ class PowerSyncCategoryRepository(
         Subcategory(
             id = getString(column)!!,
             title = getString(++column)!!.trim(),
+            position = getDouble(++column)!!,
             categoryId = getString(++column)!!,
         )
     }
@@ -342,7 +340,7 @@ private const val CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES =
             "FROM categories, currencies"
 
 private const val SUBCATEGORY_FIELDS_FROM_CATEGORIES =
-    "categories.id, categories.title, categories.parent_category_id " +
+    "categories.id, categories.title, categories.position, categories.parent_category_id " +
             "FROM categories"
 
 private const val CURRENCY_MATCHES_CATEGORY =

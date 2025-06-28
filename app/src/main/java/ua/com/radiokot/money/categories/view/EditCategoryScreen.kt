@@ -136,7 +136,7 @@ private fun EditCategoryScreen(
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    AccountLogoAndTitleRow(
+    LogoAndTitleRow(
         title = title,
         onTitleChanged = onTitleChanged,
         colorScheme = colorScheme,
@@ -202,7 +202,7 @@ private fun EditCategoryScreen(
 
 
 @Composable
-private fun AccountLogoAndTitleRow(
+private fun LogoAndTitleRow(
     modifier: Modifier = Modifier,
     title: State<String>,
     onTitleChanged: (String) -> Unit,

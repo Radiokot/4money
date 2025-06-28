@@ -23,9 +23,14 @@ import java.util.UUID
 
 class Subcategory(
     val title: String,
+    val position: Double,
     val categoryId: String,
     val id: String = UUID.randomUUID().toString(),
-) {
+) : Comparable<Subcategory> {
+
+    override fun compareTo(other: Subcategory): Int =
+        position.compareTo(other.position)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Subcategory) return false

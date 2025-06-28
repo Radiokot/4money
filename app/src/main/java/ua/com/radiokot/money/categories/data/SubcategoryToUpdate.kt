@@ -25,22 +25,35 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface SubcategoryToUpdate {
 
+    val title: String
+
+    /**
+     * Index of the subcategory in an ordered collection.
+     */
+    val index: Int
+
     @Serializable
     @SerialName("new")
     class New(
-        val title: String,
-    ) : SubcategoryToUpdate
+        override val title: String,
+        override val index: Int,
+    ) : SubcategoryToUpdate {
+
+        override fun toString(): String {
+            return "New(title='$title', position=$index)"
+        }
+    }
 
     @Serializable
     @SerialName("existing")
     class Existing(
         val id: String,
-        val newTitle: String,
+        override val title: String,
+        override val index: Int,
     ) : SubcategoryToUpdate {
 
-        constructor(subcategory: Subcategory) : this(
-            id = subcategory.id,
-            newTitle = subcategory.title,
-        )
+        override fun toString(): String {
+            return "Existing(id='$id', title='$title', position=$index)"
+        }
     }
 }

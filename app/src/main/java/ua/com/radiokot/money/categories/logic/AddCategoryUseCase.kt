@@ -30,6 +30,6 @@ interface AddCategoryUseCase {
         currency: Currency,
         isIncome: Boolean,
         colorScheme: ItemColorScheme,
-        subcategories: List<SubcategoryToUpdate>,
+        subcategories: Collection<SubcategoryToUpdate>,
     ): Result<Unit>
 }

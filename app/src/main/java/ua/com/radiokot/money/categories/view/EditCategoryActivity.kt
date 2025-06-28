@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.navigation.compose.NavHost
 import kotlinx.serialization.json.Json
-import ua.com.radiokot.money.accounts.view.EditAccountScreenRoute
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.colors.data.ItemLogoType
@@ -115,6 +114,15 @@ private fun Content(
                     ),
                 )
             },
+            onProceedToSubcategoryEdit = { subcategoryToUpdate, colorScheme ->
+                softwareKeyboardController?.hide()
+                navController.navigate(
+                    EditSubcategoryScreenRoute(
+                        subcategoryToUpdate = subcategoryToUpdate,
+                        colorSchemeName = colorScheme.name,
+                    )
+                )
+            },
             onClose = finishActivity,
             onDone = finishActivity,
         )
@@ -123,7 +131,7 @@ private fun Content(
             onClose = navController::navigateUp,
             onDone = { colorScheme ->
                 navController.navigateUp()
-                EditAccountScreenRoute.setSelectedColorScheme(
+                EditCategoryScreenRoute.setSelectedColorScheme(
                     selectedColorScheme = colorScheme,
                     navController = navController,
                 )
@@ -134,8 +142,19 @@ private fun Content(
             onClose = navController::navigateUp,
             onDone = { currency ->
                 navController.navigateUp()
-                EditAccountScreenRoute.setSelectedCurrency(
+                EditCategoryScreenRoute.setSelectedCurrency(
                     selectedCurrency = currency,
+                    navController = navController,
+                )
+            }
+        )
+
+        editSubcategoryScreen(
+            onClose = navController::navigateUp,
+            onDone = { subcategoryToUpdate ->
+                navController.navigateUp()
+                EditCategoryScreenRoute.setSubcategoryToUpdate(
+                    subcategoryToUpdate = subcategoryToUpdate,
                     navController = navController,
                 )
             }

@@ -27,10 +27,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.CategoryRepository
+import ua.com.radiokot.money.categories.data.SubcategoryToUpdate
 import ua.com.radiokot.money.categories.logic.AddCategoryUseCase
 import ua.com.radiokot.money.categories.logic.EditCategoryUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
@@ -87,6 +90,25 @@ class EditCategoryScreenViewModel(
                 )
                 ?: currencyRepository.getCurrencies().first())
     })
+    private val _subcategories: MutableStateFlow<List<SubcategoryToUpdate>> =
+        MutableStateFlow(runBlocking {
+            if (categoryToEdit != null)
+                categoryRepository
+                    .getSubcategoriesFlow(
+                        categoryId = categoryToEdit.id,
+                    )
+                    .first()
+                    .sorted()
+                    .mapIndexed { index, subcategory ->
+                        SubcategoryToUpdate.Existing(
+                            id = subcategory.id,
+                            title = subcategory.title,
+                            index = index,
+                        )
+                    }
+            else
+                emptyList()
+        })
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
@@ -142,6 +164,22 @@ class EditCategoryScreenViewModel(
         }
 
         _currency.value = newCurrency
+    }
+
+    fun onSubcategoryEdited(
+        subcategoryToUpdate: SubcategoryToUpdate,
+    ) {
+        log.debug {
+            "onSubcategoryEdited(): updating subcategories:" +
+                    "\nsubcategoryToUpdate=$subcategoryToUpdate"
+        }
+
+        _subcategories.update { subcategories ->
+            subcategories
+                .toMutableList()
+                .apply { set(subcategoryToUpdate.index, subcategoryToUpdate) }
+                .toList()
+        }
     }
 
     fun onSaveClicked() {
@@ -222,6 +260,7 @@ class EditCategoryScreenViewModel(
                     currency = currency,
                     isIncome = isIncome,
                     colorScheme = colorScheme,
+                    subcategories = emptyList(),
                 )
                 .onFailure { error ->
                     log.error(error) {
@@ -251,6 +290,11 @@ class EditCategoryScreenViewModel(
 
         class ProceedToCurrencySelection(
             val currentCurrency: Currency,
+        ) : Event
+
+        class ProceedToSubcategoryEdit(
+            val subcategoryToUpdate: SubcategoryToUpdate,
+            val colorScheme: ItemColorScheme,
         ) : Event
 
         object Close : Event
