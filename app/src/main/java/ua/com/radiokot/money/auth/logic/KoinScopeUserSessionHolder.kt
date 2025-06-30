@@ -36,7 +36,7 @@ import org.koin.core.scope.Scope
 import org.koin.dsl.ScopeDSL
 import ua.com.radiokot.money.auth.data.UserSession
 
-private const val DI_SCOPE_SESSION = "user-session"
+const val DI_SCOPE_SESSION = "user-session"
 
 class KoinScopeUserSessionHolder(
     private val koin: Koin,

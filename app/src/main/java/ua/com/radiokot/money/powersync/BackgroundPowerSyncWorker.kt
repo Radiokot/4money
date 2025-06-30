@@ -31,7 +31,8 @@ import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
+import org.koin.core.scope.Scope
+import ua.com.radiokot.money.auth.logic.DI_SCOPE_SESSION
 import ua.com.radiokot.money.lazyLogger
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.measureTime
@@ -43,20 +44,29 @@ class BackgroundPowerSyncWorker(
     KoinComponent {
 
     private val log by lazyLogger("BackgroundPowerSyncWorker")
-    private val supabaseClient: SupabaseClient by inject()
-    // Keep lazy inject for the sync to kick in on first access.
-    private val powerSyncDatabase: PowerSyncDatabase by inject()
 
     override suspend fun doWork(
     ): Result = try {
 
         withTimeout(1.minutes) {
 
+            val sessionScope: Scope? = getKoin().getScopeOrNull(DI_SCOPE_SESSION)
+            if (sessionScope == null) {
+                log.debug {
+                    "doWork(): skipping, there is no session"
+                }
+
+                return@withTimeout Result.success()
+            }
+
             log.debug {
                 "doWork(): waiting for Supabase initialization"
             }
 
-            val initializedSupabaseStatus = supabaseClient.auth.sessionStatus
+            val initializedSupabaseStatus = sessionScope
+                .get<SupabaseClient>()
+                .auth
+                .sessionStatus
                 .dropWhile { it is SessionStatus.Initializing }
                 .first()
 
@@ -74,8 +84,9 @@ class BackgroundPowerSyncWorker(
             }
 
             val syncDuration = measureTime {
-                // Sync kicks in here, as it is a lazy inject.
-                powerSyncDatabase
+                // Sync kicks in here.
+                sessionScope
+                    .get<PowerSyncDatabase>()
                     .currentStatus
                     .asFlow()
                     .first { it.hasSynced == true }
