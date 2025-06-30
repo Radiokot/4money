@@ -25,9 +25,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ua.com.radiokot.money.categories.data.Category
@@ -38,7 +36,7 @@ import ua.com.radiokot.money.currency.data.Currency
 
 private const val SAVED_STATE_KEY_SELECTED_COLOR_SCHEME = "selected-color-scheme"
 private const val SAVED_STATE_KEY_SELECTED_CURRENCY = "selected-currency"
-private const val SAVED_STATE_KEY_SUBCATEGORY_TO_UPDATE_JSON = "subcategory-to-update-json"
+private const val SAVED_STATE_KEY_SUBCATEGORY_TO_UPDATE = "subcategory-to-update"
 
 @Serializable
 data class EditCategoryScreenRoute(
@@ -75,10 +73,7 @@ data class EditCategoryScreenRoute(
         ) = navController
             .currentBackStackEntry
             ?.savedStateHandle
-            ?.set(
-                SAVED_STATE_KEY_SUBCATEGORY_TO_UPDATE_JSON,
-                Json.encodeToString(subcategoryToUpdate)
-            )
+            ?.set(SAVED_STATE_KEY_SUBCATEGORY_TO_UPDATE, subcategoryToUpdate)
     }
 }
 
@@ -156,12 +151,11 @@ fun NavGraphBuilder.editCategoryScreen(
 
     LaunchedEffect(route) {
         entry.savedStateHandle
-            .getStateFlow<String?>(
-                key = SAVED_STATE_KEY_SUBCATEGORY_TO_UPDATE_JSON,
+            .getStateFlow<SubcategoryToUpdate?>(
+                key = SAVED_STATE_KEY_SUBCATEGORY_TO_UPDATE,
                 initialValue = null,
             )
             .filterNotNull()
-            .map<String, SubcategoryToUpdate>(Json::decodeFromString)
             .collect(viewModel::onSubcategoryEdited)
     }
 

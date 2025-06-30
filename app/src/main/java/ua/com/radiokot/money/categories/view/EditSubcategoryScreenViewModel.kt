@@ -40,7 +40,8 @@ class EditSubcategoryScreenViewModel(
 
     private val log by lazyLogger("EditSubcategoryScreenVM")
     private val subcategoryToUpdate = parameters.subcategoryToUpdate
-    val isNewSubcategory: Boolean = subcategoryToUpdate is SubcategoryToUpdate.New
+    val isNewSubcategory: Boolean
+        get() = subcategoryToUpdate.isNew
     private val _title: MutableStateFlow<String> =
         MutableStateFlow(subcategoryToUpdate.title)
     val title = _title.asStateFlow()
@@ -67,20 +68,9 @@ class EditSubcategoryScreenViewModel(
             return
         }
 
-        val result: SubcategoryToUpdate = when (subcategoryToUpdate) {
-            is SubcategoryToUpdate.Existing ->
-                SubcategoryToUpdate.Existing(
-                    id = subcategoryToUpdate.id,
-                    title = title.value,
-                    index = subcategoryToUpdate.index,
-                )
-
-            is SubcategoryToUpdate.New ->
-                SubcategoryToUpdate.New(
-                    title = title.value,
-                    index = subcategoryToUpdate.index,
-                )
-        }
+        val result = subcategoryToUpdate.copy(
+            title = _title.value,
+        )
 
         log.debug {
             "onSaveClicked(): done:" +

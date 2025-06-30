@@ -19,41 +19,30 @@
 
 package ua.com.radiokot.money.categories.data
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.util.UUID
 
 @Serializable
-sealed interface SubcategoryToUpdate {
-
-    val title: String
-
+data class SubcategoryToUpdate(
     /**
-     * Index of the subcategory in an ordered collection.
+     * Existing subcategory ID or a temp unique ID of a new one.
      */
-    val index: Int
+    val id: String,
+    val title: String,
+    val isNew: Boolean,
+) : java.io.Serializable {
 
-    @Serializable
-    @SerialName("new")
-    class New(
-        override val title: String,
-        override val index: Int,
-    ) : SubcategoryToUpdate {
+    constructor(subcategory: Subcategory) : this(
+        id = subcategory.id,
+        title = subcategory.title,
+        isNew = false
+    )
 
-        override fun toString(): String {
-            return "New(title='$title', position=$index)"
-        }
-    }
-
-    @Serializable
-    @SerialName("existing")
-    class Existing(
-        val id: String,
-        override val title: String,
-        override val index: Int,
-    ) : SubcategoryToUpdate {
-
-        override fun toString(): String {
-            return "Existing(id='$id', title='$title', position=$index)"
-        }
+    companion object {
+        fun new() = SubcategoryToUpdate(
+            id = UUID.randomUUID().toString(),
+            title = "",
+            isNew = true,
+        )
     }
 }

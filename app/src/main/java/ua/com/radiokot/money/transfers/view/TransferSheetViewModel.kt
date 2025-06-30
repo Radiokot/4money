@@ -44,7 +44,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
-import ua.com.radiokot.money.categories.data.Subcategory
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewCurrency
@@ -118,7 +117,7 @@ class TransferSheetViewModel(
                     .getSubcategoriesFlow(categoryCounterparty.category.id)
                     .map { subcategories ->
                         subcategories
-                            .sortedBy(Subcategory::title)
+                            .sorted()
                             .map { subcategory ->
                                 ViewSelectableSubcategoryListItem(
                                     subcategory = subcategory,

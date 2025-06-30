@@ -40,12 +40,15 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -132,6 +135,10 @@ private fun EditSubcategoryScreen(
 
     Spacer(modifier = Modifier.height(6.dp))
 
+    val focusRequester = remember {
+        FocusRequester()
+    }
+
     BasicTextField(
         value = title.value,
         onValueChange = onTitleChanged,
@@ -148,6 +155,7 @@ private fun EditSubcategoryScreen(
                 color = Color.DarkGray,
             )
             .padding(12.dp)
+            .focusRequester(focusRequester)
     )
 
     Spacer(modifier = Modifier.height(24.dp))
@@ -162,6 +170,10 @@ private fun EditSubcategoryScreen(
                 onClick = onSaveClicked,
             )
     )
+
+    LaunchedEffect(focusRequester) {
+        focusRequester.requestFocus()
+    }
 }
 
 @Composable

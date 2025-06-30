@@ -27,17 +27,19 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -48,6 +50,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -55,6 +59,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composeunstyled.Text
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.view.ItemLogo
@@ -73,12 +79,15 @@ private fun EditCategoryScreen(
     currencyCode: State<String>,
     isCurrencyChangeEnabled: Boolean,
     onCurrencyClicked: () -> Unit,
+    subcategoryItemList: State<List<ViewSubcategoryToUpdateListItem>>,
+    onSubcategoryItemClicked: (ViewSubcategoryToUpdateListItem) -> Unit,
+    onSubcategoryItemMoved: suspend (fromIndex: Int, toIndex: Int) -> Unit,
+    onAddSubcategoryClicked: () -> Unit,
     onCloseClicked: () -> Unit,
 ) = Column(
     modifier = Modifier
         .windowInsetsPadding(
             WindowInsets.navigationBars
-                .only(WindowInsetsSides.Horizontal)
                 .add(WindowInsets.statusBars)
         )
         .padding(
@@ -136,70 +145,150 @@ private fun EditCategoryScreen(
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    LogoAndTitleRow(
-        title = title,
-        onTitleChanged = onTitleChanged,
-        colorScheme = colorScheme,
-        onLogoClicked = onLogoClicked,
-        modifier = Modifier
-            .fillMaxWidth()
+    val subcategoryListState = rememberLazyListState()
+    val subcategoryReorderableState = rememberReorderableLazyListState(
+        lazyListState = subcategoryListState,
+        onMove = { from, to ->
+            // 1 is subtracted because the first item in the column
+            // is the section with title and currency.
+            onSubcategoryItemMoved(
+                from.index - 1,
+                to.index - 1,
+            )
+        },
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
-
-    Text(
-        text = "Currency",
-    )
-
-    Spacer(modifier = Modifier.height(6.dp))
-
-    Row(
+    LazyColumn(
+        state = subcategoryListState,
         modifier = Modifier
             .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color =
-                if (isCurrencyChangeEnabled)
-                    Color.DarkGray
-                else
-                    Color.Gray,
-            )
-            .clickable(
-                enabled = isCurrencyChangeEnabled,
-                onClick = onCurrencyClicked,
-            )
-            .padding(12.dp)
+            .imePadding()
     ) {
-        Text(
-            text = currencyCode.value,
-            color =
-            if (isCurrencyChangeEnabled)
-                Color.Unspecified
-            else
-                Color.Gray,
-            modifier = Modifier
-                .weight(1f)
-        )
+        item {
+            LogoAndTitleRow(
+                title = title,
+                onTitleChanged = onTitleChanged,
+                colorScheme = colorScheme,
+                onLogoClicked = onLogoClicked,
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
 
-        if (isCurrencyChangeEnabled) {
-            Text(text = "▶️")
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Currency",
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(
+                        width = 1.dp,
+                        color =
+                        if (isCurrencyChangeEnabled)
+                            Color.DarkGray
+                        else
+                            Color.Gray,
+                    )
+                    .clickable(
+                        enabled = isCurrencyChangeEnabled,
+                        onClick = onCurrencyClicked,
+                    )
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = currencyCode.value,
+                    color =
+                    if (isCurrencyChangeEnabled)
+                        Color.Unspecified
+                    else
+                        Color.Gray,
+                    modifier = Modifier
+                        .weight(1f)
+                )
+
+                if (isCurrencyChangeEnabled) {
+                    Text(text = "▶️")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Subcategories",
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+        }
+
+        items(
+            items = subcategoryItemList.value,
+            key = ViewSubcategoryToUpdateListItem::key,
+        ) { item ->
+
+            ReorderableItem(
+                state = subcategoryReorderableState,
+                key = item.key,
+                modifier = Modifier
+                    .clickable(
+                        onClick = {
+                            onSubcategoryItemClicked(item)
+                        },
+                    )
+            ) { isDragging ->
+                Text(
+                    text = item.title,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .longPressDraggableHandle()
+                        .padding(
+                            vertical = 12.dp,
+                        )
+                        .graphicsLayer {
+                            alpha =
+                                if (isDragging)
+                                    0.7f
+                                else
+                                    1f
+                        }
+                )
+            }
+        }
+
+        item {
+            Text(
+                text = "➕ Add subcategory",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        onClick = onAddSubcategoryClicked,
+                    )
+                    .padding(
+                        vertical = 12.dp,
+                    )
+            )
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
+
+            TextButton(
+                text = "Save",
+                isEnabled = isSaveEnabled.value,
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .clickable(
+                        enabled = isSaveEnabled.value,
+                        onClick = onSaveClicked,
+                    )
+            )
         }
     }
-
-    Spacer(modifier = Modifier.height(24.dp))
-
-    TextButton(
-        text = "Save",
-        isEnabled = isSaveEnabled.value,
-        modifier = Modifier
-            .fillMaxWidth(1f)
-            .clickable(
-                enabled = isSaveEnabled.value,
-                onClick = onSaveClicked,
-            )
-    )
 }
-
 
 @Composable
 private fun LogoAndTitleRow(
@@ -271,6 +360,10 @@ fun EditCategoryScreenRoot(
         currencyCode = viewModel.currencyCode.collectAsState(),
         isCurrencyChangeEnabled = viewModel.isCurrencyChangeEnabled,
         onCurrencyClicked = remember { viewModel::onCurrencyClicked },
+        subcategoryItemList = viewModel.subcategories.collectAsState(),
+        onSubcategoryItemClicked = remember { viewModel::onSubcategoryItemClicked },
+        onSubcategoryItemMoved = remember { viewModel::onSubcategoryItemMoved },
+        onAddSubcategoryClicked = remember { viewModel::onAddSubcategoryClicked },
         onCloseClicked = remember { viewModel::onCloseClicked },
     )
 }
@@ -279,7 +372,7 @@ fun EditCategoryScreenRoot(
     apiLevel = 34,
 )
 @Composable
-private fun EditAccountScreenPreview(
+private fun Preview(
 
 ) {
     EditCategoryScreen(
@@ -297,6 +390,11 @@ private fun EditAccountScreenPreview(
         currencyCode = "USD".let(::mutableStateOf),
         isCurrencyChangeEnabled = true,
         onCurrencyClicked = {},
+        subcategoryItemList = emptyList<ViewSubcategoryToUpdateListItem>()
+            .let(::mutableStateOf),
+        onSubcategoryItemClicked = {},
+        onSubcategoryItemMoved = { _, _ -> },
+        onAddSubcategoryClicked = {},
         onCloseClicked = {},
     )
 }

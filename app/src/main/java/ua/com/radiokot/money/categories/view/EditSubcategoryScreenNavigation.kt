@@ -50,7 +50,7 @@ data class EditSubcategoryScreenRoute(
 fun NavGraphBuilder.editSubcategoryScreen(
     onClose: () -> Unit,
     onDone: (subcategoryToUpdate: SubcategoryToUpdate) -> Unit,
-) = composable<EditCategoryScreenRoute> { entry ->
+) = composable<EditSubcategoryScreenRoute> { entry ->
 
     val route: EditSubcategoryScreenRoute = entry.toRoute()
     val viewModel: EditSubcategoryScreenViewModel = koinViewModel {

@@ -35,7 +35,7 @@ class PowerSyncAddCategoryUseCase(
         currency: Currency,
         isIncome: Boolean,
         colorScheme: ItemColorScheme,
-        subcategories: Collection<SubcategoryToUpdate>,
+        subcategories: List<SubcategoryToUpdate>,
     ): Result<Unit> = runCatching {
 
         database.writeTransaction { transaction ->

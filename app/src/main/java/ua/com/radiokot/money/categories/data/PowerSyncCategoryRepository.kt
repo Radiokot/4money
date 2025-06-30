@@ -187,21 +187,26 @@ class PowerSyncCategoryRepository(
         newTitle: String,
         newColorScheme: ItemColorScheme,
         transaction: PowerSyncTransaction,
-    ) {
+    ): Category {
         val categoryToUpdate = runBlocking {
             getCategory(categoryId)
                 ?: error("Category to update not found")
         }
 
         transaction.execute(
-            sql = UPDATE_CATEGORY_BY_ID,
+            sql = INSERT_OR_REPLACE_CATEGORY,
             parameters = listOf(
-                newTitle,
-                newColorScheme.name,
                 categoryToUpdate.id,
+                newTitle,
+                categoryToUpdate.currency.id,
+                null,
+                categoryToUpdate.isIncome,
+                newColorScheme.name,
                 categoryToUpdate.position,
             )
         )
+
+        return categoryToUpdate
     }
 
     fun addCategory(
@@ -232,7 +237,7 @@ class PowerSyncCategoryRepository(
         )
 
         transaction.execute(
-            sql = INSERT_CATEGORY,
+            sql = INSERT_OR_REPLACE_CATEGORY,
             parameters = listOf(
                 category.id,
                 category.title,
@@ -249,43 +254,33 @@ class PowerSyncCategoryRepository(
 
     fun updateSubcategories(
         parentCategory: Category,
-        subcategories: Collection<SubcategoryToUpdate>,
+        subcategories: List<SubcategoryToUpdate>,
         transaction: PowerSyncTransaction,
     ) {
+        val sternBrocotTree = SternBrocotTreeSearch()
+
         subcategories.forEach { subcategoryToUpdate ->
 
-            val position = subcategoryToUpdate.index + 1.0
+            sternBrocotTree.goRight()
 
-            when (subcategoryToUpdate) {
-                is SubcategoryToUpdate.New -> {
+            val id =
+                if (subcategoryToUpdate.isNew)
+                    UUID.randomUUID().toString()
+                else
+                    subcategoryToUpdate.id
 
-                    transaction.execute(
-                        sql = INSERT_CATEGORY,
-                        parameters = listOf(
-                            UUID.randomUUID().toString(),
-                            subcategoryToUpdate.title,
-                            parentCategory.currency.id,
-                            parentCategory.id,
-                            parentCategory.isIncome,
-                            parentCategory.colorScheme.name,
-                            position,
-                        )
-                    )
-                }
-
-                is SubcategoryToUpdate.Existing -> {
-
-                    transaction.execute(
-                        sql = UPDATE_CATEGORY_BY_ID,
-                        parameters = listOf(
-                            subcategoryToUpdate.title,
-                            parentCategory.colorScheme.name,
-                            position,
-                            subcategoryToUpdate.id,
-                        )
-                    )
-                }
-            }
+            transaction.execute(
+                sql = INSERT_OR_REPLACE_CATEGORY,
+                parameters = listOf(
+                    id,
+                    subcategoryToUpdate.title,
+                    parentCategory.currency.id,
+                    parentCategory.id,
+                    parentCategory.isIncome,
+                    parentCategory.colorScheme.name,
+                    sternBrocotTree.value,
+                )
+            )
         }
     }
 
@@ -374,20 +369,6 @@ private const val SELECT_CATEGORIES_THEN_SUBCATEGORIES =
 
 /**
  * Params:
- * 1. Title
- * 2. Color scheme name
- * 3. Position
- * 4. ID
- */
-private const val UPDATE_CATEGORY_BY_ID =
-    "UPDATE categories SET " +
-            "title = ?, " +
-            "color_scheme = ?, " +
-            "position = ? " +
-            "WHERE id = ? "
-
-/**
- * Params:
  * 1. ID
  * 2. Title
  * 3. Currency ID
@@ -396,7 +377,7 @@ private const val UPDATE_CATEGORY_BY_ID =
  * 6. Color scheme name
  * 7. Position
  */
-private const val INSERT_CATEGORY =
-    "INSERT INTO categories " +
+private const val INSERT_OR_REPLACE_CATEGORY =
+    "INSERT OR REPLACE INTO categories " +
             "(id, title, currency_id, parent_category_id, is_income, color_scheme, position) " +
             "VALUES(?, ?, ?, ?, ?, ?, ?)"

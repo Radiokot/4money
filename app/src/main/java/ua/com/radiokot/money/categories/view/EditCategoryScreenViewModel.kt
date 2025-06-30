@@ -99,13 +99,7 @@ class EditCategoryScreenViewModel(
                     )
                     .first()
                     .sorted()
-                    .mapIndexed { index, subcategory ->
-                        SubcategoryToUpdate.Existing(
-                            id = subcategory.id,
-                            title = subcategory.title,
-                            index = index,
-                        )
-                    }
+                    .map(::SubcategoryToUpdate)
             else
                 emptyList()
         })
@@ -118,6 +112,12 @@ class EditCategoryScreenViewModel(
 
     val isCurrencyChangeEnabled: Boolean =
         isNewCategory
+
+    val subcategories: StateFlow<List<ViewSubcategoryToUpdateListItem>> =
+        _subcategories
+            .map(viewModelScope) { subcategories ->
+                subcategories.map(::ViewSubcategoryToUpdateListItem)
+            }
 
     val isSaveEnabled: StateFlow<Boolean> =
         _title
@@ -166,6 +166,67 @@ class EditCategoryScreenViewModel(
         _currency.value = newCurrency
     }
 
+    fun onAddSubcategoryClicked() {
+
+        log.debug {
+            "onAddSubcategoryClicked(): proceeding to new subcategory edit"
+        }
+
+        _events.tryEmit(
+            Event.ProceedToSubcategoryEdit(
+                subcategoryToUpdate = SubcategoryToUpdate.new(),
+                colorScheme = colorScheme.value,
+            )
+        )
+    }
+
+    suspend fun onSubcategoryItemMoved(
+        fromIndex: Int,
+        toIndex: Int,
+    ) {
+        log.debug {
+            "onSubcategoryItemMoved(): moving:" +
+                    "\nfromIndex=$fromIndex," +
+                    "\ntoIndex=$toIndex"
+        }
+
+        _subcategories.emit(
+            _subcategories
+                .value
+                .toMutableList()
+                .apply {
+                    add(
+                        toIndex,
+                        removeAt(fromIndex)
+                    )
+                }
+        )
+    }
+
+    fun onSubcategoryItemClicked(
+        clickedItem: ViewSubcategoryToUpdateListItem,
+    ) {
+        val subcategoryToUpdate = clickedItem.source
+        if (subcategoryToUpdate == null) {
+            log.warn {
+                "onSubcategoryItemClicked(): missing subcategory source"
+            }
+            return
+        }
+
+        log.debug {
+            "onSubcategoryItemClicked(): proceeding to subcategory edit:" +
+                    "\nsubcategoryToUpdate=$subcategoryToUpdate"
+        }
+
+        _events.tryEmit(
+            Event.ProceedToSubcategoryEdit(
+                subcategoryToUpdate = subcategoryToUpdate,
+                colorScheme = colorScheme.value,
+            )
+        )
+    }
+
     fun onSubcategoryEdited(
         subcategoryToUpdate: SubcategoryToUpdate,
     ) {
@@ -177,8 +238,15 @@ class EditCategoryScreenViewModel(
         _subcategories.update { subcategories ->
             subcategories
                 .toMutableList()
-                .apply { set(subcategoryToUpdate.index, subcategoryToUpdate) }
-                .toList()
+                .apply {
+                    val index = subcategories
+                        .indexOfFirst { it.id == subcategoryToUpdate.id }
+                    if (index >= 0) {
+                        set(index, subcategoryToUpdate)
+                    } else {
+                        add(subcategoryToUpdate)
+                    }
+                }
         }
     }
 
@@ -206,12 +274,14 @@ class EditCategoryScreenViewModel(
 
             val title = _title.value
             val colorScheme = _colorScheme.value
+            val subcategories = _subcategories.value
 
             log.debug {
                 "editCategory(): editing:" +
                         "\ncategoryId=$categoryId," +
                         "\ntitle=$title," +
-                        "\ncolorScheme=$colorScheme"
+                        "\ncolorScheme=$colorScheme," +
+                        "\nsubcategories=${subcategories.size}"
             }
 
             editCategoryUseCase
@@ -219,6 +289,7 @@ class EditCategoryScreenViewModel(
                     categoryId = categoryId,
                     newTitle = title,
                     newColorScheme = colorScheme,
+                    subcategories = subcategories,
                 )
                 .onFailure { error ->
                     log.error(error) {
@@ -245,13 +316,15 @@ class EditCategoryScreenViewModel(
             val currency = _currency.value
             val colorScheme = _colorScheme.value
             val isIncome = isIncome
+            val subcategories = _subcategories.value
 
             log.debug {
                 "addCategory(): adding:" +
                         "\ntitle=$title," +
                         "\ncurrency=$currency," +
                         "\ncolorScheme=$colorScheme," +
-                        "\nisIncome=$isIncome"
+                        "\nisIncome=$isIncome," +
+                        "\nsubcategories=${subcategories.size}"
             }
 
             addCategoryUseCase
@@ -260,7 +333,7 @@ class EditCategoryScreenViewModel(
                     currency = currency,
                     isIncome = isIncome,
                     colorScheme = colorScheme,
-                    subcategories = emptyList(),
+                    subcategories = subcategories,
                 )
                 .onFailure { error ->
                     log.error(error) {
