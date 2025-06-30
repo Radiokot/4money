@@ -1,3 +1,0 @@
-Fixed:
-- Opening the account logo screen from the category edit screen
-- Not selecting subcategory when editing a transfer
