@@ -154,7 +154,7 @@ class AtomicCrudSupabaseConnector(
         supabaseClient.httpClient.httpClient.plugin(HttpSend).intercept { request ->
             val resp = execute(request)
             val response = resp.response
-            if (response.status.value == 400) {
+            if (response.status.value >= 400) {
                 val responseText = response.bodyAsText()
 
                 try {
