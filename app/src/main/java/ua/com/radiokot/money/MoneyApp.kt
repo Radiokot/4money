@@ -103,7 +103,7 @@ class MoneyApp : Application() {
 
     private fun initBackgroundSync() {
 
-        val workRequest = PeriodicWorkRequestBuilder<BackgroundPowerSyncWorker>(1, TimeUnit.HOURS)
+        val workRequest = PeriodicWorkRequestBuilder<BackgroundPowerSyncWorker>(30, TimeUnit.MINUTES)
             .setConstraints(
                 Constraints.Builder()
                     .setRequiredNetworkRequest(
