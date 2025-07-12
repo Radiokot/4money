@@ -1,5 +1,0 @@
-Fixed:
-- Broken background synchronization
-
-Added:
-- Ability to reorder, edit and add (but not delete) subcategories
