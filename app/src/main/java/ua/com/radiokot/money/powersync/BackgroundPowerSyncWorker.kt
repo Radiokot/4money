@@ -25,9 +25,7 @@ import androidx.work.WorkerParameters
 import com.powersync.PowerSyncDatabase
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import org.koin.core.component.KoinComponent
@@ -60,24 +58,13 @@ class BackgroundPowerSyncWorker(
             }
 
             log.debug {
-                "doWork(): waiting for Supabase initialization"
+                "doWork(): refreshing Supabase auth session"
             }
 
-            val initializedSupabaseStatus = sessionScope
+            sessionScope
                 .get<SupabaseClient>()
                 .auth
-                .sessionStatus
-                .dropWhile { it is SessionStatus.Initializing }
-                .first()
-
-            if (initializedSupabaseStatus !is SessionStatus.Authenticated) {
-                log.debug {
-                    "doWork(): skipping, Supabase client is not authenticated:" +
-                            "\nstatus=$initializedSupabaseStatus"
-                }
-
-                return@withTimeout Result.success()
-            }
+                .refreshCurrentSession()
 
             log.debug {
                 "doWork(): waiting for PowerSync full sync"
