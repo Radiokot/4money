@@ -21,9 +21,9 @@ android {
     defaultConfig {
         applicationId "ua.com.radiokot.money"
         minSdk 26
-        targetSdk 34
-        versionCode 17
-        versionName "0.7.1"
+        targetSdk 35
+        versionCode 18
+        versionName "0.8.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -82,6 +82,13 @@ android {
     packagingOptions {
         // Problems caused by Bouncy castle
         exclude 'META-INF/versions/**'
+        doNotStrip '**/*.so'
+    }
+
+    // F-Droid policy: https://gitlab.com/fdroid/admin/-/issues/367
+    dependenciesInfo {
+        includeInApk false
+        includeInBundle false
     }
 }
 
