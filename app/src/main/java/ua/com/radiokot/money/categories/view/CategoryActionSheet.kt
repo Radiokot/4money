@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,9 +60,25 @@ import ua.com.radiokot.money.uikit.TextButton
 import java.math.BigInteger
 
 @Composable
+fun CategoryActionSheetRoot(
+    modifier: Modifier = Modifier,
+    viewModel: CategoryActionSheetViewModel,
+) {
+    CategoryActionSheet(
+        period = viewModel.period,
+        amount = viewModel.amount.collectAsState(),
+        colorScheme = viewModel.colorScheme.collectAsState(),
+        title = viewModel.title.collectAsState(),
+        onEditClicked = remember { viewModel::onEditClicked },
+        onActivityClicked = remember { viewModel::onActivityClicked },
+        modifier = modifier,
+    )
+}
+
+@Composable
 private fun CategoryActionSheet(
     modifier: Modifier = Modifier,
-    period: State<HistoryPeriod>,
+    period: HistoryPeriod,
     amount: State<ViewAmount>,
     colorScheme: State<ItemColorScheme>,
     title: State<String>,
@@ -112,7 +129,7 @@ private fun CategoryActionSheet(
 @Composable
 private fun Header(
     modifier: Modifier = Modifier,
-    period: State<HistoryPeriod>,
+    period: HistoryPeriod,
     amount: State<ViewAmount>,
     colorScheme: State<ItemColorScheme>,
     title: State<String>,
@@ -140,16 +157,16 @@ private fun Header(
 
     Row {
         Text(
-            text = when (val periodValue = period.value) {
+            text = when (period) {
                 is HistoryPeriod.Day ->
-                    periodValue.localDay.toString()
+                    period.localDay.toString()
 
                 is HistoryPeriod.Month ->
                     LocalDate.Format {
                         monthName(MonthNames.ENGLISH_FULL)
                         chars(" ")
                         year()
-                    }.format(periodValue.localMonth)
+                    }.format(period.localMonth)
 
                 HistoryPeriod.Since70th ->
                     "All time"
@@ -182,7 +199,7 @@ private fun Preview(
 
 ) {
     CategoryActionSheet(
-        period = HistoryPeriod.Day().let(::mutableStateOf),
+        period = HistoryPeriod.Day(),
         amount = ViewAmount(
             value = BigInteger("15000"),
             currency = ViewCurrency(
