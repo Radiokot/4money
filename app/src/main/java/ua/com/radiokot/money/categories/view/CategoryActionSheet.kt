@@ -65,8 +65,8 @@ fun CategoryActionSheetRoot(
     viewModel: CategoryActionSheetViewModel,
 ) {
     CategoryActionSheet(
-        period = viewModel.period,
-        amount = viewModel.amount.collectAsState(),
+        statsPeriod = viewModel.statsPeriod,
+        statsAmount = viewModel.statsAmount.collectAsState(),
         colorScheme = viewModel.colorScheme.collectAsState(),
         title = viewModel.title.collectAsState(),
         onEditClicked = remember { viewModel::onEditClicked },
@@ -78,20 +78,21 @@ fun CategoryActionSheetRoot(
 @Composable
 private fun CategoryActionSheet(
     modifier: Modifier = Modifier,
-    period: HistoryPeriod,
-    amount: State<ViewAmount>,
+    statsPeriod: HistoryPeriod,
+    statsAmount: State<ViewAmount>,
     colorScheme: State<ItemColorScheme>,
     title: State<String>,
     onEditClicked: () -> Unit,
     onActivityClicked: () -> Unit,
 ) = Column(
     modifier = modifier
+        .background(Color(0xFFF9FBE7))
         .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
 ) {
 
     Header(
-        period = period,
-        amount = amount,
+        statsPeriod = statsPeriod,
+        statsAmount = statsAmount,
         colorScheme = colorScheme,
         title = title,
         modifier = Modifier
@@ -129,8 +130,8 @@ private fun CategoryActionSheet(
 @Composable
 private fun Header(
     modifier: Modifier = Modifier,
-    period: HistoryPeriod,
-    amount: State<ViewAmount>,
+    statsPeriod: HistoryPeriod,
+    statsAmount: State<ViewAmount>,
     colorScheme: State<ItemColorScheme>,
     title: State<String>,
 ) = Column(
@@ -157,16 +158,16 @@ private fun Header(
 
     Row {
         Text(
-            text = when (period) {
+            text = when (statsPeriod) {
                 is HistoryPeriod.Day ->
-                    period.localDay.toString()
+                    statsPeriod.localDay.toString()
 
                 is HistoryPeriod.Month ->
                     LocalDate.Format {
                         monthName(MonthNames.ENGLISH_FULL)
                         chars(" ")
                         year()
-                    }.format(period.localMonth)
+                    }.format(statsPeriod.localMonth)
 
                 HistoryPeriod.Since70th ->
                     "All time"
@@ -181,7 +182,7 @@ private fun Header(
 
         Text(
             text = amountFormat(
-                amount = amount.value,
+                amount = statsAmount.value,
                 customColor = textColor,
             ),
             textAlign = TextAlign.End,
@@ -199,8 +200,8 @@ private fun Preview(
 
 ) {
     CategoryActionSheet(
-        period = HistoryPeriod.Day(),
-        amount = ViewAmount(
+        statsPeriod = HistoryPeriod.Day(),
+        statsAmount = ViewAmount(
             value = BigInteger("15000"),
             currency = ViewCurrency(
                 symbol = "$",

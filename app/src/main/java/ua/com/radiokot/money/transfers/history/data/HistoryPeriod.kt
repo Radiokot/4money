@@ -28,8 +28,10 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.Serializable
 import java.time.Year
 
+@Serializable
 sealed interface HistoryPeriod {
 
     val startInclusive: LocalDateTime
@@ -41,6 +43,7 @@ sealed interface HistoryPeriod {
     operator fun contains(dateTime: LocalDateTime): Boolean =
         dateTime >= startInclusive && dateTime < endExclusive
 
+    @Serializable
     class Day(
         val localDay: LocalDate = Clock.System
             .now()
@@ -71,6 +74,7 @@ sealed interface HistoryPeriod {
         )
     }
 
+    @Serializable
     class Month(
         val localMonth: LocalDate = Clock.System
             .now()
@@ -102,6 +106,7 @@ sealed interface HistoryPeriod {
         )
     }
 
+    @Serializable
     object Since70th : HistoryPeriod {
 
         override val startInclusive: LocalDateTime =

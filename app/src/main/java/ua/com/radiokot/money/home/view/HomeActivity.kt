@@ -69,9 +69,11 @@ import ua.com.radiokot.money.accounts.view.accountsScreen
 import ua.com.radiokot.money.auth.logic.UserSessionScope
 import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
 import ua.com.radiokot.money.categories.view.CategoriesScreenRoute
+import ua.com.radiokot.money.categories.view.CategoryActionSheetRoute
 import ua.com.radiokot.money.categories.view.EditCategoryActivity
 import ua.com.radiokot.money.categories.view.EditCategoryScreenRoute
 import ua.com.radiokot.money.categories.view.categoriesScreen
+import ua.com.radiokot.money.categories.view.categoryActionSheet
 import ua.com.radiokot.money.preferences.view.PreferencesScreenRoute
 import ua.com.radiokot.money.preferences.view.preferencesScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
@@ -167,17 +169,12 @@ private fun HomeScreen(
             categoriesScreen(
                 homeViewModel = viewModel,
                 onProceedToTransfer = transfersNavigator::proceedToTransfer,
-                onProceedToCategoryActions = { category ->
-                    // TODO: Open the sheet having the Edit option
-                    context.startActivity(
-                        Intent(context, EditCategoryActivity::class.java)
-                            .putExtras(
-                                EditCategoryActivity.getBundle(
-                                    route = EditCategoryScreenRoute(
-                                        categoryToEdit = category,
-                                    ),
-                                )
-                            )
+                onProceedToCategoryActions = { category, statsPeriod ->
+                    navController.navigate(
+                        route = CategoryActionSheetRoute(
+                            category = category,
+                            statsPeriod = statsPeriod,
+                        )
                     )
                 },
                 onProceedToCategoryAdd = { isIncome ->
@@ -193,6 +190,35 @@ private fun HomeScreen(
                             )
                     )
                 },
+            )
+
+            categoryActionSheet(
+                onProceedToEdit = { category ->
+                    context.startActivity(
+                        Intent(context, EditCategoryActivity::class.java)
+                            .putExtras(
+                                EditCategoryActivity.getBundle(
+                                    route = EditCategoryScreenRoute(
+                                        categoryToEdit = category,
+                                    ),
+                                )
+                            )
+                    )
+                    navController.navigateUp()
+                },
+                onProceedToFilteredActivity = { categoryCounterparty ->
+                    viewModel.filterActivityByCounterparty(
+                        counterparty = categoryCounterparty,
+                    )
+                    navController.navigate(
+                        route = ActivityScreenRoute,
+                        navOptions = navOptions {
+                            popUpTo<AccountsScreenRoute> {
+                                inclusive = true
+                            }
+                        }
+                    )
+                }
             )
 
             activityScreen(

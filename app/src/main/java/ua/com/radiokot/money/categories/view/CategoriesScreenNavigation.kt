@@ -30,6 +30,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.home.view.HomeViewModel
+import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 
 @Serializable
 data class CategoriesScreenRoute(
@@ -39,7 +40,10 @@ data class CategoriesScreenRoute(
 fun NavGraphBuilder.categoriesScreen(
     homeViewModel: HomeViewModel,
     onProceedToTransfer: (category: Category) -> Unit,
-    onProceedToCategoryActions: (category: Category) -> Unit,
+    onProceedToCategoryActions: (
+        category: Category,
+        statsPeriod: HistoryPeriod,
+    ) -> Unit,
     onProceedToCategoryAdd: (isIncome: Boolean) -> Unit,
 ) = composable<CategoriesScreenRoute> { entry ->
 
@@ -58,7 +62,10 @@ fun NavGraphBuilder.categoriesScreen(
                     onProceedToTransfer(event.category)
 
                 is CategoriesScreenViewModel.Event.ProceedToCategoryActions ->
-                    onProceedToCategoryActions(event.category)
+                    onProceedToCategoryActions(
+                        event.category,
+                        event.statsPeriod,
+                    )
 
                 is CategoriesScreenViewModel.Event.ProceedToCategoryAdd ->
                     onProceedToCategoryAdd(event.isIncome)

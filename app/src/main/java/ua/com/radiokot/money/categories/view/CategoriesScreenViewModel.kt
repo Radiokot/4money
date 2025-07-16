@@ -43,6 +43,7 @@ import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.view.HistoryStatsPeriodViewModel
 import java.math.BigInteger
 
@@ -155,7 +156,10 @@ class CategoriesScreenViewModel(
         )
     }
 
-    fun onCategoryItemLongClicked(item: ViewCategoryListItem) {
+    fun onCategoryItemLongClicked(
+        item: ViewCategoryListItem,
+    ) {
+        val period = historyStatsPeriod.value
         val category = item.source
         if (category == null) {
             log.warn {
@@ -166,11 +170,15 @@ class CategoriesScreenViewModel(
 
         log.debug {
             "onCategoryItemLongClicked(): proceeding to actions:" +
-                    "\ncategory=$category"
+                    "\ncategory=$category," +
+                    "\nperiod=$period"
         }
 
         _events.tryEmit(
-            Event.ProceedToCategoryActions(category)
+            Event.ProceedToCategoryActions(
+                category = category,
+                statsPeriod = period,
+            )
         )
     }
 
@@ -197,6 +205,7 @@ class CategoriesScreenViewModel(
 
         class ProceedToCategoryActions(
             val category: Category,
+            val statsPeriod: HistoryPeriod,
         ) : Event
 
         class ProceedToCategoryAdd(

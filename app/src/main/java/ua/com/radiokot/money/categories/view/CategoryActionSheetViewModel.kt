@@ -22,8 +22,10 @@ package ua.com.radiokot.money.categories.view
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.runBlocking
@@ -46,15 +48,14 @@ class CategoryActionSheetViewModel(
     private val log by lazyLogger("CategoryActionSheetVM")
 
     private val categoryStats: StateFlow<CategoryStats> = runBlocking {
-
         getCategoryStatsUseCase(
             isIncome = parameters.isIncome,
-            period = parameters.period,
+            period = parameters.statsPeriod,
         )
             .mapNotNull { categoryStats ->
                 categoryStats.find { it.first.id == parameters.categoryId }
             }
-            .stateIn(viewModelScope)
+            .run { stateIn(viewModelScope, SharingStarted.Eagerly, first()) }
     }
 
     private val category: StateFlow<Category> =
@@ -65,9 +66,9 @@ class CategoryActionSheetViewModel(
         category
             .map(viewModelScope, Category::title)
 
-    val period: HistoryPeriod = parameters.period
+    val statsPeriod: HistoryPeriod = parameters.statsPeriod
 
-    val amount: StateFlow<ViewAmount> =
+    val statsAmount: StateFlow<ViewAmount> =
         categoryStats
             .map(viewModelScope) { (category, amount) ->
                 ViewAmount(
@@ -86,8 +87,7 @@ class CategoryActionSheetViewModel(
     fun onEditClicked() {
         _events.tryEmit(
             Event.ProceedToEdit(
-                categoryId = category.value.id,
-                isIncome = category.value.isIncome,
+                category = category.value,
             )
         )
     }
@@ -105,8 +105,7 @@ class CategoryActionSheetViewModel(
     sealed interface Event {
 
         class ProceedToEdit(
-            val categoryId: String,
-            val isIncome: Boolean,
+            val category: Category,
         ) : Event
 
         class ProceedToFilteredActivity(
@@ -117,6 +116,6 @@ class CategoryActionSheetViewModel(
     class Parameters(
         val categoryId: String,
         val isIncome: Boolean,
-        val period: HistoryPeriod,
+        val statsPeriod: HistoryPeriod,
     )
 }
