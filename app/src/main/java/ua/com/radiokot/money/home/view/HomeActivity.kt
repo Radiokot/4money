@@ -213,7 +213,7 @@ private fun HomeScreen(
                     navController.navigate(
                         route = ActivityScreenRoute,
                         navOptions = navOptions {
-                            popUpTo<AccountsScreenRoute> {
+                            popUpTo<CategoriesScreenRoute> {
                                 inclusive = true
                             }
                         }
