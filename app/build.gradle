@@ -107,7 +107,7 @@ ext {
     supabaseVersion = "3.1.4"
     kotlinLoggingVersion = "7.0.3"
     slf4jApiVersion = "2.0.16"
-    slf4jHandroidVersion = "2.0.13"
+    logbackVersion = "3.0.0"
     kotlinSerializationJsonVersion = "1.8.0"
     workVersion = "2.10.1"
     composeUnstyledVersion = "1.31.0"
@@ -144,7 +144,7 @@ dependencies {
     implementation "io.github.jan-tennert.supabase:postgrest-kt:$supabaseVersion"
 
     implementation "io.github.oshai:kotlin-logging-jvm:$kotlinLoggingVersion"
-    implementation "com.gitlab.mvysny.slf4j:slf4j-handroid:$slf4jHandroidVersion"
+    implementation "com.github.tony19:logback-android:$logbackVersion"
     implementation("org.slf4j:slf4j-api:$slf4jApiVersion") {
         exclude group: "org.slf4j", module: "slf4j-api"
     }

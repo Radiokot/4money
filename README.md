@@ -28,4 +28,4 @@ If you're exploring PowerSync use case examples, take a look at:
 - Koin for dependency injection
 - Supabase as a backend
 - PowerSync for local-first data storage and synchronization
-- kotlin-logging & slf4j-handroid for logging
+- kotlin-logging & logback-android for logging

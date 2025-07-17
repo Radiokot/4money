@@ -22,7 +22,7 @@ package ua.com.radiokot.money
 import android.app.Application
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.os.Build
+import android.os.Environment
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -33,14 +33,14 @@ import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
-import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
-import org.slf4j.impl.HandroidLoggerAdapter
 import ua.com.radiokot.money.auth.authModule
 import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
 import ua.com.radiokot.money.home.homeModule
 import ua.com.radiokot.money.powersync.BackgroundPowerSyncWorker
+import ua.com.radiokot.money.util.KoinKLogger
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 class MoneyApp : Application() {
@@ -52,7 +52,7 @@ class MoneyApp : Application() {
         initLogging()
 
         startKoin {
-            androidLogger()
+            logger(KoinKLogger)
             androidContext(this@MoneyApp)
 
             modules(
@@ -66,9 +66,43 @@ class MoneyApp : Application() {
     }
 
     private fun initLogging() {
-        HandroidLoggerAdapter.APP_NAME = "4MN"
-        HandroidLoggerAdapter.DEBUG = BuildConfig.DEBUG
-        HandroidLoggerAdapter.ANDROID_API_LEVEL = Build.VERSION.SDK_INT
+        // The Logback configuration is in the app/src/main/assets/logback.xml
+
+        System.setProperty(
+            "LOG_LEVEL",
+            if (BuildConfig.DEBUG)
+                "TRACE"
+            else
+                "INFO"
+        )
+
+        try {
+            val logFolder =
+                File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+                    getString(R.string.app_name)
+                )
+                    .also(File::mkdirs)
+
+            System.setProperty(
+                "LOG_FILE_DIRECTORY",
+                logFolder.path
+            )
+        } catch (e: Exception) {
+            log.error(e) {
+                "initLogging(): failed log file folder initialization"
+            }
+        }
+
+        log.trace {
+            "initLogging(): trace logger enabled"
+        }
+        log.debug {
+            "initLogging(): debug logger enabled"
+        }
+        log.info {
+            "initLogging(): info logger enabled"
+        }
     }
 
     private fun initSessionHolder() {
@@ -103,18 +137,19 @@ class MoneyApp : Application() {
 
     private fun initBackgroundSync() {
 
-        val workRequest = PeriodicWorkRequestBuilder<BackgroundPowerSyncWorker>(30, TimeUnit.MINUTES)
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkRequest(
-                        networkRequest = NetworkRequest.Builder()
-                            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                            .build(),
-                        networkType = NetworkType.CONNECTED,
-                    )
-                    .build()
-            )
-            .build()
+        val workRequest =
+            PeriodicWorkRequestBuilder<BackgroundPowerSyncWorker>(30, TimeUnit.MINUTES)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkRequest(
+                            networkRequest = NetworkRequest.Builder()
+                                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                                .build(),
+                            networkType = NetworkType.CONNECTED,
+                        )
+                        .build()
+                )
+                .build()
 
         WorkManager.getInstance(this)
             .enqueueUniquePeriodicWork(
