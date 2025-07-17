@@ -41,7 +41,9 @@ import ua.com.radiokot.money.home.homeModule
 import ua.com.radiokot.money.powersync.BackgroundPowerSyncWorker
 import ua.com.radiokot.money.util.KoinKLogger
 import java.io.File
+import java.lang.Thread.UncaughtExceptionHandler
 import java.util.concurrent.TimeUnit
+import kotlin.system.exitProcess
 
 class MoneyApp : Application() {
     private val log by lazyLogger("App")
@@ -91,6 +93,19 @@ class MoneyApp : Application() {
         } catch (e: Exception) {
             log.error(e) {
                 "initLogging(): failed log file folder initialization"
+            }
+        }
+
+        val defaultUncaughtExceptionHandler: UncaughtExceptionHandler? =
+            Thread.getDefaultUncaughtExceptionHandler()
+
+        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
+            log.error(exception) { "Fatal exception\n" }
+
+            if (defaultUncaughtExceptionHandler != null) {
+                defaultUncaughtExceptionHandler.uncaughtException(thread, exception)
+            } else {
+                exitProcess(10)
             }
         }
 
