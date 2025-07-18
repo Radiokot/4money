@@ -96,6 +96,6 @@ class BackgroundPowerSyncWorker(
             "doWork(): failed"
         }
 
-        Result.failure()
+        Result.retry()
     }
 }
