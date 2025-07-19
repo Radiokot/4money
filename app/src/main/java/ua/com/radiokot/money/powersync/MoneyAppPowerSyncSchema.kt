@@ -46,6 +46,7 @@ fun moneyAppPowerSyncSchema() = Schema(
                 Column.text("position"),
                 Column.text("color_scheme"),
                 Column.text("type"),
+                Column.integer("archived"),
             ),
             ignoreEmptyUpdates = true,
         ),
@@ -57,6 +58,7 @@ fun moneyAppPowerSyncSchema() = Schema(
                 Column.text("parent_category_id"),
                 Column.integer("is_income"),
                 Column.text("color_scheme"),
+                Column.integer("archived"),
                 // Real (float8) can't provide sufficient precision,
                 // leading to frequent healing.
                 Column.text("position"),

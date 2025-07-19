@@ -31,6 +31,7 @@ class Account(
     val position: Double,
     val colorScheme: ItemColorScheme,
     val type: Type,
+    val isArchived: Boolean,
     val id: String = UUID.randomUUID().toString(),
 ) : Comparable<Account> {
 

@@ -349,6 +349,7 @@ class PowerSyncAccountRepository(
             currency = currency,
             colorScheme = colorScheme,
             type = type,
+            isArchived = false,
             position = position,
         )
 
@@ -453,6 +454,7 @@ class PowerSyncAccountRepository(
                         ?: error("Can't find '$colorSchemeName' color scheme")
                 },
             type = getString(++column)!!.trim().let(Account.Type::fromSlug),
+            isArchived = getBoolean(++column) == true,
             currency = currency,
         )
     }
@@ -461,7 +463,7 @@ class PowerSyncAccountRepository(
 private const val SELECT_ACCOUNTS =
     "SELECT currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
             "accounts.id, accounts.title, accounts.balance, accounts.position, " +
-            "accounts.color_scheme, accounts.type, accounts.currency_id " +
+            "accounts.color_scheme, accounts.type, accounts.archived, accounts.currency_id " +
             "FROM accounts, currencies " +
             "WHERE accounts.currency_id = currencies.id"
 

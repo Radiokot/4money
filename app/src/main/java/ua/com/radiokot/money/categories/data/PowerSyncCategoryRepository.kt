@@ -113,14 +113,14 @@ class PowerSyncCategoryRepository(
         .watch(
             sql = SELECT_CATEGORIES_THEN_SUBCATEGORIES,
             mapper = { sqlCursor ->
-                val parentCategoryId = sqlCursor.getString(9)
+                val parentCategoryId = sqlCursor.getString(10) // Cursed.
                 if (parentCategoryId == null)
                     toCategory(sqlCursor)
                 else
                     Subcategory(
                         id = sqlCursor.getString(4)!!, // Hell.
                         title = sqlCursor.getString(5)!!.trim(),
-                        position = sqlCursor.getDouble(8)!!, // Holy molly.
+                        position = sqlCursor.getDouble(9)!!, // Holy molly.
                         categoryId = parentCategoryId,
                     )
             }
@@ -233,6 +233,7 @@ class PowerSyncCategoryRepository(
             currency = currency,
             isIncome = isIncome,
             colorScheme = colorScheme,
+            isArchived = false,
             position = position,
         )
 
@@ -307,6 +308,7 @@ class PowerSyncCategoryRepository(
                     colorSchemesByName[colorSchemeName]
                         ?: error("Can't find '$colorSchemeName' color scheme")
                 },
+            isArchived = getBoolean(++column) == true,
             position = getDouble(++column)!!,
             currency = currency,
         )
@@ -329,7 +331,8 @@ class PowerSyncCategoryRepository(
 
 private const val CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES =
     "currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
-            "categories.id, categories.title, categories.is_income, categories.color_scheme, " +
+            "categories.id, categories.title, categories.is_income, " +
+            "categories.color_scheme, categories.archived, " +
             "categories.position, " +
             "categories.parent_category_id " +
             "FROM categories, currencies"

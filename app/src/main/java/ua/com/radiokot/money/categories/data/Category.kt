@@ -28,6 +28,7 @@ class Category(
     val currency: Currency,
     val isIncome: Boolean,
     val colorScheme: ItemColorScheme,
+    val isArchived: Boolean,
     val position: Double,
     val id: String = UUID.randomUUID().toString(),
 ) : Comparable<Category> {
