@@ -21,6 +21,10 @@ package ua.com.radiokot.money.accounts.data
 
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
+import com.powersync.db.getBooleanOptional
+import com.powersync.db.getDouble
+import com.powersync.db.getLong
+import com.powersync.db.getString
 import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -432,38 +436,45 @@ class PowerSyncAccountRepository(
     private fun toAccount(
         sqlCursor: SqlCursor,
     ): Account = with(sqlCursor) {
-
-        var column = 0
-
-        val currency = Currency(
-            id = getString(column)!!,
-            code = getString(++column)!!.trim(),
-            symbol = getString(++column)!!.trim(),
-            precision = getLong(++column)!!.toInt(),
-        )
-
         Account(
-            id = getString(++column)!!,
-            title = getString(++column)!!.trim(),
-            balance = BigInteger(getString(++column)!!.trim()),
-            position = getDouble(++column)!!,
-            colorScheme = getString(++column)!!
+            id = getString("accountId"),
+            title = getString("accountTitle").trim(),
+            balance = BigInteger(getString("accountBalance").trim()),
+            position = getDouble("accountPosition"),
+            colorScheme = getString("accountColorScheme")
                 .trim()
                 .let { colorSchemeName ->
                     colorSchemesByName[colorSchemeName]
                         ?: error("Can't find '$colorSchemeName' color scheme")
                 },
-            type = getString(++column)!!.trim().let(Account.Type::fromSlug),
-            isArchived = getBoolean(++column) == true,
-            currency = currency,
+            type = getString("accountType")
+                .trim()
+                .let(Account.Type::fromSlug),
+            isArchived = getBooleanOptional("accountArchived") == true,
+            currency = Currency(
+                id = getString("currencyId"),
+                code = getString("currencyCode").trim(),
+                symbol = getString("currencySymbol").trim(),
+                precision = getLong("currencyPrecision").toInt(),
+            ),
         )
     }
 }
 
 private const val SELECT_ACCOUNTS =
-    "SELECT currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
-            "accounts.id, accounts.title, accounts.balance, accounts.position, " +
-            "accounts.color_scheme, accounts.type, accounts.archived, accounts.currency_id " +
+    "SELECT " +
+            "currencies.id as 'currencyId', " +
+            "currencies.code as 'currencyCode', " +
+            "currencies.symbol as 'currencySymbol', " +
+            "currencies.precision as 'currencyPrecision', " +
+            "accounts.id as 'accountId', " +
+            "accounts.title as 'accountTitle', " +
+            "accounts.balance as 'accountBalance', " +
+            "accounts.position as 'accountPosition', " +
+            "accounts.color_scheme as 'accountColorScheme', " +
+            "accounts.type as 'accountType', " +
+            "accounts.archived as 'accountArchived', " +
+            "accounts.currency_id as 'accountCurrencyId' " +
             "FROM accounts, currencies " +
             "WHERE accounts.currency_id = currencies.id"
 

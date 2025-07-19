@@ -21,6 +21,11 @@ package ua.com.radiokot.money.categories.data
 
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
+import com.powersync.db.getBooleanOptional
+import com.powersync.db.getDouble
+import com.powersync.db.getLong
+import com.powersync.db.getString
+import com.powersync.db.getStringOptional
 import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -113,16 +118,11 @@ class PowerSyncCategoryRepository(
         .watch(
             sql = SELECT_CATEGORIES_THEN_SUBCATEGORIES,
             mapper = { sqlCursor ->
-                val parentCategoryId = sqlCursor.getString(10) // Cursed.
+                val parentCategoryId = sqlCursor.getStringOptional("categoryParentId")
                 if (parentCategoryId == null)
                     toCategory(sqlCursor)
                 else
-                    Subcategory(
-                        id = sqlCursor.getString(4)!!, // Hell.
-                        title = sqlCursor.getString(5)!!.trim(),
-                        position = sqlCursor.getDouble(9)!!, // Holy molly.
-                        categoryId = parentCategoryId,
-                    )
+                    toSubcategory(sqlCursor)
             }
         )
         .map { categoriesAndSubcategories ->
@@ -288,57 +288,58 @@ class PowerSyncCategoryRepository(
     private fun toCategory(
         sqlCursor: SqlCursor,
     ): Category = with(sqlCursor) {
-
-        var column = 0
-
-        val currency = Currency(
-            id = getString(column)!!,
-            code = getString(++column)!!.trim(),
-            symbol = getString(++column)!!.trim(),
-            precision = getLong(++column)!!.toInt(),
-        )
-
         Category(
-            id = getString(++column)!!,
-            title = getString(++column)!!.trim(),
-            isIncome = getBoolean(++column) == true,
-            colorScheme = getString(++column)!!
+            id = getString("categoryId"),
+            title = getString("categoryTitle").trim(),
+            isIncome = getBooleanOptional("categoryIsIncome") == true,
+            colorScheme = getString("categoryColorScheme")
                 .trim()
                 .let { colorSchemeName ->
                     colorSchemesByName[colorSchemeName]
                         ?: error("Can't find '$colorSchemeName' color scheme")
                 },
-            isArchived = getBoolean(++column) == true,
-            position = getDouble(++column)!!,
-            currency = currency,
+            isArchived = getBooleanOptional("categoryArchived") == true,
+            position = getDouble("categoryPosition"),
+            currency = Currency(
+                id = getString("currencyId"),
+                code = getString("currencyCode").trim(),
+                symbol = getString("currencySymbol").trim(),
+                precision = getLong("currencyPrecision").toInt(),
+            ),
         )
     }
 
     private fun toSubcategory(
         sqlCursor: SqlCursor,
     ): Subcategory = with(sqlCursor) {
-
-        var column = 0
-
         Subcategory(
-            id = getString(column)!!,
-            title = getString(++column)!!.trim(),
-            position = getDouble(++column)!!,
-            categoryId = getString(++column)!!,
+            id = getString("categoryId"),
+            title = getString("categoryTitle").trim(),
+            position = getDouble("categoryPosition"),
+            categoryId = getString("categoryParentId"),
         )
     }
 }
 
 private const val CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES =
-    "currencies.id, currencies.code, currencies.symbol, currencies.precision, " +
-            "categories.id, categories.title, categories.is_income, " +
-            "categories.color_scheme, categories.archived, " +
-            "categories.position, " +
-            "categories.parent_category_id " +
+    "currencies.id as 'currencyId', " +
+            "currencies.code as 'currencyCode', " +
+            "currencies.symbol as 'currencySymbol', " +
+            "currencies.precision as 'currencyPrecision', " +
+            "categories.id as 'categoryId', " +
+            "categories.title as 'categoryTitle', " +
+            "categories.is_income as 'categoryIsIncome', " +
+            "categories.color_scheme as 'categoryColorScheme', " +
+            "categories.archived as 'categoryArchived', " +
+            "categories.position as 'categoryPosition', " +
+            "categories.parent_category_id as 'categoryParentId' " +
             "FROM categories, currencies"
 
 private const val SUBCATEGORY_FIELDS_FROM_CATEGORIES =
-    "categories.id, categories.title, categories.position, categories.parent_category_id " +
+    "categories.id as 'categoryId', " +
+            "categories.title as 'categoryTitle', " +
+            "categories.position as 'categoryPosition', " +
+            "categories.parent_category_id as 'categoryParentId' " +
             "FROM categories"
 
 private const val CURRENCY_MATCHES_CATEGORY =
@@ -346,7 +347,7 @@ private const val CURRENCY_MATCHES_CATEGORY =
 
 private const val SELECT_CATEGORIES =
     "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
-            "WHERE categories.parent_category_id IS NULL " +
+            "WHERE categoryParentId IS NULL " +
             "AND $CURRENCY_MATCHES_CATEGORY "
 
 /**
@@ -355,7 +356,7 @@ private const val SELECT_CATEGORIES =
  */
 private const val SELECT_SUBCATEGORIES_BY_PARENT_ID =
     "SELECT $SUBCATEGORY_FIELDS_FROM_CATEGORIES " +
-            "WHERE categories.parent_category_id = ?"
+            "WHERE categoryParentId = ?"
 
 /**
  * Params:
@@ -363,12 +364,12 @@ private const val SELECT_SUBCATEGORIES_BY_PARENT_ID =
  */
 private const val SELECT_SUBCATEGORY_BY_ID =
     "SELECT $SUBCATEGORY_FIELDS_FROM_CATEGORIES " +
-            "WHERE categories.id = ?"
+            "WHERE categoryId = ?"
 
 private const val SELECT_CATEGORIES_THEN_SUBCATEGORIES =
     "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
             "WHERE $CURRENCY_MATCHES_CATEGORY " +
-            "ORDER BY categories.parent_category_id ASC"
+            "ORDER BY categoryParentId ASC"
 
 /**
  * Params:

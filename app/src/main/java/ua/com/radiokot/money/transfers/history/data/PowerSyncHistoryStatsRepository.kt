@@ -20,6 +20,8 @@
 package ua.com.radiokot.money.transfers.history.data
 
 import com.powersync.db.Queries
+import com.powersync.db.getString
+import com.powersync.db.getStringOptional
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -47,10 +49,10 @@ class PowerSyncHistoryStatsRepository(
                 ),
                 mapper = { sqlCursor ->
                     // Sum subcategories into parent.
-                    val categoryId = sqlCursor.getString(2)
-                        ?: sqlCursor.getString(0)!!
+                    val categoryId = sqlCursor.getStringOptional("categoryParentId")
+                        ?: sqlCursor.getString("transferCounterpartyId")
                     // Category ID to string amount not to store bunch of BigIntegers.
-                    categoryId to sqlCursor.getString(1)!!.trim()
+                    categoryId to sqlCursor.getString("transferAmount").trim()
                 }
             )
             .map { transfersToSum ->
@@ -73,8 +75,10 @@ private const val DATETIME_IN_PERIOD =
     "datetime >= datetime(?) AND datetime < datetime(?)"
 
 private const val SELECT_FOR_INCOME_CATEGORIES =
-    "SELECT transfers.source_id, transfers.source_amount, " +
-            "categories.parent_category_id, " +
+    "SELECT " +
+            "transfers.source_id as 'transferCounterpartyId', " +
+            "transfers.source_amount as 'transferAmount', " +
+            "categories.parent_category_id as 'categoryParentId', " +
             "$DATETIME " +
             "FROM transfers, categories " +
             "WHERE transfers.source_id in " +
@@ -83,8 +87,10 @@ private const val SELECT_FOR_INCOME_CATEGORIES =
             "AND $DATETIME_IN_PERIOD"
 
 private const val SELECT_FOR_EXPENSE_CATEGORIES =
-    "SELECT transfers.destination_id, transfers.destination_amount, " +
-            "categories.parent_category_id, " +
+    "SELECT " +
+            "transfers.destination_id as 'transferCounterpartyId', " +
+            "transfers.destination_amount as 'transferAmount', " +
+            "categories.parent_category_id as 'categoryParentId', " +
             "$DATETIME " +
             "FROM transfers, categories " +
             "WHERE transfers.destination_id in " +

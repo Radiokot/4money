@@ -24,6 +24,8 @@ import androidx.paging.PagingSource.LoadResult
 import androidx.paging.PagingState
 import com.powersync.db.Queries
 import com.powersync.db.SqlCursor
+import com.powersync.db.getString
+import com.powersync.db.getStringOptional
 import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,10 +41,10 @@ import kotlinx.datetime.format
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.plus
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
-import ua.com.radiokot.money.plus
 import java.lang.ref.WeakReference
 import java.math.BigInteger
 import java.util.UUID
@@ -365,26 +367,19 @@ class PowerSyncTransferHistoryRepository(
         sqlCursor: SqlCursor,
         counterpartiesById: Map<String, TransferCounterparty>,
     ): Transfer = with(sqlCursor) {
-        var column = 0
-
-        val id = getString(column)!!
-        val dateTime = LocalDateTime.fromDbString(getString(++column)!!)
-        val sourceId = getString(++column)!!
-        val sourceAmount = BigInteger(getString(++column)!!.trim())
-        val destinationId = getString(++column)!!
-        val destinationAmount = BigInteger(getString(++column)!!.trim())
-        val memo = getString(++column)?.trim()
+        val sourceId = getString("transferSourceId")
+        val destinationId = getString("transferDestinationId")
 
         Transfer(
-            id = id,
+            id = getString("transferId"),
             source = counterpartiesById[sourceId]
                 ?: error("Source $sourceId not found"),
-            sourceAmount = sourceAmount,
+            sourceAmount = BigInteger(getString("transferSourceAmount").trim()),
             destination = counterpartiesById[destinationId]
-                ?: error("Destination $sourceId not found"),
-            destinationAmount = destinationAmount,
-            dateTime = dateTime,
-            memo = memo,
+                ?: error("Destination $destinationId not found"),
+            destinationAmount = BigInteger(getString("transferDestinationAmount").trim()),
+            dateTime = LocalDateTime.fromDbString(getString(DATETIME)),
+            memo = getStringOptional("transferMemo")?.trim(),
         )
     }
 
@@ -408,12 +403,17 @@ class PowerSyncTransferHistoryRepository(
         )
 }
 
-private const val DATETIME = "datetime"
+private const val DATETIME = "transferDatetime"
 
 private const val SELECT_TRANSFERS =
-    "SELECT transfers.id, datetime(transfers.time) AS $DATETIME, " +
-            "transfers.source_id, transfers.source_amount, " +
-            "transfers.destination_id, transfers.destination_amount, transfers.memo " +
+    "SELECT " +
+            "transfers.id as 'transferId', " +
+            "datetime(transfers.time) AS $DATETIME, " +
+            "transfers.source_id as 'transferSourceId', " +
+            "transfers.source_amount as 'transferSourceAmount', " +
+            "transfers.destination_id as 'transferDestinationId', " +
+            "transfers.destination_amount as 'transferDestinationAmount', " +
+            "transfers.memo as 'transferMemo' " +
             "FROM transfers"
 
 /**
