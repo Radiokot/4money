@@ -44,7 +44,7 @@ import ua.com.radiokot.money.auth.logic.sessionScope
 val powerSyncModule = module {
     includes(authModule)
 
-    singleOf(::moneyAppPowerSyncSchema) bind Schema::class
+    singleOf(DbSchema::getPowerSyncSchema) bind Schema::class
 
     sessionScope {
 

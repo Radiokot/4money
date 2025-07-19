@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import ua.com.radiokot.money.powersync.DbSchema
 import java.math.BigInteger
 
 class PowerSyncHistoryStatsRepository(
@@ -49,10 +50,10 @@ class PowerSyncHistoryStatsRepository(
                 ),
                 mapper = { sqlCursor ->
                     // Sum subcategories into parent.
-                    val categoryId = sqlCursor.getStringOptional("categoryParentId")
-                        ?: sqlCursor.getString("transferCounterpartyId")
+                    val categoryId = sqlCursor.getStringOptional(DbSchema.CATEGORY_SELECTED_PARENT_ID)
+                        ?: sqlCursor.getString(TRANSFER_SELECTED_COUNTERPARTY_ID)
                     // Category ID to string amount not to store bunch of BigIntegers.
-                    categoryId to sqlCursor.getString("transferAmount").trim()
+                    categoryId to sqlCursor.getString(TRANSFER_SELECTED_AMOUNT).trim()
                 }
             )
             .map { transfersToSum ->
@@ -68,32 +69,33 @@ class PowerSyncHistoryStatsRepository(
             .flowOn(Dispatchers.Default)
 }
 
-private const val DATETIME =
-    "datetime(transfers.time) AS datetime"
+private const val TRANSFER_DATETIME_IN_PERIOD =
+    "${DbSchema.TRANSFER_SELECTED_DATETIME} >= datetime(?) " +
+            "AND ${DbSchema.TRANSFER_SELECTED_DATETIME} < datetime(?)"
 
-private const val DATETIME_IN_PERIOD =
-    "datetime >= datetime(?) AND datetime < datetime(?)"
+private const val TRANSFER_SELECTED_COUNTERPARTY_ID = "transferCounterpartyId"
+private const val TRANSFER_SELECTED_AMOUNT = "transferAmount"
 
 private const val SELECT_FOR_INCOME_CATEGORIES =
     "SELECT " +
-            "transfers.source_id as 'transferCounterpartyId', " +
-            "transfers.source_amount as 'transferAmount', " +
-            "categories.parent_category_id as 'categoryParentId', " +
-            "$DATETIME " +
-            "FROM transfers, categories " +
-            "WHERE transfers.source_id in " +
-            "(SELECT categories.id FROM categories WHERE categories.is_income = 1) " +
-            "AND transfers.source_id = categories.id " +
-            "AND $DATETIME_IN_PERIOD"
+            "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_SOURCE_ID} as $TRANSFER_SELECTED_COUNTERPARTY_ID, " +
+            "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_SOURCE_AMOUNT} as $TRANSFER_SELECTED_AMOUNT, " +
+            "${DbSchema.CATEGORIES_TABLE}.${DbSchema.CATEGORY_PARENT_ID} as ${DbSchema.CATEGORY_SELECTED_PARENT_ID}, " +
+            "${DbSchema.TRANSFER_TIME_AS_DATETIME} " +
+            "FROM ${DbSchema.TRANSFERS_TABLE}, ${DbSchema.CATEGORIES_TABLE} " +
+            "WHERE $TRANSFER_SELECTED_COUNTERPARTY_ID in " +
+            "(SELECT ${DbSchema.ID} FROM ${DbSchema.CATEGORIES_TABLE} WHERE ${DbSchema.CATEGORY_IS_INCOME} = 1) " +
+            "AND $TRANSFER_SELECTED_COUNTERPARTY_ID = ${DbSchema.CATEGORIES_TABLE}.${DbSchema.ID} " +
+            "AND $TRANSFER_DATETIME_IN_PERIOD"
 
 private const val SELECT_FOR_EXPENSE_CATEGORIES =
     "SELECT " +
-            "transfers.destination_id as 'transferCounterpartyId', " +
-            "transfers.destination_amount as 'transferAmount', " +
-            "categories.parent_category_id as 'categoryParentId', " +
-            "$DATETIME " +
-            "FROM transfers, categories " +
-            "WHERE transfers.destination_id in " +
-            "(SELECT categories.id FROM categories WHERE categories.is_income = 0) " +
-            "AND transfers.destination_id = categories.id " +
-            "AND $DATETIME_IN_PERIOD"
+            "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_DESTINATION_ID} as $TRANSFER_SELECTED_COUNTERPARTY_ID, " +
+            "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_DESTINATION_AMOUNT} as $TRANSFER_SELECTED_AMOUNT, " +
+            "${DbSchema.CATEGORIES_TABLE}.${DbSchema.CATEGORY_PARENT_ID} as ${DbSchema.CATEGORY_SELECTED_PARENT_ID}, " +
+            "${DbSchema.TRANSFER_TIME_AS_DATETIME} " +
+            "FROM ${DbSchema.TRANSFERS_TABLE}, ${DbSchema.CATEGORIES_TABLE} " +
+            "WHERE $TRANSFER_SELECTED_COUNTERPARTY_ID in " +
+            "(SELECT ${DbSchema.ID} FROM ${DbSchema.CATEGORIES_TABLE} WHERE ${DbSchema.CATEGORY_IS_INCOME} = 0) " +
+            "AND $TRANSFER_SELECTED_COUNTERPARTY_ID = ${DbSchema.CATEGORIES_TABLE}.${DbSchema.ID} " +
+            "AND $TRANSFER_DATETIME_IN_PERIOD"

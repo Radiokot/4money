@@ -21,10 +21,6 @@ package ua.com.radiokot.money.accounts.data
 
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
-import com.powersync.db.getBooleanOptional
-import com.powersync.db.getDouble
-import com.powersync.db.getLong
-import com.powersync.db.getString
 import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +40,7 @@ import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.powersync.DbSchema
 import ua.com.radiokot.money.util.SternBrocotTreeDescPositionHealer
 import ua.com.radiokot.money.util.SternBrocotTreeSearch
 import java.math.BigInteger
@@ -435,54 +432,32 @@ class PowerSyncAccountRepository(
 
     private fun toAccount(
         sqlCursor: SqlCursor,
-    ): Account = with(sqlCursor) {
-        Account(
-            id = getString("accountId"),
-            title = getString("accountTitle").trim(),
-            balance = BigInteger(getString("accountBalance").trim()),
-            position = getDouble("accountPosition"),
-            colorScheme = getString("accountColorScheme")
-                .trim()
-                .let { colorSchemeName ->
-                    colorSchemesByName[colorSchemeName]
-                        ?: error("Can't find '$colorSchemeName' color scheme")
-                },
-            type = getString("accountType")
-                .trim()
-                .let(Account.Type::fromSlug),
-            isArchived = getBooleanOptional("accountArchived") == true,
-            currency = Currency(
-                id = getString("currencyId"),
-                code = getString("currencyCode").trim(),
-                symbol = getString("currencySymbol").trim(),
-                precision = getLong("currencyPrecision").toInt(),
-            ),
+    ): Account =
+        DbSchema.toAccount(
+            sqlCursor = sqlCursor,
+            colorSchemesByName = colorSchemesByName,
         )
-    }
 }
 
 private const val SELECT_ACCOUNTS =
     "SELECT " +
-            "currencies.id as 'currencyId', " +
-            "currencies.code as 'currencyCode', " +
-            "currencies.symbol as 'currencySymbol', " +
-            "currencies.precision as 'currencyPrecision', " +
-            "accounts.id as 'accountId', " +
-            "accounts.title as 'accountTitle', " +
-            "accounts.balance as 'accountBalance', " +
-            "accounts.position as 'accountPosition', " +
-            "accounts.color_scheme as 'accountColorScheme', " +
-            "accounts.type as 'accountType', " +
-            "accounts.archived as 'accountArchived', " +
-            "accounts.currency_id as 'accountCurrencyId' " +
-            "FROM accounts, currencies " +
-            "WHERE accounts.currency_id = currencies.id"
+            DbSchema.CURRENCY_SELECT_COLUMNS + ", " +
+            DbSchema.ACCOUNT_SELECT_COLUMNS +
+            "FROM ${DbSchema.ACCOUNTS_TABLE}, ${DbSchema.CURRENCIES_TABLE} " +
+            "WHERE ${DbSchema.ACCOUNT_SELECTED_CURRENCY_ID} = ${DbSchema.CURRENCY_SELECTED_ID}"
 
-private const val SELECT_ACCOUNT_BY_ID = "$SELECT_ACCOUNTS AND accounts.id = ?"
+private const val SELECT_ACCOUNT_BY_ID =
+    "$SELECT_ACCOUNTS AND ${DbSchema.ACCOUNT_SELECTED_ID} = ?"
 
-private const val UPDATE_POSITION_BY_ID = "UPDATE accounts SET position = ? WHERE id = ?"
+private const val UPDATE_POSITION_BY_ID =
+    "UPDATE ${DbSchema.ACCOUNTS_TABLE} " +
+            "SET ${DbSchema.ACCOUNT_POSITION} = ? " +
+            "WHERE ${DbSchema.ID} = ?"
 
-private const val UPDATE_TYPE_BY_ID = "UPDATE accounts SET type = ? WHERE id = ?"
+private const val UPDATE_TYPE_BY_ID =
+    "UPDATE ${DbSchema.ACCOUNTS_TABLE} SET " +
+            "${DbSchema.ACCOUNT_TYPE} = ? " +
+            "WHERE ${DbSchema.ID} = ?"
 
 /**
  * Params:
@@ -492,11 +467,11 @@ private const val UPDATE_TYPE_BY_ID = "UPDATE accounts SET type = ? WHERE id = ?
  * 4. ID
  */
 private const val UPDATE_ACCOUNT_BY_ID =
-    "UPDATE accounts SET " +
-            "title = ?, " +
-            "type = ?, " +
-            "color_scheme = ? " +
-            "WHERE id = ? "
+    "UPDATE ${DbSchema.ACCOUNTS_TABLE} SET " +
+            "${DbSchema.ACCOUNT_TITLE} = ?, " +
+            "${DbSchema.ACCOUNT_TYPE} = ?, " +
+            "${DbSchema.ACCOUNT_COLOR_SCHEME} = ? " +
+            "WHERE ${DbSchema.ID} = ? "
 
 /**
  * Params:
@@ -509,6 +484,15 @@ private const val UPDATE_ACCOUNT_BY_ID =
  * 7. Type slug
  */
 private const val INSERT_ACCOUNT =
-    "INSERT INTO accounts " +
-            "(id, title, balance, currency_id, position, color_scheme, type) " +
-            "VALUES(?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO ${DbSchema.ACCOUNTS_TABLE} " +
+            "(" +
+            "${DbSchema.ID}, " +
+            "${DbSchema.ACCOUNT_TITLE}, " +
+            "${DbSchema.ACCOUNT_BALANCE}, " +
+            "${DbSchema.ACCOUNT_CURRENCY_ID}, " +
+            "${DbSchema.ACCOUNT_POSITION}, " +
+            "${DbSchema.ACCOUNT_COLOR_SCHEME}, " +
+            "${DbSchema.ACCOUNT_TYPE}, " +
+            "${DbSchema.ACCOUNT_ARCHIVED} " +
+            ") " +
+            "VALUES(?, ?, ?, ?, ?, ?, ?, 0)"

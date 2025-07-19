@@ -21,10 +21,6 @@ package ua.com.radiokot.money.categories.data
 
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.SqlCursor
-import com.powersync.db.getBooleanOptional
-import com.powersync.db.getDouble
-import com.powersync.db.getLong
-import com.powersync.db.getString
 import com.powersync.db.getStringOptional
 import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.coroutines.CoroutineScope
@@ -45,6 +41,7 @@ import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.powersync.DbSchema
 import ua.com.radiokot.money.util.SternBrocotTreeDescPositionHealer
 import ua.com.radiokot.money.util.SternBrocotTreeSearch
 import java.util.UUID
@@ -100,7 +97,7 @@ class PowerSyncCategoryRepository(
                 parameters = listOf(
                     subcategoryId,
                 ),
-                mapper = ::toSubcategory,
+                mapper = DbSchema::toSubcategory,
             )
 
     override fun getSubcategoriesFlow(
@@ -111,18 +108,19 @@ class PowerSyncCategoryRepository(
             parameters = listOf(
                 categoryId,
             ),
-            mapper = ::toSubcategory,
+            mapper = DbSchema::toSubcategory,
         )
 
     private val subcategoriesByCategorySharedFlow = database
         .watch(
             sql = SELECT_CATEGORIES_THEN_SUBCATEGORIES,
             mapper = { sqlCursor ->
-                val parentCategoryId = sqlCursor.getStringOptional("categoryParentId")
+                val parentCategoryId =
+                    sqlCursor.getStringOptional(DbSchema.CATEGORY_SELECTED_PARENT_ID)
                 if (parentCategoryId == null)
                     toCategory(sqlCursor)
                 else
-                    toSubcategory(sqlCursor)
+                    DbSchema.toSubcategory(sqlCursor)
             }
         )
         .map { categoriesAndSubcategories ->
@@ -287,67 +285,28 @@ class PowerSyncCategoryRepository(
 
     private fun toCategory(
         sqlCursor: SqlCursor,
-    ): Category = with(sqlCursor) {
-        Category(
-            id = getString("categoryId"),
-            title = getString("categoryTitle").trim(),
-            isIncome = getBooleanOptional("categoryIsIncome") == true,
-            colorScheme = getString("categoryColorScheme")
-                .trim()
-                .let { colorSchemeName ->
-                    colorSchemesByName[colorSchemeName]
-                        ?: error("Can't find '$colorSchemeName' color scheme")
-                },
-            isArchived = getBooleanOptional("categoryArchived") == true,
-            position = getDouble("categoryPosition"),
-            currency = Currency(
-                id = getString("currencyId"),
-                code = getString("currencyCode").trim(),
-                symbol = getString("currencySymbol").trim(),
-                precision = getLong("currencyPrecision").toInt(),
-            ),
+    ): Category =
+        DbSchema.toCategory(
+            sqlCursor = sqlCursor,
+            colorSchemesByName = colorSchemesByName,
         )
-    }
-
-    private fun toSubcategory(
-        sqlCursor: SqlCursor,
-    ): Subcategory = with(sqlCursor) {
-        Subcategory(
-            id = getString("categoryId"),
-            title = getString("categoryTitle").trim(),
-            position = getDouble("categoryPosition"),
-            categoryId = getString("categoryParentId"),
-        )
-    }
 }
 
 private const val CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES =
-    "currencies.id as 'currencyId', " +
-            "currencies.code as 'currencyCode', " +
-            "currencies.symbol as 'currencySymbol', " +
-            "currencies.precision as 'currencyPrecision', " +
-            "categories.id as 'categoryId', " +
-            "categories.title as 'categoryTitle', " +
-            "categories.is_income as 'categoryIsIncome', " +
-            "categories.color_scheme as 'categoryColorScheme', " +
-            "categories.archived as 'categoryArchived', " +
-            "categories.position as 'categoryPosition', " +
-            "categories.parent_category_id as 'categoryParentId' " +
-            "FROM categories, currencies"
+    DbSchema.CATEGORY_SELECT_COLUMNS + ", " +
+            DbSchema.CURRENCY_SELECT_COLUMNS +
+            "FROM ${DbSchema.CATEGORIES_TABLE}, ${DbSchema.CURRENCIES_TABLE}"
 
 private const val SUBCATEGORY_FIELDS_FROM_CATEGORIES =
-    "categories.id as 'categoryId', " +
-            "categories.title as 'categoryTitle', " +
-            "categories.position as 'categoryPosition', " +
-            "categories.parent_category_id as 'categoryParentId' " +
-            "FROM categories"
+    DbSchema.SUBCATEGORY_SELECT_COLUMNS +
+            "FROM ${DbSchema.CATEGORIES_TABLE}"
 
 private const val CURRENCY_MATCHES_CATEGORY =
-    "categories.currency_id = currencies.id"
+    "${DbSchema.CATEGORY_SELECTED_CURRENCY_ID} = ${DbSchema.CURRENCY_SELECTED_ID}"
 
 private const val SELECT_CATEGORIES =
     "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
-            "WHERE categoryParentId IS NULL " +
+            "WHERE ${DbSchema.CATEGORY_SELECTED_PARENT_ID} IS NULL " +
             "AND $CURRENCY_MATCHES_CATEGORY "
 
 /**
@@ -356,7 +315,7 @@ private const val SELECT_CATEGORIES =
  */
 private const val SELECT_SUBCATEGORIES_BY_PARENT_ID =
     "SELECT $SUBCATEGORY_FIELDS_FROM_CATEGORIES " +
-            "WHERE categoryParentId = ?"
+            "WHERE ${DbSchema.CATEGORY_SELECTED_PARENT_ID} = ?"
 
 /**
  * Params:
@@ -364,12 +323,12 @@ private const val SELECT_SUBCATEGORIES_BY_PARENT_ID =
  */
 private const val SELECT_SUBCATEGORY_BY_ID =
     "SELECT $SUBCATEGORY_FIELDS_FROM_CATEGORIES " +
-            "WHERE categoryId = ?"
+            "WHERE ${DbSchema.CATEGORY_SELECTED_ID} = ?"
 
 private const val SELECT_CATEGORIES_THEN_SUBCATEGORIES =
     "SELECT $CATEGORY_FIELDS_FROM_CATEGORIES_AND_CURRENCIES " +
             "WHERE $CURRENCY_MATCHES_CATEGORY " +
-            "ORDER BY categoryParentId ASC"
+            "ORDER BY ${DbSchema.CATEGORY_SELECTED_PARENT_ID} ASC"
 
 /**
  * Params:
@@ -382,6 +341,15 @@ private const val SELECT_CATEGORIES_THEN_SUBCATEGORIES =
  * 7. Position
  */
 private const val INSERT_OR_REPLACE_CATEGORY =
-    "INSERT OR REPLACE INTO categories " +
-            "(id, title, currency_id, parent_category_id, is_income, color_scheme, position) " +
-            "VALUES(?, ?, ?, ?, ?, ?, ?)"
+    "INSERT OR REPLACE INTO ${DbSchema.CATEGORIES_TABLE} " +
+            "(" +
+            "${DbSchema.ID}, " +
+            "${DbSchema.CATEGORY_TITLE}, " +
+            "${DbSchema.CATEGORY_CURRENCY_ID}, " +
+            "${DbSchema.CATEGORY_PARENT_ID}, " +
+            "${DbSchema.CATEGORY_IS_INCOME}, " +
+            "${DbSchema.CATEGORY_COLOR_SCHEME}, " +
+            "${DbSchema.CATEGORY_POSITION}, " +
+            "${DbSchema.CATEGORY_ARCHIVED} " +
+            ") " +
+            "VALUES(?, ?, ?, ?, ?, ?, ?, 0)"

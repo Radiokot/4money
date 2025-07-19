@@ -20,7 +20,6 @@
 package ua.com.radiokot.money.currency.data
 
 import com.powersync.PowerSyncDatabase
-import com.powersync.db.SqlCursor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,7 +29,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
-import java.math.BigDecimal
+import ua.com.radiokot.money.powersync.DbSchema
 
 class PowerSyncCurrencyRepository(
     private val database: PowerSyncDatabase,
@@ -42,7 +41,7 @@ class PowerSyncCurrencyRepository(
         database
             .watch(
                 sql = SELECT_CURRENCIES,
-                mapper = ::toCurrency,
+                mapper = DbSchema::toCurrency,
             )
             .flowOn(Dispatchers.Default)
             .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
@@ -57,14 +56,14 @@ class PowerSyncCurrencyRepository(
         database.getOptional(
             sql = SELECT_CURRENCY_BY_CODE,
             parameters = listOf(code),
-            mapper = ::toCurrency,
+            mapper = DbSchema::toCurrency,
         )
 
     private val currencyPairMapSharedFlow =
         database
             .watch(
                 sql = SELECT_PAIRS,
-                mapper = ::toPricePair,
+                mapper = DbSchema::toPricePair,
             )
             .map { pairs ->
                 // Synced pairs have USD quote.
@@ -78,24 +77,18 @@ class PowerSyncCurrencyRepository(
 
     override fun getCurrencyPairMapFlow(): Flow<CurrencyPairMap> =
         currencyPairMapSharedFlow
-
-    private fun toCurrency(sqlCursor: SqlCursor) = sqlCursor.run {
-        Currency(
-            code = getString(0)!!.trim(),
-            symbol = getString(1)!!.trim(),
-            precision = getLong(2)!!.toInt(),
-            id = getString(3)!!,
-        )
-    }
-
-    private fun toPricePair(sqlCursor: SqlCursor): Pair<String, BigDecimal> = sqlCursor.run {
-        getString(0)!! to BigDecimal(getString(1)!!.trim())
-    }
 }
 
-private const val SELECT_CURRENCIES = "SELECT code, symbol, precision, id FROM currencies"
+private const val SELECT_CURRENCIES =
+    "SELECT ${DbSchema.CURRENCY_SELECT_COLUMNS} " +
+            "FROM ${DbSchema.CURRENCIES_TABLE}"
 
-private const val SELECT_CURRENCY_BY_CODE = "$SELECT_CURRENCIES " +
-        "WHERE code = ? ORDER BY id LIMIT 1"
+private const val SELECT_CURRENCY_BY_CODE =
+    "$SELECT_CURRENCIES " +
+            "WHERE ${DbSchema.CURRENCY_SELECTED_CODE} = ? " +
+            "ORDER BY ${DbSchema.CURRENCY_SELECTED_ID} " +
+            "LIMIT 1"
 
-private const val SELECT_PAIRS = "SELECT id, price FROM pairs"
+private const val SELECT_PAIRS =
+    "SELECT ${DbSchema.PAIR_SELECT_COLUMNS} " +
+            "FROM ${DbSchema.PAIRS_TABLE}"

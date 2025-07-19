@@ -24,8 +24,6 @@ import androidx.paging.PagingSource.LoadResult
 import androidx.paging.PagingState
 import com.powersync.db.Queries
 import com.powersync.db.SqlCursor
-import com.powersync.db.getString
-import com.powersync.db.getStringOptional
 import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,11 +35,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.format
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.plus
+import ua.com.radiokot.money.powersync.DbSchema
+import ua.com.radiokot.money.powersync.DbSchema.toDbString
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
@@ -93,27 +92,27 @@ class PowerSyncTransferHistoryRepository(
                             postfix = ")",
                         )
 
-                    append("(transfers.source_id IN ")
+                    append("(${DbSchema.TRANSFER_SELECTED_SOURCE_ID} IN ")
                     append(counterpartyIdSetString)
-                    append(" OR transfers.destination_id IN ")
+                    append(" OR ${DbSchema.TRANSFER_SELECTED_DESTINATION_ID} IN ")
                     append(counterpartyIdSetString)
                     append(')')
                 }
 
         val timeCondition = buildString {
-            append("$DATETIME >= datetime('${withinPeriod.startInclusive}') ")
-            append("AND $DATETIME < datetime('${withinPeriod.endExclusive}') ")
+            append("${DbSchema.TRANSFER_SELECTED_DATETIME} >= datetime('${withinPeriod.startInclusive}') ")
+            append("AND ${DbSchema.TRANSFER_SELECTED_DATETIME} < datetime('${withinPeriod.endExclusive}') ")
             when {
                 cursor?.isBefore == true ->
-                    append("AND $DATETIME < datetime('${cursor.timeExclusive}') ")
+                    append("AND ${DbSchema.TRANSFER_SELECTED_DATETIME} < datetime('${cursor.timeExclusive}') ")
 
                 cursor?.isAfter == true ->
-                    append("AND $DATETIME > datetime('${cursor.timeExclusive}') ")
+                    append("AND ${DbSchema.TRANSFER_SELECTED_DATETIME} > datetime('${cursor.timeExclusive}') ")
             }
         }
 
         val orderCondition = buildString {
-            append("ORDER BY $DATETIME ")
+            append("ORDER BY ${DbSchema.TRANSFER_SELECTED_DATETIME} ")
             when {
                 cursor?.isAfter == true ->
                     append("ASC ")
@@ -140,7 +139,7 @@ class PowerSyncTransferHistoryRepository(
                 },
                 parameters = listOf(),
                 mapper = { sqlCursor ->
-                    toTransfer(
+                    DbSchema.toTransfer(
                         sqlCursor = sqlCursor,
                         counterpartiesById = counterpartiesById,
                     )
@@ -227,7 +226,7 @@ class PowerSyncTransferHistoryRepository(
                     transferId,
                 ),
                 mapper = { sqlCursor ->
-                    toTransfer(
+                    DbSchema.toTransfer(
                         sqlCursor = sqlCursor,
                         counterpartiesById = counterpartiesById,
                     )
@@ -296,7 +295,8 @@ class PowerSyncTransferHistoryRepository(
         }
 
         transaction.execute(
-            sql = "DELETE FROM transfers WHERE transfers.id = ?",
+            sql = "DELETE FROM ${DbSchema.TRANSFERS_TABLE} " +
+                    "WHERE ${DbSchema.ID} = ?",
             parameters = listOf(
                 transferId,
             )
@@ -305,7 +305,8 @@ class PowerSyncTransferHistoryRepository(
         invalidatePagingSourcesWhen {
             database
                 .watch(
-                    sql = "SELECT transfers.id FROM transfers WHERE transfers.id = ?",
+                    sql = "SELECT ${DbSchema.ID} FROM ${DbSchema.TRANSFERS_TABLE} " +
+                            "WHERE ${DbSchema.ID} = ?",
                     parameters = listOf(transferId),
                     mapper = { },
                 )
@@ -363,65 +364,24 @@ class PowerSyncTransferHistoryRepository(
         }
     }
 
-    private fun toTransfer(
-        sqlCursor: SqlCursor,
-        counterpartiesById: Map<String, TransferCounterparty>,
-    ): Transfer = with(sqlCursor) {
-        val sourceId = getString("transferSourceId")
-        val destinationId = getString("transferDestinationId")
-
-        Transfer(
-            id = getString("transferId"),
-            source = counterpartiesById[sourceId]
-                ?: error("Source $sourceId not found"),
-            sourceAmount = BigInteger(getString("transferSourceAmount").trim()),
-            destination = counterpartiesById[destinationId]
-                ?: error("Destination $destinationId not found"),
-            destinationAmount = BigInteger(getString("transferDestinationAmount").trim()),
-            dateTime = LocalDateTime.fromDbString(getString(DATETIME)),
-            memo = getStringOptional("transferMemo")?.trim(),
-        )
-    }
-
     private fun TransferHistoryPage.toLoadResultPage() = LoadResult.Page(
         data = data,
         prevKey = previousPageCursor,
         nextKey = nextPageCursor,
     )
-
-    private fun LocalDateTime.toDbString() =
-        format(LocalDateTime.Formats.ISO)
-            .replace('T', ' ')
-            // Trim millis.
-            .substringBeforeLast('.')
-
-    private fun LocalDateTime.Companion.fromDbString(dateTimeString: String) =
-        parse(
-            input = dateTimeString
-                .replace(' ', 'T'),
-            format = LocalDateTime.Formats.ISO
-        )
 }
 
-private const val DATETIME = "transferDatetime"
-
 private const val SELECT_TRANSFERS =
-    "SELECT " +
-            "transfers.id as 'transferId', " +
-            "datetime(transfers.time) AS $DATETIME, " +
-            "transfers.source_id as 'transferSourceId', " +
-            "transfers.source_amount as 'transferSourceAmount', " +
-            "transfers.destination_id as 'transferDestinationId', " +
-            "transfers.destination_amount as 'transferDestinationAmount', " +
-            "transfers.memo as 'transferMemo' " +
-            "FROM transfers"
+    "SELECT ${DbSchema.TRANSFER_SELECT_COLUMNS} " +
+            "FROM ${DbSchema.TRANSFERS_TABLE}"
 
 /**
  * Params:
  * 1. Transfer ID
  */
 private const val SELECT_BY_ID =
-    "$SELECT_TRANSFERS WHERE transfers.id = ?"
+    "$SELECT_TRANSFERS " +
+            "WHERE ${DbSchema.TRANSFER_SELECTED_ID} = ?"
 
 /**
  * Params:
@@ -435,6 +395,15 @@ private const val SELECT_BY_ID =
  * 8. Metadata
  */
 private const val INSERT_OR_REPLACE_TRANSFER =
-    "INSERT OR REPLACE INTO transfers " +
-            "(id, time, source_id, source_amount, destination_id, destination_amount, memo, _metadata) " +
+    "INSERT OR REPLACE INTO ${DbSchema.TRANSFERS_TABLE} " +
+            "(" +
+            "${DbSchema.ID}, " +
+            "${DbSchema.TRANSFER_TIME}, " +
+            "${DbSchema.TRANSFER_SOURCE_ID}, " +
+            "${DbSchema.TRANSFER_SOURCE_AMOUNT}, " +
+            "${DbSchema.TRANSFER_DESTINATION_ID}, " +
+            "${DbSchema.TRANSFER_DESTINATION_AMOUNT}, " +
+            "${DbSchema.TRANSFER_MEMO}, " +
+            "${DbSchema.METADATA} " +
+            ") " +
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
