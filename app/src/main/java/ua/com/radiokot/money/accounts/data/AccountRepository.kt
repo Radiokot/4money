@@ -36,10 +36,4 @@ interface AccountRepository {
         accountId: String,
         newValue: BigInteger,
     )
-
-    suspend fun move(
-        accountToMove: Account,
-        accountToPlaceBefore: Account?,
-        accountToPlaceAfter: Account?,
-    )
 }

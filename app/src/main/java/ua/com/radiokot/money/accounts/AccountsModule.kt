@@ -26,9 +26,11 @@ import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.accounts.logic.AddAccountUseCase
 import ua.com.radiokot.money.accounts.logic.EditAccountUseCase
+import ua.com.radiokot.money.accounts.logic.GetVisibleAccountsUseCase
 import ua.com.radiokot.money.accounts.logic.MoveAccountUseCase
 import ua.com.radiokot.money.accounts.logic.PowerSyncAddAccountUseCase
 import ua.com.radiokot.money.accounts.logic.PowerSyncEditAccountUseCase
+import ua.com.radiokot.money.accounts.logic.PowerSyncMoveAccountUseCase
 import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
 import ua.com.radiokot.money.accounts.view.AccountActionSheetViewModel
 import ua.com.radiokot.money.accounts.view.AccountsViewModel
@@ -62,8 +64,10 @@ val accountsModule = module {
         } bind UpdateAccountBalanceUseCase::class
 
         factory {
-            MoveAccountUseCase(
-                accountRepository = get()
+            PowerSyncMoveAccountUseCase(
+                database = get(),
+                accountRepository = get(),
+                getVisibleAccountsUseCase = get(),
             )
         } bind MoveAccountUseCase::class
 
@@ -71,6 +75,7 @@ val accountsModule = module {
             PowerSyncEditAccountUseCase(
                 database = get(),
                 accountRepository = get(),
+                getVisibleAccountsUseCase = get(),
             )
         } bind EditAccountUseCase::class
 
@@ -78,15 +83,22 @@ val accountsModule = module {
             PowerSyncAddAccountUseCase(
                 database = get(),
                 accountRepository = get(),
+                getVisibleAccountsUseCase = get(),
             )
         } bind AddAccountUseCase::class
 
+        scoped {
+            GetVisibleAccountsUseCase(
+                accountRepository = get(),
+            )
+        } bind GetVisibleAccountsUseCase::class
+
         viewModel {
             AccountsViewModel(
-                accountRepository = get(),
                 currencyRepository = get(),
                 currencyPreferences = get(),
                 moveAccountUseCase = get(),
+                getVisibleAccountsUseCase = get(),
             )
         } bind AccountsViewModel::class
 

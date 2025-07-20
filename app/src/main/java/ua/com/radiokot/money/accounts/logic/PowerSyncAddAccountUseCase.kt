@@ -20,14 +20,17 @@
 package ua.com.radiokot.money.accounts.logic
 
 import com.powersync.PowerSyncDatabase
+import kotlinx.coroutines.flow.first
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.data.Currency
+import ua.com.radiokot.money.util.SternBrocotTreeSearch
 
 class PowerSyncAddAccountUseCase(
     private val database: PowerSyncDatabase,
     private val accountRepository: PowerSyncAccountRepository,
+    private val getVisibleAccountsUseCase: GetVisibleAccountsUseCase,
 ) : AddAccountUseCase {
 
     override suspend fun invoke(
@@ -37,6 +40,17 @@ class PowerSyncAddAccountUseCase(
         colorScheme: ItemColorScheme,
     ): Result<Unit> = runCatching {
 
+        val firstAccountOfTargetType = getVisibleAccountsUseCase()
+            .first()
+            .firstOrNull { it.type == type }
+
+        val position = SternBrocotTreeSearch()
+            .goBetween(
+                lowerBound = firstAccountOfTargetType?.position ?: 0.0,
+                upperBound = Double.POSITIVE_INFINITY,
+            )
+            .value
+
         database.writeTransaction { transaction ->
 
             accountRepository.addAccount(
@@ -44,6 +58,7 @@ class PowerSyncAddAccountUseCase(
                 currency = currency,
                 type = type,
                 colorScheme = colorScheme,
+                position = position,
                 transaction = transaction,
             )
         }

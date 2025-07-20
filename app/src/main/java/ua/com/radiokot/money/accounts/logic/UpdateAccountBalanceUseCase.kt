@@ -29,6 +29,7 @@ class UpdateAccountBalanceUseCase(
         accountId: String,
         newValue: BigInteger,
     ): Result<Unit> = runCatching {
+
         accountRepository.updateBalance(
             accountId = accountId,
             newValue = newValue,

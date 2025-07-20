@@ -31,13 +31,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.powersync.DbSchema
-import ua.com.radiokot.money.util.SternBrocotTreeSearch
 import java.math.BigInteger
 
 class PowerSyncAccountRepository(
@@ -96,146 +94,6 @@ class PowerSyncAccountRepository(
             )
     }
 
-    override suspend fun move(
-        accountToMove: Account,
-        accountToPlaceBefore: Account?,
-        accountToPlaceAfter: Account?,
-    ) {
-        val sortedAccounts = getAccounts()
-            .sorted()
-
-        val targetType = accountToPlaceBefore?.type
-            ?: accountToPlaceAfter?.type
-            ?: accountToMove.type
-
-        val isChangingType = accountToMove.type != targetType
-
-        val sortedAccountsWithinTargetType = sortedAccounts
-            .filter { it.type == accountToMove.type }
-
-        if (!isChangingType) {
-
-            val accountToMoveIndexWithinTargetType =
-                sortedAccountsWithinTargetType.indexOf(accountToMove)
-
-            val accountToPlaceBeforeIndexWithinTargetType =
-                sortedAccountsWithinTargetType.indexOf(accountToPlaceBefore)
-
-            val accountToPlaceAfterIndexWithinTargetType =
-                sortedAccountsWithinTargetType.indexOf(accountToPlaceAfter)
-
-            if (accountToPlaceBeforeIndexWithinTargetType == accountToMoveIndexWithinTargetType + 1
-                || accountToPlaceAfterIndexWithinTargetType == accountToMoveIndexWithinTargetType - 1
-            ) {
-                log.debug {
-                    "move(): skipping as the account is already in place"
-                }
-
-                return
-            }
-
-            // Avoid position recalculation when swapping neighbours within the same type,
-            // otherwise the fraction quickly becomes tiny (after tens of swaps).
-            if (accountToPlaceBeforeIndexWithinTargetType == accountToMoveIndexWithinTargetType + 2
-                || accountToPlaceAfterIndexWithinTargetType == accountToMoveIndexWithinTargetType - 2
-            ) {
-                val accountToSwapWith =
-                    if (accountToPlaceBeforeIndexWithinTargetType == accountToMoveIndexWithinTargetType + 2)
-                        sortedAccountsWithinTargetType[accountToMoveIndexWithinTargetType + 1]
-                    else
-                        sortedAccountsWithinTargetType[accountToMoveIndexWithinTargetType - 1]
-
-                log.debug {
-                    "move(): swapping positions within the same type:" +
-                            "\nswap=$accountToMove," +
-                            "\nwith=$accountToSwapWith"
-                }
-
-                database.writeTransaction { transition ->
-                    transition.execute(
-                        sql = UPDATE_POSITION_BY_ID,
-                        parameters = listOf(
-                            accountToSwapWith.position.toString(),
-                            accountToMove.id,
-                        )
-                    )
-                    transition.execute(
-                        sql = UPDATE_POSITION_BY_ID,
-                        parameters = listOf(
-                            accountToMove.position.toString(),
-                            accountToSwapWith.id,
-                        )
-                    )
-                }
-
-                log.debug {
-                    "move(): swapped successfully"
-                }
-
-                return
-            }
-        }
-
-        log.debug {
-            "move(): calculating new position" +
-                    "\nfor=$accountToMove," +
-                    "\ntoPlaceBefore=${accountToPlaceBefore}," +
-                    "\nwithinType=$targetType"
-        }
-
-        // As accounts are ordered by descending position,
-        // placing before means assigning greater position value.
-        // The end (bottom) is 0.0.
-        val lowerBound = accountToPlaceBefore?.position ?: 0.0
-        // The start (top) is +∞.
-        val upperBound = accountToPlaceAfter?.position ?: Double.POSITIVE_INFINITY
-
-        log.debug {
-            "move(): got bounds for new position:" +
-                    "\nlower=$lowerBound," +
-                    "\nupper=$upperBound"
-        }
-
-        val newPosition = SternBrocotTreeSearch()
-            .goBetween(
-                lowerBound = lowerBound,
-                upperBound = upperBound,
-            )
-            .value
-
-        log.debug {
-            "move(): updating:" +
-                    "\naccount=$accountToMove," +
-                    "\nnewPosition=$newPosition," +
-                    "\ntargetType=$targetType," +
-                    "\nisChangingType=$isChangingType"
-        }
-
-        database.writeTransaction { transaction ->
-            transaction.execute(
-                sql = UPDATE_POSITION_BY_ID,
-                parameters = listOf(
-                    newPosition.toString(),
-                    accountToMove.id,
-                )
-            )
-
-            if (isChangingType) {
-                transaction.execute(
-                    sql = UPDATE_TYPE_BY_ID,
-                    parameters = listOf(
-                        targetType.slug,
-                        accountToMove.id,
-                    )
-                )
-            }
-        }
-
-        log.debug {
-            "move(): moved successfully"
-        }
-    }
-
     fun updateAccountBalanceBy(
         accountId: String,
         delta: BigInteger,
@@ -274,21 +132,9 @@ class PowerSyncAccountRepository(
         currency: Currency,
         type: Account.Type,
         colorScheme: ItemColorScheme,
+        position: Double,
         transaction: PowerSyncTransaction,
     ): Account {
-
-        val accountToPlaceBefore = runBlocking {
-            getAccounts()
-                .sorted()
-                .firstOrNull { it.type == type }
-        }
-
-        val position = SternBrocotTreeSearch()
-            .goBetween(
-                lowerBound = accountToPlaceBefore?.position ?: 0.0,
-                upperBound = Double.POSITIVE_INFINITY,
-            )
-            .value
 
         val account = Account(
             title = title,
@@ -328,52 +174,43 @@ class PowerSyncAccountRepository(
         newColorScheme: ItemColorScheme,
         transaction: PowerSyncTransaction,
     ) {
-        val accountToUpdate = runBlocking {
-            getAccount(accountId)
-                ?: error("Account to update not found")
-        }
-
         transaction.execute(
             sql = UPDATE_ACCOUNT_BY_ID,
             parameters = listOf(
                 newTitle,
                 newType.slug,
                 newColorScheme.name,
-                accountToUpdate.id,
+                accountId,
             )
         )
+    }
 
-        if (newType != accountToUpdate.type) {
-
-            val accountToPlaceBefore = runBlocking {
-                getAccounts()
-                    .sorted()
-                    .firstOrNull { it.type == newType }
-            }
-
-            val newPosition = SternBrocotTreeSearch()
-                .goBetween(
-                    lowerBound = accountToPlaceBefore?.position ?: 0.0,
-                    upperBound = Double.POSITIVE_INFINITY,
-                )
-                .value
-
-            transaction.execute(
-                sql = UPDATE_POSITION_BY_ID,
-                parameters = listOf(
-                    newPosition.toString(),
-                    accountToUpdate.id,
-                )
+    fun updatePosition(
+        accountId: String,
+        newPosition: Double,
+        transaction: PowerSyncTransaction,
+    ) {
+        transaction.execute(
+            sql = UPDATE_POSITION_BY_ID,
+            parameters = listOf(
+                newPosition.toString(),
+                accountId,
             )
+        )
+    }
 
-            log.debug {
-                "updateAccount(): also updated position on type change:" +
-                        "\noldPosition=${accountToUpdate.position}," +
-                        "\noldType=${accountToUpdate.type}," +
-                        "\nnewPosition=$newPosition," +
-                        "\nnewType=$newType"
-            }
-        }
+    fun updateType(
+        accountId: String,
+        newType: Account.Type,
+        transaction: PowerSyncTransaction,
+    ) {
+        transaction.execute(
+            sql = UPDATE_TYPE_BY_ID,
+            parameters = listOf(
+                newType.slug,
+                accountId,
+            )
+        )
     }
 
     private fun toAccount(
@@ -395,11 +232,21 @@ private const val SELECT_ACCOUNTS =
 private const val SELECT_ACCOUNT_BY_ID =
     "$SELECT_ACCOUNTS AND ${DbSchema.ACCOUNT_SELECTED_ID} = ?"
 
+/**
+ * Params:
+ * 1. New position
+ * 2. ID
+ */
 private const val UPDATE_POSITION_BY_ID =
     "UPDATE ${DbSchema.ACCOUNTS_TABLE} " +
             "SET ${DbSchema.ACCOUNT_POSITION} = ? " +
             "WHERE ${DbSchema.ID} = ?"
 
+/**
+ * Params:
+ * 1. New type slug
+ * 2. ID
+ */
 private const val UPDATE_TYPE_BY_ID =
     "UPDATE ${DbSchema.ACCOUNTS_TABLE} SET " +
             "${DbSchema.ACCOUNT_TYPE} = ? " +

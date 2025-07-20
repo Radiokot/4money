@@ -33,18 +33,9 @@ class Account(
     val type: Type,
     val isArchived: Boolean,
     val id: String = UUID.randomUUID().toString(),
-) : Comparable<Account> {
-
-    private val reversePosition: Double
+) {
+    val reversePosition: Double
         get() = -position
-
-    override fun compareTo(other: Account): Int =
-        compareValuesBy(
-            this,
-            other,
-            Account::type,
-            Account::reversePosition,
-        )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

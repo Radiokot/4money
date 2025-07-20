@@ -19,15 +19,29 @@
 
 package ua.com.radiokot.money.accounts.logic
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import ua.com.radiokot.money.accounts.data.Account
-import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.accounts.data.AccountRepository
 
-interface EditAccountUseCase {
+class GetVisibleAccountsUseCase(
+    private val accountRepository: AccountRepository,
+) {
+    private val accountComparator = compareBy(
+        Account::type,
+        Account::reversePosition,
+        Account::title
+    )
 
-    suspend operator fun invoke(
-        accountToEdit: Account,
-        newTitle: String,
-        newType: Account.Type,
-        newColorScheme: ItemColorScheme,
-    ): Result<Unit>
+    /**
+     * @return sorted accounts as intended to be show to the user.
+     */
+    operator fun invoke(): Flow<List<Account>> =
+        accountRepository
+            .getAccountsFlow()
+            .map { accounts ->
+                accounts
+                    .filterNot(Account::isArchived)
+                    .sortedWith(accountComparator)
+            }
 }

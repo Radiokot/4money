@@ -167,9 +167,7 @@ class EditAccountScreenViewModel(
         }
 
         if (accountToEdit != null) {
-            editAccount(
-                accountId = accountToEdit.id,
-            )
+            editAccount(accountToEdit)
         } else {
             addAccount()
         }
@@ -177,7 +175,7 @@ class EditAccountScreenViewModel(
 
     private var editJob: Job? = null
     private fun editAccount(
-        accountId: String,
+        accountToEdit:Account,
     ) {
         editJob?.cancel()
         editJob = viewModelScope.launch {
@@ -188,7 +186,7 @@ class EditAccountScreenViewModel(
 
             log.debug {
                 "editAccount(): editing:" +
-                        "\naccountId=$accountId," +
+                        "\naccountToEdit=$accountToEdit," +
                         "\ntitle=$title," +
                         "\ntype=$type," +
                         "\ncolorScheme=$colorScheme"
@@ -196,7 +194,7 @@ class EditAccountScreenViewModel(
 
             editAccountUseCase
                 .invoke(
-                    accountId = accountId,
+                    accountToEdit = accountToEdit,
                     newTitle = title,
                     newType = type,
                     newColorScheme = colorScheme,

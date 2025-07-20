@@ -39,7 +39,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
-import ua.com.radiokot.money.accounts.data.AccountRepository
+import ua.com.radiokot.money.accounts.logic.GetVisibleAccountsUseCase
 import ua.com.radiokot.money.accounts.view.ViewAccountListItem
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.CategoryStats
@@ -55,8 +55,8 @@ import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TransferCounterpartySelectionSheetViewModel(
-    accountRepository: AccountRepository,
     private val categoryRepository: CategoryRepository,
+    getVisibleAccountsUseCase: GetVisibleAccountsUseCase,
     private val getCategoryStatsUseCase: GetCategoryStatsUseCase,
 ) : ViewModel() {
 
@@ -112,7 +112,7 @@ class TransferCounterpartySelectionSheetViewModel(
             .flatMapLatest { areAccountsVisible ->
                 if (areAccountsVisible)
                     combine(
-                        accountRepository.getAccountsFlow(),
+                        getVisibleAccountsUseCase(),
                         alreadySelectedCounterpartyId,
                         _isIncognito,
                         transform = ::Triple
@@ -122,8 +122,6 @@ class TransferCounterpartySelectionSheetViewModel(
                                 alreadySelectedCounterpartyId.toString()
 
                             accounts
-                                .sorted()
-                                .filterNot(Account::isArchived)
                                 .groupBy(Account::type)
                                 .flatMap { (type, accountsOfType) ->
                                     buildList {
