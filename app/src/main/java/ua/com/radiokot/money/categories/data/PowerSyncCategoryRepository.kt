@@ -25,14 +25,10 @@ import com.powersync.db.getStringOptional
 import com.powersync.db.internal.PowerSyncTransaction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
@@ -40,21 +36,16 @@ import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
-import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.powersync.DbSchema
-import ua.com.radiokot.money.util.SternBrocotTreeDescPositionHealer
 import ua.com.radiokot.money.util.SternBrocotTreeSearch
 import java.util.UUID
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class PowerSyncCategoryRepository(
     colorSchemeRepository: ItemColorSchemeRepository,
     private val database: PowerSyncDatabase,
 ) : CategoryRepository {
 
-    private val log by lazyLogger("PowerSyncCategoryRepo")
     private val colorSchemesByName = colorSchemeRepository.getItemColorSchemesByName()
-    private val categoryPositionHealer = SternBrocotTreeDescPositionHealer(Category::position)
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val categoriesSharedFlow = database
@@ -79,7 +70,6 @@ class PowerSyncCategoryRepository(
             .map { allCategories ->
                 allCategories.filter { it.isIncome == isIncome }
             }
-            .flatMapLatest(::healPositionsIfNeeded)
 
     override suspend fun getCategory(
         categoryId: String,
@@ -142,43 +132,6 @@ class PowerSyncCategoryRepository(
 
     override fun getSubcategoriesByCategoriesFlow(): Flow<Map<Category, List<Subcategory>>> =
         subcategoriesByCategorySharedFlow
-
-    private suspend fun healPositionsIfNeeded(
-        categories: List<Category>,
-    ): Flow<List<Category>> {
-
-        if (categoryPositionHealer.arePositionsHealthy(categories)) {
-            return flowOf(categories)
-        }
-
-        log.debug {
-            "healPositionsIfNeeded(): start healing"
-        }
-
-        var updateCount = 0
-        database.writeTransaction { transaction ->
-            categoryPositionHealer.healPositions(
-                items = categories,
-                updatePosition = { item, newPosition ->
-                    transaction.execute(
-                        sql = "UPDATE categories SET position = ? WHERE id = ?",
-                        parameters = listOf(
-                            newPosition.toString(),
-                            item.id,
-                        )
-                    )
-                    updateCount++
-                }
-            )
-        }
-
-        log.debug {
-            "healPositionsIfNeeded(): healed successfully:" +
-                    "\nupdates=$updateCount"
-        }
-
-        return emptyFlow()
-    }
 
     fun updateCategory(
         categoryId: String,
