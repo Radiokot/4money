@@ -1,2 +1,0 @@
-Added:
-- Category action sheet with Edit and Activity options, opened by long pressing a category
