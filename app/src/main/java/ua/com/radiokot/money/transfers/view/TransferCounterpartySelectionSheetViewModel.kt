@@ -123,6 +123,7 @@ class TransferCounterpartySelectionSheetViewModel(
 
                             accounts
                                 .sorted()
+                                .filterNot(Account::isArchived)
                                 .groupBy(Account::type)
                                 .flatMap { (type, accountsOfType) ->
                                     buildList {

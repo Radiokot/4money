@@ -23,13 +23,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
@@ -54,9 +57,19 @@ class AccountsViewModel(
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
+    private val sortedVisibleAccounts: SharedFlow<List<Account>> =
+        accountRepository
+            .getAccountsFlow()
+            .map { accounts ->
+                accounts
+                    .filterNot(Account::isArchived)
+                    .sorted()
+            }
+            .shareIn(viewModelScope, SharingStarted.Lazily)
+
     val accountListItems: StateFlow<List<ViewAccountListItem>> =
         combine(
-            accountRepository.getAccountsFlow(),
+            sortedVisibleAccounts,
             currencyRepository.getCurrencyPairMapFlow(),
             currencyPreferences.primaryCurrencyCode,
             transform = ::Triple
@@ -66,7 +79,6 @@ class AccountsViewModel(
                     .getCurrencyByCode(primaryCurrencyCode)
 
                 accounts
-                    .sorted()
                     .groupBy(Account::type)
                     .flatMap { (type, accountsOfType) ->
                         buildList {
@@ -113,7 +125,7 @@ class AccountsViewModel(
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val totalAmountsPerCurrency: StateFlow<List<ViewAmount>> =
-        accountRepository.getAccountsFlow()
+        sortedVisibleAccounts
             .map { accounts ->
                 accounts
                     .groupBy(Account::currency)
@@ -129,7 +141,7 @@ class AccountsViewModel(
 
     val totalAmount: StateFlow<ViewAmount?> =
         combine(
-            accountRepository.getAccountsFlow(),
+            sortedVisibleAccounts,
             currencyRepository.getCurrencyPairMapFlow(),
             currencyPreferences.primaryCurrencyCode,
             transform = ::Triple
