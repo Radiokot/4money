@@ -493,6 +493,6 @@ private const val INSERT_ACCOUNT =
             "${DbSchema.ACCOUNT_POSITION}, " +
             "${DbSchema.ACCOUNT_COLOR_SCHEME}, " +
             "${DbSchema.ACCOUNT_TYPE}, " +
-            "${DbSchema.ACCOUNT_ARCHIVED} " +
+            "${DbSchema.ACCOUNT_IS_ARCHIVED} " +
             ") " +
             "VALUES(?, ?, ?, ?, ?, ?, ?, 0)"

@@ -139,8 +139,8 @@ object DbSchema {
     const val ACCOUNT_SELECTED_COLOR_SCHEME = ACCOUNTS_TABLE + ACCOUNT_COLOR_SCHEME
     const val ACCOUNT_TYPE = "type"
     const val ACCOUNT_SELECTED_TYPE = ACCOUNTS_TABLE + ACCOUNT_TYPE
-    const val ACCOUNT_ARCHIVED = "archived"
-    const val ACCOUNT_SELECTED_ARCHIVED = ACCOUNTS_TABLE + ACCOUNT_ARCHIVED
+    const val ACCOUNT_IS_ARCHIVED = "is_archived"
+    const val ACCOUNT_SELECTED_ARCHIVED = ACCOUNTS_TABLE + ACCOUNT_IS_ARCHIVED
     const val ACCOUNT_CURRENCY_ID = "currency_id"
     const val ACCOUNT_SELECTED_CURRENCY_ID = ACCOUNTS_TABLE + ACCOUNT_CURRENCY_ID
 
@@ -151,7 +151,7 @@ object DbSchema {
             "$ACCOUNTS_TABLE.$ACCOUNT_POSITION as $ACCOUNT_SELECTED_POSITION, " +
             "$ACCOUNTS_TABLE.$ACCOUNT_COLOR_SCHEME as $ACCOUNT_SELECTED_COLOR_SCHEME, " +
             "$ACCOUNTS_TABLE.$ACCOUNT_TYPE as $ACCOUNT_SELECTED_TYPE, " +
-            "$ACCOUNTS_TABLE.$ACCOUNT_ARCHIVED as $ACCOUNT_SELECTED_ARCHIVED, " +
+            "$ACCOUNTS_TABLE.$ACCOUNT_IS_ARCHIVED as $ACCOUNT_SELECTED_ARCHIVED, " +
             "$ACCOUNTS_TABLE.$ACCOUNT_CURRENCY_ID as $ACCOUNT_SELECTED_CURRENCY_ID "
 
     private fun getPowerSyncAccountsTable() = Table(
@@ -165,7 +165,7 @@ object DbSchema {
             Column.text(ACCOUNT_POSITION),
             Column.text(ACCOUNT_COLOR_SCHEME),
             Column.text(ACCOUNT_TYPE),
-            Column.integer(ACCOUNT_ARCHIVED),
+            Column.integer(ACCOUNT_IS_ARCHIVED),
         ),
         ignoreEmptyUpdates = true,
     )
