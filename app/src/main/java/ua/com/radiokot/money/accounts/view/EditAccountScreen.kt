@@ -214,7 +214,7 @@ private fun EditAccountScreen(
                 .weight(1f)
         )
 
-        Text(text = "▶️")
+        Text(text = "🔽")
     }
 
     Spacer(modifier = Modifier.height(24.dp))
