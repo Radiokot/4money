@@ -18,6 +18,10 @@
             <maxHistory>7</maxHistory>
         </rollingPolicy>
 
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} %-36.36logger %.-1level %msg%n</pattern>
         </encoder>
