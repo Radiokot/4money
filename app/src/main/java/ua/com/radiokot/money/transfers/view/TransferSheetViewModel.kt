@@ -424,6 +424,12 @@ class TransferSheetViewModel(
                     }
                 }
                 .onSuccess {
+                    log.info {
+                        "Edited transfer $transferId " +
+                                "to transfer $sourceAmount from $sourceCounterparty " +
+                                "as $destinationAmount to $destinationCounterparty at $dateTime"
+                    }
+
                     log.debug {
                         "editTransfer(): transfer edited"
                     }
@@ -474,6 +480,11 @@ class TransferSheetViewModel(
                     }
                 }
                 .onSuccess {
+                    log.info {
+                        "Transferred $sourceAmount from $sourceCounterparty " +
+                                "as $destinationAmount to $destinationCounterparty"
+                    }
+
                     log.debug {
                         "transferFunds(): funds transferred"
                     }

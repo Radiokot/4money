@@ -49,12 +49,12 @@ import kotlinx.datetime.toLocalDateTime
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.isSameDayAs
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.map
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.history.data.TransferHistoryRepository
 import ua.com.radiokot.money.transfers.logic.RevertTransferUseCase
 import ua.com.radiokot.money.transfers.view.ViewDate
 import ua.com.radiokot.money.transfers.view.ViewTransferListItem
-import ua.com.radiokot.money.map
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActivityViewModel(
@@ -199,6 +199,10 @@ class ActivityViewModel(
                     }
                 }
                 .onSuccess {
+                    log.info {
+                        "Reverted transfer $id"
+                    }
+
                     log.debug {
                         "revertTransfer(): transfer reverted"
                     }

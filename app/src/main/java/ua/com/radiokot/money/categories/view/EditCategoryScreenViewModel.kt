@@ -297,6 +297,10 @@ class EditCategoryScreenViewModel(
                     }
                 }
                 .onSuccess {
+                    log.info {
+                        "Edited category $categoryToEdit"
+                    }
+
                     log.debug {
                         "editCategory(): category edited"
                     }
@@ -341,6 +345,11 @@ class EditCategoryScreenViewModel(
                     }
                 }
                 .onSuccess {
+                    log.info {
+                        "Added new ${currency.code} ${if (isIncome) "income" else "expense"} " +
+                                "category '$title'"
+                    }
+
                     log.debug {
                         "addCategory(): category added"
                     }

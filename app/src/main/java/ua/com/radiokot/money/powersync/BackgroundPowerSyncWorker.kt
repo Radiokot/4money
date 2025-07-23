@@ -25,7 +25,8 @@ import androidx.work.WorkerParameters
 import com.powersync.PowerSyncDatabase
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
-import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import org.koin.core.component.KoinComponent
@@ -61,22 +62,31 @@ class BackgroundPowerSyncWorker(
                 "doWork(): refreshing Supabase auth session"
             }
 
-            sessionScope
-                .get<SupabaseClient>()
-                .auth
-                .refreshCurrentSession()
-
-            log.debug {
-                "doWork(): waiting for PowerSync full sync"
-            }
-
             val syncDuration = measureTime {
+
+                log.info {
+                    "Background sync started"
+                }
+
+                sessionScope
+                    .get<SupabaseClient>()
+                    .auth
+                    .refreshCurrentSession()
+
+                log.debug {
+                    "doWork(): waiting for PowerSync full sync"
+                }
+
                 // Sync kicks in here.
                 sessionScope
                     .get<PowerSyncDatabase>()
                     .currentStatus
                     .asFlow()
                     .first { it.hasSynced == true }
+            }
+
+            log.info {
+                "Background sync done in $syncDuration"
             }
 
             log.debug {
@@ -87,10 +97,7 @@ class BackgroundPowerSyncWorker(
             return@withTimeout Result.success()
         }
     } catch (e: Exception) {
-
-        if (e is CancellationException) {
-            throw e
-        }
+        currentCoroutineContext().ensureActive()
 
         log.error(e) {
             "doWork(): failed"

@@ -175,7 +175,7 @@ class EditAccountScreenViewModel(
 
     private var editJob: Job? = null
     private fun editAccount(
-        accountToEdit:Account,
+        accountToEdit: Account,
     ) {
         editJob?.cancel()
         editJob = viewModelScope.launch {
@@ -205,6 +205,10 @@ class EditAccountScreenViewModel(
                     }
                 }
                 .onSuccess {
+                    log.info {
+                        "Edited account $accountToEdit"
+                    }
+
                     log.debug {
                         "editAccount(): account edited"
                     }
@@ -233,19 +237,22 @@ class EditAccountScreenViewModel(
                         "\ncolorScheme=$colorScheme"
             }
 
-            addAccountUseCase
-                .invoke(
-                    title=title,
-                    currency=currency,
-                    type=type,
-                    colorScheme=colorScheme,
-                )
+            addAccountUseCase(
+                title = title,
+                currency = currency,
+                type = type,
+                colorScheme = colorScheme,
+            )
                 .onFailure { error ->
                     log.error(error) {
                         "addAccount(): failed to add account"
                     }
                 }
                 .onSuccess {
+                    log.info {
+                        "Added new ${currency.code} account '$title'"
+                    }
+
                     log.debug {
                         "addAccount(): account added"
                     }
