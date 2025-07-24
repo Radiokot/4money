@@ -110,7 +110,7 @@ ext {
     logbackVersion = "3.0.0"
     kotlinSerializationJsonVersion = "1.8.0"
     workVersion = "2.10.1"
-    composeUnstyledVersion = "1.31.0"
+    composeUnstyledVersion = "1.38.0"
     bip39Version = "1.0.9"
     bouncycastleVersion = "2.73.7"
 }

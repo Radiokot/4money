@@ -58,14 +58,14 @@ class BackgroundPowerSyncWorker(
                 return@withTimeout Result.success()
             }
 
-            log.debug {
-                "doWork(): refreshing Supabase auth session"
-            }
-
             val syncDuration = measureTime {
 
                 log.info {
                     "Background sync started"
+                }
+
+                log.debug {
+                    "doWork(): refreshing Supabase auth session"
                 }
 
                 sessionScope
