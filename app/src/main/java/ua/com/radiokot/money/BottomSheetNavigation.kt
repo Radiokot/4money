@@ -31,7 +31,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -161,9 +160,8 @@ fun MoneyAppModalBottomSheetHost(
 
     val sheetState = rememberModalBottomSheetState(
         initialDetent = SheetDetent.Hidden,
-        // Use normal speed once the IME padding issue is resolved
-        // https://github.com/composablehorizons/compose-unstyled/issues/74
-        animationSpec = tween(50),
+        // Need to do something with the exit speed.
+        animationSpec = tween(150),
     )
 
     LaunchedEffect(sheetState) {
@@ -196,6 +194,7 @@ fun MoneyAppModalBottomSheetHost(
         )
 
         Sheet(
+            imeAware = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .defaultMinSize(minWidth = 1.dp, minHeight = 1.dp)
@@ -205,7 +204,6 @@ fun MoneyAppModalBottomSheetHost(
                         topEnd = 24.dp,
                     )
                 )
-                .imePadding()
         ) SheetContent@{
 
             val backStack by bottomSheetNavigator.backStack.collectAsState()
