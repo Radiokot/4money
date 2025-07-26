@@ -55,7 +55,8 @@ fun AmountInputField(
     currency: ViewCurrency,
     amountFormat: ViewAmountFormat,
     onNewValueParsed: (BigInteger) -> Unit,
-    onKeyboardSubmit: () -> Unit,
+    onKeyboardSubmit: () -> Unit = {},
+    imeAction: ImeAction = ImeAction.Done,
 ) {
     var lastEnteredTextFieldValue by remember {
         mutableStateOf(TextFieldValue())
@@ -111,7 +112,7 @@ fun AmountInputField(
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Decimal,
-            imeAction = ImeAction.Done,
+            imeAction = imeAction,
         ),
         keyboardActions = KeyboardActions {
             onKeyboardSubmit()

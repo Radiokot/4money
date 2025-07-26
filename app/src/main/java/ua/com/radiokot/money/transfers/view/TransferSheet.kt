@@ -63,6 +63,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -279,6 +280,7 @@ private fun TransferSheet(
                         onKeyboardSubmit = {
                             destinationAmountFocusRequester.requestFocus()
                         },
+                        imeAction = ImeAction.Next,
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(sourceAmountFocusRequester)
@@ -307,7 +309,10 @@ private fun TransferSheet(
                     amountFormat = amountFormat,
                     onNewValueParsed = onNewDestinationAmountValueParsed,
                     onKeyboardSubmit = {
-                        softKeyboard?.hide()
+                        if (isSaveEnabled.value) {
+                            softKeyboard?.hide()
+                            onSaveClicked()
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
