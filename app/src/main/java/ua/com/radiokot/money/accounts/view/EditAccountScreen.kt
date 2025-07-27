@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -54,6 +55,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composeunstyled.Checkbox
 import com.composeunstyled.Text
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
@@ -74,7 +76,11 @@ private fun EditAccountScreen(
     isCurrencyChangeEnabled: Boolean,
     onCurrencyClicked: () -> Unit,
     type: State<Account.Type>,
+    isTypeChangeEnabled: State<Boolean>,
     onTypeClicked: () -> Unit,
+    isArchived: State<Boolean>,
+    isArchivedVisible: Boolean,
+    onArchivedClicked: () -> Unit,
     onCloseClicked: () -> Unit,
 ) = Column(
     modifier = Modifier
@@ -201,20 +207,69 @@ private fun EditAccountScreen(
             .fillMaxWidth()
             .border(
                 width = 1.dp,
-                color = Color.DarkGray,
+                color =
+                if (isTypeChangeEnabled.value)
+                    Color.DarkGray
+                else
+                    Color.Gray,
             )
             .clickable(
+                enabled = isTypeChangeEnabled.value,
                 onClick = onTypeClicked,
             )
             .padding(12.dp)
     ) {
         Text(
             text = type.value.name,
+            color = if (isTypeChangeEnabled.value)
+                Color.Unspecified
+            else
+                Color.Gray,
             modifier = Modifier
                 .weight(1f)
         )
 
-        Text(text = "🔽")
+        if (isTypeChangeEnabled.value) {
+            Text(text = "🔽")
+        }
+    }
+
+    if (isArchivedVisible) {
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clickable(
+                    onClick = onArchivedClicked,
+                )
+                .padding(
+                    vertical = 12.dp,
+                )
+        ) {
+            Text(
+                text = "Archived",
+                modifier = Modifier
+                    .weight(1f)
+            )
+
+            Checkbox(
+                checked = isArchived.value,
+                shape = RoundedCornerShape(12.dp),
+                borderColor = Color.DarkGray,
+                borderWidth = 1.dp,
+                onCheckedChange = { onArchivedClicked() },
+                modifier = Modifier
+                    .padding(
+                        horizontal = 6.dp,
+                    )
+                    .size(
+                        28.dp,
+                    )
+            ) {
+                Text(text = "☑️")
+            }
+        }
     }
 
     Spacer(modifier = Modifier.height(24.dp))
@@ -302,7 +357,11 @@ fun EditAccountScreenRoot(
         isCurrencyChangeEnabled = viewModel.isCurrencyChangeEnabled,
         onCurrencyClicked = remember { viewModel::onCurrencyClicked },
         type = viewModel.type.collectAsState(),
+        isTypeChangeEnabled = viewModel.isTypeChangeEnabled.collectAsState(),
         onTypeClicked = remember { viewModel::onTypeClicked },
+        isArchived = viewModel.isArchived.collectAsState(),
+        isArchivedVisible = viewModel.isArchivedVisible,
+        onArchivedClicked = remember { viewModel::onArchivedClicked },
         onCloseClicked = remember { viewModel::onCloseClicked },
     )
 }
@@ -329,7 +388,11 @@ private fun EditAccountScreenPreview(
         isCurrencyChangeEnabled = true,
         onCurrencyClicked = {},
         type = Account.Type.Savings.let(::mutableStateOf),
+        isTypeChangeEnabled = true.let(::mutableStateOf),
         onTypeClicked = {},
+        isArchived = false.let(::mutableStateOf),
+        isArchivedVisible = true,
+        onArchivedClicked = {},
         onCloseClicked = {},
     )
 }

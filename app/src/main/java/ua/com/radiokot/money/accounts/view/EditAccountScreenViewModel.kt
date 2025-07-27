@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.accounts.data.Account
@@ -178,6 +179,15 @@ class EditAccountScreenViewModel(
         }
 
         _type.value = newType
+    }
+
+    fun onArchivedClicked() {
+
+        log.debug {
+            "onArchivedClicked(): flipping archived"
+        }
+
+        _isArchived.update(Boolean::not)
     }
 
     fun onSaveClicked() {
