@@ -55,6 +55,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composeunstyled.Text
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
@@ -72,6 +73,8 @@ fun AccountsScreenRoot(
     totalAmountPerCurrencyList = viewModel.totalAmountsPerCurrency.collectAsState(),
     totalAmount = viewModel.totalAmount.collectAsState(),
     onAddClicked = remember { viewModel::onAddClicked },
+    isArchiveVisible = viewModel.isArchiveVisible.collectAsState(),
+    onArchiveClicked = remember { viewModel::onArchiveClicked },
 )
 
 @Composable
@@ -87,6 +90,8 @@ private fun AccountsScreen(
     totalAmountPerCurrencyList: State<List<ViewAmount>>,
     totalAmount: State<ViewAmount?>,
     onAddClicked: () -> Unit,
+    isArchiveVisible: State<Boolean>,
+    onArchiveClicked: () -> Unit,
 ) = Column(
     modifier = modifier
 ) {
@@ -203,6 +208,21 @@ private fun AccountsScreen(
                     itemList = accountItemList,
                     onAccountItemClicked = onAccountItemClicked,
                     onAccountItemMoved = onAccountItemMoved,
+                    bottomContent =
+                    if (isArchiveVisible.value) {
+                        {
+                            item {
+                                BottomArchiveLink(
+                                    modifier = Modifier
+                                        .clickable(
+                                            onClick = onArchiveClicked,
+                                        )
+                                )
+                            }
+                        }
+                    } else {
+                        null
+                    }
                 )
 
             Page.Total ->
@@ -212,15 +232,29 @@ private fun AccountsScreen(
                 )
         }
     }
+}
 
-    MovableAccountList(
+@Composable
+private fun BottomArchiveLink(
+    modifier: Modifier = Modifier,
+) = Row(
+    modifier = modifier
+        .padding(
+            vertical = 8.dp,
+        )
+        .fillMaxWidth()
+) {
+    Text(
+        text = "Archive",
+        fontSize = 16.sp,
+        fontWeight = FontWeight(500),
         modifier = Modifier
-            .padding(
-                horizontal = 16.dp,
-            ),
-        itemList = accountItemList,
-        onAccountItemClicked = onAccountItemClicked,
-        onAccountItemMoved = onAccountItemMoved,
+            .weight(1f),
+    )
+
+    Text(
+        text = "▶️",
+        fontSize = 16.sp,
     )
 }
 

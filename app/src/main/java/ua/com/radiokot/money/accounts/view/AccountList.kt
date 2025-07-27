@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
@@ -126,6 +127,7 @@ fun MovableAccountList(
         itemToPlaceBefore: ViewAccountListItem.Account?,
         itemToPlaceAfter: ViewAccountListItem.Account?,
     ) -> Unit,
+    bottomContent: (LazyListScope.() -> Unit)? = null,
 ) {
     val movableItemList = remember {
         mutableStateListOf<ViewAccountListItem>()
@@ -241,6 +243,8 @@ fun MovableAccountList(
                 }
             }
         }
+
+        bottomContent?.invoke(this)
     }
 }
 

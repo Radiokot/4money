@@ -22,6 +22,7 @@ package ua.com.radiokot.money.home.view
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.tween
@@ -163,6 +164,14 @@ private fun HomeScreen(
                                 )
                             )
                     )
+                },
+                onProceedToArchivedAccounts = {
+                    // TODO: Proceed to archived accounts
+                    Toast.makeText(
+                        context,
+                        "🤷🏻‍♂️",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             )
 

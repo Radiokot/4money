@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
+import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.logic.GetVisibleAccountsUseCase
 import ua.com.radiokot.money.accounts.logic.MoveAccountUseCase
 import ua.com.radiokot.money.currency.data.Currency
@@ -46,6 +47,7 @@ import ua.com.radiokot.money.lazyLogger
 import java.math.BigInteger
 
 class AccountsViewModel(
+    accountRepository: AccountRepository,
     private val currencyRepository: CurrencyRepository,
     currencyPreferences: CurrencyPreferences,
     getVisibleAccountsUseCase: GetVisibleAccountsUseCase,
@@ -166,6 +168,12 @@ class AccountsViewModel(
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
+    val isArchiveVisible: StateFlow<Boolean> =
+        accountRepository
+            .getAccountsFlow()
+            .map { it.any(Account::isArchived) }
+            .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
     fun onAccountItemClicked(item: ViewAccountListItem.Account) {
         val account = item.source
         if (account == null) {
@@ -250,6 +258,14 @@ class AccountsViewModel(
         _events.tryEmit(Event.ProceedToAccountAdd)
     }
 
+    fun onArchiveClicked() {
+        log.debug {
+            "onArchiveClicked(): proceeding to archive"
+        }
+
+        _events.tryEmit(Event.ProceedToArchivedAccounts)
+    }
+
     sealed interface Event {
 
         class ProceedToAccountActions(
@@ -257,5 +273,7 @@ class AccountsViewModel(
         ) : Event
 
         object ProceedToAccountAdd : Event
+
+        object ProceedToArchivedAccounts : Event
     }
 }

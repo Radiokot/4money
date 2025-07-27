@@ -110,6 +110,7 @@ val accountsModule = module {
 
         viewModel {
             AccountsViewModel(
+                accountRepository = get(),
                 currencyRepository = get(),
                 currencyPreferences = get(),
                 moveAccountUseCase = get(),
