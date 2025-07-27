@@ -19,6 +19,8 @@
 
 package ua.com.radiokot.money
 
+import android.view.Window
+import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
@@ -44,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.FloatingWindow
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -62,6 +65,7 @@ import com.composables.core.Scrim
 import com.composables.core.Sheet
 import com.composables.core.SheetDetent
 import com.composables.core.rememberModalBottomSheetState
+import com.composeunstyled.LocalModalWindow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -182,6 +186,15 @@ fun MoneyAppModalBottomSheetHost(
         state = sheetState,
         onDismiss = bottomSheetNavigator::onDismiss,
     ) {
+        val modalWindow: Window = LocalModalWindow.current
+
+        LaunchedEffect(modalWindow) {
+            WindowInsetsControllerCompat(modalWindow, modalWindow.decorView)
+                .isAppearanceLightNavigationBars = true
+            // This removes the default navigation bar scrim.
+            modalWindow.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        }
+
         val scrimFadeAnimationSpec: SpringSpec<Float> = remember {
             spring(
                 stiffness = Spring.StiffnessMedium,
@@ -210,7 +223,6 @@ fun MoneyAppModalBottomSheetHost(
             val topBackStackEntry by remember {
                 derivedStateOf { backStack.lastOrNull() }
             }
-
             AnimatedContent(
                 targetState = topBackStackEntry
                     ?: return@SheetContent,
@@ -239,6 +251,8 @@ fun MoneyAppModalBottomSheetHost(
                 ) {
                     bottomSheetNavigator.popBackStack(shownBackStackEntry, false)
                 }
+
+
 
                 DisposableEffect(shownBackStackEntry) {
                     onDispose {
