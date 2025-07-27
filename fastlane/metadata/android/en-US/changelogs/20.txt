@@ -1,0 +1,6 @@
+Changed:
+- Improved enter animation of the operation sheet
+
+Added:
+- Ability to archive (but not unarchive) the account on the edit screen
+- Ability to submit the operation with the Done keyboard action in the operation sheet

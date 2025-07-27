@@ -1,2 +1,0 @@
-Added:
-- Not showing archived accounts (without the ability to archive or un-archive them, for now)
