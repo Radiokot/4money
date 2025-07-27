@@ -32,7 +32,9 @@ import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.logic.AddAccountUseCase
+import ua.com.radiokot.money.accounts.logic.ArchiveAccountUseCase
 import ua.com.radiokot.money.accounts.logic.EditAccountUseCase
+import ua.com.radiokot.money.accounts.logic.UnarchiveAccountUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
@@ -51,6 +53,8 @@ class EditAccountScreenViewModel(
     itemColorSchemeRepository: ItemColorSchemeRepository,
     private val editAccountUseCase: EditAccountUseCase,
     private val addAccountUseCase: AddAccountUseCase,
+    private val archiveAccountUseCase: ArchiveAccountUseCase,
+    private val unarchiveAccountUseCase: UnarchiveAccountUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("EditAccountScreenVM")
@@ -62,20 +66,16 @@ class EditAccountScreenViewModel(
             null
         }
     }
-    val isNewAccount: Boolean = accountToEdit == null
     private val _title: MutableStateFlow<String> = MutableStateFlow(
         accountToEdit?.title ?: ""
     )
-    val title = _title.asStateFlow()
     private val _colorScheme: MutableStateFlow<ItemColorScheme> = MutableStateFlow(
         accountToEdit?.colorScheme
             ?: itemColorSchemeRepository.getItemColorSchemesByName().getValue("Green3")
     )
-    val colorScheme = _colorScheme.asStateFlow()
     private val _type: MutableStateFlow<Account.Type> = MutableStateFlow(
         accountToEdit?.type ?: Account.Type.Regular
     )
-    val type = _type.asStateFlow()
     private val _currency: MutableStateFlow<Currency> = MutableStateFlow(runBlocking {
         accountToEdit?.currency
             ?: (currencyRepository
@@ -84,15 +84,35 @@ class EditAccountScreenViewModel(
                 )
                 ?: currencyRepository.getCurrencies().first())
     })
+    private val _isArchived: MutableStateFlow<Boolean> = MutableStateFlow(
+        accountToEdit?.isArchived ?: false
+    )
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
+
+    val isNewAccount: Boolean = accountToEdit == null
+
+    val title = _title.asStateFlow()
+
+    val colorScheme = _colorScheme.asStateFlow()
+
+    val type = _type.asStateFlow()
+
+    val isArchived = _isArchived.asStateFlow()
 
     val currencyCode: StateFlow<String> =
         _currency
             .map(viewModelScope, Currency::code)
 
+    val isTypeChangeEnabled: StateFlow<Boolean> =
+        isArchived
+            .map(viewModelScope, Boolean::not)
+
     val isCurrencyChangeEnabled: Boolean =
         isNewAccount
+
+    val isArchivedVisible: Boolean =
+        !isNewAccount
 
     val isSaveEnabled: StateFlow<Boolean> =
         _title
@@ -166,10 +186,17 @@ class EditAccountScreenViewModel(
             return
         }
 
-        if (accountToEdit != null) {
-            editAccount(accountToEdit)
-        } else {
+        if (accountToEdit == null) {
             addAccount()
+            return
+        }
+
+        if (isArchived.value && !accountToEdit.isArchived) {
+            archiveAccount(accountToEdit)
+        } else if (!isArchived.value && accountToEdit.isArchived) {
+            unarchiveAccount(accountToEdit)
+        } else {
+            editAccount(accountToEdit)
         }
     }
 
@@ -211,6 +238,76 @@ class EditAccountScreenViewModel(
 
                     log.debug {
                         "editAccount(): account edited"
+                    }
+
+                    _events.emit(Event.Done)
+                }
+        }
+    }
+
+    private var archiveJob: Job? = null
+    private fun archiveAccount(
+        accountToArchive: Account,
+    ) {
+        archiveJob?.cancel()
+        archiveJob = viewModelScope.launch {
+
+            log.debug {
+                "accountToArchive(): archiving:" +
+                        "\naccountToArchive=$accountToArchive"
+            }
+
+            archiveAccountUseCase
+                .invoke(
+                    accountToArchive = accountToArchive,
+                )
+                .onFailure {
+                    log.error(it) {
+                        "archiveAccount(): failed to archive account"
+                    }
+                }
+                .onSuccess {
+                    log.info {
+                        "Archived account $accountToArchive"
+                    }
+
+                    log.debug {
+                        "archiveAccount(): account archived"
+                    }
+
+                    _events.emit(Event.Done)
+                }
+        }
+    }
+
+    private var unarchiveJob: Job? = null
+    private fun unarchiveAccount(
+        accountToUnarchive: Account,
+    ) {
+        unarchiveJob?.cancel()
+        unarchiveJob = viewModelScope.launch {
+
+            log.debug {
+                "unarchiveAccount(): unarchiving:" +
+                        "\naccountToUnarchive=$accountToUnarchive"
+            }
+
+            unarchiveAccountUseCase
+                .invoke(
+                    accountToUnrachive = accountToUnarchive,
+                )
+                .onFailure { error ->
+                    log.error(error) {
+                        "unarchiveAccount(): failed to unarchive account"
+                    }
+                }
+                .onSuccess {
+                    log.info {
+                        "Unarchived account $accountToUnarchive"
+                    }
+
+                    log.debug {
+                        "unarchiveAccount(): account unarchived"
                     }
 
                     _events.emit(Event.Done)

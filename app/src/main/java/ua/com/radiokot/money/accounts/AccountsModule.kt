@@ -25,12 +25,14 @@ import org.koin.dsl.module
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.accounts.logic.AddAccountUseCase
+import ua.com.radiokot.money.accounts.logic.ArchiveAccountUseCase
 import ua.com.radiokot.money.accounts.logic.EditAccountUseCase
 import ua.com.radiokot.money.accounts.logic.GetVisibleAccountsUseCase
 import ua.com.radiokot.money.accounts.logic.MoveAccountUseCase
 import ua.com.radiokot.money.accounts.logic.PowerSyncAddAccountUseCase
 import ua.com.radiokot.money.accounts.logic.PowerSyncEditAccountUseCase
 import ua.com.radiokot.money.accounts.logic.PowerSyncMoveAccountUseCase
+import ua.com.radiokot.money.accounts.logic.UnarchiveAccountUseCase
 import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
 import ua.com.radiokot.money.accounts.view.AccountActionSheetViewModel
 import ua.com.radiokot.money.accounts.view.AccountsViewModel
@@ -57,13 +59,13 @@ val accountsModule = module {
             )
         } bind AccountRepository::class
 
-        factory {
+        scoped {
             UpdateAccountBalanceUseCase(
                 accountRepository = get(),
             )
         } bind UpdateAccountBalanceUseCase::class
 
-        factory {
+        scoped {
             PowerSyncMoveAccountUseCase(
                 database = get(),
                 accountRepository = get(),
@@ -71,7 +73,7 @@ val accountsModule = module {
             )
         } bind MoveAccountUseCase::class
 
-        factory {
+        scoped {
             PowerSyncEditAccountUseCase(
                 database = get(),
                 accountRepository = get(),
@@ -79,7 +81,7 @@ val accountsModule = module {
             )
         } bind EditAccountUseCase::class
 
-        factory {
+        scoped {
             PowerSyncAddAccountUseCase(
                 database = get(),
                 accountRepository = get(),
@@ -92,6 +94,19 @@ val accountsModule = module {
                 accountRepository = get(),
             )
         } bind GetVisibleAccountsUseCase::class
+
+        scoped {
+            ArchiveAccountUseCase(
+                accountRepository = get(),
+            )
+        } bind ArchiveAccountUseCase::class
+
+        scoped {
+            UnarchiveAccountUseCase(
+                accountRepository = get(),
+                getVisibleAccountsUseCase = get(),
+            )
+        } bind UnarchiveAccountUseCase::class
 
         viewModel {
             AccountsViewModel(
@@ -120,6 +135,8 @@ val accountsModule = module {
                 itemColorSchemeRepository = get(),
                 editAccountUseCase = get(),
                 addAccountUseCase = get(),
+                archiveAccountUseCase = get(),
+                unarchiveAccountUseCase = get(),
             )
         } bind EditAccountScreenViewModel::class
     }

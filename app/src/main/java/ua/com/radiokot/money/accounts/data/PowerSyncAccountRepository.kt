@@ -213,6 +213,53 @@ class PowerSyncAccountRepository(
         )
     }
 
+    private fun updateArchived(
+        accountId: String,
+        isArchived: Boolean,
+        transaction: PowerSyncTransaction,
+    ) {
+        transaction.execute(
+            sql = UPDATE_ARCHIVED_BY_ID,
+            parameters = listOf(
+                isArchived,
+                accountId,
+            )
+        )
+    }
+
+    override suspend fun archive(
+        accountId: String,
+    ) {
+        database.writeTransaction { transaction ->
+
+            updateArchived(
+                accountId = accountId,
+                isArchived = true,
+                transaction = transaction,
+            )
+        }
+    }
+
+    override suspend fun unarchive(
+        accountId: String,
+        newPosition: Double,
+    ) {
+        database.writeTransaction { transaction ->
+
+            updateArchived(
+                accountId = accountId,
+                isArchived = false,
+                transaction = transaction,
+            )
+
+            updatePosition(
+                accountId = accountId,
+                newPosition = newPosition,
+                transaction = transaction,
+            )
+        }
+    }
+
     private fun toAccount(
         sqlCursor: SqlCursor,
     ): Account =
@@ -265,6 +312,16 @@ private const val UPDATE_ACCOUNT_BY_ID =
             "${DbSchema.ACCOUNT_TYPE} = ?, " +
             "${DbSchema.ACCOUNT_COLOR_SCHEME} = ? " +
             "WHERE ${DbSchema.ID} = ? "
+
+/**
+ * Params:
+ * 1. Is archived boolean
+ * 2. ID
+ */
+private const val UPDATE_ARCHIVED_BY_ID =
+    "UPDATE ${DbSchema.ACCOUNTS_TABLE} SET " +
+            "${DbSchema.ACCOUNT_IS_ARCHIVED} = ? " +
+            "WHERE ${DbSchema.ID} = ?"
 
 /**
  * Params:
