@@ -23,6 +23,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.tween
@@ -37,11 +38,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -98,7 +101,12 @@ class HomeActivity : UserSessionScopeActivity() {
             return
         }
 
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            navigationBarStyle = SystemBarStyle.light(
+                scrim = 0,
+                darkScrim = 0,
+            ),
+        )
 
         setContent {
             UserSessionScope {
@@ -143,6 +151,7 @@ private fun HomeScreen(
             exitTransition = { fadeOut(tween(150)) },
             modifier = Modifier
                 .weight(1f)
+                .displayCutoutPadding()
         ) {
 
             accountsScreen(
@@ -374,7 +383,7 @@ private fun BottomNavigation(
     modifier = Modifier
         .fillMaxWidth()
         .background(Color(0xfff0edf1))
-        .windowInsetsPadding(WindowInsets.navigationBars)
+        .safeDrawingPadding()
         .padding(
             vertical = 12.dp,
         )
