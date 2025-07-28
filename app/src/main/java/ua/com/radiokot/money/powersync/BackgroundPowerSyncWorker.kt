@@ -65,15 +65,6 @@ class BackgroundPowerSyncWorker(
                 }
 
                 log.debug {
-                    "doWork(): refreshing Supabase auth session"
-                }
-
-                sessionScope
-                    .get<SupabaseClient>()
-                    .auth
-                    .refreshCurrentSession()
-
-                log.debug {
                     "doWork(): waiting for PowerSync full sync"
                 }
 

@@ -31,6 +31,8 @@ import androidx.work.WorkManager
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
@@ -132,15 +134,26 @@ class MoneyApp : Application() {
         }
 
         if (supabaseSession == null) {
+            log.info {
+                "There is no user session"
+            }
+
             log.debug {
                 "initSessionHolder(): no stored session found"
             }
+
             return
+        }
+
+        log.info {
+            "Loaded session for user '${supabaseSession.user?.id}' " +
+                    "expiring at ${supabaseSession.expiresAt.toLocalDateTime(TimeZone.currentSystemDefault())}"
         }
 
         log.debug {
             "initSessionHolder(): setting the loaded session:" +
-                    "\nuserId=${supabaseSession.user?.id}"
+                    "\nuserId=${supabaseSession.user?.id}," +
+                    "\nexpiresAt=${supabaseSession.expiresAt}"
         }
 
         get<UserSessionHolder>().set(
