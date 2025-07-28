@@ -26,7 +26,7 @@ import com.powersync.connectors.PowerSyncCredentials
 import com.powersync.db.crud.CrudEntry
 import com.powersync.db.crud.CrudTransaction
 import com.powersync.db.crud.UpdateType
-import com.powersync.db.runWrappedSuspending
+import com.powersync.db.runWrapped
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.annotations.SupabaseInternal
 import io.github.jan.supabase.auth.Auth
@@ -171,7 +171,7 @@ class AtomicCrudSupabaseConnector(
     }
 
     override suspend fun fetchCredentials(
-    ): PowerSyncCredentials = runWrappedSuspending {
+    ): PowerSyncCredentials = runWrapped {
 
         check(supabaseClient.auth.sessionStatus.value is SessionStatus.Authenticated) {
             "Supabase client is not authenticated"
@@ -195,10 +195,10 @@ class AtomicCrudSupabaseConnector(
 
     override suspend fun uploadData(
         database: PowerSyncDatabase,
-    ) = runWrappedSuspending {
+    ) = runWrapped {
 
         val transaction = database.getNextCrudTransaction()
-            ?: return@runWrappedSuspending
+            ?: return@runWrapped
 
         try {
             if (!tryToUploadSpecialTransaction(transaction)) {
@@ -221,7 +221,7 @@ class AtomicCrudSupabaseConnector(
                 Logger.e("Data upload error: ${e.message ?: e}")
                 Logger.e("Discarding transaction: $transaction")
                 transaction.complete(null)
-                return@runWrappedSuspending
+                return@runWrapped
             }
 
             Logger.e("Data upload error - retrying transaction: $transaction, $e")

@@ -15,7 +15,7 @@ if (localPropertiesFile.exists()) {
 def ciSigningKeystoreFile = project.file("ci-signing.jks")
 
 android {
-    namespace 'ua.com.radiokot.money'
+    namespace "ua.com.radiokot.money"
     compileSdk 35
 
     defaultConfig {
@@ -70,19 +70,14 @@ android {
         }
     }
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = "17"
     }
 
     packagingOptions {
         // Problems caused by Bouncy castle
-        exclude 'META-INF/versions/**'
-        doNotStrip '**/*.so'
+        exclude "META-INF/versions/**"
+        doNotStrip "**/*.so"
     }
 
     // F-Droid policy: https://gitlab.com/fdroid/admin/-/issues/367
@@ -103,7 +98,7 @@ ext {
     pagingVersion = "3.3.6"
     activityVersion = "1.10.1"
     koinBomVersion = "4.0.2"
-    powersyncVersion = "1.2.1"
+    powersyncVersion = "1.3.0"
     supabaseVersion = "3.1.4"
     kotlinLoggingVersion = "7.0.3"
     slf4jApiVersion = "2.0.16"
