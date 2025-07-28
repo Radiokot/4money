@@ -243,6 +243,11 @@ class AccountsViewModel(
                     }
                 }
                 .onSuccess {
+                    log.info {
+                        "Moved account $accountToMove " +
+                                "to be between $accountToPlaceAfter and $accountToPlaceBefore"
+                    }
+
                     log.debug {
                         "onAccountItemMoved(): moved successfully"
                     }
