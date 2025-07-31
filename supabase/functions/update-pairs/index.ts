@@ -148,7 +148,7 @@ function mergePrices(...prices: UsdPriceEntry[][]): UsdPriceEntry[] {
 
 Deno.serve(async (req) => {
 
-  const timeString: string | null = req.searchParams?.get("time")
+  const timeString: string | null = new URL(req.url).searchParams?.get("time")
   let time: Date = new Date()
   if (timeString) {
     time = new Date(Date.parse(timeString))
