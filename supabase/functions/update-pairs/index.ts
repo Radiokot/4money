@@ -4,7 +4,7 @@
 
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
-import { createClient } from "jsr:@supabase/supabase-js@2"
+import postgres from 'https://deno.land/x/postgresjs/mod.js'
 
 class UsdPriceEntry {
   code: string;
@@ -62,6 +62,8 @@ const CRYPTO_WHITELIST = new Set<string>([
   "BTC", "ETH", "XMR", "USDT", "CCD",
 ])
 
+const sql = postgres(Deno.env.get("SUPABASE_DB_URL"))
+
 async function fetchBinancePrices(): Promise<UsdPriceEntry[]> {
   try {
     const response = await fetch(BINANCE_API)
@@ -83,9 +85,12 @@ async function fetchBinancePrices(): Promise<UsdPriceEntry[]> {
   }
 }
 
-async function fetchWisePrices(): Promise<UsdPriceEntry[]> {
+async function fetchWisePrices(time: Date): Promise<UsdPriceEntry[]> {
   try {
-    const response = await fetch(WISE_API, {
+    const url = new URL(WISE_API)
+    url.searchParams.set("time", time.toISOString())
+
+    const response = await fetch(url, {
       headers: {
         "Authorization": `Bearer ${WISE_API_KEY}`
       }
@@ -142,6 +147,13 @@ function mergePrices(...prices: UsdPriceEntry[][]): UsdPriceEntry[] {
 }
 
 Deno.serve(async (req) => {
+
+  const timeString: string | null = req.searchParams?.get("time")
+  let time: Date = new Date()
+  if (timeString) {
+    time = new Date(Date.parse(timeString))
+  }
+
   try {
     const [
       binancePrices,
@@ -149,7 +161,7 @@ Deno.serve(async (req) => {
       kucoinPrices,
     ] = await Promise.all([
       fetchBinancePrices(),
-      fetchWisePrices(),
+      fetchWisePrices(time),
       fetchKucoinPrices(),
     ])
     const averagePrices = mergePrices(
@@ -159,33 +171,23 @@ Deno.serve(async (req) => {
       [UsdPriceEntry.USDT],
     )
 
-    const serviceClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    )
-
-    // Insert/update pairs.
-    const { error } = await serviceClient
-      .from("pairs")
-      .upsert(
-        averagePrices
-          .map(usdPriceEntry => ({
-            base_currency_code: usdPriceEntry.code,
-            quote_currency_code: "USD",
-            price: usdPriceEntry.price,
-          })),
-        {
-          ignoreDuplicates: false,
-          returning: "minimal",
-        }
-      )
-
-    if (error) {
-      throw error
-    }
+    const pairValues = averagePrices.map(usdPriceEntry => ({
+      base_currency_code: usdPriceEntry.code,
+      quote_currency_code: "USD",
+      price: usdPriceEntry.price,
+    }))
+    
+    await sql`
+      INSERT INTO pairs ${sql(pairValues)}
+      ON CONFLICT (base_currency_code, quote_currency_code) 
+      DO UPDATE SET price = EXCLUDED.price;
+    `
 
     return new Response(
-      JSON.stringify({ done: true }),
+      JSON.stringify({
+        done: true,
+        time: time,
+      }),
       {
         headers: { "Content-Type": "application/json" }
       }
