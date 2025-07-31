@@ -176,13 +176,27 @@ Deno.serve(async (req) => {
       quote_currency_code: "USD",
       price: usdPriceEntry.price,
     }))
-    
+
     await sql`
       INSERT INTO pairs ${sql(pairValues)}
       ON CONFLICT (base_currency_code, quote_currency_code) 
       DO UPDATE SET price = EXCLUDED.price;
     `
 
+    const dailyPriceValues = averagePrices.map(usdPriceEntry => ({
+      base_currency_code: usdPriceEntry.code,
+      day: time.toISOString().substring(0, 10),
+      samples: 1,
+      price: usdPriceEntry.price,
+    }))
+
+    await sql`
+      INSERT INTO daily_prices ${sql(dailyPriceValues)}
+      ON CONFLICT (base_currency_code, day)
+      DO UPDATE SET 
+        price = trim_scale(daily_prices.price + (EXCLUDED.price - daily_prices.price) / (daily_prices.samples + 1)),
+        samples = daily_prices.samples + 1
+    `
     return new Response(
       JSON.stringify({
         done: true,
