@@ -55,7 +55,7 @@ class UsdPriceEntry {
 }
 
 const BINANCE_API = "https://api.binance.com/api/v3/ticker/price"
-const WISE_API = "https://api.wise.com/v1/rates?target=USD"
+const WISE_API = "https://api.wise.com/v1/rates"
 const WISE_API_KEY = Deno.env.get("WISE_API_KEY") ?? ""
 const KUCOIN_API = "https://api.kucoin.com/api/v1/market/allTickers"
 const CRYPTO_WHITELIST = new Set<string>([
@@ -89,6 +89,7 @@ async function fetchWisePrices(time: Date): Promise<UsdPriceEntry[]> {
   try {
     const url = new URL(WISE_API)
     url.searchParams.set("time", time.toISOString())
+    url.searchParams.set("target", "USD")
 
     const response = await fetch(url, {
       headers: {
@@ -171,17 +172,19 @@ Deno.serve(async (req) => {
       [UsdPriceEntry.USDT],
     )
 
-    const pairValues = averagePrices.map(usdPriceEntry => ({
-      base_currency_code: usdPriceEntry.code,
-      quote_currency_code: "USD",
-      price: usdPriceEntry.price,
-    }))
+    if (!timeString) {
+      const pairValues = averagePrices.map(usdPriceEntry => ({
+        base_currency_code: usdPriceEntry.code,
+        quote_currency_code: "USD",
+        price: usdPriceEntry.price,
+      }))
 
-    await sql`
-      INSERT INTO pairs ${sql(pairValues)}
-      ON CONFLICT (base_currency_code, quote_currency_code) 
-      DO UPDATE SET price = EXCLUDED.price;
-    `
+      await sql`
+        INSERT INTO pairs ${sql(pairValues)}
+        ON CONFLICT (base_currency_code, quote_currency_code) 
+        DO UPDATE SET price = EXCLUDED.price;
+      `
+    }
 
     const dailyPriceValues = averagePrices.map(usdPriceEntry => ({
       base_currency_code: usdPriceEntry.code,
