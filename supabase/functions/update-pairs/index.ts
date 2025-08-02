@@ -17,22 +17,6 @@ class UsdPriceEntry {
     this.source = source
   }
 
-  static fromWiseUsdRate(usdRate: any): UsdPriceEntry {
-    return new UsdPriceEntry(
-      usdRate.source,
-      parseFloat(usdRate.rate),
-      "wise"
-    )
-  }
-
-  static fromKucoinUsdtTickerPrice(tickerPrice: any): UsdPriceEntry {
-    return new UsdPriceEntry(
-      tickerPrice.symbol.replace("-USDT", ""),
-      parseFloat(tickerPrice.buy),
-      "kucoin",
-    )
-  }
-
   static fromMultiplePrices(code: string, prices: number[]): UsdPriceEntry {
     const sum = prices.reduce((acc: number, val: number) => acc + val, 0)
     const average = prices.length > 0 ? sum / prices.length : 0
@@ -46,7 +30,6 @@ class UsdPriceEntry {
   static USDT = new UsdPriceEntry("USDT", 1, "stablecoin")
 }
 
-const KUCOIN_API = "https://api.kucoin.com/api/v1/market/allTickers"
 const CRYPTO_WHITELIST = new Set<string>([
   "BTC", "ETH", "XMR", "CCD",
 ])
@@ -70,7 +53,7 @@ async function fetchBinancePrices(time: Date): Promise<UsdPriceEntry[]> {
 
     const entries: (UsdPriceEntry | null)[] = await Promise.all(
       listedCurrencies.map(code => {
-        
+
         const dayStartDate = new Date(time)
         dayStartDate.setUTCHours(0, 0, 0, 0)
         const dayStartMillis = dayStartDate.getTime()
@@ -126,29 +109,65 @@ async function fetchWisePrices(time: Date): Promise<UsdPriceEntry[]> {
     const data = await response.json()
 
     return data
-      .map(item => UsdPriceEntry.fromWiseUsdRate(item))
+      .map(item => new UsdPriceEntry(item.source, +item.rate, "wise"))
   } catch (error) {
     console.error("Error fetching from Wise:", error)
     return []
   }
 }
 
-async function fetchKucoinPrices(): Promise<UsdPriceEntry[]> {
+async function fetchKucoinPrices(time: Date): Promise<UsdPriceEntry[]> {
   try {
-    const response = await fetch(KUCOIN_API)
-    if (!response.ok) {
-      throw new Error(`Kucoin API error: ${response.status}`)
-    }
+    const tickerData: any[] = await fetch("https://api.kucoin.com/api/v1/market/allTickers")
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Kucoin tickers API error: ${response.status}`)
+        }
+        return response.json()
+      })
+      .then(json => json.data.ticker as any[])
 
-    const data = (await response.json()).data
-
-    return data
-      .ticker
+    const listedCurrencies = tickerData
       .filter(item => item.symbol.endsWith("-USDT"))
-      .map(item => UsdPriceEntry.fromKucoinUsdtTickerPrice(item))
-      .filter(usdPriceEntry => CRYPTO_WHITELIST.has(usdPriceEntry.code))
+      .map(item => item.symbol.substring(0, item.symbol.lastIndexOf("-USDT")))
+      .filter(code => CRYPTO_WHITELIST.has(code))
+
+    const entries: (UsdPriceEntry | null)[] = await Promise.all(
+      listedCurrencies.map(code => {
+
+        const dayStartDate = new Date(time)
+        dayStartDate.setUTCHours(0, 0, 0, 0)
+        const dayStartSeconds = Math.ceil(dayStartDate.getTime() / 1000)
+        const dayEndSeconds = dayStartSeconds + 24 * 3600 - 1
+
+        const candlesUrl = new URL("https://api.kucoin.com/api/v1/market/candles")
+        candlesUrl.searchParams.set("symbol", code + "-USDT")
+        candlesUrl.searchParams.set("type", "1day")
+        candlesUrl.searchParams.set("startAt", dayStartSeconds.toString())
+        candlesUrl.searchParams.set("endAt", dayEndSeconds.toString())
+
+        return fetch(candlesUrl)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Kucoin candles API error: ${response.status}`)
+            }
+            return response.json()
+          })
+          .then(json => json.data as any[])
+          .then(candlesData => {
+            if (candlesData.length == 0) {
+              return null
+            }
+
+            // Closing price.
+            return new UsdPriceEntry(code, +candlesData[0][4], "kucoin-candles")
+          })
+      })
+    )
+
+    return entries.filter(entry => entry != null) as UsdPriceEntry[]
   } catch (error) {
-    console.error("Error fetching from Kucoin:", error)
+    console.error("Error fetching historical prices from Kucoin:", error)
     return []
   }
 }
@@ -186,7 +205,7 @@ Deno.serve(async (req) => {
     ] = await Promise.all([
       fetchBinancePrices(time),
       fetchWisePrices(time),
-      fetchKucoinPrices(),
+      fetchKucoinPrices(time),
     ])
     const averagePrices = mergePrices(
       binancePrices,
