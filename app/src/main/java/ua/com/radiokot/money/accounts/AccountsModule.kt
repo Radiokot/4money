@@ -36,6 +36,7 @@ import ua.com.radiokot.money.accounts.logic.UnarchiveAccountUseCase
 import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
 import ua.com.radiokot.money.accounts.view.AccountActionSheetViewModel
 import ua.com.radiokot.money.accounts.view.AccountsViewModel
+import ua.com.radiokot.money.accounts.view.ArchivedAccountsScreenViewModel
 import ua.com.radiokot.money.accounts.view.EditAccountScreenViewModel
 import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.categoriesModule
@@ -140,5 +141,11 @@ val accountsModule = module {
                 unarchiveAccountUseCase = get(),
             )
         } bind EditAccountScreenViewModel::class
+
+        viewModel {
+            ArchivedAccountsScreenViewModel(
+                accountRepository = get(),
+            )
+        } bind ArchivedAccountsScreenViewModel::class
     }
 }

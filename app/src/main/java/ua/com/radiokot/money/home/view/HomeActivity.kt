@@ -22,7 +22,6 @@ package ua.com.radiokot.money.home.view
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -66,6 +65,7 @@ import org.koin.compose.koinInject
 import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
 import ua.com.radiokot.money.accounts.view.AccountActionSheetRoute
 import ua.com.radiokot.money.accounts.view.AccountsScreenRoute
+import ua.com.radiokot.money.accounts.view.ArchivedAccountsActivity
 import ua.com.radiokot.money.accounts.view.EditAccountActivity
 import ua.com.radiokot.money.accounts.view.EditAccountScreenRoute
 import ua.com.radiokot.money.accounts.view.accountActionSheet
@@ -175,12 +175,9 @@ private fun HomeScreen(
                     )
                 },
                 onProceedToArchivedAccounts = {
-                    // TODO: Proceed to archived accounts
-                    Toast.makeText(
-                        context,
-                        "🤷🏻‍♂️",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    context.startActivity(
+                        Intent(context, ArchivedAccountsActivity::class.java)
+                    )
                 }
             )
 

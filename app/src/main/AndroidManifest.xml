@@ -68,5 +68,10 @@
             android:name=".categories.view.EditCategoryActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustNothing" />
+
+        <activity
+            android:name=".accounts.view.ArchivedAccountsActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustNothing" />
     </application>
 </manifest>
