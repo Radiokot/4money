@@ -2,6 +2,9 @@ name: Release dogfood to the Telegram channel
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - dogfood
 
 env:
   java_version: 17
