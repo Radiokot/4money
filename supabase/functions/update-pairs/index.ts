@@ -17,14 +17,6 @@ class UsdPriceEntry {
     this.source = source
   }
 
-  static fromBinanceUsdtTickerPrice(tickerPrice: any): UsdPriceEntry {
-    return new UsdPriceEntry(
-      tickerPrice.symbol.replace("USDT", ""),
-      parseFloat(tickerPrice.price),
-      "binance",
-    )
-  }
-
   static fromWiseUsdRate(usdRate: any): UsdPriceEntry {
     return new UsdPriceEntry(
       usdRate.source,
@@ -54,46 +46,77 @@ class UsdPriceEntry {
   static USDT = new UsdPriceEntry("USDT", 1, "stablecoin")
 }
 
-const BINANCE_API = "https://api.binance.com/api/v3/ticker/price"
-const WISE_API = "https://api.wise.com/v1/rates"
-const WISE_API_KEY = Deno.env.get("WISE_API_KEY") ?? ""
 const KUCOIN_API = "https://api.kucoin.com/api/v1/market/allTickers"
 const CRYPTO_WHITELIST = new Set<string>([
-  "BTC", "ETH", "XMR", "USDT", "CCD",
+  "BTC", "ETH", "XMR", "CCD",
 ])
 
 const sql = postgres(Deno.env.get("SUPABASE_DB_URL"))
 
-async function fetchBinancePrices(): Promise<UsdPriceEntry[]> {
+async function fetchBinancePrices(time: Date): Promise<UsdPriceEntry[]> {
   try {
-    const response = await fetch(BINANCE_API)
-    if (!response.ok) {
-      throw new Error(`Binance API error: ${response.status}`)
-    }
+    const tickerData: any[] = await fetch("https://api.binance.com/api/v3/ticker/price")
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Binance ticker API error: ${response.status}`)
+        }
+        return response.json()
+      })
 
-    const data = await response.json()
-
-    const entries = data
+    const listedCurrencies = tickerData
       .filter(item => item.symbol.endsWith("USDT"))
-      .map(item => UsdPriceEntry.fromBinanceUsdtTickerPrice(item))
-      .filter(usdPriceEntry => CRYPTO_WHITELIST.has(usdPriceEntry.code))
+      .map(item => item.symbol.substring(0, item.symbol.lastIndexOf("USDT")))
+      .filter(code => CRYPTO_WHITELIST.has(code))
 
-    return entries
+    const entries: (UsdPriceEntry | null)[] = await Promise.all(
+      listedCurrencies.map(code => {
+        
+        const dayStartDate = new Date(time)
+        dayStartDate.setUTCHours(0, 0, 0, 0)
+        const dayStartMillis = dayStartDate.getTime()
+        const dayEndMillis = dayStartMillis + 24 * 3600000 - 1
+
+        const klinesUrl = new URL("https://api.binance.com/api/v3/klines")
+        klinesUrl.searchParams.set("symbol", code + "USDT")
+        klinesUrl.searchParams.set("interval", "1d")
+        klinesUrl.searchParams.set("startTime", dayStartMillis.toString())
+        klinesUrl.searchParams.set("endTime", dayEndMillis.toString())
+
+        return fetch(klinesUrl)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Binance klines API error: ${response.status}`)
+            }
+            return response.json()
+          })
+          .then(klinesData => klinesData as any[])
+          .then(klinesData => {
+            if (klinesData.length == 0) {
+              return null
+            }
+
+            // Closing price.
+            return new UsdPriceEntry(code, +klinesData[0][4], "binance-klines")
+          })
+      })
+    )
+
+    return entries.filter(entry => entry != null) as UsdPriceEntry[]
   } catch (error) {
-    console.error("Error fetching from Binance:", error)
+    console.error("Error fetching historical prices from Binance:", error)
     return []
   }
 }
 
 async function fetchWisePrices(time: Date): Promise<UsdPriceEntry[]> {
   try {
-    const url = new URL(WISE_API)
+    const url = new URL("https://api.wise.com/v1/rates")
     url.searchParams.set("time", time.toISOString())
     url.searchParams.set("target", "USD")
 
     const response = await fetch(url, {
       headers: {
-        "Authorization": `Bearer ${WISE_API_KEY}`
+        "Authorization": `Bearer ${Deno.env.get("WISE_API_KEY") ?? ""}`
       }
     })
     if (!response.ok) {
@@ -161,7 +184,7 @@ Deno.serve(async (req) => {
       wisePrices,
       kucoinPrices,
     ] = await Promise.all([
-      fetchBinancePrices(),
+      fetchBinancePrices(time),
       fetchWisePrices(time),
       fetchKucoinPrices(),
     ])
