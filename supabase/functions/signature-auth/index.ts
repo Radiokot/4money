@@ -75,10 +75,6 @@ Deno.serve(async (req) => {
   const userUuid = await uuid.v5.generate(uuid.NAMESPACE_DNS, userIdentifier + ".4mn.local")
   const userEmail = userUuid + "@4mn.local"
 
-  // As it is not possible to create a session without credentials,
-  // use a temp random password to sign in.
-  const userTempPassword = crypto.randomUUID()
-
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -107,17 +103,19 @@ Deno.serve(async (req) => {
     )
   }
 
-  const { error: passwordUpdateError } = await supabase.auth.admin.updateUserById(
-    userUuid,
-    {
-      password: userTempPassword,
-    }
-  )
+  // Use a one-time password (OTP) to sign in,
+  // as the signature auth user has no password.
+  // Setting a temp password for each login doesn't work
+  // because it logs out all the other sessions of this user.
+  const { data: otpData, error: otpError } = await supabase.auth.admin.generateLink({
+    type: "magiclink",
+    email: userEmail,
+  })
 
-  if (passwordUpdateError) {
-    console.error("User password update failed", passwordUpdateError)
+  if (otpError) {
+    console.log("User OTP creation failed", otpError)
     return new Response(
-      JSON.stringify({ error: "User password update failed", details: passwordUpdateError.code }),
+      JSON.stringify({ error: "User OTP creation failed", details: otpError.code }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" }
@@ -125,9 +123,9 @@ Deno.serve(async (req) => {
     )
   }
 
-  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-    email: userEmail,
-    password: userTempPassword,
+  const { data: signInData, error: signInError } = await supabase.auth.verifyOtp({
+    token_hash: otpData.properties.hashed_token,
+    type: "email",
   })
 
   if (signInError) {
@@ -143,6 +141,6 @@ Deno.serve(async (req) => {
 
   return new Response(
     JSON.stringify(signInData.session),
-    { headers: { "Content-Type": "text/plain" } },
+    { headers: { "Content-Type": "application/json" } },
   )
 })
