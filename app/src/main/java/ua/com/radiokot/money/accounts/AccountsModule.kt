@@ -126,6 +126,7 @@ val accountsModule = module {
                 },
                 accountRepository = get(),
                 updateAccountBalanceUseCase = get(),
+                unarchiveAccountUseCase = get(),
             )
         } bind AccountActionSheetViewModel::class
 

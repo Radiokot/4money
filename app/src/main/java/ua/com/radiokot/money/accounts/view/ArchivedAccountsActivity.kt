@@ -85,7 +85,7 @@ private fun Content(
         )
 
         accountActionSheet(
-            onBalanceUpdated = navController::navigateUp,
+            onDone = navController::navigateUp,
             onProceedToEdit = { accountId ->
                 context.startActivity(
                     Intent(context, EditAccountActivity::class.java)

@@ -35,8 +35,7 @@ data class AccountActionSheetRoute(
 )
 
 fun NavGraphBuilder.accountActionSheet(
-    onBalanceUpdated: () -> Unit,
-    onUnarchived: () -> Unit = {},
+    onDone: () -> Unit,
     onProceedToIncome: (destinationAccountId: TransferCounterpartyId.Account) -> Unit = {},
     onProceedToExpense: (sourceAccountId: TransferCounterpartyId.Account) -> Unit = {},
     onProceedToTransfer: (sourceAccountId: TransferCounterpartyId.Account) -> Unit = {},
@@ -56,8 +55,6 @@ fun NavGraphBuilder.accountActionSheet(
     LaunchedEffect(route) {
         viewModel.events.collect { event ->
             when (event) {
-                AccountActionSheetViewModel.Event.BalanceUpdated ->
-                    onBalanceUpdated()
 
                 is AccountActionSheetViewModel.Event.ProceedToIncome ->
                     onProceedToIncome(event.destinationAccountId)
@@ -74,8 +71,8 @@ fun NavGraphBuilder.accountActionSheet(
                 is AccountActionSheetViewModel.Event.ProceedToFilteredActivity ->
                     onProceedToFilteredActivity(event.accountCounterparty)
 
-                AccountActionSheetViewModel.Event.Unarchived ->
-                    onUnarchived()
+                AccountActionSheetViewModel.Event.Done ->
+                    onDone()
             }
         }
     }

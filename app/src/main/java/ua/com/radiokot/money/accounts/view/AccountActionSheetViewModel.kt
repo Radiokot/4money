@@ -24,19 +24,14 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
+import ua.com.radiokot.money.accounts.logic.UnarchiveAccountUseCase
 import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
+import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
@@ -47,39 +42,45 @@ class AccountActionSheetViewModel(
     parameters: Parameters,
     accountRepository: AccountRepository,
     private val updateAccountBalanceUseCase: UpdateAccountBalanceUseCase,
+    private val unarchiveAccountUseCase: UnarchiveAccountUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("AccountActionSheetVM")
+
+    private val account: Account = runBlocking {
+        accountRepository
+            .getAccount(
+                accountId = parameters.accountId,
+            )
+            ?: error("Account not found")
+    }
+
+    val title: String =
+        account.title
+
+    val balance: ViewAmount =
+        ViewAmount(
+            value = account.balance,
+            currency = account.currency,
+        )
+
     private val _mode: MutableStateFlow<ViewAccountActionSheetMode> =
-        MutableStateFlow(ViewAccountActionSheetMode.Actions)
+        MutableStateFlow(
+            if (account.isArchived)
+                ViewAccountActionSheetMode.ArchivedActions
+            else
+                ViewAccountActionSheetMode.DefaultActions
+        )
     val mode = _mode.asStateFlow()
+
     private val _balanceInputValue: MutableStateFlow<BigInteger> =
-        MutableStateFlow(BigInteger.ZERO)
+        MutableStateFlow(account.balance)
     val balanceInputValue = _balanceInputValue.asStateFlow()
+
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events
 
-    private lateinit var account: Account
-    val accountDetails: StateFlow<ViewAccountDetails> =
-        accountRepository
-            .getAccountFlow(
-                accountId = parameters.accountId,
-            )
-            .onEach { freshAccount ->
-                account = freshAccount
-                _balanceInputValue.update { freshAccount.balance }
-            }
-            .map(::ViewAccountDetails)
-            .run { stateIn(viewModelScope, SharingStarted.Eagerly, runBlocking { first() }) }
-
     fun onBalanceClicked() {
-        if (mode.value != ViewAccountActionSheetMode.Actions) {
-            log.debug {
-                "onBalanceClicked(): ignoring as not in actions mode"
-            }
-            return
-        }
-
         log.debug {
             "onBalanceClicked(): switching mode to balance editing"
         }
@@ -89,13 +90,6 @@ class AccountActionSheetViewModel(
     }
 
     fun onTransferClicked() {
-        if (mode.value != ViewAccountActionSheetMode.Actions) {
-            log.debug {
-                "onTransferClicked(): ignoring as not in actions mode"
-            }
-            return
-        }
-
         _events.tryEmit(
             Event.ProceedToTransfer(
                 sourceAccountId = TransferCounterpartyId.Account(account.id),
@@ -104,13 +98,6 @@ class AccountActionSheetViewModel(
     }
 
     fun onIncomeClicked() {
-        if (mode.value != ViewAccountActionSheetMode.Actions) {
-            log.debug {
-                "onIncomeClicked(): ignoring as not in actions mode"
-            }
-            return
-        }
-
         _events.tryEmit(
             Event.ProceedToIncome(
                 destinationAccountId = TransferCounterpartyId.Account(account.id),
@@ -119,13 +106,6 @@ class AccountActionSheetViewModel(
     }
 
     fun onExpenseClicked() {
-        if (mode.value != ViewAccountActionSheetMode.Actions) {
-            log.debug {
-                "onExpenseClicked(): ignoring as not in actions mode"
-            }
-            return
-        }
-
         _events.tryEmit(
             Event.ProceedToExpense(
                 sourceAccountId = TransferCounterpartyId.Account(account.id),
@@ -134,13 +114,6 @@ class AccountActionSheetViewModel(
     }
 
     fun onActivityClicked() {
-        if (mode.value != ViewAccountActionSheetMode.Actions) {
-            log.debug {
-                "onActivityClicked(): ignoring as not in actions mode"
-            }
-            return
-        }
-
         _events.tryEmit(
             Event.ProceedToFilteredActivity(
                 accountCounterparty = TransferCounterparty.Account(
@@ -151,18 +124,15 @@ class AccountActionSheetViewModel(
     }
 
     fun onEditClicked() {
-        if (mode.value != ViewAccountActionSheetMode.Actions) {
-            log.debug {
-                "onEditClicked(): ignoring as not in actions mode"
-            }
-            return
-        }
-
         _events.tryEmit(
             Event.ProceedToEdit(
                 accountId = account.id,
             )
         )
+    }
+
+    fun onUnarchiveClicked() {
+        unarchiveAccount()
     }
 
     fun onNewBalanceInputValueParsed(newValue: BigInteger) {
@@ -205,7 +175,40 @@ class AccountActionSheetViewModel(
                         "updateAccountBalance(): balance updated, posting event"
                     }
 
-                    _events.tryEmit(Event.BalanceUpdated)
+                    _events.tryEmit(Event.Done)
+                }
+        }
+    }
+
+    private var unarchiveJob: Job? = null
+    private fun unarchiveAccount() {
+        unarchiveJob?.cancel()
+        unarchiveJob = viewModelScope.launch {
+
+            log.debug {
+                "unarchiveAccount(): unarchiving:" +
+                        "\naccount=$account"
+            }
+
+            unarchiveAccountUseCase
+                .invoke(
+                    accountToUnrachive = account,
+                )
+                .onFailure { error ->
+                    log.error(error) {
+                        "unarchiveAccount(): failed to unarchive account"
+                    }
+                }
+                .onSuccess {
+                    log.info {
+                        "Unarchived account $account"
+                    }
+
+                    log.debug {
+                        "unarchiveAccount(): account unarchived"
+                    }
+
+                    _events.emit(Event.Done)
                 }
         }
     }
@@ -232,9 +235,7 @@ class AccountActionSheetViewModel(
             val accountCounterparty: TransferCounterparty.Account,
         ) : Event
 
-        object BalanceUpdated : Event
-
-        object Unarchived : Event
+        object Done : Event
     }
 
     class Parameters(

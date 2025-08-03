@@ -58,10 +58,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
+import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.uikit.AmountInputField
 import ua.com.radiokot.money.uikit.TextButton
-import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 import java.math.BigInteger
 
 @Composable
@@ -70,7 +71,8 @@ fun AccountActionSheet(
     viewModel: AccountActionSheetViewModel,
 ) {
     AccountActionSheet(
-        accountDetails = viewModel.accountDetails.collectAsState(),
+        title = viewModel.title,
+        balance = viewModel.balance,
         mode = viewModel.mode.collectAsState(),
         balanceInputValue = viewModel.balanceInputValue.collectAsState(),
         onBalanceClicked = remember { viewModel::onBalanceClicked },
@@ -81,6 +83,7 @@ fun AccountActionSheet(
         onExpenseClicked = remember { viewModel::onExpenseClicked },
         onActivityClicked = remember { viewModel::onActivityClicked },
         onEditClicked = remember { viewModel::onEditClicked },
+        onUnarchiveClicked = remember { viewModel::onUnarchiveClicked },
         modifier = modifier,
     )
 }
@@ -88,7 +91,8 @@ fun AccountActionSheet(
 @Composable
 private fun AccountActionSheet(
     modifier: Modifier = Modifier,
-    accountDetails: State<ViewAccountDetails>,
+    title: String,
+    balance: ViewAmount,
     mode: State<ViewAccountActionSheetMode>,
     balanceInputValue: State<BigInteger>,
     onBalanceClicked: () -> Unit,
@@ -99,6 +103,7 @@ private fun AccountActionSheet(
     onExpenseClicked: () -> Unit,
     onActivityClicked: () -> Unit,
     onEditClicked: () -> Unit,
+    onUnarchiveClicked: () -> Unit,
 ) = BoxWithConstraints(
     modifier = modifier
         .background(Color(0xFFF9FBE7))
@@ -131,7 +136,7 @@ private fun AccountActionSheet(
             Spacer(modifier = Modifier.height(32.dp))
 
             BasicText(
-                text = accountDetails.value.title,
+                text = title,
                 style = TextStyle(
                     textAlign = TextAlign.Center,
                     fontSize = 24.sp,
@@ -147,7 +152,7 @@ private fun AccountActionSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             BasicText(
-                text = amountFormat(accountDetails.value.balance),
+                text = amountFormat(balance),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = TextStyle(
@@ -168,8 +173,8 @@ private fun AccountActionSheet(
         }
 
         when (mode.value) {
-            ViewAccountActionSheetMode.Actions ->
-                ActionsModeContent(
+            ViewAccountActionSheetMode.DefaultActions ->
+                DefaultActionsModeContent(
                     onBalanceClicked = onBalanceClicked,
                     onTransferClicked = onTransferClicked,
                     onIncomeClicked = onIncomeClicked,
@@ -178,9 +183,17 @@ private fun AccountActionSheet(
                     onEditClicked = onEditClicked,
                 )
 
+            ViewAccountActionSheetMode.ArchivedActions -> {
+                ArchivedActionsModeContent(
+                    onBalanceClicked = onBalanceClicked,
+                    onEditClicked = onEditClicked,
+                    onUnarchiveClicked = onUnarchiveClicked,
+                )
+            }
+
             ViewAccountActionSheetMode.Balance ->
                 BalanceModeContent(
-                    accountDetails = accountDetails,
+                    currency = balance.currency,
                     balanceInputValue = balanceInputValue,
                     amountFormat = amountFormat,
                     onNewBalanceInputValueParsed = onNewBalanceInputValueParsed,
@@ -197,8 +210,6 @@ private fun AccountActionSheet(
 )
 private fun AccountActionSheetPreview(
 ) = Column {
-    val amount = ViewAmountPreviewParameterProvider().values.first()
-
     ViewAccountActionSheetMode.entries.forEach { mode ->
         BasicText(
             text = mode.name + ": ",
@@ -206,10 +217,14 @@ private fun AccountActionSheetPreview(
         )
 
         AccountActionSheet(
-            accountDetails = ViewAccountDetails(
-                title = "Account #1",
-                balance = amount,
-            ).let(::mutableStateOf),
+            title = "My account",
+            balance = ViewAmount(
+                value = BigInteger("1050"),
+                currency = ViewCurrency(
+                    symbol = "$",
+                    precision = 2,
+                )
+            ),
             mode = mode.let(::mutableStateOf),
             balanceInputValue = BigInteger("9856").let(::mutableStateOf),
             onBalanceClicked = {},
@@ -220,12 +235,13 @@ private fun AccountActionSheetPreview(
             onExpenseClicked = {},
             onActivityClicked = {},
             onEditClicked = {},
+            onUnarchiveClicked = {},
         )
     }
 }
 
 @Composable
-private fun ActionsModeContent(
+private fun DefaultActionsModeContent(
     onBalanceClicked: () -> Unit,
     onTransferClicked: () -> Unit,
     onIncomeClicked: () -> Unit,
@@ -306,8 +322,54 @@ private fun ActionsModeContent(
 }
 
 @Composable
+private fun ArchivedActionsModeContent(
+    onBalanceClicked: () -> Unit,
+    onEditClicked: () -> Unit,
+    onUnarchiveClicked: () -> Unit,
+) = Column(
+    verticalArrangement = Arrangement.spacedBy(16.dp),
+    modifier = Modifier
+        .padding(
+            horizontal = 16.dp,
+        )
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        TextButton(
+            text = "✏️ Edit",
+            modifier = Modifier
+                .weight(1f)
+                .clickable(
+                    onClick = onEditClicked,
+                )
+        )
+
+        TextButton(
+            text = "⚖️ Balance",
+            modifier = Modifier
+                .weight(1f)
+                .clickable(
+                    onClick = onBalanceClicked,
+                )
+        )
+
+        TextButton(
+            text = "⤴️ Restore",
+            modifier = Modifier
+                .weight(1f)
+                .clickable(
+                    onClick = onUnarchiveClicked,
+                )
+        )
+    }
+
+    Spacer(modifier = Modifier.height(24.dp))
+}
+
+@Composable
 private fun BalanceModeContent(
-    accountDetails: State<ViewAccountDetails>,
+    currency: ViewCurrency,
     balanceInputValue: State<BigInteger>,
     amountFormat: ViewAmountFormat,
     onNewBalanceInputValueParsed: (BigInteger) -> Unit,
@@ -320,14 +382,13 @@ private fun BalanceModeContent(
             bottom = 24.dp,
         )
 ) {
-    val balanceInputCurrency = accountDetails.value.balance.currency
     val focusRequester = remember {
         FocusRequester()
     }
 
     AmountInputField(
         value = balanceInputValue,
-        currency = balanceInputCurrency,
+        currency = currency,
         amountFormat = amountFormat,
         onNewValueParsed = onNewBalanceInputValueParsed,
         onKeyboardSubmit = onBalanceInputSubmit,

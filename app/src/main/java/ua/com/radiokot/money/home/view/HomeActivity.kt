@@ -246,7 +246,7 @@ private fun HomeScreen(
             )
 
             accountActionSheet(
-                onBalanceUpdated = navController::navigateUp,
+                onDone = navController::navigateUp,
                 onProceedToExpense = { sourceAccountId ->
                     transfersNavigator.proceedToTransfer(
                         accountId = sourceAccountId,
