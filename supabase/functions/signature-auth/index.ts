@@ -73,6 +73,8 @@ Deno.serve(async (req) => {
     }
   )
 
+  // Create a verified user with the derived identifiers.
+  // Ignore the creation error if the user already exists.
   const { error: userCreationError } = await supabase.auth.admin.createUser({
     id: userUuid,
     email: userEmail,
