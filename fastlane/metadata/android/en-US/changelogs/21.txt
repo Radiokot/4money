@@ -1,6 +1,0 @@
-Fixed:
-- Main screen content being hidden behind a frontal camera in the landscape mode
-
-Added:
-- Ability to see archived accounts
-- Ability to edit and unarchive an archived account
