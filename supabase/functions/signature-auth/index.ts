@@ -41,19 +41,6 @@ Deno.serve(async (req) => {
     )
   }
 
-  let pubkey: ed25519.Point
-  try {
-    pubkey = ed25519.Point.fromHex(pubkeyHex)
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: "Public key decoding failed", details: error.message }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" }
-      }
-    )
-  }
-
   // Check if the challenge is signed a private key
   // which corresponds to the specified public key.
   try {
