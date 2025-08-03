@@ -86,18 +86,6 @@ private fun Content(
 
         accountActionSheet(
             onBalanceUpdated = navController::navigateUp,
-            onProceedToExpense = { sourceAccountId ->
-
-            },
-            onProceedToIncome = { destinationAccountId ->
-
-            },
-            onProceedToTransfer = { sourceAccountId ->
-
-            },
-            onProceedToFilteredActivity = { accountCounterparty ->
-
-            },
             onProceedToEdit = { accountId ->
                 context.startActivity(
                     Intent(context, EditAccountActivity::class.java)

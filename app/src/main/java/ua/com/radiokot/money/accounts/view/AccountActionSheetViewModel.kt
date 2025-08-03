@@ -21,21 +21,19 @@ package ua.com.radiokot.money.accounts.view
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.accounts.logic.UpdateAccountBalanceUseCase
@@ -45,9 +43,9 @@ import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import java.math.BigInteger
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class AccountActionSheetViewModel(
-    private val accountRepository: AccountRepository,
+    parameters: Parameters,
+    accountRepository: AccountRepository,
     private val updateAccountBalanceUseCase: UpdateAccountBalanceUseCase,
 ) : ViewModel() {
 
@@ -60,36 +58,19 @@ class AccountActionSheetViewModel(
     val balanceInputValue = _balanceInputValue.asStateFlow()
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events
-    private val requestedAccountId: MutableStateFlow<String?> = MutableStateFlow(null)
 
     private lateinit var account: Account
-    private val accountSharedFlow: SharedFlow<Account> =
-        requestedAccountId
-            .filterNotNull()
-            .flatMapLatest { accountId ->
-                accountRepository
-                    .getAccountFlow(accountId)
-            }
+    val accountDetails: StateFlow<ViewAccountDetails> =
+        accountRepository
+            .getAccountFlow(
+                accountId = parameters.accountId,
+            )
             .onEach { freshAccount ->
                 account = freshAccount
-                _balanceInputValue.emit(freshAccount.balance)
+                _balanceInputValue.update { freshAccount.balance }
             }
-            .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
-
-    val accountDetails: StateFlow<ViewAccountDetails?> =
-        accountSharedFlow
-            .filterNotNull()
             .map(::ViewAccountDetails)
-            .stateIn(viewModelScope, SharingStarted.Lazily, null)
-
-    fun setAccount(accountId: String) {
-        log.debug {
-            "setAccount(): setting: " +
-                    "\naccountId=$accountId"
-        }
-
-        requestedAccountId.tryEmit(accountId)
-    }
+            .run { stateIn(viewModelScope, SharingStarted.Eagerly, runBlocking { first() }) }
 
     fun onBalanceClicked() {
         if (mode.value != ViewAccountActionSheetMode.Actions) {
@@ -252,5 +233,11 @@ class AccountActionSheetViewModel(
         ) : Event
 
         object BalanceUpdated : Event
+
+        object Unarchived : Event
     }
+
+    class Parameters(
+        val accountId: String,
+    )
 }

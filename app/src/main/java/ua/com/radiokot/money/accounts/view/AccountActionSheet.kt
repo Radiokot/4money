@@ -59,23 +59,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
-import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.uikit.AmountInputField
 import ua.com.radiokot.money.uikit.TextButton
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 import java.math.BigInteger
 
 @Composable
-fun AccountActionSheetRoot(
+fun AccountActionSheet(
     modifier: Modifier = Modifier,
     viewModel: AccountActionSheetViewModel,
 ) {
-    val accountDetailsState = viewModel.accountDetails.collectAsState()
-    val modeState = viewModel.mode.collectAsState()
-
     AccountActionSheet(
-        accountDetails = accountDetailsState.value ?: return,
-        mode = modeState.value,
+        accountDetails = viewModel.accountDetails.collectAsState(),
+        mode = viewModel.mode.collectAsState(),
         balanceInputValue = viewModel.balanceInputValue.collectAsState(),
         onBalanceClicked = remember { viewModel::onBalanceClicked },
         onNewBalanceInputValueParsed = remember { viewModel::onNewBalanceInputValueParsed },
@@ -92,8 +88,8 @@ fun AccountActionSheetRoot(
 @Composable
 private fun AccountActionSheet(
     modifier: Modifier = Modifier,
-    accountDetails: ViewAccountDetails,
-    mode: ViewAccountActionSheetMode,
+    accountDetails: State<ViewAccountDetails>,
+    mode: State<ViewAccountActionSheetMode>,
     balanceInputValue: State<BigInteger>,
     onBalanceClicked: () -> Unit,
     onNewBalanceInputValueParsed: (BigInteger) -> Unit,
@@ -135,7 +131,7 @@ private fun AccountActionSheet(
             Spacer(modifier = Modifier.height(32.dp))
 
             BasicText(
-                text = accountDetails.title,
+                text = accountDetails.value.title,
                 style = TextStyle(
                     textAlign = TextAlign.Center,
                     fontSize = 24.sp,
@@ -151,7 +147,7 @@ private fun AccountActionSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             BasicText(
-                text = amountFormat(accountDetails.balance),
+                text = amountFormat(accountDetails.value.balance),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = TextStyle(
@@ -171,7 +167,7 @@ private fun AccountActionSheet(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        when (mode) {
+        when (mode.value) {
             ViewAccountActionSheetMode.Actions ->
                 ActionsModeContent(
                     onBalanceClicked = onBalanceClicked,
@@ -213,8 +209,8 @@ private fun AccountActionSheetPreview(
             accountDetails = ViewAccountDetails(
                 title = "Account #1",
                 balance = amount,
-            ),
-            mode = mode,
+            ).let(::mutableStateOf),
+            mode = mode.let(::mutableStateOf),
             balanceInputValue = BigInteger("9856").let(::mutableStateOf),
             onBalanceClicked = {},
             onNewBalanceInputValueParsed = {},
@@ -311,7 +307,7 @@ private fun ActionsModeContent(
 
 @Composable
 private fun BalanceModeContent(
-    accountDetails: ViewAccountDetails,
+    accountDetails: State<ViewAccountDetails>,
     balanceInputValue: State<BigInteger>,
     amountFormat: ViewAmountFormat,
     onNewBalanceInputValueParsed: (BigInteger) -> Unit,
@@ -324,7 +320,7 @@ private fun BalanceModeContent(
             bottom = 24.dp,
         )
 ) {
-    val balanceInputCurrency = accountDetails.balance.currency
+    val balanceInputCurrency = accountDetails.value.balance.currency
     val focusRequester = remember {
         FocusRequester()
     }

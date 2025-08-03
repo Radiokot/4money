@@ -121,6 +121,9 @@ val accountsModule = module {
 
         viewModel {
             AccountActionSheetViewModel(
+                parameters = requireNotNull(getOrNull()) {
+                    "AccountActionSheetViewModel.Parameters are required"
+                },
                 accountRepository = get(),
                 updateAccountBalanceUseCase = get(),
             )

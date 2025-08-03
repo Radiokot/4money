@@ -22,9 +22,9 @@ package ua.com.radiokot.money.accounts.view
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.toRoute
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import ua.com.radiokot.money.bottomSheet
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
@@ -36,54 +36,51 @@ data class AccountActionSheetRoute(
 
 fun NavGraphBuilder.accountActionSheet(
     onBalanceUpdated: () -> Unit,
-    onProceedToIncome: (destinationAccountId: TransferCounterpartyId.Account) -> Unit,
-    onProceedToExpense: (sourceAccountId: TransferCounterpartyId.Account) -> Unit,
-    onProceedToTransfer: (sourceAccountId: TransferCounterpartyId.Account) -> Unit,
-    onProceedToFilteredActivity: (accountCounterparty: TransferCounterparty.Account) -> Unit,
+    onUnarchived: () -> Unit = {},
+    onProceedToIncome: (destinationAccountId: TransferCounterpartyId.Account) -> Unit = {},
+    onProceedToExpense: (sourceAccountId: TransferCounterpartyId.Account) -> Unit = {},
+    onProceedToTransfer: (sourceAccountId: TransferCounterpartyId.Account) -> Unit = {},
+    onProceedToFilteredActivity: (accountCounterparty: TransferCounterparty.Account) -> Unit = {},
     onProceedToEdit: (accountId: String) -> Unit,
 ) = bottomSheet<AccountActionSheetRoute> { entry ->
 
-    val accountId = entry.toRoute<AccountActionSheetRoute>()
-        .accountId
-    val viewModel = koinViewModel<AccountActionSheetViewModel>()
-
-    LaunchedEffect(accountId) {
-        viewModel.setAccount(
-            accountId = accountId,
+    val route: AccountActionSheetRoute = entry.toRoute()
+    val viewModel: AccountActionSheetViewModel = koinViewModel {
+        parametersOf(
+            AccountActionSheetViewModel.Parameters(
+                accountId = route.accountId,
+            )
         )
+    }
 
-        launch {
-            viewModel.events.collect { event ->
-                when (event) {
-                    AccountActionSheetViewModel.Event.BalanceUpdated -> {
-                        onBalanceUpdated()
-                    }
+    LaunchedEffect(route) {
+        viewModel.events.collect { event ->
+            when (event) {
+                AccountActionSheetViewModel.Event.BalanceUpdated ->
+                    onBalanceUpdated()
 
-                    is AccountActionSheetViewModel.Event.ProceedToIncome -> {
-                        onProceedToIncome(event.destinationAccountId)
-                    }
+                is AccountActionSheetViewModel.Event.ProceedToIncome ->
+                    onProceedToIncome(event.destinationAccountId)
 
-                    is AccountActionSheetViewModel.Event.ProceedToExpense -> {
-                        onProceedToExpense(event.sourceAccountId)
-                    }
+                is AccountActionSheetViewModel.Event.ProceedToExpense ->
+                    onProceedToExpense(event.sourceAccountId)
 
-                    is AccountActionSheetViewModel.Event.ProceedToTransfer -> {
-                        onProceedToTransfer(event.sourceAccountId)
-                    }
+                is AccountActionSheetViewModel.Event.ProceedToTransfer ->
+                    onProceedToTransfer(event.sourceAccountId)
 
-                    is AccountActionSheetViewModel.Event.ProceedToEdit ->{
-                        onProceedToEdit(event.accountId)
-                    }
+                is AccountActionSheetViewModel.Event.ProceedToEdit ->
+                    onProceedToEdit(event.accountId)
 
-                    is AccountActionSheetViewModel.Event.ProceedToFilteredActivity -> {
-                        onProceedToFilteredActivity(event.accountCounterparty)
-                    }
-                }
+                is AccountActionSheetViewModel.Event.ProceedToFilteredActivity ->
+                    onProceedToFilteredActivity(event.accountCounterparty)
+
+                AccountActionSheetViewModel.Event.Unarchived ->
+                    onUnarchived()
             }
         }
     }
 
-    AccountActionSheetRoot(
+    AccountActionSheet(
         viewModel = viewModel,
     )
 }
