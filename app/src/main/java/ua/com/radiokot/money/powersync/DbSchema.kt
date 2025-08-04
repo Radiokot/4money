@@ -209,8 +209,8 @@ object DbSchema {
     const val CATEGORY_SELECTED_IS_INCOME = CATEGORIES_TABLE + CATEGORY_IS_INCOME
     const val CATEGORY_COLOR_SCHEME = "color_scheme"
     const val CATEGORY_SELECTED_COLOR_SCHEME = CATEGORIES_TABLE + CATEGORY_COLOR_SCHEME
-    const val CATEGORY_ARCHIVED = "archived"
-    const val CATEGORY_SELECTED_ARCHIVED = CATEGORIES_TABLE + CATEGORY_ARCHIVED
+    const val CATEGORY_IS_ARCHIVED = "is_archived"
+    const val CATEGORY_SELECTED_IS_ARCHIVED = CATEGORIES_TABLE + CATEGORY_IS_ARCHIVED
     const val CATEGORY_POSITION = "position"
     const val CATEGORY_SELECTED_POSITION = CATEGORIES_TABLE + CATEGORY_POSITION
 
@@ -221,7 +221,7 @@ object DbSchema {
             "$CATEGORIES_TABLE.$CATEGORY_PARENT_ID as $CATEGORY_SELECTED_PARENT_ID, " +
             "$CATEGORIES_TABLE.$CATEGORY_IS_INCOME as $CATEGORY_SELECTED_IS_INCOME, " +
             "$CATEGORIES_TABLE.$CATEGORY_COLOR_SCHEME as $CATEGORY_SELECTED_COLOR_SCHEME, " +
-            "$CATEGORIES_TABLE.$CATEGORY_ARCHIVED as $CATEGORY_SELECTED_ARCHIVED, " +
+            "$CATEGORIES_TABLE.$CATEGORY_IS_ARCHIVED as $CATEGORY_SELECTED_IS_ARCHIVED, " +
             "$CATEGORIES_TABLE.$CATEGORY_POSITION as $CATEGORY_SELECTED_POSITION "
 
     const val SUBCATEGORY_SELECT_COLUMNS = "" +
@@ -238,7 +238,7 @@ object DbSchema {
             Column.text(CATEGORY_PARENT_ID),
             Column.integer(CATEGORY_IS_INCOME),
             Column.text(CATEGORY_COLOR_SCHEME),
-            Column.integer(CATEGORY_ARCHIVED),
+            Column.integer(CATEGORY_IS_ARCHIVED),
             // Real (float8) can't provide sufficient precision,
             // leading to frequent healing.
             Column.text(CATEGORY_POSITION),
@@ -264,7 +264,7 @@ object DbSchema {
                     colorSchemesByName[colorSchemeName]
                         ?: error("Can't find '$colorSchemeName' color scheme")
                 },
-            isArchived = getBooleanOptional(CATEGORY_SELECTED_ARCHIVED) == true,
+            isArchived = getBooleanOptional(CATEGORY_SELECTED_IS_ARCHIVED) == true,
             position = getDouble(CATEGORY_SELECTED_POSITION),
             currency = toCurrency(sqlCursor),
         )

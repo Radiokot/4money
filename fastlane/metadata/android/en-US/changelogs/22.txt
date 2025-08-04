@@ -1,2 +1,0 @@
-Added:
-- Ability to unarchive an archived account from the action sheet

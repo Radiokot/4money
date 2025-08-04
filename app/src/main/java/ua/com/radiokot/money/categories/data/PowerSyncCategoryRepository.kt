@@ -154,6 +154,7 @@ class PowerSyncCategoryRepository(
                 categoryToUpdate.isIncome,
                 newColorScheme.name,
                 categoryToUpdate.position,
+                categoryToUpdate.isArchived,
             )
         )
 
@@ -198,6 +199,7 @@ class PowerSyncCategoryRepository(
                 category.isIncome,
                 category.colorScheme.name,
                 category.position,
+                category.isArchived,
             )
         )
 
@@ -231,6 +233,7 @@ class PowerSyncCategoryRepository(
                     parentCategory.isIncome,
                     parentCategory.colorScheme.name,
                     sternBrocotTree.value,
+                    false,
                 )
             )
         }
@@ -292,6 +295,7 @@ private const val SELECT_CATEGORIES_THEN_SUBCATEGORIES =
  * 5. Is income boolean
  * 6. Color scheme name
  * 7. Position
+ * 8. Is archived
  */
 private const val INSERT_OR_REPLACE_CATEGORY =
     "INSERT OR REPLACE INTO ${DbSchema.CATEGORIES_TABLE} " +
@@ -303,6 +307,6 @@ private const val INSERT_OR_REPLACE_CATEGORY =
             "${DbSchema.CATEGORY_IS_INCOME}, " +
             "${DbSchema.CATEGORY_COLOR_SCHEME}, " +
             "${DbSchema.CATEGORY_POSITION}, " +
-            "${DbSchema.CATEGORY_ARCHIVED} " +
+            "${DbSchema.CATEGORY_IS_ARCHIVED} " +
             ") " +
-            "VALUES(?, ?, ?, ?, ?, ?, ?, 0)"
+            "VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
