@@ -54,6 +54,8 @@ class HomeViewModel(
                     ?.mapTo(mutableListOf(), ViewTransferCounterparty::fromCounterparty)
                     ?: emptyList()
             }
+    private val _hasMoreNotice: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val hasMoreNotice = _hasMoreNotice.asStateFlow()
 
     override fun onNextHistoryStatsPeriodClicked() {
         log.debug {

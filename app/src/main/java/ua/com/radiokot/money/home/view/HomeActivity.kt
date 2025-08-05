@@ -49,10 +49,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -360,7 +366,8 @@ private fun HomeScreen(
                 navController.navigate(
                     route = PreferencesScreenRoute,
                 )
-            }
+            },
+            hasMoreNotice = viewModel.hasMoreNotice.collectAsState(),
         )
     }
 
@@ -375,6 +382,7 @@ private fun BottomNavigation(
     onCategoriesClicked: () -> Unit,
     onActivityClicked: () -> Unit,
     onMoreClicked: () -> Unit,
+    hasMoreNotice: State<Boolean>,
 ) = Row(
     horizontalArrangement = Arrangement.SpaceAround,
     modifier = Modifier
@@ -418,6 +426,7 @@ private fun BottomNavigation(
     BottomNavigationEntry(
         text = "More",
         icon = "⚙️",
+        hasNotice = hasMoreNotice.value,
         modifier = Modifier
             .weight(1f)
             .stableClickable(
@@ -431,6 +440,7 @@ private fun BottomNavigationEntry(
     modifier: Modifier = Modifier,
     text: String,
     icon: String,
+    hasNotice: Boolean = false,
 ) = Column(
     modifier = modifier
         .width(IntrinsicSize.Max),
@@ -443,6 +453,30 @@ private fun BottomNavigationEntry(
         ),
         modifier = Modifier
             .fillMaxWidth()
+            .run {
+                if (!hasNotice) {
+                    return@run this
+                }
+
+                val noticeCircleRadiusPx: Float
+                val noticeCircleOffset: Offset
+                with(LocalDensity.current) {
+                    noticeCircleRadiusPx = 4.dp.toPx()
+                    noticeCircleOffset = Offset(
+                        x = 18.dp.toPx(),
+                        y = (-8).dp.toPx(),
+                    )
+                }
+
+                then(Modifier.drawWithContent {
+                    drawContent()
+                    drawCircle(
+                        color = Color.Red,
+                        radius = noticeCircleRadiusPx,
+                        center = center + noticeCircleOffset
+                    )
+                })
+            }
     )
 
     Spacer(modifier = Modifier.height(6.dp))
@@ -469,4 +503,5 @@ private fun BottomNavigation2Preview(
     onCategoriesClicked = { },
     onActivityClicked = { },
     onMoreClicked = { },
+    hasMoreNotice = true.let(::mutableStateOf),
 )
