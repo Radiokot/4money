@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.preferences.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -27,7 +28,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -38,7 +39,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composeunstyled.Text
 import ua.com.radiokot.money.uikit.TextButton
 
 @Composable
@@ -57,23 +58,43 @@ private fun PreferencesScreen(
     onSaveCurrencyPreferencesClicked: () -> Unit,
     userId: State<String>,
     onSignOutClicked: () -> Unit,
+    isSyncErrorsNoticeVisible: State<Boolean>,
 ) = Column(
     modifier = modifier
         .verticalScroll(
             state = rememberScrollState(),
         )
 ) {
-    BasicText(
+
+    if (isSyncErrorsNoticeVisible.value) {
+        Text(
+            text = "Sorry, there is a data upload error 🥺\u2060👉🏻\u2060👈🏻\n\n" +
+                    "Some of the changes you made have been reverted. " +
+                    "The app will be fixed soon, then the reverted changes will be applied.",
+            color = Color.White,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = Color(0xFFfc9a47),
+                    shape = RoundedCornerShape(
+                        size = 8.dp,
+                    )
+                )
+                .padding(16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(40.dp))
+    }
+
+    Text(
         text = "Currency",
-        style = TextStyle(
-            fontSize = 16.sp,
-            fontWeight = FontWeight(500)
-        ),
+        fontSize = 16.sp,
+        fontWeight = FontWeight(500),
     )
 
     Spacer(modifier = Modifier.height(18.dp))
 
-    BasicText(
+    Text(
         text = "Primary currency",
     )
 
@@ -112,23 +133,21 @@ private fun PreferencesScreen(
 
     Spacer(modifier = Modifier.height(40.dp))
 
-    BasicText(
+    Text(
         text = "User",
-        style = TextStyle(
-            fontSize = 16.sp,
-            fontWeight = FontWeight(500)
-        ),
+        fontSize = 16.sp,
+        fontWeight = FontWeight(500),
     )
 
     Spacer(modifier = Modifier.height(18.dp))
 
-    BasicText(
+    Text(
         text = "Identifier",
     )
 
     Spacer(modifier = Modifier.height(6.dp))
 
-    BasicText(
+    Text(
         text = userId.value,
     )
 
@@ -145,7 +164,7 @@ private fun PreferencesScreen(
 }
 
 @Composable
-fun PreferencesScreenRoot(
+fun PreferencesScreen(
     modifier: Modifier = Modifier,
     viewModel: PreferencesScreenViewModel,
 ) = PreferencesScreen(
@@ -156,6 +175,7 @@ fun PreferencesScreenRoot(
     onSaveCurrencyPreferencesClicked = remember { viewModel::onSaveCurrencyPreferencesClicked },
     onSignOutClicked = remember { viewModel::onSignOutClicked },
     userId = viewModel.userId.collectAsState(),
+    isSyncErrorsNoticeVisible = viewModel.isSyncErrorsNoticeVisible.collectAsState(),
 )
 
 @Preview(
@@ -170,4 +190,5 @@ private fun PreferencesScreenPreview(
     onSaveCurrencyPreferencesClicked = {},
     userId = "uid".let(::mutableStateOf),
     onSignOutClicked = {},
+    isSyncErrorsNoticeVisible = true.let(::mutableStateOf),
 )

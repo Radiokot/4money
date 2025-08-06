@@ -25,11 +25,13 @@ import org.koin.dsl.module
 import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.currency.currencyModule
 import ua.com.radiokot.money.preferences.view.PreferencesScreenViewModel
+import ua.com.radiokot.money.syncerrors.syncErrorsModule
 
 val preferencesModule = module {
 
     includes(
         currencyModule,
+        syncErrorsModule,
     )
 
     sessionScope {
@@ -38,6 +40,7 @@ val preferencesModule = module {
             PreferencesScreenViewModel(
                 currencyPreferences = get(),
                 session = get(),
+                syncErrorRepository = get(),
                 signOutUseCase = get(),
             )
         } bind PreferencesScreenViewModel::class

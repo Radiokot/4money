@@ -37,10 +37,12 @@ import ua.com.radiokot.money.auth.logic.SignOutUseCase
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.syncerrors.data.SyncErrorRepository
 
 class PreferencesScreenViewModel(
     private val currencyPreferences: CurrencyPreferences,
-    private val session: UserSession,
+    session: UserSession,
+    syncErrorRepository: SyncErrorRepository,
     private val signOutUseCase: SignOutUseCase,
 ) : ViewModel() {
 
@@ -63,6 +65,12 @@ class PreferencesScreenViewModel(
                         && enteredPrimaryCurrencyCode != savedPrimaryCurrencyCode
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    val isSyncErrorsNoticeVisible: StateFlow<Boolean> =
+        syncErrorRepository
+            .getErrorCountFlow()
+            .map { it > 0 }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun onPrimaryCurrencyCodeChanged(newValue: String) {
         _primaryCurrencyCodeValue.value = newValue

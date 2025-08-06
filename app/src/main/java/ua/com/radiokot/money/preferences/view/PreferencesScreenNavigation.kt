@@ -45,7 +45,7 @@ fun NavGraphBuilder.preferencesScreen(
         }
     }
 
-    PreferencesScreenRoot(
+    PreferencesScreen(
         viewModel = viewModel,
         modifier = Modifier
             .fillMaxSize()
