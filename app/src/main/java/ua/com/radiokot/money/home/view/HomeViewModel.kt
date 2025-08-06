@@ -22,19 +22,23 @@ package ua.com.radiokot.money.home.view
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.map
+import ua.com.radiokot.money.syncerrors.data.SyncErrorRepository
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.view.ActivityFilterViewModelDelegate
 import ua.com.radiokot.money.transfers.history.view.HistoryStatsPeriodViewModel
 import ua.com.radiokot.money.transfers.view.ViewTransferCounterparty
-import ua.com.radiokot.money.map
 
 class HomeViewModel(
-
+    syncErrorRepository: SyncErrorRepository,
 ) : ViewModel(),
     HistoryStatsPeriodViewModel,
     ActivityFilterViewModelDelegate {
@@ -54,8 +58,12 @@ class HomeViewModel(
                     ?.mapTo(mutableListOf(), ViewTransferCounterparty::fromCounterparty)
                     ?: emptyList()
             }
-    private val _hasMoreNotice: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val hasMoreNotice = _hasMoreNotice.asStateFlow()
+
+    val hasMoreNotice: StateFlow<Boolean> =
+        syncErrorRepository
+            .getErrorCountFlow()
+            .map { it > 0 }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     override fun onNextHistoryStatsPeriodClicked() {
         log.debug {

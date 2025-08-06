@@ -17,35 +17,27 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.home
+package ua.com.radiokot.money.syncerrors
 
-import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import ua.com.radiokot.money.accounts.accountsModule
 import ua.com.radiokot.money.auth.logic.sessionScope
-import ua.com.radiokot.money.categories.categoriesModule
-import ua.com.radiokot.money.home.view.HomeViewModel
-import ua.com.radiokot.money.preferences.preferencesModule
-import ua.com.radiokot.money.syncerrors.syncErrorsModule
-import ua.com.radiokot.money.transfers.transfersModule
+import ua.com.radiokot.money.powersync.powerSyncModule
+import ua.com.radiokot.money.syncerrors.data.PowerSyncSyncErrorRepository
+import ua.com.radiokot.money.syncerrors.data.SyncErrorRepository
 
-val homeModule = module {
+val syncErrorsModule = module {
 
     includes(
-        accountsModule,
-        categoriesModule,
-        transfersModule,
-        preferencesModule,
-        syncErrorsModule,
+        powerSyncModule,
     )
 
     sessionScope {
 
-        viewModel {
-            HomeViewModel(
-                syncErrorRepository = get(),
+        scoped {
+            PowerSyncSyncErrorRepository(
+                database = get(),
             )
-        } bind HomeViewModel::class
+        } bind SyncErrorRepository::class
     }
 }
