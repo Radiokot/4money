@@ -51,6 +51,7 @@ object DbSchema {
             getPowerSyncPairsTable(),
             getPowerSyncCategoriesTable(),
             getPowerSyncTransfersTable(),
+            getPowerSyncSyncErrorsTable(),
         )
     )
 
@@ -345,6 +346,16 @@ object DbSchema {
             memo = getStringOptional(TRANSFER_SELECTED_MEMO)?.trim(),
         )
     }
+
+    const val SYNC_ERRORS_TABLE = "sync_errors"
+
+    private fun getPowerSyncSyncErrorsTable() = Table(
+        name = SYNC_ERRORS_TABLE,
+        columns = listOf(
+            // Just an ID, which is a timestamp.
+        ),
+        ignoreEmptyUpdates = true,
+    )
 
     fun LocalDateTime.toDbString() =
         format(LocalDateTime.Formats.ISO)
