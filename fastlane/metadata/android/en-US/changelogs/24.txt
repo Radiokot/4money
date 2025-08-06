@@ -1,0 +1,2 @@
+Added:
+- Indication of a data upload error, if it occurred
