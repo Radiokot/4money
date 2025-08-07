@@ -34,7 +34,7 @@ import org.slf4j.event.Level.INFO
 import org.slf4j.event.Level.TRACE
 import org.slf4j.event.Level.WARN
 
-object KremitSlf4jLogWriter : LogWriter() {
+object KermitSlf4jLogWriter : LogWriter() {
 
     override fun log(
         severity: Severity,
@@ -43,7 +43,7 @@ object KremitSlf4jLogWriter : LogWriter() {
         throwable: Throwable?,
     ) {
         LoggerFactory
-            .getLogger(tag.ifEmpty { "Kremit" })
+            .getLogger(tag.ifEmpty { "Kermit" })
             .atLevel(
                 when (severity) {
                     Verbose -> TRACE

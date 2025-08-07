@@ -38,7 +38,7 @@ import org.koin.dsl.module
 import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.auth.authModule
 import ua.com.radiokot.money.auth.logic.sessionScope
-import ua.com.radiokot.money.util.KremitSlf4jLogWriter
+import ua.com.radiokot.money.util.KermitSlf4jLogWriter
 
 @OptIn(
     DelicateCoroutinesApi::class,
@@ -57,7 +57,7 @@ val powerSyncModule = module {
                 schema = get(),
                 logger = Logger(
                     config = StaticConfig(
-                        logWriterList = listOf(KremitSlf4jLogWriter),
+                        logWriterList = listOf(KermitSlf4jLogWriter),
                     ),
                     tag = "PowerSync",
                 ),

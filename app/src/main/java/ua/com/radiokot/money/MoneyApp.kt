@@ -43,7 +43,7 @@ import ua.com.radiokot.money.auth.logic.UserSessionHolder
 import ua.com.radiokot.money.home.homeModule
 import ua.com.radiokot.money.powersync.BackgroundPowerSyncWorker
 import ua.com.radiokot.money.util.KoinSlf4jLogger
-import ua.com.radiokot.money.util.KremitSlf4jLogWriter
+import ua.com.radiokot.money.util.KermitSlf4jLogWriter
 import java.io.File
 import java.lang.Thread.UncaughtExceptionHandler
 import java.util.concurrent.TimeUnit
@@ -113,8 +113,8 @@ class MoneyApp : Application() {
             }
         }
 
-        // Global Kremit.
-        Logger.setLogWriters(KremitSlf4jLogWriter)
+        // Global Kermit.
+        Logger.setLogWriters(KermitSlf4jLogWriter)
 
         log.trace {
             "initLogging(): trace logger enabled"
