@@ -201,6 +201,7 @@ class AtomicCrudSupabaseConnector(
             ?: return@runWrapped
 
         try {
+            error("Sosich")
             if (!tryToUploadSpecialTransaction(transaction)) {
                 supabaseClient.postgrest.rpc(
                     function = "atomic_crud",

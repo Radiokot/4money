@@ -28,6 +28,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import co.touchlab.kermit.Logger
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.runBlocking
@@ -42,6 +43,7 @@ import ua.com.radiokot.money.auth.logic.UserSessionHolder
 import ua.com.radiokot.money.home.homeModule
 import ua.com.radiokot.money.powersync.BackgroundPowerSyncWorker
 import ua.com.radiokot.money.util.KoinKLogger
+import ua.com.radiokot.money.util.KremitSlf4jLogWriter
 import java.io.File
 import java.lang.Thread.UncaughtExceptionHandler
 import java.util.concurrent.TimeUnit
@@ -110,6 +112,9 @@ class MoneyApp : Application() {
                 exitProcess(10)
             }
         }
+
+        // Kremit, used by PowerSync.
+        Logger.setLogWriters(KremitSlf4jLogWriter)
 
         log.trace {
             "initLogging(): trace logger enabled"
