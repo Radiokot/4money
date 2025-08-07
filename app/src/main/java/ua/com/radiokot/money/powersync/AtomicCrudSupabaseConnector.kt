@@ -19,7 +19,6 @@
 
 package ua.com.radiokot.money.powersync
 
-import co.touchlab.kermit.Logger
 import com.powersync.PowerSyncDatabase
 import com.powersync.connectors.PowerSyncBackendConnector
 import com.powersync.connectors.PowerSyncCredentials
@@ -43,6 +42,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import ua.com.radiokot.money.lazyLogger
 
 /**
  * A Supabase connector applying CRUD transactions atomically,
@@ -58,6 +58,7 @@ class AtomicCrudSupabaseConnector(
     private val powerSyncEndpoint: String,
 ) : PowerSyncBackendConnector() {
 
+    private val log by lazyLogger("AtomicCrud")
     private var errorCode: String? = null
 
     private object PostgresFatalCodes {
@@ -163,7 +164,10 @@ class AtomicCrudSupabaseConnector(
                     )
                     errorCode = error["code"]
                 } catch (e: Exception) {
-                    Logger.e("Failed to parse error response: $e")
+                    log.error(e) {
+                        "intercept(): failed parsing error response:" +
+                                "\n"
+                    }
                 }
             }
             resp
@@ -201,7 +205,6 @@ class AtomicCrudSupabaseConnector(
             ?: return@runWrapped
 
         try {
-            error("Sosich")
             if (!tryToUploadSpecialTransaction(transaction)) {
                 supabaseClient.postgrest.rpc(
                     function = "atomic_crud",
@@ -219,13 +222,24 @@ class AtomicCrudSupabaseConnector(
                  * If protecting against data loss is important, save the failing records
                  * elsewhere instead of discarding, and/or notify the user.
                  */
-                Logger.e("Data upload error: ${e.message ?: e}")
-                Logger.e("Discarding transaction: $transaction")
+
+                log.error(e) {
+                    "uploadData(): fatal error on upload, discarding transaction:" +
+                            "\ntransaction=$transaction" +
+                            "\n"
+                }
+
                 transaction.complete(null)
+
                 return@runWrapped
             }
 
-            Logger.e("Data upload error - retrying transaction: $transaction, $e")
+            log.warn(e) {
+                "uploadData(): error on upload, retrying transaction:" +
+                        "\ntransaction=$transaction" +
+                        "\n"
+            }
+
             throw e
         }
     }
