@@ -19,6 +19,8 @@
 
 package ua.com.radiokot.money.powersync
 
+import co.touchlab.kermit.Logger
+import co.touchlab.kermit.StaticConfig
 import com.powersync.DatabaseDriverFactory
 import com.powersync.ExperimentalPowerSyncAPI
 import com.powersync.PowerSyncDatabase
@@ -36,6 +38,7 @@ import org.koin.dsl.module
 import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.auth.authModule
 import ua.com.radiokot.money.auth.logic.sessionScope
+import ua.com.radiokot.money.util.KremitSlf4jLogWriter
 
 @OptIn(
     DelicateCoroutinesApi::class,
@@ -52,6 +55,12 @@ val powerSyncModule = module {
             PowerSyncDatabase(
                 factory = DatabaseDriverFactory(androidApplication()),
                 schema = get(),
+                logger = Logger(
+                    config = StaticConfig(
+                        logWriterList = listOf(KremitSlf4jLogWriter),
+                    ),
+                    tag = "PowerSync",
+                ),
             ).apply {
                 GlobalScope.launch {
                     connect(

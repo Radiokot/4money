@@ -19,7 +19,6 @@
 
 package ua.com.radiokot.money.util
 
-import android.annotation.SuppressLint
 import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Severity
 import co.touchlab.kermit.Severity.Assert
@@ -37,7 +36,6 @@ import org.slf4j.event.Level.WARN
 
 object KremitSlf4jLogWriter : LogWriter() {
 
-    @SuppressLint("CheckResult")
     override fun log(
         severity: Severity,
         message: String,
@@ -45,7 +43,7 @@ object KremitSlf4jLogWriter : LogWriter() {
         throwable: Throwable?,
     ) {
         LoggerFactory
-            .getLogger(tag.ifEmpty { "Global" })
+            .getLogger(tag.ifEmpty { "Kremit" })
             .atLevel(
                 when (severity) {
                     Verbose -> TRACE
@@ -57,11 +55,7 @@ object KremitSlf4jLogWriter : LogWriter() {
                     -> ERROR
                 }
             )
-            .apply {
-                if (throwable != null) {
-                    setCause(throwable)
-                }
-            }
+            .setCause(throwable)
             .log(message)
     }
 }

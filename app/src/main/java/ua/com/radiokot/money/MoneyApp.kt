@@ -113,7 +113,7 @@ class MoneyApp : Application() {
             }
         }
 
-        // Kremit, used by PowerSync.
+        // Global Kremit.
         Logger.setLogWriters(KremitSlf4jLogWriter)
 
         log.trace {
