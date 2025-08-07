@@ -42,7 +42,7 @@ import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
 import ua.com.radiokot.money.home.homeModule
 import ua.com.radiokot.money.powersync.BackgroundPowerSyncWorker
-import ua.com.radiokot.money.util.KoinKLogger
+import ua.com.radiokot.money.util.KoinSlf4jLogger
 import ua.com.radiokot.money.util.KremitSlf4jLogWriter
 import java.io.File
 import java.lang.Thread.UncaughtExceptionHandler
@@ -58,7 +58,7 @@ class MoneyApp : Application() {
         initLogging()
 
         startKoin {
-            logger(KoinKLogger)
+            logger(KoinSlf4jLogger)
             androidContext(this@MoneyApp)
 
             modules(

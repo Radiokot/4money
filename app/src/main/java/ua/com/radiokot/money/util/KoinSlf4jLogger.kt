@@ -19,25 +19,34 @@
 
 package ua.com.radiokot.money.util
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.koin.core.logger.Level
 import org.koin.core.logger.Logger
 import org.koin.core.logger.MESSAGE
+import org.slf4j.LoggerFactory
 
-object KoinKLogger : Logger() {
+object KoinSlf4jLogger : Logger() {
 
-    private val logger = KotlinLogging.logger("Koin")
+    private val logger: org.slf4j.Logger by lazy {
+        LoggerFactory.getLogger("Koin")
+    }
 
-    @Suppress("DEPRECATION")
     override fun display(level: Level, msg: MESSAGE) {
-        when (level) {
-            Level.DEBUG -> logger.debug(msg)
-            Level.INFO -> logger.info(msg)
-            Level.ERROR -> logger.error(msg)
-            Level.WARNING -> logger.warn(msg)
-            Level.NONE -> {
-                // No-op.
-            }
+        if (level == Level.NONE) {
+            return
         }
+
+        @Suppress("KotlinConstantConditions")
+        logger
+            .atLevel(
+                when (level) {
+                    Level.DEBUG -> org.slf4j.event.Level.DEBUG
+                    Level.INFO -> org.slf4j.event.Level.INFO
+                    Level.WARNING -> org.slf4j.event.Level.WARN
+                    Level.ERROR,
+                    Level.NONE,
+                    -> org.slf4j.event.Level.ERROR
+                }
+            )
+            .log(msg)
     }
 }
