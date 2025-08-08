@@ -24,7 +24,6 @@ import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.FlowType
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.functions.Functions
-import io.github.jan.supabase.logging.LogLevel
 import io.github.jan.supabase.postgrest.Postgrest
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
@@ -32,9 +31,9 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.BuildConfig
 import ua.com.radiokot.money.R
+import ua.com.radiokot.money.auth.logic.KoinScopeUserSessionHolder
 import ua.com.radiokot.money.auth.logic.SignInWithCredentialsUseCase
 import ua.com.radiokot.money.auth.logic.SignInWithPhraseUseCase
-import ua.com.radiokot.money.auth.logic.KoinScopeUserSessionHolder
 import ua.com.radiokot.money.auth.logic.SignOutUseCase
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
 import ua.com.radiokot.money.auth.logic.sessionScope
@@ -48,12 +47,6 @@ val authModule = module {
             supabaseUrl = BuildConfig.SUPABASE_URL,
             supabaseKey = BuildConfig.SUPABASE_ANON_KEY,
         ) {
-            defaultLogLevel =
-                if (BuildConfig.DEBUG)
-                    LogLevel.DEBUG
-                else
-                    LogLevel.ERROR
-
             install(Postgrest)
             install(Functions)
             install(Auth) {
