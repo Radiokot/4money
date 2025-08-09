@@ -37,7 +37,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -55,8 +54,14 @@ import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.logic.EditTransferUseCase
 import ua.com.radiokot.money.transfers.logic.TransferFundsUseCase
 import java.math.BigInteger
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalCoroutinesApi::class)
+// Be careful, an experementator's around 💀
+@OptIn(
+    ExperimentalCoroutinesApi::class,
+    ExperimentalTime::class,
+)
 class TransferSheetViewModel(
     private val parameters: Parameters,
     private val accountRepository: AccountRepository,
@@ -108,6 +113,7 @@ class TransferSheetViewModel(
             transform = ::Pair
         )
             .flatMapLatest { (source, destination) ->
+                @Suppress("UnusedFlow") // Inspector is an idiot.
                 val categoryCounterparty =
                     (source as? TransferCounterparty.Category)
                         ?: (destination as? TransferCounterparty.Category)
@@ -509,11 +515,11 @@ class TransferSheetViewModel(
                 category = categoryRepository
                     .getCategory(categoryId)!!,
                 subcategory =
-                if (subcategoryId != null)
-                    categoryRepository
-                        .getSubcategory(subcategoryId)!!
-                else
-                    null
+                    if (subcategoryId != null)
+                        categoryRepository
+                            .getSubcategory(subcategoryId)!!
+                    else
+                        null
             )
     }
 

@@ -42,13 +42,15 @@ import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
 import ua.com.radiokot.money.home.homeModule
 import ua.com.radiokot.money.powersync.BackgroundPowerSyncWorker
-import ua.com.radiokot.money.util.KoinSlf4jLogger
 import ua.com.radiokot.money.util.KermitSlf4jLogWriter
+import ua.com.radiokot.money.util.KoinSlf4jLogger
 import java.io.File
 import java.lang.Thread.UncaughtExceptionHandler
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 class MoneyApp : Application() {
     private val log by lazyLogger("App")
 

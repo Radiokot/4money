@@ -19,7 +19,6 @@
 
 package ua.com.radiokot.money.transfers.history.data
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -30,8 +29,11 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import java.time.Year
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Serializable
+@OptIn(ExperimentalTime::class)
 sealed interface HistoryPeriod {
 
     val startInclusive: LocalDateTime
@@ -82,7 +84,7 @@ sealed interface HistoryPeriod {
             .date,
     ) : HistoryPeriod {
 
-        private val firstDay = localMonth.minus(localMonth.dayOfMonth - 1, DateTimeUnit.DAY)
+        private val firstDay = localMonth.minus(localMonth.day - 1, DateTimeUnit.DAY)
         private val fistDayOfNextMonth = firstDay.plus(1, DateTimeUnit.MONTH)
 
         override val startInclusive: LocalDateTime =

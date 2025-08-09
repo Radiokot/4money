@@ -24,11 +24,13 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 /**
  * @return [LocalDateTime] as if you incremented a mechanical clock and a calendar
  * by the given [duration], disregarding DST.
  */
+@OptIn(ExperimentalTime::class)
 operator fun LocalDateTime.plus(duration: Duration): LocalDateTime =
     toInstant(TimeZone.UTC)
         .plus(duration)

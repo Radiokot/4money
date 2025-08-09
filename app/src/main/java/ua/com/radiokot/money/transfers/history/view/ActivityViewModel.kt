@@ -40,7 +40,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -55,8 +54,14 @@ import ua.com.radiokot.money.transfers.history.data.TransferHistoryRepository
 import ua.com.radiokot.money.transfers.logic.RevertTransferUseCase
 import ua.com.radiokot.money.transfers.view.ViewDate
 import ua.com.radiokot.money.transfers.view.ViewTransferListItem
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalCoroutinesApi::class)
+// Look mum, I'm an experimentator 🤦🏻
+@OptIn(
+    ExperimentalCoroutinesApi::class,
+    ExperimentalTime::class,
+)
 class ActivityViewModel(
     historyStatsPeriodViewModel: HistoryStatsPeriodViewModel,
     private val activityFilterViewModelDelegate: ActivityFilterViewModelDelegate,
@@ -89,15 +94,15 @@ class ActivityViewModel(
                         enablePlaceholders = false,
                     ),
                     pagingSourceFactory =
-                    {
-                        transferHistoryRepository.getTransferHistoryPagingSource(
-                            withinPeriod = period,
-                            counterpartyIds = counterparties
-                                ?.mapTo(mutableSetOf()) { counterparty ->
-                                    counterparty.id.toString()
-                                },
-                        )
-                    },
+                        {
+                            transferHistoryRepository.getTransferHistoryPagingSource(
+                                withinPeriod = period,
+                                counterpartyIds = counterparties
+                                    ?.mapTo(mutableSetOf()) { counterparty ->
+                                        counterparty.id.toString()
+                                    },
+                            )
+                        },
                 )
             }
 

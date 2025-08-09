@@ -25,7 +25,6 @@ import com.powersync.ExperimentalPowerSyncAPI
 import com.powersync.PowerSyncDatabase
 import com.powersync.db.Queries
 import com.powersync.db.schema.Schema
-import com.powersync.sync.ConnectionMethod
 import com.powersync.sync.SyncOptions
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -62,7 +61,6 @@ val powerSyncModule = module {
                             powerSyncEndpoint = BuildConfig.POWERSYNC_URL,
                         ),
                         options = SyncOptions(
-                            method = ConnectionMethod.WebSocket(),
                             userAgent = "4Money/${BuildConfig.VERSION_NAME}",
                         )
                     )

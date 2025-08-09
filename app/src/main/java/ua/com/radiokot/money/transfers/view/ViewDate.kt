@@ -20,7 +20,6 @@
 package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.runtime.Immutable
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -28,7 +27,10 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import ua.com.radiokot.money.isSameDayAs
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 @Immutable
 class ViewDate(
     val localDate: LocalDate,
