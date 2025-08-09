@@ -31,6 +31,7 @@ import androidx.work.WorkManager
 import co.touchlab.kermit.Logger
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -52,7 +53,12 @@ import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 class MoneyApp : Application() {
-    private val log by lazyLogger("App")
+
+    private val log by lazy {
+        // Logger with a static name.
+        // Must be lazy so it is not created before initLogging()
+        KotlinLogging.logger("App")
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -76,6 +82,7 @@ class MoneyApp : Application() {
     private fun initLogging() {
         // The Logback configuration is in the app/src/main/assets/logback.xml
 
+        @Suppress("KotlinConstantConditions")
         System.setProperty(
             "LOG_LEVEL",
             if (BuildConfig.DEBUG)

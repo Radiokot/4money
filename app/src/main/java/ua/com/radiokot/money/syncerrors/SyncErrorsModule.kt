@@ -19,9 +19,16 @@
 
 package ua.com.radiokot.money.syncerrors
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.auth.logic.sessionScope
+import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.powersync.powerSyncModule
 import ua.com.radiokot.money.syncerrors.data.PowerSyncSyncErrorRepository
 import ua.com.radiokot.money.syncerrors.data.SyncErrorRepository
@@ -37,7 +44,22 @@ val syncErrorsModule = module {
         scoped {
             PowerSyncSyncErrorRepository(
                 database = get(),
-            )
+            ).apply {
+
+                val log = KotlinLogging.logger("SyncErrorsWarning")
+
+                @OptIn(DelicateCoroutinesApi::class)
+                GlobalScope.launch {
+                    getErrorCountFlow()
+                        .filter { it > 0 }
+                        .distinctUntilChanged()
+                        .collect { errorCount ->
+                            log.warn {
+                                "There are data upload errors on the server: $errorCount"
+                            }
+                        }
+                }
+            }
         } bind SyncErrorRepository::class
     }
 }
