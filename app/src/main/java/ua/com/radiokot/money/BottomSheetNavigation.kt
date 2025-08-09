@@ -164,7 +164,6 @@ fun MoneyAppModalBottomSheetHost(
 
     val sheetState = rememberModalBottomSheetState(
         initialDetent = SheetDetent.Hidden,
-        // Need to do something with the exit speed.
         animationSpec = tween(150),
     )
 
@@ -223,6 +222,7 @@ fun MoneyAppModalBottomSheetHost(
             val topBackStackEntry by remember {
                 derivedStateOf { backStack.lastOrNull() }
             }
+
             AnimatedContent(
                 targetState = topBackStackEntry
                     ?: return@SheetContent,
@@ -251,8 +251,6 @@ fun MoneyAppModalBottomSheetHost(
                 ) {
                     bottomSheetNavigator.popBackStack(shownBackStackEntry, false)
                 }
-
-
 
                 DisposableEffect(shownBackStackEntry) {
                     onDispose {
