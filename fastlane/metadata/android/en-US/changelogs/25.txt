@@ -1,0 +1,3 @@
+Fixed:
+- Missing currency conversion
+- Not deleting old log files
