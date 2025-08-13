@@ -38,7 +38,8 @@ import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.powersync.DbSchema.ACCOUNT_SELECT_COLUMNS
 import ua.com.radiokot.money.powersync.DbSchema.CATEGORY_SELECT_COLUMNS
 import ua.com.radiokot.money.powersync.DbSchema.CURRENCY_SELECT_COLUMNS
-import ua.com.radiokot.money.powersync.DbSchema.DAILY_PRICE_SELECT_COLUMNS
+import ua.com.radiokot.money.powersync.DbSchema.DAILY_PRICE_SELECTED_BASE_CODE
+import ua.com.radiokot.money.powersync.DbSchema.DAILY_PRICE_SELECTED_PRICE
 import ua.com.radiokot.money.powersync.DbSchema.SUBCATEGORY_SELECT_COLUMNS
 import ua.com.radiokot.money.powersync.DbSchema.TRANSFER_SELECT_COLUMNS
 import ua.com.radiokot.money.transfers.data.Transfer
@@ -115,11 +116,6 @@ object DbSchema {
     const val DAILY_PRICE_PRICE = "price"
     const val DAILY_PRICE_SELECTED_PRICE = DAILY_PRICES_TABLE + DAILY_PRICE_PRICE
 
-    const val DAILY_PRICE_SELECT_COLUMNS = "" +
-            "$DAILY_PRICE_ID_AS_DATETIME, " +
-            "$DAILY_PRICE_ID_AS_BASE_CODE, " +
-            "$DAILY_PRICES_TABLE.$DAILY_PRICE_PRICE as $DAILY_PRICE_SELECTED_PRICE"
-
     private fun getPowerSyncDailyPricesTable() = Table(
         // In this table, ID is YYYY-MM-DD + base currency code.
         name = DAILY_PRICES_TABLE,
@@ -130,7 +126,8 @@ object DbSchema {
     )
 
     /**
-     * @see DAILY_PRICE_SELECT_COLUMNS
+     * @see DAILY_PRICE_SELECTED_BASE_CODE
+     * @see DAILY_PRICE_SELECTED_PRICE
      */
     fun toPricePair(
         sqlCursor: SqlCursor,

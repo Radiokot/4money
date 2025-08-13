@@ -90,7 +90,8 @@ private const val SELECT_CURRENCY_BY_CODE =
             "LIMIT 1"
 
 private const val SELECT_LATEST_PRICES =
-    "SELECT ${DbSchema.DAILY_PRICE_SELECT_COLUMNS} " +
+    "SELECT ${DbSchema.DAILY_PRICE_ID_AS_BASE_CODE}, " +
+            "${DbSchema.DAILY_PRICES_TABLE}.${DbSchema.DAILY_PRICE_PRICE} as ${DbSchema.DAILY_PRICE_SELECTED_PRICE} " +
             "FROM ${DbSchema.DAILY_PRICES_TABLE} " +
-            "WHERE ${DbSchema.DAILY_PRICE_SELECTED_DATETIME} = " +
-            "(SELECT datetime(MAX(${DbSchema.DAILY_PRICE_DAY_SUBSTRING})) FROM ${DbSchema.DAILY_PRICES_TABLE})"
+            "WHERE ${DbSchema.DAILY_PRICE_DAY_SUBSTRING} = " +
+            "(SELECT MAX(${DbSchema.DAILY_PRICE_DAY_SUBSTRING}) FROM ${DbSchema.DAILY_PRICES_TABLE})"
