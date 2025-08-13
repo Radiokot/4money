@@ -14,7 +14,8 @@
     <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${LOG_FILE_DIRECTORY}/4MN-%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>7</maxHistory>
+            <maxHistory>4</maxHistory>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
         </rollingPolicy>
 
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
