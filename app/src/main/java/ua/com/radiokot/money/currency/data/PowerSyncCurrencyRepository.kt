@@ -62,7 +62,7 @@ class PowerSyncCurrencyRepository(
     private val currencyPairMapSharedFlow =
         database
             .watch(
-                sql = SELECT_PAIRS,
+                sql = SELECT_LATEST_PRICES,
                 mapper = DbSchema::toPricePair,
             )
             .map { pairs ->
@@ -89,6 +89,8 @@ private const val SELECT_CURRENCY_BY_CODE =
             "ORDER BY ${DbSchema.CURRENCY_SELECTED_ID} " +
             "LIMIT 1"
 
-private const val SELECT_PAIRS =
-    "SELECT ${DbSchema.PAIR_SELECT_COLUMNS} " +
-            "FROM ${DbSchema.PAIRS_TABLE}"
+private const val SELECT_LATEST_PRICES =
+    "SELECT ${DbSchema.DAILY_PRICE_SELECT_COLUMNS} " +
+            "FROM ${DbSchema.DAILY_PRICES_TABLE} " +
+            "WHERE ${DbSchema.DAILY_PRICE_SELECTED_DATETIME} = " +
+            "(SELECT datetime(MAX(${DbSchema.DAILY_PRICE_DAY_SUBSTRING})) FROM ${DbSchema.DAILY_PRICES_TABLE})"

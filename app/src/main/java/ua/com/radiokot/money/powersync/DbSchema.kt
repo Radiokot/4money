@@ -35,6 +35,12 @@ import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.Subcategory
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.data.Currency
+import ua.com.radiokot.money.powersync.DbSchema.ACCOUNT_SELECT_COLUMNS
+import ua.com.radiokot.money.powersync.DbSchema.CATEGORY_SELECT_COLUMNS
+import ua.com.radiokot.money.powersync.DbSchema.CURRENCY_SELECT_COLUMNS
+import ua.com.radiokot.money.powersync.DbSchema.DAILY_PRICE_SELECT_COLUMNS
+import ua.com.radiokot.money.powersync.DbSchema.SUBCATEGORY_SELECT_COLUMNS
+import ua.com.radiokot.money.powersync.DbSchema.TRANSFER_SELECT_COLUMNS
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import java.math.BigDecimal
@@ -48,7 +54,7 @@ object DbSchema {
         listOf(
             getPowerSyncCurrencyTable(),
             getPowerSyncAccountsTable(),
-            getPowerSyncPairsTable(),
+            getPowerSyncDailyPricesTable(),
             getPowerSyncCategoriesTable(),
             getPowerSyncTransfersTable(),
             getPowerSyncSyncErrorsTable(),
@@ -97,34 +103,41 @@ object DbSchema {
         )
     }
 
-    const val PAIRS_TABLE = "pairs"
-    const val PAIR_SELECTED_ID = PAIRS_TABLE + ID
-    const val PAIR_PRICE = "price"
-    const val PAIR_SELECTED_PRICE = PAIRS_TABLE + PAIR_PRICE
+    const val DAILY_PRICES_TABLE = "daily_prices"
+    const val DAILY_PRICE_SELECTED_DATETIME = DAILY_PRICES_TABLE + "datetime"
+    const val DAILY_PRICE_DAY_SUBSTRING = "substr($DAILY_PRICES_TABLE.$ID, 1, 10)"
+    const val DAILY_PRICE_ID_AS_DATETIME =
+        "datetime($DAILY_PRICE_DAY_SUBSTRING) as $DAILY_PRICE_SELECTED_DATETIME"
+    const val DAILY_PRICE_SELECTED_BASE_CODE = DAILY_PRICES_TABLE + "base"
+    const val DAILY_PRICE_BASE_CODE_SUBSTRING = "substr($DAILY_PRICES_TABLE.$ID, 11)"
+    const val DAILY_PRICE_ID_AS_BASE_CODE =
+        "$DAILY_PRICE_BASE_CODE_SUBSTRING as $DAILY_PRICE_SELECTED_BASE_CODE"
+    const val DAILY_PRICE_PRICE = "price"
+    const val DAILY_PRICE_SELECTED_PRICE = DAILY_PRICES_TABLE + DAILY_PRICE_PRICE
 
-    const val PAIR_SELECT_COLUMNS = "" +
-            "$PAIRS_TABLE.$ID as $PAIR_SELECTED_ID, " +
-            "$PAIRS_TABLE.$PAIR_PRICE as $PAIR_SELECTED_PRICE "
+    const val DAILY_PRICE_SELECT_COLUMNS = "" +
+            "$DAILY_PRICE_ID_AS_DATETIME, " +
+            "$DAILY_PRICE_ID_AS_BASE_CODE, " +
+            "$DAILY_PRICES_TABLE.$DAILY_PRICE_PRICE as $DAILY_PRICE_SELECTED_PRICE"
 
-    private fun getPowerSyncPairsTable() = Table(
-        // In this table, base_currency_code is the id
-        // and all the prices are in USD.
-        name = PAIRS_TABLE,
+    private fun getPowerSyncDailyPricesTable() = Table(
+        // In this table, ID is YYYY-MM-DD + base currency code.
+        name = DAILY_PRICES_TABLE,
         columns = listOf(
-            Column.text(PAIR_PRICE),
+            Column.text(DAILY_PRICE_PRICE),
         ),
         ignoreEmptyUpdates = true,
     )
 
     /**
-     * @see PAIR_SELECT_COLUMNS
+     * @see DAILY_PRICE_SELECT_COLUMNS
      */
     fun toPricePair(
         sqlCursor: SqlCursor,
     ): Pair<String, BigDecimal> = with(sqlCursor) {
         Pair(
-            getString(PAIR_SELECTED_ID),
-            BigDecimal(getString(PAIR_SELECTED_PRICE).trim()),
+            getString(DAILY_PRICE_SELECTED_BASE_CODE),
+            BigDecimal(getString(DAILY_PRICE_SELECTED_PRICE).trim()),
         )
     }
 
@@ -289,7 +302,8 @@ object DbSchema {
     const val TRANSFER_SELECTED_ID = TRANSFERS_TABLE + ID
     const val TRANSFER_TIME = "time"
     const val TRANSFER_SELECTED_DATETIME = TRANSFERS_TABLE + "datetime"
-    const val TRANSFER_TIME_AS_DATETIME = "datetime($TRANSFERS_TABLE.$TRANSFER_TIME) as $TRANSFER_SELECTED_DATETIME"
+    const val TRANSFER_TIME_AS_DATETIME =
+        "datetime($TRANSFERS_TABLE.$TRANSFER_TIME) as $TRANSFER_SELECTED_DATETIME"
     const val TRANSFER_SOURCE_ID = "source_id"
     const val TRANSFER_SELECTED_SOURCE_ID = TRANSFERS_TABLE + TRANSFER_SOURCE_ID
     const val TRANSFER_SOURCE_AMOUNT = "source_amount"
