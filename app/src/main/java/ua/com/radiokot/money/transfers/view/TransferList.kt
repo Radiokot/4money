@@ -167,7 +167,7 @@ private fun HeaderItem(
         .fillMaxWidth(),
 ) {
     BasicText(
-        text = item.date.localDate.dayOfMonth.toString(),
+        text = item.date.localDate.day.toString(),
         style = TextStyle(
             fontSize = 30.sp,
             fontWeight = FontWeight(300),

@@ -26,6 +26,7 @@ import android.widget.DatePicker
 import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.fragment.app.setFragmentResult
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 import kotlinx.serialization.json.Json
 import ua.com.radiokot.money.lazyLogger
 
@@ -43,8 +44,8 @@ class DatePickerDialogFragment : AppCompatDialogFragment(),
             requireContext(),
             this,
             localDate.year,
-            localDate.monthNumber - 1,
-            localDate.dayOfMonth,
+            localDate.month.number - 1,
+            localDate.day,
         ).apply {
             datePicker.maxDate = System.currentTimeMillis()
         }
@@ -53,8 +54,8 @@ class DatePickerDialogFragment : AppCompatDialogFragment(),
     override fun onDateSet(view: DatePicker?, year: Int, month: Int, dayOfMonth: Int) {
         val result = LocalDate(
             year = year,
-            monthNumber = month + 1,
-            dayOfMonth = dayOfMonth,
+            month = month + 1,
+            day = dayOfMonth,
         )
 
         log.debug {
