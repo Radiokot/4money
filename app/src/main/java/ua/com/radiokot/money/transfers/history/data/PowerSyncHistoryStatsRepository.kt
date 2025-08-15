@@ -40,18 +40,19 @@ class PowerSyncHistoryStatsRepository(
         database
             .watch(
                 sql =
-                if (isIncome)
-                    SELECT_FOR_INCOME_CATEGORIES
-                else
-                    SELECT_FOR_EXPENSE_CATEGORIES,
+                    if (isIncome)
+                        SELECT_FOR_INCOME_CATEGORIES
+                    else
+                        SELECT_FOR_EXPENSE_CATEGORIES,
                 parameters = listOf(
                     period.startInclusive.toString(),
                     period.endExclusive.toString(),
                 ),
                 mapper = { sqlCursor ->
                     // Sum subcategories into parent.
-                    val categoryId = sqlCursor.getStringOptional(DbSchema.CATEGORY_SELECTED_PARENT_ID)
-                        ?: sqlCursor.getString(TRANSFER_SELECTED_COUNTERPARTY_ID)
+                    val categoryId =
+                        sqlCursor.getStringOptional(DbSchema.CATEGORY_SELECTED_PARENT_ID)
+                            ?: sqlCursor.getString(TRANSFER_SELECTED_COUNTERPARTY_ID)
                     // Category ID to string amount not to store bunch of BigIntegers.
                     categoryId to sqlCursor.getString(TRANSFER_SELECTED_AMOUNT).trim()
                 }
@@ -65,6 +66,51 @@ class PowerSyncHistoryStatsRepository(
                         )
                     }
                 }
+            }
+            .flowOn(Dispatchers.Default)
+
+    override fun getCategoryDailyAmounts(
+        isIncome: Boolean,
+        period: HistoryPeriod,
+    ): Flow<DailyAmountsByCategoryId> =
+        database
+            .watch(
+                sql =
+                    if (isIncome)
+                        SELECT_FOR_INCOME_CATEGORIES
+                    else
+                        SELECT_FOR_EXPENSE_CATEGORIES,
+                parameters = listOf(
+                    period.startInclusive.toString(),
+                    period.endExclusive.toString(),
+                ),
+                mapper = { sqlCursor ->
+                    // Sum subcategories into parent.
+                    val categoryId =
+                        sqlCursor.getStringOptional(DbSchema.CATEGORY_SELECTED_PARENT_ID)
+                            ?: sqlCursor.getString(TRANSFER_SELECTED_COUNTERPARTY_ID)
+                    Triple(
+                        categoryId,
+                        sqlCursor
+                            .getString(DbSchema.TRANSFER_SELECTED_DATETIME)
+                            .substring(0, 11),
+                        BigInteger(sqlCursor.getString(TRANSFER_SELECTED_AMOUNT)),
+                    )
+                }
+            )
+            .map { transfersInPeriod ->
+                val dailyAmountsByCategoryId =
+                    mutableMapOf<String, MutableMap<String, BigInteger>>()
+
+                transfersInPeriod.forEach { (categoryId, transferDayString, transferAmount) ->
+                    dailyAmountsByCategoryId
+                        .getOrPut(categoryId, ::mutableMapOf)
+                        .compute(transferDayString) { _, dailyTotal ->
+                            (dailyTotal ?: BigInteger.ZERO) + transferAmount
+                        }
+                }
+
+                dailyAmountsByCategoryId
             }
             .flowOn(Dispatchers.Default)
 }

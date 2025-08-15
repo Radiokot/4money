@@ -19,22 +19,10 @@
 
 package ua.com.radiokot.money.transfers.history.data
 
-import kotlinx.coroutines.flow.Flow
 import java.math.BigInteger
 
-interface HistoryStatsRepository {
-
-    /**
-     * @return a map of total transferred amount per category –
-     * itself and the sum of subcategories.
-     */
-    fun getCategoryStatsFlow(
-        isIncome: Boolean,
-        period: HistoryPeriod,
-    ): Flow<Map<String, BigInteger>>
-
-    fun getCategoryDailyAmounts(
-        isIncome: Boolean,
-        period: HistoryPeriod,
-    ): Flow<DailyAmountsByCategoryId>
-}
+/**
+ * For each present category ID
+ * there's a map total transfer amount by day in YYYY-MM-DD format.
+ */
+typealias DailyAmountsByCategoryId = Map<String, Map<String, BigInteger>>
