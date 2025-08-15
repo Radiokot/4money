@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.currency.data
 
 import com.powersync.PowerSyncDatabase
+import com.powersync.db.getString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,7 +30,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.withContext
 import ua.com.radiokot.money.powersync.DbSchema
+import ua.com.radiokot.money.powersync.DbSchema.toDbString
+import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 
 class PowerSyncCurrencyRepository(
     private val database: PowerSyncDatabase,
@@ -77,6 +81,46 @@ class PowerSyncCurrencyRepository(
 
     override fun getCurrencyPairMapFlow(): Flow<CurrencyPairMap> =
         currencyPairMapSharedFlow
+
+    override suspend fun getDailyPrices(
+        period: HistoryPeriod,
+        currencyCodes: Iterable<String>
+    ): Map<String, CurrencyPairMap> = withContext(Dispatchers.Default) {
+
+        val pairMapsByDay = mutableMapOf<String, CurrencyPairMap>()
+
+        database
+            .getAll(
+                sql = buildString {
+                    append(SELECT_DAILY_PRICES)
+                    append(" AND ${DbSchema.DAILY_PRICE_SELECTED_BASE_CODE} IN ")
+                    append(
+                        currencyCodes.joinToString(
+                            transform = { "'$it'" },
+                            separator = ",",
+                            prefix = "(",
+                            postfix = ")",
+                        )
+                    )
+                },
+                parameters = listOf(
+                    period.startInclusive.toDbString().substring(0, 10),
+                    period.endExclusive.toDbString().substring(0, 10),
+                ),
+                mapper = { sqlCursor ->
+                    val dayString = sqlCursor
+                        .getString(DbSchema.DAILY_PRICE_SELECTED_DAY_STRING)
+
+                    pairMapsByDay.getOrPut(dayString) {
+                        CurrencyPairMap(
+                            quoteCode = "USD",
+                        )
+                    } += DbSchema.toPricePair(sqlCursor)
+                }
+            )
+
+        return@withContext pairMapsByDay
+    }
 }
 
 private const val SELECT_CURRENCIES =
@@ -95,3 +139,16 @@ private const val SELECT_LATEST_PRICES =
             "FROM ${DbSchema.DAILY_PRICES_TABLE} " +
             "WHERE ${DbSchema.DAILY_PRICE_DAY_SUBSTRING} = " +
             "(SELECT MAX(${DbSchema.DAILY_PRICE_DAY_SUBSTRING}) FROM ${DbSchema.DAILY_PRICES_TABLE})"
+
+/**
+ * Params:
+ * 1. Start day YYYY-MM-DD, inclusive
+ * 2. End day YYYY-MM-DD, exclusive
+ */
+private const val SELECT_DAILY_PRICES =
+    "SELECT ${DbSchema.DAILY_PRICE_ID_AS_DAY_STRING}, " +
+            "${DbSchema.DAILY_PRICE_ID_AS_BASE_CODE}, " +
+            "${DbSchema.DAILY_PRICES_TABLE}.${DbSchema.DAILY_PRICE_PRICE} as ${DbSchema.DAILY_PRICE_SELECTED_PRICE} " +
+            "FROM ${DbSchema.DAILY_PRICES_TABLE} " +
+            "WHERE ${DbSchema.DAILY_PRICE_SELECTED_DAY_STRING} >= ? " +
+            "AND ${DbSchema.DAILY_PRICE_SELECTED_DAY_STRING} < ? "

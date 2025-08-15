@@ -119,4 +119,20 @@ class CurrencyPairMapTest {
             map[btc, uah]?.decimalPrice
         )
     }
+
+    @Test
+    fun getPair_IfAddedLater() {
+        val map = CurrencyPairMap(
+            quoteCode = usd.code,
+        )
+
+        Assert.assertNull(map[uah, usd])
+
+        map += uah.code to BigDecimal("0.024")
+
+        Assert.assertEquals(
+            BigDecimal("0.024"),
+            map[uah, usd]?.decimalPrice
+        )
+    }
 }

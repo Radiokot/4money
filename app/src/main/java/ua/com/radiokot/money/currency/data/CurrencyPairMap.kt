@@ -31,8 +31,15 @@ import java.math.MathContext
  */
 class CurrencyPairMap(
     private val quoteCode: String,
-    private val decimalPriceByBaseCode: Map<String, BigDecimal>,
+    decimalPriceByBaseCode: Map<String, BigDecimal> = emptyMap(),
 ) {
+    private val decimalPriceByBaseCode: MutableMap<String, BigDecimal> =
+        decimalPriceByBaseCode.toMutableMap()
+
+    operator fun plusAssign(pair: Pair<String, BigDecimal>) {
+        decimalPriceByBaseCode += pair
+    }
+
     /**
      * @return a pair for given [base] and [quote] currencies having its price
      * found in this map or calculated through a double conversion.

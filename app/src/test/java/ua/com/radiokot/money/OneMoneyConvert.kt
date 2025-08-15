@@ -17,6 +17,8 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
+@file:OptIn(ExperimentalTime::class)
+
 package ua.com.radiokot.money
 
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
@@ -33,6 +35,7 @@ import java.io.File
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.UUID
+import kotlin.time.ExperimentalTime
 
 private data class OneMoneyAccount(
     val title: String,
@@ -224,6 +227,7 @@ private data class MoneyAppCategory(
     }
 }
 
+@ExperimentalTime
 private data class MoneyAppTransfer(
     val userId: UUID,
     val time: Instant,
