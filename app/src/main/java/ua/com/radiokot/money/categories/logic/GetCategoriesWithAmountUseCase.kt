@@ -23,39 +23,40 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import ua.com.radiokot.money.categories.data.CategoryRepository
-import ua.com.radiokot.money.categories.data.CategoryStats
+import ua.com.radiokot.money.categories.data.CategoryWithAmount
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.data.HistoryStatsRepository
 import java.math.BigInteger
 
-class GetCategoryStatsUseCase(
+class GetCategoriesWithAmountUseCase(
     private val categoryRepository: CategoryRepository,
     private val historyStatsRepository: HistoryStatsRepository,
 ) {
+
+    /**
+     * @return existing categories with their total amounts for the given [period].
+     */
     operator fun invoke(
         isIncome: Boolean,
         period: HistoryPeriod,
-    ): Flow<List<CategoryStats>> =
+    ): Flow<List<CategoryWithAmount>> =
         combine(
             categoryRepository.getCategoriesFlow(
                 isIncome = isIncome,
             ),
-            historyStatsRepository.getCategoryStatsFlow(
+            historyStatsRepository.getCategoryAmountsFlow(
                 isIncome = isIncome,
                 period = period,
             ),
             ::Pair,
         )
             .map { (categories, amountsByCategoryId) ->
-                buildList {
-                    categories.forEach { category ->
-                        add(
-                            category to amountsByCategoryId.getOrDefault(
-                                category.id,
-                                BigInteger.ZERO
-                            )
-                        )
-                    }
+                categories.map { category ->
+                    CategoryWithAmount(
+                        category = category,
+                        amount = amountsByCategoryId[category.id]
+                            ?: BigInteger.ZERO,
+                    )
                 }
             }
 }

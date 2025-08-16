@@ -42,8 +42,8 @@ import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.logic.GetVisibleAccountsUseCase
 import ua.com.radiokot.money.accounts.view.ViewAccountListItem
 import ua.com.radiokot.money.categories.data.CategoryRepository
-import ua.com.radiokot.money.categories.data.CategoryStats
-import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
+import ua.com.radiokot.money.categories.data.CategoryWithAmount
+import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountUseCase
 import ua.com.radiokot.money.categories.view.ViewCategoryListItem
 import ua.com.radiokot.money.categories.view.toSortedIncognitoViewItemList
 import ua.com.radiokot.money.categories.view.toSortedViewItemList
@@ -57,7 +57,7 @@ import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 class TransferCounterpartySelectionSheetViewModel(
     private val categoryRepository: CategoryRepository,
     getVisibleAccountsUseCase: GetVisibleAccountsUseCase,
-    private val getCategoryStatsUseCase: GetCategoryStatsUseCase,
+    private val getCategoriesWithAmountUseCase: GetCategoriesWithAmountUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("TransferCounterpartySelectionSheetVM")
@@ -82,11 +82,9 @@ class TransferCounterpartySelectionSheetViewModel(
             transform = ::Triple
         )
             .map { (areCategoriesVisible, isForSource, alreadySelectedCounterpartyId) ->
-                areCategoriesVisible && (
-                        isForSource == null
-                                || (isForSource == true
-                                && alreadySelectedCounterpartyId !is TransferCounterpartyId.Category)
-                        )
+                areCategoriesVisible &&
+                        (isForSource == null
+                                || (isForSource && alreadySelectedCounterpartyId !is TransferCounterpartyId.Category))
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
@@ -98,11 +96,9 @@ class TransferCounterpartySelectionSheetViewModel(
             transform = ::Triple
         )
             .map { (areCategoriesVisible, isForSource, alreadySelectedCounterpartyId) ->
-                areCategoriesVisible && (
-                        isForSource == null
-                                || (isForSource == false
-                                && alreadySelectedCounterpartyId !is TransferCounterpartyId.Category)
-                        )
+                areCategoriesVisible &&
+                        (isForSource == null
+                                || (!isForSource && alreadySelectedCounterpartyId !is TransferCounterpartyId.Category))
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
@@ -160,11 +156,11 @@ class TransferCounterpartySelectionSheetViewModel(
             .flatMapLatest { (areCategoriesVisible, isIncognito) ->
                 if (areCategoriesVisible == true)
                     if (!isIncognito)
-                        getCategoryStatsUseCase(
+                        getCategoriesWithAmountUseCase(
                             isIncome = true,
                             period = HistoryPeriod.Month(),
                         )
-                            .map(List<CategoryStats>::toSortedViewItemList)
+                            .map(List<CategoryWithAmount>::toSortedViewItemList)
                     else
                         categoryRepository
                             .getCategoriesFlow(
@@ -188,11 +184,11 @@ class TransferCounterpartySelectionSheetViewModel(
             .flatMapLatest { (areCategoriesVisible, isIncognito) ->
                 if (areCategoriesVisible == true)
                     if (!isIncognito)
-                        getCategoryStatsUseCase(
+                        getCategoriesWithAmountUseCase(
                             isIncome = false,
                             period = HistoryPeriod.Month(),
                         )
-                            .map(List<CategoryStats>::toSortedViewItemList)
+                            .map(List<CategoryWithAmount>::toSortedViewItemList)
                     else
                         categoryRepository
                             .getCategoriesFlow(

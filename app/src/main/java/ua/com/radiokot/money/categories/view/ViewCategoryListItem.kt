@@ -20,9 +20,8 @@
 package ua.com.radiokot.money.categories.view
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.ui.graphics.Color
 import ua.com.radiokot.money.categories.data.Category
-import ua.com.radiokot.money.categories.data.CategoryStats
+import ua.com.radiokot.money.categories.data.CategoryWithAmount
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewAmount
 import java.math.BigInteger
@@ -86,10 +85,10 @@ fun List<Category>.toSortedIncognitoViewItemList(): List<ViewCategoryListItem> =
             )
         }
 
-private val statsComparator = compareBy(CategoryStats::first)
+private val categoryComparator = compareBy(CategoryWithAmount::category)
 
-fun List<CategoryStats>.toSortedViewItemList(): List<ViewCategoryListItem> =
-    sortedWith(statsComparator)
+fun List<CategoryWithAmount>.toSortedViewItemList(): List<ViewCategoryListItem> =
+    sortedWith(categoryComparator)
         .map { (category, amount) ->
             ViewCategoryListItem(
                 category = category,

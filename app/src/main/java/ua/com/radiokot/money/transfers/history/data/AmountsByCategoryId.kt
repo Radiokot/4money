@@ -22,7 +22,12 @@ package ua.com.radiokot.money.transfers.history.data
 import java.math.BigInteger
 
 /**
+ * For each present category ID there's a total transfer amount.
+ */
+typealias AmountsByCategoryId = Map<String, BigInteger>
+
+/**
  * For each present category ID
- * there's a map total transfer amount by day in YYYY-MM-DD format.
+ * there's a map of total transfer amounts by day in YYYY-MM-DD format.
  */
 typealias DailyAmountsByCategoryId = Map<String, Map<String, BigInteger>>

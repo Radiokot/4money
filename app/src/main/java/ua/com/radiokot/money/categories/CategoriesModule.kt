@@ -27,7 +27,8 @@ import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
 import ua.com.radiokot.money.categories.logic.AddCategoryUseCase
 import ua.com.radiokot.money.categories.logic.EditCategoryUseCase
-import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
+import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountUseCase
+import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountsAndTotalUseCase
 import ua.com.radiokot.money.categories.logic.PowerSyncAddCategoryUseCase
 import ua.com.radiokot.money.categories.logic.PowerSyncEditCategoryUseCase
 import ua.com.radiokot.money.categories.view.CategoriesScreenViewModel
@@ -54,11 +55,20 @@ val categoriesModule = module {
         } bind CategoryRepository::class
 
         factory {
-            GetCategoryStatsUseCase(
+            GetCategoriesWithAmountUseCase(
                 categoryRepository = get(),
                 historyStatsRepository = get(),
             )
-        } bind GetCategoryStatsUseCase::class
+        } bind GetCategoriesWithAmountUseCase::class
+
+        factory {
+            GetCategoriesWithAmountsAndTotalUseCase(
+                currencyRepository = get(),
+                currencyPreferences = get(),
+                categoryRepository = get(),
+                historyStatsRepository = get(),
+            )
+        } bind GetCategoriesWithAmountsAndTotalUseCase::class
 
         viewModel { parameters ->
             CategoriesScreenViewModel(
@@ -66,7 +76,7 @@ val categoriesModule = module {
                     "HistoryStatsPeriodViewModel must be provided through the parameters " +
                             "to share the same instance"
                 },
-                getCategoryStatsUseCase = get(),
+                getCategoriesWithAmountUseCase = get(),
                 currencyRepository = get(),
                 currencyPreferences = get(),
             )
@@ -114,7 +124,7 @@ val categoriesModule = module {
                 parameters = checkNotNull(getOrNull()) {
                     "CategoryActionSheetViewModel.Parameters are required"
                 },
-                getCategoryStatsUseCase = get(),
+                getCategoriesWithAmountUseCase = get(),
             )
         } bind CategoryActionSheetViewModel::class
     }

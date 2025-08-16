@@ -17,24 +17,20 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.transfers.history.data
+package ua.com.radiokot.money.categories.data
 
-import kotlinx.coroutines.flow.Flow
+import ua.com.radiokot.money.currency.data.Amount
 import java.math.BigInteger
 
-interface HistoryStatsRepository {
+data class CategoryWithAmount(
+    val category: Category,
+    val amount: BigInteger,
+)
 
+class CategoriesWithAmountAndTotal(
     /**
-     * @return a map of total transferred amount per category –
-     * itself and the sum of subcategories.
+     * Null if the primary currency doesn't exist.
      */
-    fun getCategoryAmountsFlow(
-        isIncome: Boolean,
-        period: HistoryPeriod,
-    ): Flow<Map<String, BigInteger>>
-
-    fun getCategoryDailyAmountsFlow(
-        isIncome: Boolean,
-        period: HistoryPeriod,
-    ): Flow<DailyAmountsByCategoryId>
-}
+    val totalInPrimaryCurrency: Amount?,
+    val categories: List<CategoryWithAmount>,
+)

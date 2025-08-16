@@ -117,7 +117,7 @@ val transfersModule = module {
         viewModel {
             TransferCounterpartySelectionSheetViewModel(
                 categoryRepository = get(),
-                getCategoryStatsUseCase = get(),
+                getCategoriesWithAmountUseCase = get(),
                 getVisibleAccountsUseCase = get(),
             )
         } bind TransferCounterpartySelectionSheetViewModel::class

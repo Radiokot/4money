@@ -30,37 +30,34 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.categories.data.Category
-import ua.com.radiokot.money.categories.data.CategoryStats
-import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
+import ua.com.radiokot.money.categories.data.CategoryWithAmount
+import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
-import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.map
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 
 class CategoryActionSheetViewModel(
     parameters: Parameters,
-    private val getCategoryStatsUseCase: GetCategoryStatsUseCase,
+    private val getCategoriesWithAmountUseCase: GetCategoriesWithAmountUseCase,
 ) : ViewModel() {
 
-    private val log by lazyLogger("CategoryActionSheetVM")
-
-    private val categoryStats: StateFlow<CategoryStats> = runBlocking {
-        getCategoryStatsUseCase(
+    private val categoryWithAmount: StateFlow<CategoryWithAmount> = runBlocking {
+        getCategoriesWithAmountUseCase(
             isIncome = parameters.isIncome,
             period = parameters.statsPeriod,
         )
-            .mapNotNull { categoryStats ->
-                categoryStats.find { it.first.id == parameters.categoryId }
+            .mapNotNull { categoriesWithAmount ->
+                categoriesWithAmount.find { it.category.id == parameters.categoryId }
             }
             .run { stateIn(viewModelScope, SharingStarted.Eagerly, first()) }
     }
 
     private val category: StateFlow<Category> =
-        categoryStats
-            .map(viewModelScope, CategoryStats::first)
+        categoryWithAmount
+            .map(viewModelScope, CategoryWithAmount::category)
 
     val title: StateFlow<String> =
         category
@@ -69,7 +66,7 @@ class CategoryActionSheetViewModel(
     val statsPeriod: HistoryPeriod = parameters.statsPeriod
 
     val statsAmount: StateFlow<ViewAmount> =
-        categoryStats
+        categoryWithAmount
             .map(viewModelScope) { (category, amount) ->
                 ViewAmount(
                     value = amount,

@@ -17,8 +17,30 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.categories.data
+package ua.com.radiokot.money.currency.data
 
 import java.math.BigInteger
 
-typealias CategoryStats = Pair<Category, BigInteger>
+class Amount(
+    val value: BigInteger,
+    val currency: Currency,
+) {
+    override fun toString(): String =
+        "$value * 10^-${currency.precision} ${currency.symbol}"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Amount) return false
+
+        if (value != other.value) return false
+        if (currency != other.currency) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = value.hashCode()
+        result = 31 * result + currency.hashCode()
+        return result
+    }
+}

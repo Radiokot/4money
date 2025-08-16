@@ -33,10 +33,10 @@ class PowerSyncHistoryStatsRepository(
     private val database: Queries,
 ) : HistoryStatsRepository {
 
-    override fun getCategoryStatsFlow(
+    override fun getCategoryAmountsFlow(
         isIncome: Boolean,
         period: HistoryPeriod,
-    ): Flow<Map<String, BigInteger>> =
+    ): Flow<AmountsByCategoryId> =
         database
             .watch(
                 sql =
@@ -58,18 +58,19 @@ class PowerSyncHistoryStatsRepository(
                 }
             )
             .map { transfersToSum ->
-                buildMap<String, BigInteger> {
-                    transfersToSum.forEach { (categoryId, stringAmount) ->
-                        set(
-                            categoryId,
-                            getOrDefault(categoryId, BigInteger.ZERO) + BigInteger(stringAmount)
-                        )
+                val amountsByCategoryId = mutableMapOf<String, BigInteger>()
+
+                transfersToSum.forEach { (categoryId, stringAmount) ->
+                    amountsByCategoryId.compute(categoryId) { _, total ->
+                        (total ?: BigInteger.ZERO) + BigInteger(stringAmount)
                     }
                 }
+
+                amountsByCategoryId
             }
             .flowOn(Dispatchers.Default)
 
-    override fun getCategoryDailyAmounts(
+    override fun getCategoryDailyAmountsFlow(
         isIncome: Boolean,
         period: HistoryPeriod,
     ): Flow<DailyAmountsByCategoryId> =
@@ -93,7 +94,7 @@ class PowerSyncHistoryStatsRepository(
                         categoryId,
                         sqlCursor
                             .getString(DbSchema.TRANSFER_SELECTED_DATETIME)
-                            .substring(0, 11),
+                            .substring(0, 10),
                         BigInteger(sqlCursor.getString(TRANSFER_SELECTED_AMOUNT)),
                     )
                 }

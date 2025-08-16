@@ -36,8 +36,8 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import ua.com.radiokot.money.categories.data.Category
-import ua.com.radiokot.money.categories.data.CategoryStats
-import ua.com.radiokot.money.categories.logic.GetCategoryStatsUseCase
+import ua.com.radiokot.money.categories.data.CategoryWithAmount
+import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountUseCase
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.currency.view.ViewAmount
@@ -50,7 +50,7 @@ import java.math.BigInteger
 @OptIn(ExperimentalCoroutinesApi::class)
 class CategoriesScreenViewModel(
     historyStatsPeriodViewModel: HistoryStatsPeriodViewModel,
-    getCategoryStatsUseCase: GetCategoryStatsUseCase,
+    getCategoriesWithAmountUseCase: GetCategoriesWithAmountUseCase,
     private val currencyRepository: CurrencyRepository,
     currencyPreferences: CurrencyPreferences,
 ) : ViewModel(),
@@ -62,29 +62,29 @@ class CategoriesScreenViewModel(
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
-    private val incomeCategoryStats: Flow<List<CategoryStats>> =
+    private val incomeCategoriesWithAmount: Flow<List<CategoryWithAmount>> =
         historyStatsPeriod.flatMapLatest { period ->
-            getCategoryStatsUseCase(
+            getCategoriesWithAmountUseCase(
                 isIncome = true,
                 period = period,
             )
         }
     val incomeCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
-        incomeCategoryStats
-            .map(List<CategoryStats>::toSortedViewItemList)
+        incomeCategoriesWithAmount
+            .map(List<CategoryWithAmount>::toSortedViewItemList)
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    private val expenseCategoryStats: Flow<List<CategoryStats>> =
+    private val expenseCategoriesWithAmounts: Flow<List<CategoryWithAmount>> =
         historyStatsPeriod.flatMapLatest { period ->
-            getCategoryStatsUseCase(
+            getCategoriesWithAmountUseCase(
                 isIncome = false,
                 period = period,
             )
         }
     val expenseCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
-        expenseCategoryStats
-            .map(List<CategoryStats>::toSortedViewItemList)
+        expenseCategoriesWithAmounts
+            .map(List<CategoryWithAmount>::toSortedViewItemList)
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -92,9 +92,9 @@ class CategoriesScreenViewModel(
         combine(
             isIncome.flatMapLatest { isIncome ->
                 if (isIncome)
-                    incomeCategoryStats
+                    incomeCategoriesWithAmount
                 else
-                    expenseCategoryStats
+                    expenseCategoriesWithAmounts
             },
             currencyRepository.getCurrencyPairMapFlow(),
             currencyPreferences.primaryCurrencyCode,
