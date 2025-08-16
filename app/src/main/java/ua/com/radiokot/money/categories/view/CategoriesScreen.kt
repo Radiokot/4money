@@ -57,8 +57,7 @@ fun CategoriesScreenRoot(
     isIncome = viewModel.isIncome.collectAsStateWithLifecycle(),
     period = viewModel.historyStatsPeriod.collectAsStateWithLifecycle(),
     totalAmount = viewModel.totalAmount.collectAsStateWithLifecycle(),
-    incomeCategoryItemList = viewModel.incomeCategoryItemList.collectAsStateWithLifecycle(),
-    expenseCategoryItemList = viewModel.expenseCategoryItemList.collectAsStateWithLifecycle(),
+    categoryItemList = viewModel.categoryItemList.collectAsStateWithLifecycle(),
     onTitleClicked = remember { viewModel::onTitleClicked },
     onCategoryItemClicked = remember { viewModel::onCategoryItemClicked },
     onCategoryItemLongClicked = remember { viewModel::onCategoryItemLongClicked },
@@ -75,8 +74,7 @@ private fun CategoriesScreen(
     isIncome: State<Boolean>,
     period: State<HistoryPeriod>,
     totalAmount: State<ViewAmount?>,
-    incomeCategoryItemList: State<List<ViewCategoryListItem>>,
-    expenseCategoryItemList: State<List<ViewCategoryListItem>>,
+    categoryItemList: State<List<ViewCategoryListItem>>,
     onTitleClicked: () -> Unit,
     onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
     onCategoryItemLongClicked: (ViewCategoryListItem) -> Unit,
@@ -106,10 +104,10 @@ private fun CategoriesScreen(
 
     BasicText(
         text =
-        if (isIncome.value)
-            "Incomes"
-        else
-            "Expenses",
+            if (isIncome.value)
+                "Incomes"
+            else
+                "Expenses",
         style = TextStyle(
             textAlign = TextAlign.Center,
         ),
@@ -130,10 +128,10 @@ private fun CategoriesScreen(
                 amountFormat(
                     amount = totalAmount.value!!,
                     customColor =
-                    if (isIncome.value)
-                        Color(0xff50af99)
-                    else
-                        Color(0xffd85e8c)
+                        if (isIncome.value)
+                            Color(0xff50af99)
+                        else
+                            Color(0xffd85e8c)
                 )
             else
                 AnnotatedString("")
@@ -156,11 +154,7 @@ private fun CategoriesScreen(
     )
 
     CategoryGrid(
-        itemList =
-        if (isIncome.value)
-            incomeCategoryItemList
-        else
-            expenseCategoryItemList,
+        itemList = categoryItemList,
         onItemClicked = onCategoryItemClicked,
         onItemLongClicked = onCategoryItemLongClicked,
         isAddShown = true,
@@ -189,8 +183,7 @@ private fun CategoriesScreenPreview(
             )
         ).let(::mutableStateOf),
         period = HistoryPeriod.Month().let(::mutableStateOf),
-        incomeCategoryItemList = mutableStateOf(categories),
-        expenseCategoryItemList = mutableStateOf(categories),
+        categoryItemList = mutableStateOf(categories),
         onTitleClicked = {},
         onCategoryItemClicked = {},
         onCategoryItemLongClicked = {},

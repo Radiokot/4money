@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import ua.com.radiokot.money.powersync.DbSchema
+import ua.com.radiokot.money.powersync.DbSchema.toDbString
 import java.math.BigInteger
 
 class PowerSyncHistoryStatsRepository(
@@ -82,8 +83,8 @@ class PowerSyncHistoryStatsRepository(
                     else
                         SELECT_FOR_EXPENSE_CATEGORIES,
                 parameters = listOf(
-                    period.startInclusive.toString(),
-                    period.endExclusive.toString(),
+                    period.startInclusive.toDbString(),
+                    period.endExclusive.toDbString(),
                 ),
                 mapper = { sqlCursor ->
                     // Sum subcategories into parent.

@@ -23,17 +23,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import ua.com.radiokot.money.categories.data.CategoriesWithAmountAndTotal
 import ua.com.radiokot.money.categories.data.Category
@@ -57,40 +59,28 @@ class CategoriesScreenViewModel(
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
-    private val incomeCategoriesWithAmountAndTotal: Flow<CategoriesWithAmountAndTotal> =
-        historyStatsPeriod.flatMapLatest { period ->
-            getCategoriesWithAmountAndTotalUseCase(
-                isIncome = true,
-                period = period,
-            )
-        }
-    val incomeCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
-        incomeCategoriesWithAmountAndTotal
-            .map { it.categories.toSortedViewItemList() }
-            .flowOn(Dispatchers.Default)
-            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    private val categoriesWithAmountAndTotalSharedFlow: SharedFlow<CategoriesWithAmountAndTotal> =
+        combine(
+            isIncome,
+            historyStatsPeriod,
+            transform = ::Pair,
+        )
+            .flatMapLatest { (isIncome, period) ->
+                getCategoriesWithAmountAndTotalUseCase(
+                    isIncome = isIncome,
+                    period = period,
+                )
+            }
+            .shareIn(viewModelScope, SharingStarted.Lazily)
 
-    private val expenseCategoriesWithAmountAndTotal: Flow<CategoriesWithAmountAndTotal> =
-        historyStatsPeriod.flatMapLatest { period ->
-            getCategoriesWithAmountAndTotalUseCase(
-                isIncome = false,
-                period = period,
-            )
-        }
-    val expenseCategoryItemList: StateFlow<List<ViewCategoryListItem>> =
-        expenseCategoriesWithAmountAndTotal
+    val categoryItemList: StateFlow<List<ViewCategoryListItem>> =
+        categoriesWithAmountAndTotalSharedFlow
             .map { it.categories.toSortedViewItemList() }
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val totalAmount: StateFlow<ViewAmount?> =
-        isIncome
-            .flatMapLatest { isIncome ->
-                if (isIncome)
-                    incomeCategoriesWithAmountAndTotal
-                else
-                    expenseCategoriesWithAmountAndTotal
-            }
+        categoriesWithAmountAndTotalSharedFlow
             .mapNotNull { it.totalInPrimaryCurrency }
             .mapNotNull(::ViewAmount)
             .stateIn(viewModelScope, SharingStarted.Lazily, null)

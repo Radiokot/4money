@@ -28,7 +28,6 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
-import java.time.Year
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -119,7 +118,7 @@ sealed interface HistoryPeriod {
 
         override val endExclusive: LocalDateTime =
             LocalDateTime(
-                date = LocalDate(Year.MAX_VALUE, 12, 31),
+                date = LocalDate(9999, 12, 31),
                 time = LocalTime.fromSecondOfDay(0),
             )
 
