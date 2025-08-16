@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.currency.view
 
 import androidx.compose.runtime.Immutable
+import ua.com.radiokot.money.currency.data.Amount
 import ua.com.radiokot.money.currency.data.Currency
 import java.math.BigInteger
 
@@ -37,6 +38,13 @@ class ViewAmount(
     ) : this(
         value = value,
         currency = ViewCurrency(currency),
+    )
+
+    constructor(
+        amount: Amount,
+    ) : this(
+        value = amount.value,
+        currency = amount.currency,
     )
 
     override fun toString(): String =

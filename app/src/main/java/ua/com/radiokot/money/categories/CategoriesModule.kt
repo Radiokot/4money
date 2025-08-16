@@ -76,9 +76,7 @@ val categoriesModule = module {
                     "HistoryStatsPeriodViewModel must be provided through the parameters " +
                             "to share the same instance"
                 },
-                getCategoriesWithAmountUseCase = get(),
-                currencyRepository = get(),
-                currencyPreferences = get(),
+                getCategoriesWithAmountAndTotalUseCase = get(),
             )
         } bind CategoriesScreenViewModel::class
 
