@@ -25,6 +25,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 import ua.com.radiokot.money.categories.data.CategoriesWithAmountAndTotal
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.CategoryWithAmount
@@ -104,9 +107,22 @@ class GetCategoriesWithAmountsAndTotalUseCase(
                     )
 
                     if (primaryCurrency != null) {
+
                         categoryDailyAmounts.forEach { (dayString, amount) ->
-                            // TODO fallback to previous day
-                            val pricesForTheDay: CurrencyPairMap? = dailyPrices[dayString]
+
+                            var pricesForTheDay: CurrencyPairMap? = dailyPrices[dayString]
+
+                            // If there's no price for this day,
+                            // which could happen due to time zone differences,
+                            // try the previous day which must exist at this moment.
+                            if (pricesForTheDay == null) {
+                                val previousDayString =
+                                    LocalDate
+                                        .parse(dayString, LocalDate.Formats.ISO)
+                                        .minus(1, DateTimeUnit.DAY)
+                                        .toString()
+                                pricesForTheDay = dailyPrices[previousDayString]
+                            }
 
                             totalInPrimaryCurrency +=
                                 pricesForTheDay
