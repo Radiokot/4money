@@ -136,7 +136,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0"
     implementation "sh.calvin.reorderable:reorderable:2.5.1"
     implementation "cash.z.ecc.android:kotlin-bip39:1.0.9"
-    implementation "com.composables:core:1.39.0"
+    implementation "com.composables:core:1.41.0"
     implementation "org.bouncycastle:bcprov-lts8on:2.73.7"
 
     testImplementation "junit:junit:4.13.2"
