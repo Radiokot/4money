@@ -20,20 +20,22 @@
 package ua.com.radiokot.money.accounts.data
 
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.currency.data.Amount
 import ua.com.radiokot.money.currency.data.Currency
-import java.math.BigInteger
 import java.util.UUID
 
 class Account(
     val title: String,
-    val balance: BigInteger,
-    val currency: Currency,
+    val balance: Amount,
     val position: Double,
     val colorScheme: ItemColorScheme,
     val type: Type,
     val isArchived: Boolean,
     val id: String = UUID.randomUUID().toString(),
 ) {
+    val currency: Currency
+        get() = balance.currency
+
     val reversePosition: Double
         get() = -position
 

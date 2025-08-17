@@ -59,10 +59,7 @@ class AccountActionSheetViewModel(
         account.title
 
     val balance: ViewAmount =
-        ViewAmount(
-            value = account.balance,
-            currency = account.currency,
-        )
+        ViewAmount(account.balance)
 
     private val _mode: MutableStateFlow<ViewAccountActionSheetMode> =
         MutableStateFlow(
@@ -74,7 +71,7 @@ class AccountActionSheetViewModel(
     val mode = _mode.asStateFlow()
 
     private val _balanceInputValue: MutableStateFlow<BigInteger> =
-        MutableStateFlow(account.balance)
+        MutableStateFlow(account.balance.value)
     val balanceInputValue = _balanceInputValue.asStateFlow()
 
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
@@ -86,7 +83,7 @@ class AccountActionSheetViewModel(
         }
 
         _mode.tryEmit(ViewAccountActionSheetMode.Balance)
-        _balanceInputValue.tryEmit(account.balance)
+        _balanceInputValue.tryEmit(account.balance.value)
     }
 
     fun onTransferClicked() {

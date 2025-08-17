@@ -72,10 +72,7 @@ sealed interface ViewAccountListItem {
             isIncognito: Boolean = false,
         ) : this(
             title = account.title,
-            balance = ViewAmount(
-                value = account.balance,
-                currency = account.currency,
-            ),
+            balance = ViewAmount(account.balance),
             isIncognito = isIncognito,
             colorScheme = account.colorScheme,
             source = account,

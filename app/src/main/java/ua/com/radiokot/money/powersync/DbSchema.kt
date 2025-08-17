@@ -35,6 +35,7 @@ import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.Subcategory
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.currency.data.Amount
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.powersync.DbSchema.ACCOUNT_SELECT_COLUMNS
 import ua.com.radiokot.money.powersync.DbSchema.CATEGORY_SELECT_COLUMNS
@@ -193,7 +194,10 @@ object DbSchema {
         Account(
             id = getString(ACCOUNT_SELECTED_ID),
             title = getString(ACCOUNT_SELECTED_TITLE).trim(),
-            balance = BigInteger(getString(ACCOUNT_SELECTED_BALANCE).trim()),
+            balance = Amount(
+                value = BigInteger(getString(ACCOUNT_SELECTED_BALANCE)),
+                currency = toCurrency(sqlCursor),
+            ),
             position = getDouble(ACCOUNT_SELECTED_POSITION),
             colorScheme = getString(ACCOUNT_SELECTED_COLOR_SCHEME)
                 .trim()
@@ -205,7 +209,6 @@ object DbSchema {
                 .trim()
                 .let(Account.Type::fromSlug),
             isArchived = getBooleanOptional(ACCOUNT_SELECTED_ARCHIVED) == true,
-            currency = toCurrency(sqlCursor),
         )
     }
 

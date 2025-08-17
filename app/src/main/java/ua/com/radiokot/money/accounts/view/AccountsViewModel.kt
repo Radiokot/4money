@@ -86,7 +86,7 @@ class AccountsViewModel(
                                                         base = account.currency,
                                                         quote = primaryCurrency,
                                                     )
-                                                    ?.baseToQuote(account.balance)
+                                                    ?.baseToQuote(account.balance.value)
                                                     ?: BigInteger.ZERO
                                                 )
                                     }
@@ -127,7 +127,7 @@ class AccountsViewModel(
                     .groupBy(Account::currency)
                     .map { (currency, accountsInThisCurrency) ->
                         ViewAmount(
-                            value = accountsInThisCurrency.sumOf(Account::balance),
+                            value = accountsInThisCurrency.sumOf { it.balance.value },
                             currency = currency,
                         )
                     }
@@ -155,7 +155,7 @@ class AccountsViewModel(
                                         base = account.currency,
                                         quote = primaryCurrency,
                                     )
-                                    ?.baseToQuote(account.balance)
+                                    ?.baseToQuote(account.balance.value)
                                     ?: BigInteger.ZERO
                                 )
                     }

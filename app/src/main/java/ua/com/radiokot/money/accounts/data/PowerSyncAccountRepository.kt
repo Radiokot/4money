@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
+import ua.com.radiokot.money.currency.data.Amount
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.powersync.DbSchema
@@ -138,8 +139,10 @@ class PowerSyncAccountRepository(
 
         val account = Account(
             title = title,
-            balance = BigInteger.ZERO,
-            currency = currency,
+            balance = Amount(
+                value = BigInteger.ZERO,
+                currency = currency,
+            ),
             colorScheme = colorScheme,
             type = type,
             isArchived = false,
