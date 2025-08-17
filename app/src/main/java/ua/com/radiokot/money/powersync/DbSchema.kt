@@ -28,6 +28,7 @@ import com.powersync.db.getStringOptional
 import com.powersync.db.schema.Column
 import com.powersync.db.schema.Schema
 import com.powersync.db.schema.Table
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
 import ua.com.radiokot.money.accounts.data.Account
@@ -373,6 +374,9 @@ object DbSchema {
             .replace('T', ' ')
             // Trim millis.
             .substringBeforeLast('.')
+
+    fun LocalDateTime.toDbDayString() =
+        date.format(LocalDate.Formats.ISO)
 
     fun LocalDateTime.Companion.fromDbString(dateTimeString: String) =
         parse(

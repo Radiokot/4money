@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import ua.com.radiokot.money.powersync.DbSchema
-import ua.com.radiokot.money.powersync.DbSchema.toDbString
+import ua.com.radiokot.money.powersync.DbSchema.toDbDayString
 import java.math.BigInteger
 
 class PowerSyncHistoryStatsRepository(
@@ -46,8 +46,8 @@ class PowerSyncHistoryStatsRepository(
                     else
                         SELECT_FOR_EXPENSE_CATEGORIES,
                 parameters = listOf(
-                    period.startInclusive.toString(),
-                    period.endExclusive.toString(),
+                    period.startInclusive.toDbDayString(),
+                    period.endExclusive.toDbDayString(),
                 ),
                 mapper = { sqlCursor ->
                     // Sum subcategories into parent.
@@ -83,8 +83,8 @@ class PowerSyncHistoryStatsRepository(
                     else
                         SELECT_FOR_EXPENSE_CATEGORIES,
                 parameters = listOf(
-                    period.startInclusive.toDbString(),
-                    period.endExclusive.toDbString(),
+                    period.startInclusive.toDbDayString(),
+                    period.endExclusive.toDbDayString(),
                 ),
                 mapper = { sqlCursor ->
                     // Sum subcategories into parent.
@@ -93,10 +93,8 @@ class PowerSyncHistoryStatsRepository(
                             ?: sqlCursor.getString(TRANSFER_SELECTED_COUNTERPARTY_ID)
                     Triple(
                         categoryId,
-                        sqlCursor
-                            .getString(DbSchema.TRANSFER_SELECTED_DATETIME)
-                            .substring(0, 10),
-                        BigInteger(sqlCursor.getString(TRANSFER_SELECTED_AMOUNT)),
+                        sqlCursor.getString(TRANSFER_SELECTED_DAY_STRING),
+                        sqlCursor.getString(TRANSFER_SELECTED_AMOUNT),
                     )
                 }
             )
@@ -104,11 +102,11 @@ class PowerSyncHistoryStatsRepository(
                 val dailyAmountsByCategoryId =
                     mutableMapOf<String, MutableMap<String, BigInteger>>()
 
-                transfersInPeriod.forEach { (categoryId, transferDayString, transferAmount) ->
+                transfersInPeriod.forEach { (categoryId, transferDayString, transferAmountString) ->
                     dailyAmountsByCategoryId
                         .getOrPut(categoryId, ::mutableMapOf)
                         .compute(transferDayString) { _, dailyTotal ->
-                            (dailyTotal ?: BigInteger.ZERO) + transferAmount
+                            (dailyTotal ?: BigInteger.ZERO) + BigInteger(transferAmountString)
                         }
                 }
 
@@ -117,33 +115,34 @@ class PowerSyncHistoryStatsRepository(
             .flowOn(Dispatchers.Default)
 }
 
-private const val TRANSFER_DATETIME_IN_PERIOD =
-    "${DbSchema.TRANSFER_SELECTED_DATETIME} >= datetime(?) " +
-            "AND ${DbSchema.TRANSFER_SELECTED_DATETIME} < datetime(?)"
-
 private const val TRANSFER_SELECTED_COUNTERPARTY_ID = "transferCounterpartyId"
 private const val TRANSFER_SELECTED_AMOUNT = "transferAmount"
+private const val TRANSFER_SELECTED_DAY_STRING = "transferDay"
+
+private const val TRANSFER_DAY_IN_PERIOD =
+    "$TRANSFER_SELECTED_DAY_STRING >= ? " +
+            "AND $TRANSFER_SELECTED_DAY_STRING < ?"
 
 private const val SELECT_FOR_INCOME_CATEGORIES =
     "SELECT " +
             "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_SOURCE_ID} as $TRANSFER_SELECTED_COUNTERPARTY_ID, " +
             "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_SOURCE_AMOUNT} as $TRANSFER_SELECTED_AMOUNT, " +
             "${DbSchema.CATEGORIES_TABLE}.${DbSchema.CATEGORY_PARENT_ID} as ${DbSchema.CATEGORY_SELECTED_PARENT_ID}, " +
-            "${DbSchema.TRANSFER_TIME_AS_DATETIME} " +
+            "substr(${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_TIME}, 1, 10) as $TRANSFER_SELECTED_DAY_STRING " +
             "FROM ${DbSchema.TRANSFERS_TABLE}, ${DbSchema.CATEGORIES_TABLE} " +
             "WHERE $TRANSFER_SELECTED_COUNTERPARTY_ID in " +
             "(SELECT ${DbSchema.ID} FROM ${DbSchema.CATEGORIES_TABLE} WHERE ${DbSchema.CATEGORY_IS_INCOME} = 1) " +
             "AND $TRANSFER_SELECTED_COUNTERPARTY_ID = ${DbSchema.CATEGORIES_TABLE}.${DbSchema.ID} " +
-            "AND $TRANSFER_DATETIME_IN_PERIOD"
+            "AND $TRANSFER_DAY_IN_PERIOD"
 
 private const val SELECT_FOR_EXPENSE_CATEGORIES =
     "SELECT " +
             "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_DESTINATION_ID} as $TRANSFER_SELECTED_COUNTERPARTY_ID, " +
             "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_DESTINATION_AMOUNT} as $TRANSFER_SELECTED_AMOUNT, " +
             "${DbSchema.CATEGORIES_TABLE}.${DbSchema.CATEGORY_PARENT_ID} as ${DbSchema.CATEGORY_SELECTED_PARENT_ID}, " +
-            "${DbSchema.TRANSFER_TIME_AS_DATETIME} " +
+            "substr(${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_TIME}, 1, 10) as $TRANSFER_SELECTED_DAY_STRING " +
             "FROM ${DbSchema.TRANSFERS_TABLE}, ${DbSchema.CATEGORIES_TABLE} " +
             "WHERE $TRANSFER_SELECTED_COUNTERPARTY_ID in " +
             "(SELECT ${DbSchema.ID} FROM ${DbSchema.CATEGORIES_TABLE} WHERE ${DbSchema.CATEGORY_IS_INCOME} = 0) " +
             "AND $TRANSFER_SELECTED_COUNTERPARTY_ID = ${DbSchema.CATEGORIES_TABLE}.${DbSchema.ID} " +
-            "AND $TRANSFER_DATETIME_IN_PERIOD"
+            "AND $TRANSFER_DAY_IN_PERIOD"

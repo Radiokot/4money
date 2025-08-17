@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import ua.com.radiokot.money.powersync.DbSchema
-import ua.com.radiokot.money.powersync.DbSchema.toDbString
+import ua.com.radiokot.money.powersync.DbSchema.toDbDayString
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 
 class PowerSyncCurrencyRepository(
@@ -104,8 +104,8 @@ class PowerSyncCurrencyRepository(
                     )
                 },
                 parameters = listOf(
-                    period.startInclusive.toDbString().substring(0, 10),
-                    period.endExclusive.toDbString().substring(0, 10),
+                    period.startInclusive.toDbDayString(),
+                    period.endExclusive.toDbDayString(),
                 ),
                 mapper = { sqlCursor ->
                     val dayString = sqlCursor
