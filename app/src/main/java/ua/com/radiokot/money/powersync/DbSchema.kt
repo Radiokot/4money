@@ -26,6 +26,8 @@ import com.powersync.db.getLong
 import com.powersync.db.getString
 import com.powersync.db.getStringOptional
 import com.powersync.db.schema.Column
+import com.powersync.db.schema.Index
+import com.powersync.db.schema.IndexedColumn
 import com.powersync.db.schema.Schema
 import com.powersync.db.schema.Table
 import kotlinx.datetime.LocalDate
@@ -334,6 +336,26 @@ object DbSchema {
             Column.text(TRANSFER_DESTINATION_ID),
             Column.text(TRANSFER_DESTINATION_AMOUNT),
             Column.text(TRANSFER_MEMO),
+        ),
+        indexes = listOf(
+            Index(
+                name = "transfer-source-idx",
+                columns = listOf(
+                    IndexedColumn.descending(TRANSFER_SOURCE_ID)
+                )
+            ),
+            Index(
+                name = "transfer-destination-idx",
+                columns = listOf(
+                    IndexedColumn.descending(TRANSFER_DESTINATION_ID)
+                )
+            ),
+            Index(
+                name = "transfer-time-idx",
+                columns = listOf(
+                    IndexedColumn.descending(TRANSFER_TIME),
+                )
+            ),
         ),
         ignoreEmptyUpdates = true,
         trackMetadata = true,
