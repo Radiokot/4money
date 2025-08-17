@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -388,7 +389,11 @@ private fun BottomNavigation(
     modifier = Modifier
         .fillMaxWidth()
         .background(Color(0xfff0edf1))
-        .safeDrawingPadding()
+        // Do not use safeDrawingPadding() here
+        // to avoid jumping behind bottom sheets
+        // with soft keyboard open.
+        .displayCutoutPadding()
+        .navigationBarsPadding()
         .padding(
             vertical = 12.dp,
         )

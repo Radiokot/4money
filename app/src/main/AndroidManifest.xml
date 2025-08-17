@@ -23,8 +23,7 @@
 
         <activity
             android:name=".home.view.HomeActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustNothing">
+            android:exported="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -61,8 +60,7 @@
 
         <activity
             android:name=".accounts.view.EditAccountActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustNothing" />
+            android:exported="false" />
 
         <activity
             android:name=".categories.view.EditCategoryActivity"

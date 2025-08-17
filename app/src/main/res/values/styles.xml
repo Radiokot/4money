@@ -3,6 +3,9 @@
 
     <style name="DefaultActivity" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">#FFFFFF</item>
+
+        <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:windowExitAnimation">@android:anim/fade_out</item>
     </style>
 
     <style name="TransparentActivity" parent="Theme.AppCompat.NoActionBar">
