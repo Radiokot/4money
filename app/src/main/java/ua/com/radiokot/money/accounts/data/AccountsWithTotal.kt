@@ -17,30 +17,23 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.currency.data
+package ua.com.radiokot.money.accounts.data
 
-import kotlinx.coroutines.flow.Flow
-import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
+import ua.com.radiokot.money.currency.data.Amount
 
-interface CurrencyRepository {
-
-    suspend fun getCurrencies(): List<Currency>
-
-    fun getCurrenciesFlow(): Flow<List<Currency>>
-
-    suspend fun getCurrencyByCode(code: String): Currency?
-
-    suspend fun getLatestPrices(
-        currencyCodes: Iterable<String>,
-    ): CurrencyPairMap
-
+data class AccountsOfTypeWithTotal(
+    val type: Account.Type,
+    val accountsOfType: List<Account>,
     /**
-     * @return map of USD pairs with given [currencyCodes]
-     * per each observed day in YYYY-MM-DD format,
-     * within the given [period]
+     * Null if the primary currency doesn't exist.
      */
-    suspend fun getDailyPrices(
-        period: HistoryPeriod,
-        currencyCodes: Iterable<String>,
-    ): Map<String, CurrencyPairMap>
-}
+    val totalInPrimaryCurrency: Amount?,
+)
+
+class AccountsWithTotal(
+    val accountsOfTypes: List<AccountsOfTypeWithTotal>,
+    /**
+     * Null if the primary currency doesn't exist.
+     */
+    val totalInPrimaryCurrency: Amount?,
+)

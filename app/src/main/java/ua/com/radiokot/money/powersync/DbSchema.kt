@@ -409,5 +409,13 @@ object DbSchema {
                 .replace(' ', 'T'),
             format = LocalDateTime.Formats.ISO
         )
+
+    fun Iterable<String>.joinToSqlSet(): String =
+        joinToString(
+            transform = { "'$it'" },
+            separator = ",",
+            prefix = "(",
+            postfix = ")",
+        )
 }
 

@@ -28,10 +28,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import ua.com.radiokot.money.powersync.DbSchema
+import ua.com.radiokot.money.powersync.DbSchema.joinToSqlSet
 import ua.com.radiokot.money.powersync.DbSchema.toDbDayString
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 
@@ -63,46 +63,37 @@ class PowerSyncCurrencyRepository(
             mapper = DbSchema::toCurrency,
         )
 
-    private val currencyPairMapSharedFlow =
+    override suspend fun getLatestPrices(
+        currencyCodes: Iterable<String>,
+    ): CurrencyPairMap = withContext(Dispatchers.Default) {
+
         database
-            .watch(
-                sql = SELECT_LATEST_PRICES,
+            .getAll(
+                sql = SELECT_LATEST_PRICES +
+                        " AND ${DbSchema.DAILY_PRICE_SELECTED_BASE_CODE} IN " +
+                        currencyCodes.joinToSqlSet(),
                 mapper = DbSchema::toPricePair,
             )
-            .map { pairs ->
-                // Synced pairs have USD quote.
+            .let { pricePairs ->
                 CurrencyPairMap(
                     quoteCode = "USD",
-                    decimalPriceByBaseCode = pairs.toMap(),
+                    decimalPriceByBaseCode = pricePairs.toMap(),
                 )
             }
-            .flowOn(Dispatchers.Default)
-            .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
-
-    override fun getCurrencyPairMapFlow(): Flow<CurrencyPairMap> =
-        currencyPairMapSharedFlow
+    }
 
     override suspend fun getDailyPrices(
         period: HistoryPeriod,
-        currencyCodes: Iterable<String>
+        currencyCodes: Iterable<String>,
     ): Map<String, CurrencyPairMap> = withContext(Dispatchers.Default) {
 
         val pairMapsByDay = mutableMapOf<String, CurrencyPairMap>()
 
         database
             .getAll(
-                sql = buildString {
-                    append(SELECT_DAILY_PRICES)
-                    append(" AND ${DbSchema.DAILY_PRICE_SELECTED_BASE_CODE} IN ")
-                    append(
-                        currencyCodes.joinToString(
-                            transform = { "'$it'" },
-                            separator = ",",
-                            prefix = "(",
-                            postfix = ")",
-                        )
-                    )
-                },
+                sql = SELECT_DAILY_PRICES +
+                        " AND ${DbSchema.DAILY_PRICE_SELECTED_BASE_CODE} IN " +
+                        currencyCodes.joinToSqlSet(),
                 parameters = listOf(
                     period.startInclusive.toDbDayString(),
                     period.endExclusive.toDbDayString(),

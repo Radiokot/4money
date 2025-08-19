@@ -22,35 +22,33 @@ package ua.com.radiokot.money.accounts.view
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.AccountRepository
-import ua.com.radiokot.money.accounts.logic.GetVisibleAccountsUseCase
+import ua.com.radiokot.money.accounts.data.AccountsOfTypeWithTotal
+import ua.com.radiokot.money.accounts.data.AccountsWithTotal
+import ua.com.radiokot.money.accounts.logic.GetVisibleAccountsWithTotalUseCase
 import ua.com.radiokot.money.accounts.logic.MoveAccountUseCase
-import ua.com.radiokot.money.currency.data.Currency
-import ua.com.radiokot.money.currency.data.CurrencyPreferences
-import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
-import java.math.BigInteger
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AccountsViewModel(
     accountRepository: AccountRepository,
-    private val currencyRepository: CurrencyRepository,
-    currencyPreferences: CurrencyPreferences,
-    getVisibleAccountsUseCase: GetVisibleAccountsUseCase,
+    getVisibleAccountsWithTotalUseCase: GetVisibleAccountsWithTotalUseCase,
     private val moveAccountUseCase: MoveAccountUseCase,
 ) : ViewModel() {
 
@@ -58,72 +56,35 @@ class AccountsViewModel(
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
-    private val visibleAccounts: SharedFlow<List<Account>> =
-        getVisibleAccountsUseCase()
-            .shareIn(viewModelScope, SharingStarted.Lazily)
+    private val visibleAccountsWithTotalSharedFlow: SharedFlow<AccountsWithTotal> =
+        getVisibleAccountsWithTotalUseCase()
+            .shareIn(viewModelScope, SharingStarted.Eagerly)
 
     val accountListItems: StateFlow<List<ViewAccountListItem>> =
-        combine(
-            visibleAccounts,
-            currencyRepository.getCurrencyPairMapFlow(),
-            currencyPreferences.primaryCurrencyCode,
-            transform = ::Triple
-        )
-            .map { (accounts, currencyPairMap, primaryCurrencyCode) ->
-                val primaryCurrency: Currency? = currencyRepository
-                    .getCurrencyByCode(primaryCurrencyCode)
-
-                accounts
-                    .groupBy(Account::type)
-                    .flatMap { (type, accountsOfType) ->
-                        buildList {
-                            if (primaryCurrency != null) {
-                                val totalInPrimaryCurrency =
-                                    accountsOfType.fold(BigInteger.ZERO) { sum, account ->
-                                        sum + (
-                                                currencyPairMap
-                                                    .get(
-                                                        base = account.currency,
-                                                        quote = primaryCurrency,
-                                                    )
-                                                    ?.baseToQuote(account.balance.value)
-                                                    ?: BigInteger.ZERO
-                                                )
-                                    }
-
-                                add(
-                                    ViewAccountListItem.Header(
-                                        title = type.name,
-                                        amount = ViewAmount(
-                                            value = totalInPrimaryCurrency,
-                                            currency = primaryCurrency,
-                                        ),
-                                        key = type.slug,
-                                    )
-                                )
-                            } else {
-                                add(
-                                    ViewAccountListItem.Header(
-                                        title = type.name,
-                                        amount = null,
-                                        key = type.slug,
-                                    )
-                                )
-                            }
-
-                            accountsOfType.forEach { account ->
-                                add(ViewAccountListItem.Account(account))
-                            }
-                        }
+        visibleAccountsWithTotalSharedFlow
+            .map { it.accountsOfTypes }
+            .map { accountsOfTypes ->
+                accountsOfTypes
+                    .flatMap { (type, accountsOfType, totalInPrimaryCurrency) ->
+                        listOf(
+                            ViewAccountListItem.Header(
+                                title = type.name,
+                                amount = totalInPrimaryCurrency
+                                    ?.let(::ViewAmount),
+                                key = type.slug,
+                            )
+                        ) + accountsOfType.map(ViewAccountListItem::Account)
                     }
             }
             .flowOn(Dispatchers.Default)
-            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val totalAmountsPerCurrency: StateFlow<List<ViewAmount>> =
-        visibleAccounts
-            .map { accounts ->
-                accounts
+        visibleAccountsWithTotalSharedFlow
+            .map { it.accountsOfTypes }
+            .map { accountsOfType ->
+                accountsOfType
+                    .flatMap(AccountsOfTypeWithTotal::accountsOfType)
                     .groupBy(Account::currency)
                     .map { (currency, accountsInThisCurrency) ->
                         ViewAmount(
@@ -133,46 +94,22 @@ class AccountsViewModel(
                     }
             }
             .flowOn(Dispatchers.Default)
-            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val totalAmount: StateFlow<ViewAmount?> =
-        combine(
-            visibleAccounts,
-            currencyRepository.getCurrencyPairMapFlow(),
-            currencyPreferences.primaryCurrencyCode,
-            transform = ::Triple
-        )
-            .map { (accounts, currencyPairMap, primaryCurrencyCode) ->
-                val primaryCurrency = currencyRepository
-                    .getCurrencyByCode(primaryCurrencyCode)
-                    ?: return@map null
-
-                val totalInPrimaryCurrency: BigInteger =
-                    accounts.fold(BigInteger.ZERO) { sum, account ->
-                        sum + (
-                                currencyPairMap
-                                    .get(
-                                        base = account.currency,
-                                        quote = primaryCurrency,
-                                    )
-                                    ?.baseToQuote(account.balance.value)
-                                    ?: BigInteger.ZERO
-                                )
-                    }
-
-                ViewAmount(
-                    value = totalInPrimaryCurrency,
-                    currency = primaryCurrency,
-                )
+        visibleAccountsWithTotalSharedFlow
+            .mapNotNull { accountsWithTotal ->
+                accountsWithTotal
+                    .totalInPrimaryCurrency
+                    ?.let(::ViewAmount)
             }
-            .flowOn(Dispatchers.Default)
-            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val isArchiveVisible: StateFlow<Boolean> =
         accountRepository
             .getAccountsFlow()
             .map { it.any(Account::isArchived) }
-            .stateIn(viewModelScope, SharingStarted.Lazily, false)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun onAccountItemClicked(item: ViewAccountListItem.Account) {
         val account = item.source

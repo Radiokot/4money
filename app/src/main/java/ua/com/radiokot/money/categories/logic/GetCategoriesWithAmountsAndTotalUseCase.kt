@@ -76,75 +76,73 @@ class GetCategoriesWithAmountsAndTotalUseCase(
                 ),
 
             transform = ::Triple,
-        )
-            .mapLatest { (primaryCurrency, categories, dailyAmountsByCategoryId) ->
+        ).mapLatest { (primaryCurrency, categories, dailyAmountsByCategoryId) ->
 
-                val dailyPrices: Map<String, CurrencyPairMap> =
-                    if (primaryCurrency != null)
-                        currencyRepository.getDailyPrices(
-                            period = period,
-                            currencyCodes = categories
-                                .filter { dailyAmountsByCategoryId.containsKey(it.id) }
-                                .mapTo(mutableSetOf(primaryCurrency.code)) { it.currency.code },
-                        )
-                    else
-                        emptyMap()
-
-                val categoriesWithTotal = mutableListOf<CategoryWithAmount>()
-                var totalInPrimaryCurrency: BigInteger = BigInteger.ZERO
-
-                categories.forEach { category ->
-
-                    val categoryDailyAmounts: Collection<Pair<String, BigInteger>> =
-                        dailyAmountsByCategoryId[category.id]
-                            ?.entries
-                            ?.map { it.key to it.value }
-                            ?: emptySet()
-
-                    categoriesWithTotal += CategoryWithAmount(
-                        category = category,
-                        amount = categoryDailyAmounts.sumOf { it.second },
+            val dailyPrices: Map<String, CurrencyPairMap> =
+                if (primaryCurrency != null)
+                    currencyRepository.getDailyPrices(
+                        period = period,
+                        currencyCodes = categories
+                            .filter { dailyAmountsByCategoryId.containsKey(it.id) }
+                            .mapTo(mutableSetOf(primaryCurrency.code)) { it.currency.code },
                     )
+                else
+                    emptyMap()
 
-                    if (primaryCurrency != null) {
+            val categoriesWithTotal = mutableListOf<CategoryWithAmount>()
+            var totalInPrimaryCurrency: BigInteger = BigInteger.ZERO
 
-                        categoryDailyAmounts.forEach { (dayString, amount) ->
+            categories.forEach { category ->
 
-                            var pricesForTheDay: CurrencyPairMap? = dailyPrices[dayString]
+                val categoryDailyAmounts: Collection<Pair<String, BigInteger>> =
+                    dailyAmountsByCategoryId[category.id]
+                        ?.entries
+                        ?.map { it.key to it.value }
+                        ?: emptySet()
 
-                            // If there's no price for this day,
-                            // which could happen due to time zone differences,
-                            // try the previous day which must exist at this moment.
-                            if (pricesForTheDay == null) {
-                                val previousDayString =
-                                    LocalDate
-                                        .parse(dayString, LocalDate.Formats.ISO)
-                                        .minus(1, DateTimeUnit.DAY)
-                                        .toString()
-                                pricesForTheDay = dailyPrices[previousDayString]
-                            }
+                categoriesWithTotal += CategoryWithAmount(
+                    category = category,
+                    amount = categoryDailyAmounts.sumOf { it.second },
+                )
 
-                            totalInPrimaryCurrency +=
-                                pricesForTheDay
-                                    ?.get(
-                                        base = category.currency,
-                                        quote = primaryCurrency,
-                                    )
-                                    ?.baseToQuote(amount)
-                                    ?: BigInteger.ZERO
+                if (primaryCurrency != null) {
+
+                    categoryDailyAmounts.forEach { (dayString, amount) ->
+
+                        var pricesForTheDay: CurrencyPairMap? = dailyPrices[dayString]
+
+                        // If there's no price for this day,
+                        // which could happen due to time zone differences,
+                        // try the previous day which must exist at this moment.
+                        if (pricesForTheDay == null) {
+                            val previousDayString =
+                                LocalDate
+                                    .parse(dayString, LocalDate.Formats.ISO)
+                                    .minus(1, DateTimeUnit.DAY)
+                                    .toString()
+                            pricesForTheDay = dailyPrices[previousDayString]
                         }
+
+                        totalInPrimaryCurrency +=
+                            pricesForTheDay
+                                ?.get(
+                                    base = category.currency,
+                                    quote = primaryCurrency,
+                                )
+                                ?.baseToQuote(amount)
+                                ?: BigInteger.ZERO
                     }
                 }
-
-                CategoriesWithAmountAndTotal(
-                    totalInPrimaryCurrency = primaryCurrency?.let {
-                        Amount(
-                            currency = it,
-                            value = totalInPrimaryCurrency
-                        )
-                    },
-                    categories = categoriesWithTotal,
-                )
             }
-            .flowOn(Dispatchers.Default)
+
+            CategoriesWithAmountAndTotal(
+                totalInPrimaryCurrency = primaryCurrency?.let {
+                    Amount(
+                        currency = it,
+                        value = totalInPrimaryCurrency
+                    )
+                },
+                categories = categoriesWithTotal,
+            )
+        }.flowOn(Dispatchers.Default)
 }

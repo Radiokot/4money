@@ -28,6 +28,7 @@ import ua.com.radiokot.money.accounts.logic.AddAccountUseCase
 import ua.com.radiokot.money.accounts.logic.ArchiveAccountUseCase
 import ua.com.radiokot.money.accounts.logic.EditAccountUseCase
 import ua.com.radiokot.money.accounts.logic.GetVisibleAccountsUseCase
+import ua.com.radiokot.money.accounts.logic.GetVisibleAccountsWithTotalUseCase
 import ua.com.radiokot.money.accounts.logic.MoveAccountUseCase
 import ua.com.radiokot.money.accounts.logic.PowerSyncAddAccountUseCase
 import ua.com.radiokot.money.accounts.logic.PowerSyncEditAccountUseCase
@@ -97,6 +98,14 @@ val accountsModule = module {
         } bind GetVisibleAccountsUseCase::class
 
         scoped {
+            GetVisibleAccountsWithTotalUseCase(
+                getVisibleAccountsUseCase = get(),
+                currencyPreferences = get(),
+                currencyRepository = get(),
+            )
+        } bind GetVisibleAccountsWithTotalUseCase::class
+
+        scoped {
             ArchiveAccountUseCase(
                 accountRepository = get(),
             )
@@ -112,10 +121,8 @@ val accountsModule = module {
         viewModel {
             AccountsViewModel(
                 accountRepository = get(),
-                currencyRepository = get(),
-                currencyPreferences = get(),
+                getVisibleAccountsWithTotalUseCase = get(),
                 moveAccountUseCase = get(),
-                getVisibleAccountsUseCase = get(),
             )
         } bind AccountsViewModel::class
 

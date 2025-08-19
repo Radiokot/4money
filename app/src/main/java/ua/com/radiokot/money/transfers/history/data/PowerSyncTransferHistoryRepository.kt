@@ -40,6 +40,7 @@ import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.plus
 import ua.com.radiokot.money.powersync.DbSchema
+import ua.com.radiokot.money.powersync.DbSchema.joinToSqlSet
 import ua.com.radiokot.money.powersync.DbSchema.toDbString
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
@@ -86,11 +87,7 @@ class PowerSyncTransferHistoryRepository(
                             else
                                 null
                         }
-                        .joinToString(
-                            separator = ",",
-                            prefix = "(",
-                            postfix = ")",
-                        )
+                        .joinToSqlSet()
 
                     append("(${DbSchema.TRANSFER_SELECTED_SOURCE_ID} IN ")
                     append(counterpartyIdSetString)
@@ -330,7 +327,7 @@ class PowerSyncTransferHistoryRepository(
                             "\ncount=$invalidatedCount"
                 }
             }
-        } catch (e: TimeoutCancellationException) {
+        } catch (_: TimeoutCancellationException) {
             log.error {
                 "invalidatePagingSourcesWhen(): condition not reached in time"
             }
