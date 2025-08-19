@@ -1,0 +1,2 @@
+Changed:
+- Total amount on the Categories screen is now calculated using the historical prices
