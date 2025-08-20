@@ -1,0 +1,2 @@
+Fixed:
+- Crashing when trying to see activity by category
