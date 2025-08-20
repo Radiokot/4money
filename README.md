@@ -5,6 +5,13 @@ I'm building an expense tracking app inspired by [1Money](https://play.google.co
 The bar for such applications is quite high. My current goal is not to build a general purpose expense tracker for wide audience, 
 but only to cover the needs of my family and have some fun meanwhile. It's also my first Compose app, so I am actively learning.
 
+<p float="left">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width=200 />
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width=200 />
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width=200 />
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width=200 />
+</p>
+
 ## Key aspects
 - Local-first data storage
 - Fast and reliable sync between devices
