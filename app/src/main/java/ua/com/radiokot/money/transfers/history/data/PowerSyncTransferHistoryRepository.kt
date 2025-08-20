@@ -78,12 +78,14 @@ class PowerSyncTransferHistoryRepository(
                     val counterpartyIdSetString = counterpartiesById
                         .values
                         .mapNotNull { counterparty ->
-                            if (counterparty.id.toString() in counterpartyIds
+                            val counterpartyId = counterparty.id.toString()
+
+                            if (counterpartyId in counterpartyIds
                                 || counterparty is TransferCounterparty.Category
                                 && counterparty.subcategory != null
                                 && counterparty.category.id in counterpartyIds
                             )
-                                "'${counterparty.id}'"
+                                counterpartyId
                             else
                                 null
                         }

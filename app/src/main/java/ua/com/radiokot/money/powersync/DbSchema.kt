@@ -410,7 +410,7 @@ object DbSchema {
             format = LocalDateTime.Formats.ISO
         )
 
-    fun Iterable<String>.joinToSqlSet(): String =
+    fun Iterable<Any>.joinToSqlSet(): String =
         joinToString(
             transform = { "'$it'" },
             separator = ",",
