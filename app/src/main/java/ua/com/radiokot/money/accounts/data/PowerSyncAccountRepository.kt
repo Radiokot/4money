@@ -154,7 +154,7 @@ class PowerSyncAccountRepository(
             parameters = listOf(
                 account.id,
                 account.title,
-                account.balance.toString(),
+                account.balance.value.toString(),
                 account.currency.id,
                 account.position,
                 account.colorScheme.name,
