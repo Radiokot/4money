@@ -27,14 +27,19 @@ import org.koin.dsl.module
 import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyPreferencesOnPrefs
+import ua.com.radiokot.money.currency.data.CurrencyPriceRepository
 import ua.com.radiokot.money.currency.data.CurrencyRepository
+import ua.com.radiokot.money.currency.data.LocalCurrencyPriceRepository
 import ua.com.radiokot.money.currency.data.PowerSyncCurrencyRepository
 import ua.com.radiokot.money.currency.view.CurrencySelectionScreenViewModel
+import ua.com.radiokot.money.databaseModule
 import ua.com.radiokot.money.powersync.powerSyncModule
 
 val currencyModule = module {
+
     includes(
         powerSyncModule,
+        databaseModule,
     )
 
     single {
@@ -45,6 +50,12 @@ val currencyModule = module {
             )
         )
     } bind CurrencyPreferences::class
+
+    single {
+        LocalCurrencyPriceRepository(
+            database = get(),
+        )
+    } bind CurrencyPriceRepository::class
 
     sessionScope {
         scoped {

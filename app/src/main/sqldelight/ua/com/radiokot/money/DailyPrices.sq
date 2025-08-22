@@ -1,0 +1,25 @@
+CREATE TABLE daily_prices (
+    base_currency_code TEXT NOT NULL,
+    day TEXT NOT NULL,
+    price TEXT NOT NULL,
+    PRIMARY KEY (base_currency_code, day)
+);
+
+getLatest:
+SELECT
+    base_currency_code AS baseCode,
+    price AS priceString
+FROM daily_prices
+WHERE
+    day = (SELECT MAX(day) FROM daily_prices)
+    AND base_currency_code IN :currencyCodes;
+
+getInPeriod:
+SELECT
+    base_currency_code AS baseCode,
+    price AS priceString,
+    day AS dayString
+FROM daily_prices
+WHERE
+    day >= :periodStartDayInclusive AND day < :periodEndDayExclusive
+    AND base_currency_code IN  :currencyCodes;

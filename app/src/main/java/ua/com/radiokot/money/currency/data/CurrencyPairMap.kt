@@ -37,8 +37,14 @@ class CurrencyPairMap(
         decimalPriceByBaseCode.toMutableMap()
 
     operator fun plusAssign(pair: Pair<String, BigDecimal>) {
-        decimalPriceByBaseCode += pair
+        put(pair.first, pair.second)
     }
+
+    fun put(
+        baseCode: String,
+        decimalPrice: BigDecimal,
+    ): BigDecimal? =
+        decimalPriceByBaseCode.put(baseCode, decimalPrice)
 
     /**
      * @return a pair for given [base] and [quote] currencies having its price

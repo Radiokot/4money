@@ -3,6 +3,7 @@ plugins {
     id "org.jetbrains.kotlin.android"
     id "org.jetbrains.kotlin.plugin.compose"
     id "org.jetbrains.kotlin.plugin.serialization"
+    id "app.cash.sqldelight"
 }
 
 def localProperties = new Properties()
@@ -93,6 +94,14 @@ android {
     }
 }
 
+sqldelight {
+    databases {
+        create("MoneyAppDatabase") {
+            packageName.set("ua.com.radiokot.money")
+        }
+    }
+}
+
 ext {
     activityVersion = "1.10.1"
     powersyncVersion = "1.4.0"
@@ -138,6 +147,7 @@ dependencies {
     implementation "cash.z.ecc.android:kotlin-bip39:1.0.9"
     implementation "com.composables:core:1.41.0"
     implementation "org.bouncycastle:bcprov-lts8on:2.73.7"
+    implementation "app.cash.sqldelight:android-driver:2.1.0"
 
     testImplementation "junit:junit:4.13.2"
     androidTestImplementation "androidx.test.ext:junit:1.3.0"
