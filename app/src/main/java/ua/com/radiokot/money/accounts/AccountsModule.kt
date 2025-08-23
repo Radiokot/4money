@@ -102,6 +102,7 @@ val accountsModule = module {
                 getVisibleAccountsUseCase = get(),
                 currencyPreferences = get(),
                 currencyRepository = get(),
+                currencyPriceRepository = get(),
             )
         } bind GetVisibleAccountsWithTotalUseCase::class
 

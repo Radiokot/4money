@@ -42,13 +42,10 @@ import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.powersync.DbSchema.ACCOUNT_SELECT_COLUMNS
 import ua.com.radiokot.money.powersync.DbSchema.CATEGORY_SELECT_COLUMNS
 import ua.com.radiokot.money.powersync.DbSchema.CURRENCY_SELECT_COLUMNS
-import ua.com.radiokot.money.powersync.DbSchema.DAILY_PRICE_SELECTED_BASE_CODE
-import ua.com.radiokot.money.powersync.DbSchema.DAILY_PRICE_SELECTED_PRICE
 import ua.com.radiokot.money.powersync.DbSchema.SUBCATEGORY_SELECT_COLUMNS
 import ua.com.radiokot.money.powersync.DbSchema.TRANSFER_SELECT_COLUMNS
 import ua.com.radiokot.money.transfers.data.Transfer
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
-import java.math.BigDecimal
 import java.math.BigInteger
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -59,7 +56,6 @@ object DbSchema {
         listOf(
             getPowerSyncCurrencyTable(),
             getPowerSyncAccountsTable(),
-            getPowerSyncDailyPricesTable(),
             getPowerSyncCategoriesTable(),
             getPowerSyncTransfersTable(),
             getPowerSyncSyncErrorsTable(),
@@ -105,40 +101,6 @@ object DbSchema {
             code = getString(CURRENCY_SELECTED_CODE).trim(),
             symbol = getString(CURRENCY_SELECTED_SYMBOL).trim(),
             precision = getLong(CURRENCY_SELECTED_PRECISION).toInt(),
-        )
-    }
-
-    const val DAILY_PRICES_TABLE = "daily_prices"
-    const val DAILY_PRICE_SELECTED_DAY_STRING = DAILY_PRICES_TABLE + "day"
-    const val DAILY_PRICE_DAY_SUBSTRING = "substr($DAILY_PRICES_TABLE.$ID, 1, 10)"
-    const val DAILY_PRICE_ID_AS_DAY_STRING =
-        "$DAILY_PRICE_DAY_SUBSTRING as $DAILY_PRICE_SELECTED_DAY_STRING"
-    const val DAILY_PRICE_SELECTED_BASE_CODE = DAILY_PRICES_TABLE + "base"
-    const val DAILY_PRICE_BASE_CODE_SUBSTRING = "substr($DAILY_PRICES_TABLE.$ID, 11)"
-    const val DAILY_PRICE_ID_AS_BASE_CODE =
-        "$DAILY_PRICE_BASE_CODE_SUBSTRING as $DAILY_PRICE_SELECTED_BASE_CODE"
-    const val DAILY_PRICE_PRICE = "price"
-    const val DAILY_PRICE_SELECTED_PRICE = DAILY_PRICES_TABLE + DAILY_PRICE_PRICE
-
-    private fun getPowerSyncDailyPricesTable() = Table(
-        // In this table, ID is YYYY-MM-DD + base currency code.
-        name = DAILY_PRICES_TABLE,
-        columns = listOf(
-            Column.text(DAILY_PRICE_PRICE),
-        ),
-        ignoreEmptyUpdates = true,
-    )
-
-    /**
-     * @see DAILY_PRICE_SELECTED_BASE_CODE
-     * @see DAILY_PRICE_SELECTED_PRICE
-     */
-    fun toPricePair(
-        sqlCursor: SqlCursor,
-    ): Pair<String, BigDecimal> = with(sqlCursor) {
-        Pair(
-            getString(DAILY_PRICE_SELECTED_BASE_CODE),
-            BigDecimal(getString(DAILY_PRICE_SELECTED_PRICE).trim()),
         )
     }
 

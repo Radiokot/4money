@@ -29,6 +29,7 @@ import ua.com.radiokot.money.accounts.data.AccountsWithTotal
 import ua.com.radiokot.money.currency.data.Amount
 import ua.com.radiokot.money.currency.data.CurrencyPairMap
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
+import ua.com.radiokot.money.currency.data.CurrencyPriceRepository
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import java.math.BigInteger
 
@@ -37,6 +38,7 @@ class GetVisibleAccountsWithTotalUseCase(
     private val getVisibleAccountsUseCase: GetVisibleAccountsUseCase,
     private val currencyPreferences: CurrencyPreferences,
     private val currencyRepository: CurrencyRepository,
+    private val currencyPriceRepository: CurrencyPriceRepository,
 ) {
 
     operator fun invoke(): Flow<AccountsWithTotal> =
@@ -50,7 +52,7 @@ class GetVisibleAccountsWithTotalUseCase(
 
             val latestPrices: CurrencyPairMap? =
                 if (primaryCurrency != null)
-                    currencyRepository
+                    currencyPriceRepository
                         .getLatestPrices(
                             currencyCodes = accounts
                                 .mapTo(mutableSetOf(primaryCurrency.code)) { it.currency.code },

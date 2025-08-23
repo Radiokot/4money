@@ -34,6 +34,7 @@ import ua.com.radiokot.money.categories.data.CategoryWithAmount
 import ua.com.radiokot.money.currency.data.Amount
 import ua.com.radiokot.money.currency.data.CurrencyPairMap
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
+import ua.com.radiokot.money.currency.data.CurrencyPriceRepository
 import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.data.HistoryStatsRepository
@@ -43,6 +44,7 @@ import java.math.BigInteger
 class GetCategoriesWithAmountsAndTotalUseCase(
     private val currencyPreferences: CurrencyPreferences,
     private val currencyRepository: CurrencyRepository,
+    private val currencyPriceRepository: CurrencyPriceRepository,
     private val categoryRepository: CategoryRepository,
     private val historyStatsRepository: HistoryStatsRepository,
 ) {
@@ -80,12 +82,13 @@ class GetCategoriesWithAmountsAndTotalUseCase(
 
             val dailyPrices: Map<String, CurrencyPairMap> =
                 if (primaryCurrency != null)
-                    currencyRepository.getDailyPrices(
-                        period = period,
-                        currencyCodes = categories
-                            .filter { dailyAmountsByCategoryId.containsKey(it.id) }
-                            .mapTo(mutableSetOf(primaryCurrency.code)) { it.currency.code },
-                    )
+                    currencyPriceRepository
+                        .getDailyPrices(
+                            period = period,
+                            currencyCodes = categories
+                                .filter { dailyAmountsByCategoryId.containsKey(it.id) }
+                                .mapTo(mutableSetOf(primaryCurrency.code)) { it.currency.code },
+                        )
                 else
                     emptyMap()
 

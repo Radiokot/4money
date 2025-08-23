@@ -65,6 +65,7 @@ val categoriesModule = module {
             GetCategoriesWithAmountsAndTotalUseCase(
                 currencyRepository = get(),
                 currencyPreferences = get(),
+                currencyPriceRepository = get(),
                 categoryRepository = get(),
                 historyStatsRepository = get(),
             )

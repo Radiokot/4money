@@ -20,7 +20,6 @@
 package ua.com.radiokot.money.currency.data
 
 import kotlinx.coroutines.flow.Flow
-import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 
 interface CurrencyRepository {
 
@@ -29,18 +28,4 @@ interface CurrencyRepository {
     fun getCurrenciesFlow(): Flow<List<Currency>>
 
     suspend fun getCurrencyByCode(code: String): Currency?
-
-    suspend fun getLatestPrices(
-        currencyCodes: Iterable<String>,
-    ): CurrencyPairMap
-
-    /**
-     * @return map of USD pairs with given [currencyCodes]
-     * per each observed day in YYYY-MM-DD format,
-     * within the given [period]
-     */
-    suspend fun getDailyPrices(
-        period: HistoryPeriod,
-        currencyCodes: Iterable<String>,
-    ): Map<String, CurrencyPairMap>
 }
