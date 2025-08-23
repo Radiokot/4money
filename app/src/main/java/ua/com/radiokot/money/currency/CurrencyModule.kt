@@ -20,6 +20,8 @@
 package ua.com.radiokot.money.currency
 
 import android.content.Context
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.postgrest.postgrest
 import org.koin.android.ext.koin.androidApplication
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -54,6 +56,7 @@ val currencyModule = module {
     single {
         LocalCurrencyPriceRepository(
             database = get(),
+            postgrest = get<SupabaseClient>().postgrest,
         )
     } bind CurrencyPriceRepository::class
 

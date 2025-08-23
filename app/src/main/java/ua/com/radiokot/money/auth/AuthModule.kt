@@ -25,6 +25,8 @@ import io.github.jan.supabase.auth.FlowType
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.serializer.KotlinXSerializer
+import kotlinx.serialization.json.Json
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -47,6 +49,13 @@ val authModule = module {
             supabaseUrl = BuildConfig.SUPABASE_URL,
             supabaseKey = BuildConfig.SUPABASE_ANON_KEY,
         ) {
+            defaultSerializer = KotlinXSerializer(
+                Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                }
+            )
+
             install(Postgrest)
             install(Functions)
             install(Auth) {

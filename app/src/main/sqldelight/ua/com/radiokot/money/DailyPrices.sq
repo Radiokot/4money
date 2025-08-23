@@ -23,3 +23,17 @@ FROM daily_prices
 WHERE
     day >= :periodStartDayInclusive AND day < :periodEndDayExclusive
     AND base_currency_code IN  :currencyCodes;
+
+getLatestDay:
+SELECT MAX(day) AS dayString FROM daily_prices;
+
+insertOrReplace:
+INSERT OR REPLACE INTO daily_prices (
+    base_currency_code,
+    day,
+    price
+) VALUES (
+    :baseCode,
+    :dayString,
+    :priceString
+);
