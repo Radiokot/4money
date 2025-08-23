@@ -26,6 +26,7 @@ import org.koin.android.ext.koin.androidApplication
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import ua.com.radiokot.money.MoneyAppDatabase
 import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyPreferencesOnPrefs
@@ -55,7 +56,7 @@ val currencyModule = module {
 
     single {
         LocalCurrencyPriceRepository(
-            database = get(),
+            dailyPricesQueries = get<MoneyAppDatabase>().dailyPricesQueries,
             postgrest = get<SupabaseClient>().postgrest,
         )
     } bind CurrencyPriceRepository::class

@@ -20,11 +20,14 @@
 package ua.com.radiokot.money.currency.data
 
 import io.github.jan.supabase.postgrest.Postgrest
-import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import ua.com.radiokot.money.MoneyAppDatabase
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
+import ua.com.radiokot.money.DailyPricesQueries
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.powersync.DbSchema.toDbDayString
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
@@ -32,7 +35,7 @@ import java.math.BigDecimal
 import kotlin.time.Duration.Companion.milliseconds
 
 class LocalCurrencyPriceRepository(
-    private val database: MoneyAppDatabase,
+    private val dailyPricesQueries: DailyPricesQueries,
     private val postgrest: Postgrest,
 ) : CurrencyPriceRepository {
 
@@ -42,8 +45,7 @@ class LocalCurrencyPriceRepository(
         currencyCodes: Collection<String>,
     ): CurrencyPairMap = withContext(Dispatchers.IO) {
 
-        database
-            .dailyPricesQueries
+        dailyPricesQueries
             .getLatest(
                 currencyCodes = currencyCodes,
             )
@@ -64,8 +66,7 @@ class LocalCurrencyPriceRepository(
         currencyCodes: Collection<String>,
     ): Map<String, CurrencyPairMap> = withContext(Dispatchers.IO) {
 
-        database
-            .dailyPricesQueries
+        dailyPricesQueries
             .getInPeriod(
                 periodStartDayInclusive = period.startInclusive.toDbDayString(),
                 periodEndDayExclusive = period.endExclusive.toDbDayString(),
@@ -85,11 +86,7 @@ class LocalCurrencyPriceRepository(
             }
     }
 
-    /**
-     * Loads the prices from the latest local day to the latest day on remote.
-     * Prices for the latest local day always get updated.
-     */
-    suspend fun updatePricesFromRemote() {
+    override suspend fun updatePrices() {
 
         var latestDayBeforeLoading: String?
         var latestLoadedDay: String? = null
@@ -101,6 +98,8 @@ class LocalCurrencyPriceRepository(
         do {
             latestDayBeforeLoading = getLatestDay()
 
+            // Include the latest local/loaded day to the next portion,
+            // as there is no guarantee it is fully loaded.
             val portionStartDayInclusive: String? = latestLoadedDay ?: latestDayBeforeLoading
 
             log.debug {
@@ -118,20 +117,26 @@ class LocalCurrencyPriceRepository(
             }
 
             withContext(Dispatchers.IO) {
-                database.transaction {
-                    pricesPortion.forEach { priceRow ->
-                        database
-                            .dailyPricesQueries
+
+                dailyPricesQueries.transaction {
+
+                    pricesPortion.forEachIndexed { i, priceFields ->
+
+                        val dayString = priceFields[1].jsonPrimitive.content
+
+                        if (i == pricesPortion.size - 1) {
+                            latestLoadedDay = dayString
+                        }
+
+                        dailyPricesQueries
                             .insertOrReplace(
-                                baseCode = priceRow.baseCurrencyCode,
-                                dayString = priceRow.dayString,
-                                priceString = priceRow.priceString,
+                                baseCode = priceFields[0].jsonPrimitive.content,
+                                dayString = dayString,
+                                priceString = priceFields[2].jsonPrimitive.content,
                             )
                     }
                 }
             }
-
-            latestLoadedDay = pricesPortion.lastOrNull()?.dayString
 
             log.debug {
                 "updatePrices(): portion inserted:" +
@@ -145,8 +150,7 @@ class LocalCurrencyPriceRepository(
 
     private suspend fun getLatestDay(): String? =
         withContext(Dispatchers.IO) {
-            database
-                .dailyPricesQueries
+            dailyPricesQueries
                 .getLatestDay()
                 .executeAsOneOrNull()
                 ?.dayString
@@ -154,19 +158,15 @@ class LocalCurrencyPriceRepository(
 
     private suspend fun getRemotePricesPortion(
         startDayInclusive: String?,
-    ): List<RemoteDailyPriceRow> =
+    ): List<JsonArray> =
         postgrest
-            .from("daily_prices")
-            .select {
-                order("day", Order.ASCENDING)
-
-                if (startDayInclusive != null) {
-                    filter {
-                        gte("day", startDayInclusive)
-                    }
-                }
-            }
-            .decodeList<RemoteDailyPriceRow>()
+            .rpc(
+                function = "get_daily_prices_array",
+                parameters = buildJsonObject {
+                    put("start_day_inclusive", startDayInclusive)
+                },
+            )
+            .decodeList()
 
     private fun newUsdPriceMap() =
         CurrencyPairMap(
