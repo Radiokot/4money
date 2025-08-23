@@ -26,6 +26,7 @@ but only to cover the needs of my family and have some fun meanwhile. It's also 
 - Koin for dependency injection
 - Supabase as a backend
 - PowerSync for local-first data storage and synchronization
+- SQLDelight for local app database
 - kotlin-logging & logback-android for logging
 
 ## Points of interest
@@ -70,3 +71,10 @@ To be able to open bottom sheets NavController routes, I've created a custom nav
 Take a look at:
 - `BottomSheetNavigation`
 - `AccountActionSheetNavigation`
+
+### Synchronizing 150,000 daily currency price records
+The app keeps daily prices for all the currencies since 2023 for accurate tallying.
+Although PowerSync works fine with this amount of data, it quickly drains sync operation limits.
+Instead, these prices are kept in a separate database and updated via RPC:
+- `LocalCurrencyPriceRepository`
+- `DailyPrices.sq`

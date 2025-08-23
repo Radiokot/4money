@@ -86,13 +86,13 @@ class LocalCurrencyPriceRepository(
             }
     }
 
-    override suspend fun updatePrices() {
+    override suspend fun updateFromRemote() {
 
         var latestDayBeforeLoading: String?
         var latestLoadedDay: String? = null
 
         log.debug {
-            "updatePrices: starting update"
+            "updateFromRemote: starting update"
         }
 
         do {
@@ -103,43 +103,48 @@ class LocalCurrencyPriceRepository(
             val portionStartDayInclusive: String? = latestLoadedDay ?: latestDayBeforeLoading
 
             log.debug {
-                "updatePrices(): fetching portion:" +
+                "updateFromRemote(): fetching chunk:" +
                         "\nstartDayInclusive=$portionStartDayInclusive"
             }
 
-            val pricesPortion = getRemotePricesPortion(
+            val pricesChunk = getRemotePricesChunk(
                 startDayInclusive = portionStartDayInclusive,
             )
 
             log.debug {
-                "updatePrices(): inserting loaded portion:" +
-                        "\nsize=${pricesPortion.size}"
+                "updateFromRemote(): inserting loaded chunk:" +
+                        "\nsize=${pricesChunk.size}"
             }
 
             withContext(Dispatchers.IO) {
 
                 dailyPricesQueries.transaction {
 
-                    pricesPortion.forEachIndexed { i, priceFields ->
+                    pricesChunk.forEach { priceRow ->
 
-                        val dayString = priceFields[1].jsonPrimitive.content
-
-                        if (i == pricesPortion.size - 1) {
-                            latestLoadedDay = dayString
-                        }
+                        // Example: ["AED","2023-04-02",0.272283]
+                        val (
+                            baseCode,
+                            dayString,
+                            priceString,
+                        ) = priceRow.map { it.jsonPrimitive.content }
 
                         dailyPricesQueries
                             .insertOrReplace(
-                                baseCode = priceFields[0].jsonPrimitive.content,
+                                baseCode = baseCode,
                                 dayString = dayString,
-                                priceString = priceFields[2].jsonPrimitive.content,
+                                priceString = priceString,
                             )
+
+                        if (priceRow == pricesChunk.last()) {
+                            latestLoadedDay = dayString
+                        }
                     }
                 }
             }
 
             log.debug {
-                "updatePrices(): portion inserted:" +
+                "updateFromRemote(): chunk inserted:" +
                         "\nlatestLoadedDay=$latestLoadedDay"
             }
 
@@ -148,15 +153,14 @@ class LocalCurrencyPriceRepository(
         } while (latestDayBeforeLoading != latestLoadedDay)
     }
 
-    private suspend fun getLatestDay(): String? =
-        withContext(Dispatchers.IO) {
-            dailyPricesQueries
-                .getLatestDay()
-                .executeAsOneOrNull()
-                ?.dayString
-        }
+    private suspend fun getLatestDay(): String? = withContext(Dispatchers.IO) {
+        dailyPricesQueries
+            .getLatestDay()
+            .executeAsOneOrNull()
+            ?.dayString
+    }
 
-    private suspend fun getRemotePricesPortion(
+    private suspend fun getRemotePricesChunk(
         startDayInclusive: String?,
     ): List<JsonArray> =
         postgrest

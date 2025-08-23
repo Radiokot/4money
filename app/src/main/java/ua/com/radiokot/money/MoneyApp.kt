@@ -41,6 +41,7 @@ import org.koin.core.context.GlobalContext.startKoin
 import ua.com.radiokot.money.auth.authModule
 import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
+import ua.com.radiokot.money.currency.logic.CurrencyPricesUpdateWorker
 import ua.com.radiokot.money.home.homeModule
 import ua.com.radiokot.money.powersync.BackgroundPowerSyncWorker
 import ua.com.radiokot.money.util.KermitSlf4jLogWriter
@@ -77,12 +78,13 @@ class MoneyApp : Application() {
 
         initSessionHolder()
         initBackgroundSync()
+        initCurrencyPricesUpdate()
     }
 
     private fun initLogging() {
         // The Logback configuration is in the app/src/main/assets/logback.xml
 
-        @Suppress("KotlinConstantConditions")
+        @Suppress("KotlinConstantConditions", "RedundantSuppression")
         System.setProperty(
             "LOG_LEVEL",
             if (BuildConfig.DEBUG)
@@ -196,6 +198,30 @@ class MoneyApp : Application() {
         WorkManager.getInstance(this)
             .enqueueUniquePeriodicWork(
                 "BackgroundSync",
+                ExistingPeriodicWorkPolicy.UPDATE,
+                workRequest,
+            )
+    }
+
+    private fun initCurrencyPricesUpdate() {
+
+        val workRequest =
+            PeriodicWorkRequestBuilder<CurrencyPricesUpdateWorker>(2, TimeUnit.HOURS)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkRequest(
+                            networkRequest = NetworkRequest.Builder()
+                                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                                .build(),
+                            networkType = NetworkType.CONNECTED,
+                        )
+                        .build()
+                )
+                .build()
+
+        WorkManager.getInstance(this)
+            .enqueueUniquePeriodicWork(
+                "CurrencyPricesUpdate",
                 ExistingPeriodicWorkPolicy.UPDATE,
                 workRequest,
             )

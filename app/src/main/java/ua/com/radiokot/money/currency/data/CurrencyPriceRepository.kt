@@ -41,5 +41,5 @@ interface CurrencyPriceRepository {
      * Loads the prices from the latest local day to the latest day on remote.
      * Prices for the latest local day always get updated.
      */
-    suspend fun updatePrices()
+    suspend fun updateFromRemote()
 }
