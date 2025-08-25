@@ -104,7 +104,7 @@ sqldelight {
 
 ext {
     activityVersion = "1.10.1"
-    powersyncVersion = "1.4.0"
+    powersyncVersion = "1.5.0"
     supabaseVersion = "3.1.4"
 }
 
