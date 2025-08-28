@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -36,10 +37,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.view.TransferList
 import ua.com.radiokot.money.transfers.view.ViewTransferCounterparty
 import ua.com.radiokot.money.transfers.view.ViewTransferListItem
@@ -52,13 +51,15 @@ fun ActivityScreenRoot(
     itemPagingFlow = viewModel.transferItemPagingFlow,
     onTransferItemClicked = viewModel::onTransferItemClicked,
     onTransferItemLongClicked = viewModel::onTransferItemLongClicked,
-    period = viewModel.historyStatsPeriod.collectAsStateWithLifecycle(),
+    period = viewModel.viewHistoryStatsPeriod.collectAsState(),
     onPeriodClicked = {},
+    isPreviousPeriodButtonEnabled = viewModel.isPreviousHistoryStatsPeriodButtonEnabled.collectAsState(),
     onPreviousPeriodClicked = viewModel::onPreviousHistoryStatsPeriodClicked,
+    isNextPeriodButtonEnabled = viewModel.isNextHistoryStatsPeriodButtonEnabled.collectAsState(),
     onNextPeriodClicked = viewModel::onNextHistoryStatsPeriodClicked,
-    isBackHandlerEnabled = viewModel.isBackHandlerEnabled.collectAsStateWithLifecycle(),
+    isBackHandlerEnabled = viewModel.isBackHandlerEnabled.collectAsState(),
     onBack = viewModel::onBack,
-    counterparties = viewModel.activityFilterCounterparties.collectAsStateWithLifecycle(),
+    counterparties = viewModel.activityFilterCounterparties.collectAsState(),
     modifier = modifier,
 )
 
@@ -68,10 +69,12 @@ private fun ActivityScreen(
     itemPagingFlow: Flow<PagingData<ViewTransferListItem>>,
     onTransferItemClicked: (ViewTransferListItem.Transfer) -> Unit,
     onTransferItemLongClicked: (ViewTransferListItem.Transfer) -> Unit,
-    period: State<HistoryPeriod>,
     counterparties: State<List<ViewTransferCounterparty>>,
+    period: State<ViewHistoryPeriod>,
     onPeriodClicked: () -> Unit,
+    isNextPeriodButtonEnabled: State<Boolean>,
     onNextPeriodClicked: () -> Unit,
+    isPreviousPeriodButtonEnabled: State<Boolean>,
     onPreviousPeriodClicked: () -> Unit,
     isBackHandlerEnabled: State<Boolean>,
     onBack: () -> Unit,
@@ -81,7 +84,9 @@ private fun ActivityScreen(
     PeriodBar(
         period = period,
         onPeriodClicked = onPeriodClicked,
+        isNextButtonEnabled = isNextPeriodButtonEnabled,
         onNextPeriodClicked = onNextPeriodClicked,
+        isPreviousButtonEnabled = isPreviousPeriodButtonEnabled,
         onPreviousPeriodClicked = onPreviousPeriodClicked,
         modifier = Modifier
             .fillMaxWidth()

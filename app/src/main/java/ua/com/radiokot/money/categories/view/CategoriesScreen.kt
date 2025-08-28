@@ -19,7 +19,6 @@
 
 package ua.com.radiokot.money.categories.view
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,9 +28,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,30 +38,28 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
-import ua.com.radiokot.money.currency.view.ViewCurrency
-import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.view.PeriodBar
-import java.math.BigInteger
+import ua.com.radiokot.money.transfers.history.view.ViewHistoryPeriod
 
 @Composable
 fun CategoriesScreenRoot(
     modifier: Modifier = Modifier,
     viewModel: CategoriesScreenViewModel,
 ) = CategoriesScreen(
-    isIncome = viewModel.isIncome.collectAsStateWithLifecycle(),
-    period = viewModel.historyStatsPeriod.collectAsStateWithLifecycle(),
-    totalAmount = viewModel.totalAmount.collectAsStateWithLifecycle(),
-    categoryItemList = viewModel.categoryItemList.collectAsStateWithLifecycle(),
+    isIncome = viewModel.isIncome.collectAsState(),
+    period = viewModel.viewHistoryStatsPeriod.collectAsState(),
+    totalAmount = viewModel.totalAmount.collectAsState(),
+    categoryItemList = viewModel.categoryItemList.collectAsState(),
     onTitleClicked = remember { viewModel::onTitleClicked },
     onCategoryItemClicked = remember { viewModel::onCategoryItemClicked },
     onCategoryItemLongClicked = remember { viewModel::onCategoryItemLongClicked },
     onPeriodClicked = {},
+    isPreviousPeriodButtonEnabled = viewModel.isPreviousHistoryStatsPeriodButtonEnabled.collectAsState(),
     onPreviousPeriodClicked = remember { viewModel::onPreviousHistoryStatsPeriodClicked },
+    isNextPeriodButtonEnabled = viewModel.isNextHistoryStatsPeriodButtonEnabled.collectAsState(),
     onNextPeriodClicked = remember { viewModel::onNextHistoryStatsPeriodClicked },
     onAddClicked = remember { viewModel::onAddClicked },
     modifier = modifier,
@@ -72,14 +69,16 @@ fun CategoriesScreenRoot(
 private fun CategoriesScreen(
     modifier: Modifier = Modifier,
     isIncome: State<Boolean>,
-    period: State<HistoryPeriod>,
+    period: State<ViewHistoryPeriod>,
     totalAmount: State<ViewAmount?>,
     categoryItemList: State<List<ViewCategoryListItem>>,
     onTitleClicked: () -> Unit,
     onCategoryItemClicked: (ViewCategoryListItem) -> Unit,
     onCategoryItemLongClicked: (ViewCategoryListItem) -> Unit,
     onPeriodClicked: () -> Unit,
+    isNextPeriodButtonEnabled: State<Boolean>,
     onNextPeriodClicked: () -> Unit,
+    isPreviousPeriodButtonEnabled: State<Boolean>,
     onPreviousPeriodClicked: () -> Unit,
     onAddClicked: () -> Unit,
 ) = Column(
@@ -91,7 +90,9 @@ private fun CategoriesScreen(
     PeriodBar(
         period = period,
         onPeriodClicked = onPeriodClicked,
+        isNextButtonEnabled = isNextPeriodButtonEnabled,
         onNextPeriodClicked = onNextPeriodClicked,
+        isPreviousButtonEnabled = isPreviousPeriodButtonEnabled,
         onPreviousPeriodClicked = onPreviousPeriodClicked,
         modifier = Modifier
             .fillMaxWidth()
@@ -162,34 +163,5 @@ private fun CategoriesScreen(
         modifier = Modifier
             .fillMaxWidth()
             .weight(1f)
-    )
-}
-
-@SuppressLint("UnrememberedMutableState")
-@Composable
-@Preview
-private fun CategoriesScreenPreview(
-
-) {
-    val categories = ViewCategoryListItemPreviewParameterProvider().values.toList()
-
-    CategoriesScreen(
-        isIncome = mutableStateOf(true),
-        totalAmount = ViewAmount(
-            value = BigInteger("10100000"),
-            currency = ViewCurrency(
-                symbol = "$",
-                precision = 2,
-            )
-        ).let(::mutableStateOf),
-        period = HistoryPeriod.Month().let(::mutableStateOf),
-        categoryItemList = mutableStateOf(categories),
-        onTitleClicked = {},
-        onCategoryItemClicked = {},
-        onCategoryItemLongClicked = {},
-        onPreviousPeriodClicked = {},
-        onNextPeriodClicked = {},
-        onPeriodClicked = {},
-        onAddClicked = {},
     )
 }

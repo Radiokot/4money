@@ -38,6 +38,7 @@ import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.map
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
+import ua.com.radiokot.money.transfers.history.view.ViewHistoryPeriod
 
 class CategoryActionSheetViewModel(
     parameters: Parameters,
@@ -63,7 +64,8 @@ class CategoryActionSheetViewModel(
         category
             .map(viewModelScope, Category::title)
 
-    val statsPeriod: HistoryPeriod = parameters.statsPeriod
+    val statsPeriod: ViewHistoryPeriod =
+        ViewHistoryPeriod.fromHistoryPeriod(parameters.statsPeriod)
 
     val statsAmount: StateFlow<ViewAmount> =
         categoryWithAmount

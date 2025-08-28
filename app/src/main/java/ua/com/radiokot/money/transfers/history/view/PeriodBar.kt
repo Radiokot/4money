@@ -27,8 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,18 +35,18 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.format.MonthNames
 import ua.com.radiokot.money.stableClickable
-import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
+import ua.com.radiokot.money.transfers.view.ViewDate
 import ua.com.radiokot.money.uikit.TextButton
 
 @Composable
 fun PeriodBar(
     modifier: Modifier = Modifier,
-    period: State<HistoryPeriod>,
+    period: State<ViewHistoryPeriod>,
     onPeriodClicked: () -> Unit,
+    isNextButtonEnabled: State<Boolean>,
     onNextPeriodClicked: () -> Unit,
+    isPreviousButtonEnabled: State<Boolean>,
     onPreviousPeriodClicked: () -> Unit,
 ) = Row(
     verticalAlignment = Alignment.CenterVertically,
@@ -58,20 +56,10 @@ fun PeriodBar(
     val buttonPadding = remember {
         PaddingValues(6.dp)
     }
-    val isPreviousButtonEnabled by remember(period) {
-        derivedStateOf {
-            period.value.getPrevious() != null
-        }
-    }
-    val isNextButtonEnabled by remember(period) {
-        derivedStateOf {
-            period.value.getNext() != null
-        }
-    }
 
     TextButton(
         text = "⬅️",
-        isEnabled = isPreviousButtonEnabled,
+        isEnabled = isPreviousButtonEnabled.value,
         padding = buttonPadding,
         modifier = Modifier
             .stableClickable(
@@ -80,21 +68,7 @@ fun PeriodBar(
     )
 
     BasicText(
-        // TODO Use Java localized formats.
-        text = when (val periodValue = period.value) {
-            is HistoryPeriod.Day ->
-                periodValue.localDay.toString()
-
-            is HistoryPeriod.Month ->
-                LocalDate.Format {
-                    monthName(MonthNames.ENGLISH_FULL)
-                    chars(" ")
-                    year()
-                }.format(periodValue.localMonth)
-
-            HistoryPeriod.Since70th ->
-                "All time"
-        },
+        text = period.value.getText(),
         style = TextStyle(
             fontSize = 16.sp,
         ),
@@ -107,7 +81,7 @@ fun PeriodBar(
 
     TextButton(
         text = "➡️",
-        isEnabled = isNextButtonEnabled,
+        isEnabled = isNextButtonEnabled.value,
         padding = buttonPadding,
         modifier = Modifier
             .stableClickable(
@@ -124,10 +98,15 @@ private fun PeriodBarPreview(
 ) = PeriodBar(
     modifier = Modifier
         .fillMaxWidth(),
-    period = HistoryPeriod.Month().let(::mutableStateOf),
+    period =
+        ViewHistoryPeriod.Day(
+            day = ViewDate.today()
+        ).let(::mutableStateOf),
     onPeriodClicked = {
 
     },
+    isNextButtonEnabled = false.let(::mutableStateOf),
     onNextPeriodClicked = { },
+    isPreviousButtonEnabled = true.let(::mutableStateOf),
     onPreviousPeriodClicked = { }
 )

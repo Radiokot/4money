@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.transfers.view
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -67,6 +68,19 @@ class ViewDate(
         today = today,
         yesterday = yesterday
     )
+
+    @Composable
+    fun getText(): String =
+        when (specificType) {
+            SpecificType.Today ->
+                "Today"
+
+            SpecificType.Yesterday ->
+                "Yesterday"
+
+            null ->
+                localDate.toString()
+        }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -25,6 +25,9 @@ import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 interface HistoryStatsPeriodViewModel {
 
     val historyStatsPeriod: StateFlow<HistoryPeriod>
+    val viewHistoryStatsPeriod: StateFlow<ViewHistoryPeriod>
+    val isNextHistoryStatsPeriodButtonEnabled: StateFlow<Boolean>
+    val isPreviousHistoryStatsPeriodButtonEnabled: StateFlow<Boolean>
 
     fun onNextHistoryStatsPeriodClicked()
     fun onPreviousHistoryStatsPeriodClicked()

@@ -35,6 +35,7 @@ import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import ua.com.radiokot.money.transfers.history.view.ActivityFilterViewModelDelegate
 import ua.com.radiokot.money.transfers.history.view.HistoryStatsPeriodViewModel
+import ua.com.radiokot.money.transfers.history.view.ViewHistoryPeriod
 import ua.com.radiokot.money.transfers.view.ViewTransferCounterparty
 
 class HomeViewModel(
@@ -44,13 +45,30 @@ class HomeViewModel(
     ActivityFilterViewModelDelegate {
 
     private val log by lazyLogger("HomeVM")
+
     private val _historyStatsPeriod: MutableStateFlow<HistoryPeriod> =
         MutableStateFlow(HistoryPeriod.Month())
+
     override val historyStatsPeriod = _historyStatsPeriod.asStateFlow()
+
+    override val viewHistoryStatsPeriod: StateFlow<ViewHistoryPeriod> =
+        _historyStatsPeriod
+            .map(viewModelScope, ViewHistoryPeriod::fromHistoryPeriod)
+
+    override val isNextHistoryStatsPeriodButtonEnabled: StateFlow<Boolean> =
+        _historyStatsPeriod
+            .map(viewModelScope) { it.getNext() != null }
+
+    override val isPreviousHistoryStatsPeriodButtonEnabled: StateFlow<Boolean> =
+        _historyStatsPeriod
+            .map(viewModelScope) { it.getPrevious() != null }
+
     private val _activityFilterTransferCounterparties: MutableStateFlow<Set<TransferCounterparty>?> =
         MutableStateFlow(null)
+
     override val activityFilterTransferCounterparties: StateFlow<Set<TransferCounterparty>?> =
         _activityFilterTransferCounterparties.asStateFlow()
+
     override val activityFilterCounterparties: StateFlow<List<ViewTransferCounterparty>> =
         activityFilterTransferCounterparties
             .map(viewModelScope) { counterparties ->

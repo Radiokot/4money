@@ -48,14 +48,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composeunstyled.Text
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.format.MonthNames
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
-import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
+import ua.com.radiokot.money.transfers.history.view.ViewHistoryPeriod
+import ua.com.radiokot.money.transfers.view.ViewDate
 import ua.com.radiokot.money.uikit.TextButton
 import java.math.BigInteger
 
@@ -78,7 +77,7 @@ fun CategoryActionSheetRoot(
 @Composable
 private fun CategoryActionSheet(
     modifier: Modifier = Modifier,
-    statsPeriod: HistoryPeriod,
+    statsPeriod: ViewHistoryPeriod,
     statsAmount: State<ViewAmount>,
     colorScheme: State<ItemColorScheme>,
     title: State<String>,
@@ -130,7 +129,7 @@ private fun CategoryActionSheet(
 @Composable
 private fun Header(
     modifier: Modifier = Modifier,
-    statsPeriod: HistoryPeriod,
+    statsPeriod: ViewHistoryPeriod,
     statsAmount: State<ViewAmount>,
     colorScheme: State<ItemColorScheme>,
     title: State<String>,
@@ -158,20 +157,7 @@ private fun Header(
 
     Row {
         Text(
-            text = when (statsPeriod) {
-                is HistoryPeriod.Day ->
-                    statsPeriod.localDay.toString()
-
-                is HistoryPeriod.Month ->
-                    LocalDate.Format {
-                        monthName(MonthNames.ENGLISH_FULL)
-                        chars(" ")
-                        year()
-                    }.format(statsPeriod.localMonth)
-
-                HistoryPeriod.Since70th ->
-                    "All time"
-            },
+            text = statsPeriod.getText(),
             color = textColor,
         )
 
@@ -200,7 +186,9 @@ private fun Preview(
 
 ) {
     CategoryActionSheet(
-        statsPeriod = HistoryPeriod.Day(),
+        statsPeriod = ViewHistoryPeriod.Day(
+            day = ViewDate.today(),
+        ),
         statsAmount = ViewAmount(
             value = BigInteger("15000"),
             currency = ViewCurrency(

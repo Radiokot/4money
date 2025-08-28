@@ -330,16 +330,7 @@ private fun TransferSheet(
         }
 
         BasicText(
-            text = when (date.value.specificType) {
-                ViewDate.SpecificType.Today ->
-                    "Today"
-
-                ViewDate.SpecificType.Yesterday ->
-                    "Yesterday"
-
-                null ->
-                    date.value.localDate.toString()
-            },
+            text = date.value.getText(),
             style = TextStyle(
                 textAlign = TextAlign.Center,
             ),
