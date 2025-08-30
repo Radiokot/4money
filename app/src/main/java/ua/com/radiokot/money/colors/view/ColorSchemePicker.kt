@@ -26,6 +26,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -47,7 +48,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
-import ua.com.radiokot.money.stableClickable
 
 @Composable
 fun ColorSchemePicker(
@@ -92,7 +92,7 @@ fun ColorSchemePicker(
                             color = Color(colorScheme.primary),
                             shape = CircleShape,
                         )
-                        .stableClickable(
+                        .clickable(
                             onClick = {
                                 onColorSchemeClicked(colorScheme)
                             },

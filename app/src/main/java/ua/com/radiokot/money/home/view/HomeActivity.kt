@@ -29,6 +29,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -44,7 +45,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -88,7 +88,6 @@ import ua.com.radiokot.money.categories.view.categoryActionSheet
 import ua.com.radiokot.money.preferences.view.PreferencesScreenRoute
 import ua.com.radiokot.money.preferences.view.preferencesScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
-import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 import ua.com.radiokot.money.transfers.history.view.ActivityScreenRoute
 import ua.com.radiokot.money.transfers.history.view.activityScreen
@@ -403,7 +402,7 @@ private fun BottomNavigation(
         icon = "👛",
         modifier = Modifier
             .weight(1f)
-            .stableClickable(
+            .clickable(
                 onClick = onAccountsClicked,
             )
     )
@@ -413,7 +412,7 @@ private fun BottomNavigation(
         icon = "📊",
         modifier = Modifier
             .weight(1f)
-            .stableClickable(
+            .clickable(
                 onClick = onCategoriesClicked,
             )
     )
@@ -423,7 +422,7 @@ private fun BottomNavigation(
         icon = "📜",
         modifier = Modifier
             .weight(1f)
-            .stableClickable(
+            .clickable(
                 onClick = onActivityClicked,
             )
     )
@@ -434,7 +433,7 @@ private fun BottomNavigation(
         hasNotice = hasMoreNotice.value,
         modifier = Modifier
             .weight(1f)
-            .stableClickable(
+            .clickable(
                 onClick = onMoreClicked,
             )
     )

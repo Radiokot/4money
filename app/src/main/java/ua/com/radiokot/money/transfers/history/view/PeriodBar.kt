@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.transfers.history.view
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -35,7 +36,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.transfers.view.ViewDate
 import ua.com.radiokot.money.uikit.TextButton
 
@@ -62,7 +62,7 @@ fun PeriodBar(
         isEnabled = isPreviousButtonEnabled.value,
         padding = buttonPadding,
         modifier = Modifier
-            .stableClickable(
+            .clickable(
                 onClick = onPreviousPeriodClicked,
             )
     )
@@ -73,7 +73,7 @@ fun PeriodBar(
             fontSize = 16.sp,
         ),
         modifier = Modifier
-            .stableClickable(
+            .clickable(
                 onClick = onPeriodClicked,
             )
             .padding(buttonPadding)
@@ -84,7 +84,7 @@ fun PeriodBar(
         isEnabled = isNextButtonEnabled.value,
         padding = buttonPadding,
         modifier = Modifier
-            .stableClickable(
+            .clickable(
                 onClick = onNextPeriodClicked,
             )
     )

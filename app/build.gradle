@@ -109,16 +109,18 @@ ext {
 }
 
 dependencies {
+    // Update requires compile SDK 36
+    // noinspection GradleDependency
     implementation "androidx.core:core-ktx:1.16.0"
     implementation "androidx.appcompat:appcompat:1.7.1"
-    //noinspection KtxExtensionAvailable
+    // noinspection KtxExtensionAvailable
     implementation "androidx.activity:activity:$activityVersion"
     implementation "androidx.activity:activity-compose:$activityVersion"
     implementation "androidx.navigation:navigation-compose:2.9.3"
     implementation "androidx.paging:paging-compose:3.3.6"
     implementation "androidx.work:work-runtime-ktx:2.10.3"
 
-    implementation platform("androidx.compose:compose-bom:2025.07.00")
+    implementation platform("androidx.compose:compose-bom:2025.08.01")
     implementation "androidx.compose.foundation:foundation"
     implementation "androidx.compose.foundation:foundation-layout"
     debugImplementation "androidx.compose.ui:ui-tooling"
@@ -136,16 +138,16 @@ dependencies {
     implementation "io.github.jan-tennert.supabase:functions-kt:$supabaseVersion"
     implementation "io.github.jan-tennert.supabase:postgrest-kt:$supabaseVersion"
 
-    implementation "io.github.oshai:kotlin-logging-jvm:7.0.12"
+    implementation "io.github.oshai:kotlin-logging-jvm:7.0.13"
     implementation "com.github.tony19:logback-android:3.0.0"
     implementation("org.slf4j:slf4j-api:2.0.17") {
         exclude group: "org.slf4j", module: "slf4j-api"
     }
 
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0"
-    implementation "sh.calvin.reorderable:reorderable:2.5.1"
+    implementation "sh.calvin.reorderable:reorderable:3.0.0"
     implementation "cash.z.ecc.android:kotlin-bip39:1.0.9"
-    implementation "com.composables:core:1.41.0"
+    implementation "com.composables:core:1.42.0"
     implementation "org.bouncycastle:bcprov-lts8on:2.73.7"
     implementation "app.cash.sqldelight:android-driver:2.1.0"
 

@@ -21,6 +21,7 @@ package ua.com.radiokot.money.categories.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -41,7 +42,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
-import ua.com.radiokot.money.stableClickable
 
 @Composable
 fun SelectableSubcategoryRow(
@@ -70,9 +70,10 @@ fun SelectableSubcategoryRow(
                 item = item,
                 colorScheme = colorScheme,
                 modifier = Modifier
-                    .stableClickable(
-                        key = item.key,
-                        onClick = { onItemClicked(item) },
+                    .clickable(
+                        onClick = {
+                            onItemClicked(item)
+                        },
                     )
             )
         }
@@ -115,10 +116,10 @@ private fun SelectableSubcategoryListItem(
         text = item.title,
         style = TextStyle(
             color =
-            if (item.isSelected)
-                onPrimaryColor
-            else
-                primaryColor
+                if (item.isSelected)
+                    onPrimaryColor
+                else
+                    primaryColor
         ),
         modifier = modifier
             .run {

@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.accounts.view
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -62,7 +63,6 @@ import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
-import ua.com.radiokot.money.stableClickable
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 import java.math.BigInteger
 
@@ -100,9 +100,10 @@ fun AccountList(
                 AccountItem(
                     item = item,
                     modifier = Modifier
-                        .stableClickable(
-                            key = item.key,
-                            onClick = { onAccountItemClicked(item) }
+                        .clickable(
+                            onClick = {
+                                onAccountItemClicked(item)
+                            },
                         )
                         .padding(
                             vertical = 8.dp,
@@ -198,9 +199,10 @@ fun MovableAccountList(
                         state = reorderableState,
                         key = item.key,
                         modifier = Modifier
-                            .stableClickable(
-                                key = item.key,
-                                onClick = { onAccountItemClicked(item) }
+                            .clickable(
+                                onClick = {
+                                    onAccountItemClicked(item)
+                                },
                             )
                     ) { isDragging ->
                         AccountItem(

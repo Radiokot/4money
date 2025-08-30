@@ -68,8 +68,8 @@ fun AccountsScreenRoot(
 ) = AccountsScreen(
     modifier = modifier,
     accountItemList = viewModel.accountListItems.collectAsState(),
-    onAccountItemClicked = viewModel::onAccountItemClicked,
-    onAccountItemMoved = viewModel::onAccountItemMoved,
+    onAccountItemClicked = remember { viewModel::onAccountItemClicked },
+    onAccountItemMoved = remember { viewModel::onAccountItemMoved },
     totalAmountPerCurrencyList = viewModel.totalAmountsPerCurrency.collectAsState(),
     totalAmount = viewModel.totalAmount.collectAsState(),
     onAddClicked = remember { viewModel::onAddClicked },
