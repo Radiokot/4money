@@ -19,15 +19,6 @@
 
 package ua.com.radiokot.money.currency.view
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -57,7 +48,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composeunstyled.Text
+import ua.com.radiokot.money.uikit.RedToggle
 import ua.com.radiokot.money.uikit.TextButton
+import ua.com.radiokot.money.uikit.rememberRedToggleTransitionSpec
 
 @Composable
 private fun CurrencySelectionScreen(
@@ -119,26 +112,7 @@ private fun CurrencySelectionScreen(
         )
     }
 
-    val selectionIndicatorTransitionSpec = remember {
-        fun AnimatedContentTransitionScope<Boolean>.() =
-            if (targetState) {
-                ContentTransform(
-                    targetContentEnter = scaleIn(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                        )
-                    ),
-                    initialContentExit = ExitTransition.KeepUntilTransitionsFinished,
-                    sizeTransform = null,
-                )
-            } else {
-                ContentTransform(
-                    targetContentEnter = EnterTransition.None,
-                    initialContentExit = scaleOut(),
-                    sizeTransform = null,
-                )
-            }
-    }
+    val selectionToggleTransitionSpec = rememberRedToggleTransitionSpec()
 
     LazyColumn(
 
@@ -165,21 +139,12 @@ private fun CurrencySelectionScreen(
                     )
             ) {
 
-                AnimatedContent(
-                    targetState = item.isSelected,
-                    label = "selection-indicator",
-                    transitionSpec = selectionIndicatorTransitionSpec,
-                ) { isItemSelected ->
-                    Text(
-                        text =
-                        if (isItemSelected)
-                            "🔴"
-                        else
-                            "⭕",
-                        modifier = Modifier
-                            .padding(4.dp)
-                    )
-                }
+                RedToggle(
+                    isToggled = item.isSelected,
+                    transitionSpec = selectionToggleTransitionSpec,
+                    modifier = Modifier
+                        .padding(4.dp)
+                )
 
                 Text(
                     text = item.code,
