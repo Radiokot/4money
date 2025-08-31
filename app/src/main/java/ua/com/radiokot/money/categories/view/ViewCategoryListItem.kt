@@ -75,8 +75,11 @@ class ViewCategoryListItem(
     }
 }
 
-fun List<Category>.toSortedIncognitoViewItemList(): List<ViewCategoryListItem> =
-    sorted()
+fun List<Category>.toSortedIncognitoViewItemList(
+    isArchived: Boolean = false,
+): List<ViewCategoryListItem> =
+    filter { it.isArchived == isArchived }
+        .sorted()
         .map { category ->
             ViewCategoryListItem(
                 category = category,
@@ -85,10 +88,13 @@ fun List<Category>.toSortedIncognitoViewItemList(): List<ViewCategoryListItem> =
             )
         }
 
-private val categoryComparator = compareBy(CategoryWithAmount::category)
+private val categoryWithAmountComparator = compareBy(CategoryWithAmount::category)
 
-fun List<CategoryWithAmount>.toSortedViewItemList(): List<ViewCategoryListItem> =
-    sortedWith(categoryComparator)
+fun List<CategoryWithAmount>.toSortedViewItemList(
+    isArchived: Boolean = false,
+): List<ViewCategoryListItem> =
+    filter { it.category.isArchived == isArchived }
+        .sortedWith(categoryWithAmountComparator)
         .map { (category, amount) ->
             ViewCategoryListItem(
                 category = category,
