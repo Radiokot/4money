@@ -103,6 +103,9 @@ class EditCategoryScreenViewModel(
             else
                 emptyList()
         })
+    private val _isArchived: MutableStateFlow<Boolean> = MutableStateFlow(
+        categoryToEdit?.isArchived ?: false
+    )
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
@@ -113,11 +116,20 @@ class EditCategoryScreenViewModel(
     val isCurrencyChangeEnabled: Boolean =
         isNewCategory
 
+    val isSubcategoryEditEnabled: StateFlow<Boolean> =
+        _isArchived
+            .map(viewModelScope, Boolean::not)
+
     val subcategories: StateFlow<List<ViewSubcategoryToUpdateListItem>> =
         _subcategories
             .map(viewModelScope) { subcategories ->
                 subcategories.map(::ViewSubcategoryToUpdateListItem)
             }
+
+    val isArchived = _isArchived.asStateFlow()
+
+    val isArchivedVisible: Boolean =
+        !isNewCategory
 
     val isSaveEnabled: StateFlow<Boolean> =
         _title
@@ -248,6 +260,15 @@ class EditCategoryScreenViewModel(
                     }
                 }
         }
+    }
+
+    fun onArchivedClicked() {
+
+        log.debug {
+            "onArchivedClicked(): flipping archived"
+        }
+
+        _isArchived.update(Boolean::not)
     }
 
     fun onSaveClicked() {

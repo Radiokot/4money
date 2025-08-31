@@ -45,6 +45,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -64,6 +65,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.view.ItemLogo
+import ua.com.radiokot.money.uikit.RedToggleSwitch
 import ua.com.radiokot.money.uikit.TextButton
 
 @Composable
@@ -80,9 +82,13 @@ private fun EditCategoryScreen(
     isCurrencyChangeEnabled: Boolean,
     onCurrencyClicked: () -> Unit,
     subcategoryItemList: State<List<ViewSubcategoryToUpdateListItem>>,
+    isSubcategoryEditEnabled: State<Boolean>,
     onSubcategoryItemClicked: (ViewSubcategoryToUpdateListItem) -> Unit,
     onSubcategoryItemMoved: suspend (fromIndex: Int, toIndex: Int) -> Unit,
     onAddSubcategoryClicked: () -> Unit,
+    isArchived: State<Boolean>,
+    isArchivedVisible: Boolean,
+    onArchivedClicked: () -> Unit,
     onCloseClicked: () -> Unit,
 ) = Column(
     modifier = Modifier
@@ -119,10 +125,10 @@ private fun EditCategoryScreen(
 
         Text(
             text =
-            if (isNewCategory)
-                "New " + (if (isIncome) "income" else "expense") + " category"
-            else
-                "Edit " + (if (isIncome) "income" else "expense") + " category",
+                if (isNewCategory)
+                    "New " + (if (isIncome) "income" else "expense") + " category"
+                else
+                    "Edit " + (if (isIncome) "income" else "expense") + " category",
             fontSize = 16.sp,
             modifier = Modifier
                 .weight(1f)
@@ -188,10 +194,10 @@ private fun EditCategoryScreen(
                     .border(
                         width = 1.dp,
                         color =
-                        if (isCurrencyChangeEnabled)
-                            Color.DarkGray
-                        else
-                            Color.Gray,
+                            if (isCurrencyChangeEnabled)
+                                Color.DarkGray
+                            else
+                                Color.Gray,
                     )
                     .clickable(
                         enabled = isCurrencyChangeEnabled,
@@ -202,10 +208,10 @@ private fun EditCategoryScreen(
                 Text(
                     text = currencyCode.value,
                     color =
-                    if (isCurrencyChangeEnabled)
-                        Color.Unspecified
-                    else
-                        Color.Gray,
+                        if (isCurrencyChangeEnabled)
+                            Color.Unspecified
+                        else
+                            Color.Gray,
                     modifier = Modifier
                         .weight(1f)
                 )
@@ -234,6 +240,7 @@ private fun EditCategoryScreen(
                 key = item.key,
                 modifier = Modifier
                     .clickable(
+                        enabled = isSubcategoryEditEnabled.value,
                         onClick = {
                             onSubcategoryItemClicked(item)
                         },
@@ -241,10 +248,17 @@ private fun EditCategoryScreen(
             ) { isDragging ->
                 Text(
                     text = item.title,
+                    color =
+                        if (isSubcategoryEditEnabled.value)
+                            Color.Unspecified
+                        else
+                            Color.Gray,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .longPressDraggableHandle()
+                        .longPressDraggableHandle(
+                            enabled = isSubcategoryEditEnabled.value,
+                        )
                         .padding(
                             vertical = 12.dp,
                         )
@@ -259,12 +273,20 @@ private fun EditCategoryScreen(
             }
         }
 
-        item {
+        item(
+            key = "add-subcategory",
+        ) {
             Text(
                 text = "➕ Add subcategory",
+                color =
+                    if (isSubcategoryEditEnabled.value)
+                        Color.Unspecified
+                    else
+                        Color.Gray,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(
+                        enabled = isSubcategoryEditEnabled.value,
                         onClick = onAddSubcategoryClicked,
                     )
                     .padding(
@@ -273,7 +295,40 @@ private fun EditCategoryScreen(
             )
         }
 
-        item {
+        if (isArchivedVisible) {
+            item(
+                key = "archived"
+            ) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clickable(
+                            onClick = onArchivedClicked,
+                        )
+                        .padding(
+                            vertical = 12.dp,
+                        )
+                ) {
+                    Text(
+                        text = "Archived",
+                        modifier = Modifier
+                            .weight(1f)
+                    )
+
+                    RedToggleSwitch(
+                        isToggled = isArchived,
+                        onToggled = { onArchivedClicked() }
+                    )
+                }
+            }
+
+        }
+
+        item(
+            key = "save",
+        ) {
             Spacer(modifier = Modifier.height(24.dp))
 
             TextButton(
@@ -361,9 +416,13 @@ fun EditCategoryScreenRoot(
         isCurrencyChangeEnabled = viewModel.isCurrencyChangeEnabled,
         onCurrencyClicked = remember { viewModel::onCurrencyClicked },
         subcategoryItemList = viewModel.subcategories.collectAsState(),
+        isSubcategoryEditEnabled = viewModel.isSubcategoryEditEnabled.collectAsState(),
         onSubcategoryItemClicked = remember { viewModel::onSubcategoryItemClicked },
         onSubcategoryItemMoved = remember { viewModel::onSubcategoryItemMoved },
         onAddSubcategoryClicked = remember { viewModel::onAddSubcategoryClicked },
+        isArchived = viewModel.isArchived.collectAsState(),
+        isArchivedVisible = viewModel.isArchivedVisible,
+        onArchivedClicked = remember { viewModel::onArchivedClicked },
         onCloseClicked = remember { viewModel::onCloseClicked },
     )
 }
@@ -375,6 +434,13 @@ fun EditCategoryScreenRoot(
 private fun Preview(
 
 ) {
+    val isArchived = remember { mutableStateOf(false) }
+    val isSubcategoryEditEnabled = remember {
+        derivedStateOf {
+            !isArchived.value
+        }
+    }
+
     EditCategoryScreen(
         isNewCategory = true,
         isIncome = false,
@@ -390,11 +456,24 @@ private fun Preview(
         currencyCode = "USD".let(::mutableStateOf),
         isCurrencyChangeEnabled = true,
         onCurrencyClicked = {},
-        subcategoryItemList = emptyList<ViewSubcategoryToUpdateListItem>()
-            .let(::mutableStateOf),
+        subcategoryItemList =
+            listOf(
+                ViewSubcategoryToUpdateListItem(
+                    title = "Koshka",
+                    source = null,
+                ),
+                ViewSubcategoryToUpdateListItem(
+                    title = "Kartoshka",
+                    source = null,
+                )
+            ).let(::mutableStateOf),
+        isSubcategoryEditEnabled = isSubcategoryEditEnabled,
         onSubcategoryItemClicked = {},
         onSubcategoryItemMoved = { _, _ -> },
         onAddSubcategoryClicked = {},
+        isArchived = isArchived,
+        isArchivedVisible = true,
+        onArchivedClicked = { isArchived.value = !isArchived.value },
         onCloseClicked = {},
     )
 }
