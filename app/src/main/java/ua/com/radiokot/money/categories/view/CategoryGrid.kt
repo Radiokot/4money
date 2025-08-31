@@ -7,17 +7,22 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,10 +32,12 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.composeunstyled.Text
 import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
@@ -39,13 +46,15 @@ import ua.com.radiokot.money.currency.view.ViewAmountFormat
 fun CategoryGrid(
     modifier: Modifier = Modifier,
     itemList: State<List<ViewCategoryListItem>>,
-    onItemClicked: (ViewCategoryListItem) -> Unit,
-    onItemLongClicked: (ViewCategoryListItem) -> Unit,
+    onItemClicked: ((ViewCategoryListItem) -> Unit)? = null,
+    onItemLongClicked: ((ViewCategoryListItem) -> Unit)? = null,
     isAddShown: Boolean,
-    onAddClicked: () -> Unit,
+    onAddClicked: (() -> Unit)? = null,
+    archiveItemList: State<List<ViewCategoryListItem>>? = null,
 ) {
     val gridState = rememberLazyGridState()
     val space = 6.dp
+    val isArchiveExpanded = remember { mutableStateOf(false) }
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(72.dp),
@@ -58,52 +67,104 @@ fun CategoryGrid(
         state = gridState,
         modifier = modifier
     ) {
-        items(
-            items = itemList.value,
-            key = ViewCategoryListItem::key,
-        ) { item ->
-            CategoryListItem(
-                item = item,
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = { onItemClicked(item) },
-                        onLongClick = { onItemLongClicked(item) },
-                    )
-            )
-        }
+        categoryItems(
+            itemList = itemList,
+            onItemClicked = onItemClicked,
+            onItemLongClicked = onItemLongClicked,
+        )
 
         if (isAddShown) {
-            item {
+            item(
+                key = "add",
+            ) {
                 AddItem(
                     modifier = Modifier
                         .clickable(
-                            onClick = onAddClicked,
+                            onClick = { onAddClicked?.invoke() }
                         )
+                )
+            }
+        }
+
+        if (!archiveItemList?.value.isNullOrEmpty()) {
+            item(
+                key = "archive",
+                span = { GridItemSpan(maxLineSpan) }
+            ) {
+                ArchiveHeader(
+                    isArchiveExpanded = isArchiveExpanded,
+                )
+            }
+
+            if (isArchiveExpanded.value) {
+                categoryItems(
+                    itemList = archiveItemList,
+                    onItemClicked = onItemClicked,
+                    onItemLongClicked = onItemLongClicked,
                 )
             }
         }
     }
 }
 
-@Composable
-@Preview(
-    apiLevel = 34,
-    widthDp = 200,
-)
-private fun CategoryGridPreview(
+private fun LazyGridScope.categoryItems(
+    itemList: State<List<ViewCategoryListItem>>,
+    onItemClicked: ((ViewCategoryListItem) -> Unit)?,
+    onItemLongClicked: ((ViewCategoryListItem) -> Unit)?,
 ) {
-    CategoryGrid(
-        itemList = ViewCategoryListItemPreviewParameterProvider()
-            .values
-            .toList()
-            .let(::mutableStateOf),
-        onItemClicked = {},
-        onItemLongClicked = {},
-        isAddShown = true,
-        onAddClicked = {},
+    items(
+        items = itemList.value,
+        ViewCategoryListItem::key,
+    ) { item ->
+        CategoryListItem(
+            item = item,
+            modifier = Modifier
+                .combinedClickable(
+                    onClick = {
+                        onItemClicked?.invoke(item)
+                    },
+                    onLongClick = {
+                        onItemLongClicked?.invoke(item)
+                    },
+                )
+        )
+    }
+}
+
+@Composable
+private fun ArchiveHeader(
+    isArchiveExpanded: MutableState<Boolean>,
+) {
+    Row(
         modifier = Modifier
+            .clickable(
+                onClick = {
+                    isArchiveExpanded.value = !isArchiveExpanded.value
+                },
+            )
+            .padding(
+                vertical = 10.dp,
+                horizontal = 8.dp,
+            )
             .fillMaxWidth()
-    )
+    ) {
+        Text(
+            text = "Archive",
+            fontSize = 16.sp,
+            fontWeight = FontWeight(500),
+            modifier = Modifier
+                .weight(1f),
+        )
+
+        Text(
+            text =
+                if (isArchiveExpanded.value)
+                    "🔼"
+                else
+                    "🔽",
+            fontSize = 16.sp,
+        )
+    }
 }
 
 @Composable
@@ -207,6 +268,31 @@ private fun AddItem(
         text = "",
         modifier = Modifier
             .drawWithContent { }
+    )
+}
+
+@Composable
+@Preview(
+    apiLevel = 34,
+    widthDp = 200,
+)
+private fun CategoryGridPreview(
+) {
+    val (itemList, archiveItemList) =
+        ViewCategoryListItemPreviewParameterProvider()
+            .values
+            .toList()
+            .chunked(3)
+
+    CategoryGrid(
+        itemList = itemList.let(::mutableStateOf),
+        onItemClicked = {},
+        onItemLongClicked = {},
+        isAddShown = true,
+        onAddClicked = {},
+        archiveItemList = archiveItemList.let(::mutableStateOf),
+        modifier = Modifier
+            .fillMaxWidth()
     )
 }
 

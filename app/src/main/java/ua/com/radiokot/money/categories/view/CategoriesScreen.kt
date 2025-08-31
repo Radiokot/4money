@@ -62,6 +62,7 @@ fun CategoriesScreenRoot(
     isNextPeriodButtonEnabled = viewModel.isNextHistoryStatsPeriodButtonEnabled.collectAsState(),
     onNextPeriodClicked = remember { viewModel::onNextHistoryStatsPeriodClicked },
     onAddClicked = remember { viewModel::onAddClicked },
+    categoryArchiveItemList = viewModel.categoryArchiveItemList.collectAsState(),
     modifier = modifier,
 )
 
@@ -81,6 +82,7 @@ private fun CategoriesScreen(
     isPreviousPeriodButtonEnabled: State<Boolean>,
     onPreviousPeriodClicked: () -> Unit,
     onAddClicked: () -> Unit,
+    categoryArchiveItemList: State<List<ViewCategoryListItem>>,
 ) = Column(
     modifier = modifier
         .padding(
@@ -160,6 +162,7 @@ private fun CategoriesScreen(
         onItemLongClicked = onCategoryItemLongClicked,
         isAddShown = true,
         onAddClicked = onAddClicked,
+        archiveItemList = categoryArchiveItemList,
         modifier = Modifier
             .fillMaxWidth()
             .weight(1f)

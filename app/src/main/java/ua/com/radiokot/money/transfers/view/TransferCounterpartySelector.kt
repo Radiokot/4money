@@ -168,9 +168,6 @@ fun TransferCounterpartySelector(
 
     Spacer(modifier = Modifier.height(12.dp))
 
-    val noOpLongClick: (ViewCategoryListItem) -> Unit = remember { {} }
-    val noOpAdd: () -> Unit = remember { {} }
-
     HorizontalPager(
         state = pagerState,
         beyondViewportPageCount = pages.size - 1,
@@ -184,9 +181,7 @@ fun TransferCounterpartySelector(
                 CategoryGrid(
                     itemList = incomeCategoryItemList!!,
                     onItemClicked = onCategoryItemClicked,
-                    onItemLongClicked = noOpLongClick,
                     isAddShown = false,
-                    onAddClicked = noOpAdd,
                 )
             }
 
@@ -194,9 +189,7 @@ fun TransferCounterpartySelector(
                 CategoryGrid(
                     itemList = expenseCategoryItemList!!,
                     onItemClicked = onCategoryItemClicked,
-                    onItemLongClicked = noOpLongClick,
                     isAddShown = false,
-                    onAddClicked = noOpAdd,
                 )
             }
 
