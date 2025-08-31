@@ -44,7 +44,6 @@ import ua.com.radiokot.money.currency.data.CurrencyRepository
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.map
-import ua.com.radiokot.money.transfers.view.TransferSheetViewModel.Event
 
 class EditAccountScreenViewModel(
     parameters: Parameters,

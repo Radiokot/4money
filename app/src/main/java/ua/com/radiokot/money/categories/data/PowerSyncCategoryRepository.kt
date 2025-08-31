@@ -133,32 +133,60 @@ class PowerSyncCategoryRepository(
     override fun getSubcategoriesByCategoriesFlow(): Flow<Map<Category, List<Subcategory>>> =
         subcategoriesByCategorySharedFlow
 
+    override suspend fun archiveCategory(
+        categoryId: String,
+    ) {
+        database.writeTransaction { transaction ->
+
+            updateArchived(
+                categoryId = categoryId,
+                isArchived = true,
+                transaction = transaction,
+            )
+        }
+    }
+
+    override suspend fun unarchiveCategory(
+        categoryId: String,
+    ) {
+        database.writeTransaction { transaction ->
+
+            updateArchived(
+                categoryId = categoryId,
+                isArchived = false,
+                transaction = transaction,
+            )
+        }
+    }
+
+    private fun updateArchived(
+        categoryId: String,
+        isArchived: Boolean,
+        transaction: PowerSyncTransaction,
+    ) {
+        transaction.execute(
+            sql = UPDATE_ARCHIVED_BY_ID,
+            parameters = listOf(
+                isArchived,
+                categoryId,
+            )
+        )
+    }
+
     fun updateCategory(
         categoryId: String,
         newTitle: String,
         newColorScheme: ItemColorScheme,
         transaction: PowerSyncTransaction,
-    ): Category {
-        val categoryToUpdate = runBlocking {
-            getCategory(categoryId)
-                ?: error("Category to update not found")
-        }
-
+    ) {
         transaction.execute(
-            sql = INSERT_OR_REPLACE_CATEGORY,
+            sql = UPDATE_CATEGORY_BY_ID,
             parameters = listOf(
-                categoryToUpdate.id,
                 newTitle,
-                categoryToUpdate.currency.id,
-                null,
-                categoryToUpdate.isIncome,
                 newColorScheme.name,
-                categoryToUpdate.position,
-                categoryToUpdate.isArchived,
+                categoryId,
             )
         )
-
-        return categoryToUpdate
     }
 
     fun addCategory(
@@ -190,16 +218,14 @@ class PowerSyncCategoryRepository(
         )
 
         transaction.execute(
-            sql = INSERT_OR_REPLACE_CATEGORY,
+            sql = INSERT_CATEGORY,
             parameters = listOf(
                 category.id,
                 category.title,
                 category.currency.id,
-                null,
                 category.isIncome,
                 category.colorScheme.name,
                 category.position,
-                category.isArchived,
             )
         )
 
@@ -224,7 +250,7 @@ class PowerSyncCategoryRepository(
                     subcategoryToUpdate.id
 
             transaction.execute(
-                sql = INSERT_OR_REPLACE_CATEGORY,
+                sql = INSERT_OR_REPLACE_SUBCATEGORY,
                 parameters = listOf(
                     id,
                     subcategoryToUpdate.title,
@@ -233,7 +259,6 @@ class PowerSyncCategoryRepository(
                     parentCategory.isIncome,
                     parentCategory.colorScheme.name,
                     sternBrocotTree.value,
-                    false,
                 )
             )
         }
@@ -291,13 +316,35 @@ private const val SELECT_CATEGORIES_THEN_SUBCATEGORIES =
  * 1. ID
  * 2. Title
  * 3. Currency ID
+ * 4. Is income boolean
+ * 5. Color scheme name
+ * 6. Position
+ */
+private const val INSERT_CATEGORY =
+    "INSERT INTO ${DbSchema.CATEGORIES_TABLE} " +
+            "(" +
+            "${DbSchema.ID}, " +
+            "${DbSchema.CATEGORY_TITLE}, " +
+            "${DbSchema.CATEGORY_CURRENCY_ID}, " +
+            "${DbSchema.CATEGORY_PARENT_ID}, " +
+            "${DbSchema.CATEGORY_IS_INCOME}, " +
+            "${DbSchema.CATEGORY_COLOR_SCHEME}, " +
+            "${DbSchema.CATEGORY_POSITION}, " +
+            "${DbSchema.CATEGORY_IS_ARCHIVED} " +
+            ") " +
+            "VALUES(?, ?, ?, NULL, ?, ?, ?, 0)"
+
+/**
+ * Params:
+ * 1. ID
+ * 2. Title
+ * 3. Currency ID
  * 4. Parent category ID
  * 5. Is income boolean
  * 6. Color scheme name
  * 7. Position
- * 8. Is archived
  */
-private const val INSERT_OR_REPLACE_CATEGORY =
+private const val INSERT_OR_REPLACE_SUBCATEGORY =
     "INSERT OR REPLACE INTO ${DbSchema.CATEGORIES_TABLE} " +
             "(" +
             "${DbSchema.ID}, " +
@@ -309,4 +356,26 @@ private const val INSERT_OR_REPLACE_CATEGORY =
             "${DbSchema.CATEGORY_POSITION}, " +
             "${DbSchema.CATEGORY_IS_ARCHIVED} " +
             ") " +
-            "VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
+            "VALUES(?, ?, ?, ?, ?, ?, ?, 0)"
+
+/**
+ * Params:
+ * 1. Title
+ * 2. Color scheme name
+ * 3. ID
+ */
+private const val UPDATE_CATEGORY_BY_ID =
+    "UPDATE ${DbSchema.CATEGORIES_TABLE} SET " +
+            "${DbSchema.CATEGORY_TITLE} = ?, " +
+            "${DbSchema.CATEGORY_COLOR_SCHEME} = ? " +
+            "WHERE ${DbSchema.ID} = ? "
+
+/**
+ * Params:
+ * 1. Is archived boolean
+ * 2. ID
+ */
+private const val UPDATE_ARCHIVED_BY_ID =
+    "UPDATE ${DbSchema.CATEGORIES_TABLE} SET " +
+            "${DbSchema.CATEGORY_IS_ARCHIVED} = ? " +
+            "WHERE ${DbSchema.ID} = ?"

@@ -17,25 +17,21 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.categories.data
+package ua.com.radiokot.money.categories.logic
 
-import kotlinx.coroutines.flow.Flow
+import ua.com.radiokot.money.categories.data.Category
+import ua.com.radiokot.money.categories.data.CategoryRepository
 
-interface CategoryRepository {
+class ArchiveCategoryUseCase(
+    private val categoryRepository: CategoryRepository,
+) {
 
-    suspend fun getCategories(isIncome: Boolean): List<Category>
+    suspend operator fun invoke(
+        categoryToArchive: Category,
+    ): Result<Unit> = runCatching {
 
-    fun getCategoriesFlow(isIncome: Boolean): Flow<List<Category>>
-
-    suspend fun getCategory(categoryId: String): Category?
-
-    suspend fun getSubcategory(subcategoryId: String): Subcategory?
-
-    fun getSubcategoriesFlow(categoryId: String): Flow<List<Subcategory>>
-
-    fun getSubcategoriesByCategoriesFlow(): Flow<Map<Category, List<Subcategory>>>
-
-    suspend fun archiveCategory(categoryId: String)
-
-    suspend fun unarchiveCategory(categoryId: String)
+        categoryRepository.archiveCategory(
+            categoryId = categoryToArchive.id,
+        )
+    }
 }

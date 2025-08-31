@@ -36,9 +36,12 @@ class PowerSyncEditCategoryUseCase(
         subcategories: List<SubcategoryToUpdate>,
     ): Result<Unit> = runCatching {
 
+        val categoryToEdit = categoryRepository.getCategory(categoryId)
+            ?: error("Category to edit not found: $categoryId")
+
         database.writeTransaction { transaction ->
 
-            val updatedCategory = categoryRepository.updateCategory(
+            categoryRepository.updateCategory(
                 categoryId = categoryId,
                 newTitle = newTitle,
                 newColorScheme = newColorScheme,
@@ -46,7 +49,7 @@ class PowerSyncEditCategoryUseCase(
             )
 
             categoryRepository.updateSubcategories(
-                parentCategory = updatedCategory,
+                parentCategory = categoryToEdit,
                 subcategories = subcategories,
                 transaction = transaction,
             )

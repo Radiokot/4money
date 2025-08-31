@@ -35,6 +35,7 @@ import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.SubcategoryToUpdate
 import ua.com.radiokot.money.categories.logic.AddCategoryUseCase
+import ua.com.radiokot.money.categories.logic.ArchiveCategoryUseCase
 import ua.com.radiokot.money.categories.logic.EditCategoryUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
@@ -53,6 +54,7 @@ class EditCategoryScreenViewModel(
     itemColorSchemeRepository: ItemColorSchemeRepository,
     private val editCategoryUseCase: EditCategoryUseCase,
     private val addCategoryUseCase: AddCategoryUseCase,
+    private val archiveCategoryUseCase: ArchiveCategoryUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("EditCategoryScreenVM")
@@ -277,18 +279,23 @@ class EditCategoryScreenViewModel(
             return
         }
 
-        if (categoryToEdit != null) {
-            editCategory(
-                categoryId = categoryToEdit.id,
-            )
-        } else {
+        if (categoryToEdit == null) {
             addCategory()
+            return
+        }
+
+        if (isArchived.value && !categoryToEdit.isArchived) {
+            archiveCategory(categoryToEdit)
+        } else if (!isArchived.value && categoryToEdit.isArchived){
+            // unarchive
+        } else {
+            editCategory(categoryToEdit)
         }
     }
 
     private var editJob: Job? = null
     private fun editCategory(
-        categoryId: String,
+        categoryToEdit: Category,
     ) {
         editJob?.cancel()
         editJob = viewModelScope.launch {
@@ -299,7 +306,7 @@ class EditCategoryScreenViewModel(
 
             log.debug {
                 "editCategory(): editing:" +
-                        "\ncategoryId=$categoryId," +
+                        "\ncategoryToEdit=$categoryToEdit," +
                         "\ntitle=$title," +
                         "\ncolorScheme=$colorScheme," +
                         "\nsubcategories=${subcategories.size}"
@@ -307,7 +314,7 @@ class EditCategoryScreenViewModel(
 
             editCategoryUseCase
                 .invoke(
-                    categoryId = categoryId,
+                    categoryId = categoryToEdit.id,
                     newTitle = title,
                     newColorScheme = colorScheme,
                     subcategories = subcategories,
@@ -373,6 +380,40 @@ class EditCategoryScreenViewModel(
 
                     log.debug {
                         "addCategory(): category added"
+                    }
+
+                    _events.emit(Event.Done)
+                }
+        }
+    }
+
+    private var archiveJob: Job? = null
+    private fun archiveCategory(
+        categoryToArchive: Category,
+    ) {
+        archiveJob?.cancel()
+        archiveJob = viewModelScope.launch {
+            log.debug {
+                "archiveCategory(): archiving:" +
+                        "\ncategoryToArchive=$categoryToArchive"
+            }
+
+            archiveCategoryUseCase
+                .invoke(
+                    categoryToArchive = categoryToArchive,
+                )
+                .onFailure { error ->
+                    log.error(error) {
+                        "archiveCategory(): failed to archive category"
+                    }
+                }
+                .onSuccess {
+                    log.info {
+                        "Archived category $categoryToArchive"
+                    }
+
+                    log.debug {
+                        "archiveCategory(): category archived"
                     }
 
                     _events.emit(Event.Done)

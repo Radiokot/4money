@@ -26,6 +26,7 @@ import ua.com.radiokot.money.auth.logic.sessionScope
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
 import ua.com.radiokot.money.categories.logic.AddCategoryUseCase
+import ua.com.radiokot.money.categories.logic.ArchiveCategoryUseCase
 import ua.com.radiokot.money.categories.logic.EditCategoryUseCase
 import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountUseCase
 import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountsAndTotalUseCase
@@ -54,14 +55,14 @@ val categoriesModule = module {
             )
         } bind CategoryRepository::class
 
-        factory {
+        scoped {
             GetCategoriesWithAmountUseCase(
                 categoryRepository = get(),
                 historyStatsRepository = get(),
             )
         } bind GetCategoriesWithAmountUseCase::class
 
-        factory {
+        scoped {
             GetCategoriesWithAmountsAndTotalUseCase(
                 currencyRepository = get(),
                 currencyPreferences = get(),
@@ -81,19 +82,25 @@ val categoriesModule = module {
             )
         } bind CategoriesScreenViewModel::class
 
-        factory {
+        scoped {
             PowerSyncEditCategoryUseCase(
                 categoryRepository = get(),
                 database = get(),
             )
         } bind EditCategoryUseCase::class
 
-        factory {
+        scoped {
             PowerSyncAddCategoryUseCase(
                 database = get(),
                 categoryRepository = get(),
             )
         } bind AddCategoryUseCase::class
+
+        scoped {
+            ArchiveCategoryUseCase(
+                categoryRepository = get(),
+            )
+        } bind ArchiveCategoryUseCase::class
 
         viewModel {
             EditCategoryScreenViewModel(
@@ -106,6 +113,7 @@ val categoriesModule = module {
                 itemColorSchemeRepository = get(),
                 editCategoryUseCase = get(),
                 addCategoryUseCase = get(),
+                archiveCategoryUseCase = get(),
             )
         } bind EditCategoryScreenViewModel::class
 
