@@ -111,20 +111,23 @@ class CategoriesScreenViewModel(
             return
         }
 
-        log.debug {
-            "onCategoryItemClicked(): proceeding to transfer:" +
-                    "\ncategory=$category"
-        }
+        if (category.isArchived) {
+            proceedToCategoryActions(category)
+        } else {
+            log.debug {
+                "onCategoryItemClicked(): proceeding to transfer:" +
+                        "\ncategory=$category"
+            }
 
-        _events.tryEmit(
-            Event.ProceedToTransfer(category)
-        )
+            _events.tryEmit(
+                Event.ProceedToTransfer(category)
+            )
+        }
     }
 
     fun onCategoryItemLongClicked(
         item: ViewCategoryListItem,
     ) {
-        val period = historyStatsPeriod.value
         val category = item.source
         if (category == null) {
             log.warn {
@@ -133,8 +136,20 @@ class CategoriesScreenViewModel(
             return
         }
 
+        if (category.isArchived) {
+            log.debug {
+                "onCategoryItemLongClicked(): ignoring for archived category"
+            }
+            return
+        }
+
+        proceedToCategoryActions(category)
+    }
+
+    private fun proceedToCategoryActions(category: Category) {
+        val period = historyStatsPeriod.value
         log.debug {
-            "onCategoryItemLongClicked(): proceeding to actions:" +
+            "proceedToCategoryActions(): proceeding to actions:" +
                     "\ncategory=$category," +
                     "\nperiod=$period"
         }
