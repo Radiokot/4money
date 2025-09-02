@@ -32,6 +32,7 @@ import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountUseCase
 import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountsAndTotalUseCase
 import ua.com.radiokot.money.categories.logic.PowerSyncAddCategoryUseCase
 import ua.com.radiokot.money.categories.logic.PowerSyncEditCategoryUseCase
+import ua.com.radiokot.money.categories.logic.UnarchiveCategoryUseCase
 import ua.com.radiokot.money.categories.view.CategoriesScreenViewModel
 import ua.com.radiokot.money.categories.view.CategoryActionSheetViewModel
 import ua.com.radiokot.money.categories.view.EditCategoryScreenViewModel
@@ -102,6 +103,12 @@ val categoriesModule = module {
             )
         } bind ArchiveCategoryUseCase::class
 
+        scoped {
+            UnarchiveCategoryUseCase(
+                categoryRepository = get(),
+            )
+        } bind UnarchiveCategoryUseCase::class
+
         viewModel {
             EditCategoryScreenViewModel(
                 parameters = checkNotNull(getOrNull()) {
@@ -114,6 +121,7 @@ val categoriesModule = module {
                 editCategoryUseCase = get(),
                 addCategoryUseCase = get(),
                 archiveCategoryUseCase = get(),
+                unarchiveCategoryUseCase = get(),
             )
         } bind EditCategoryScreenViewModel::class
 

@@ -17,43 +17,43 @@
    along with 4Money. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ua.com.radiokot.money.accounts.logic
+package ua.com.radiokot.money.categories.logic
 
-import kotlinx.coroutines.flow.first
-import ua.com.radiokot.money.accounts.data.Account
-import ua.com.radiokot.money.accounts.data.AccountRepository
+import ua.com.radiokot.money.categories.data.Category
+import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.util.SternBrocotTreeSearch
 
-class UnarchiveAccountUseCase(
-    private val accountRepository: AccountRepository,
-    private val getVisibleAccountsUseCase: GetVisibleAccountsUseCase,
+class UnarchiveCategoryUseCase(
+    private val categoryRepository: CategoryRepository,
 ) {
-    private val log by lazyLogger("UnarchiveAccountUC")
+    private val log by lazyLogger("UnarchiveCategoryUC")
 
     suspend operator fun invoke(
-        accountToUnrachive: Account,
+        categoryToUnarchive: Category,
     ): Result<Unit> = runCatching {
 
-        val lastAccountOfType = getVisibleAccountsUseCase()
-            .first()
-            .lastOrNull { it.type == accountToUnrachive.type }
+        val lastCategoryOfType = categoryRepository
+            .getCategories(
+                isIncome = categoryToUnarchive.isIncome,
+            )
+            .lastOrNull { it.isIncome == categoryToUnarchive.isIncome }
 
         val newPosition = SternBrocotTreeSearch()
             .goBetween(
                 lowerBound = 0.0,
-                upperBound = lastAccountOfType?.position ?: Double.POSITIVE_INFINITY,
+                upperBound = lastCategoryOfType?.position ?: Double.POSITIVE_INFINITY,
             )
             .value
 
         log.debug {
             "invoke(): unarchiving and updating position:" +
-                    "\naccountToUnarchive=$accountToUnrachive," +
+                    "\ncategoryToUnarchive=$categoryToUnarchive," +
                     "\nnewPosition=$newPosition"
         }
 
-        accountRepository.unarchive(
-            accountId = accountToUnrachive.id,
+        categoryRepository.unarchiveCategory(
+            categoryId = categoryToUnarchive.id,
             newPosition = newPosition,
         )
     }

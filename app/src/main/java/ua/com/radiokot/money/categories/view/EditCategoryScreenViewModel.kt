@@ -37,6 +37,7 @@ import ua.com.radiokot.money.categories.data.SubcategoryToUpdate
 import ua.com.radiokot.money.categories.logic.AddCategoryUseCase
 import ua.com.radiokot.money.categories.logic.ArchiveCategoryUseCase
 import ua.com.radiokot.money.categories.logic.EditCategoryUseCase
+import ua.com.radiokot.money.categories.logic.UnarchiveCategoryUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
@@ -55,6 +56,7 @@ class EditCategoryScreenViewModel(
     private val editCategoryUseCase: EditCategoryUseCase,
     private val addCategoryUseCase: AddCategoryUseCase,
     private val archiveCategoryUseCase: ArchiveCategoryUseCase,
+    private val unarchiveCategoryUseCase: UnarchiveCategoryUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("EditCategoryScreenVM")
@@ -287,7 +289,7 @@ class EditCategoryScreenViewModel(
         if (isArchived.value && !categoryToEdit.isArchived) {
             archiveCategory(categoryToEdit)
         } else if (!isArchived.value && categoryToEdit.isArchived){
-            // unarchive
+            unarchiveCategory(categoryToEdit)
         } else {
             editCategory(categoryToEdit)
         }
@@ -414,6 +416,40 @@ class EditCategoryScreenViewModel(
 
                     log.debug {
                         "archiveCategory(): category archived"
+                    }
+
+                    _events.emit(Event.Done)
+                }
+        }
+    }
+
+    private var unarchiveJob: Job? = null
+    private fun unarchiveCategory(
+        categoryToUnarchive: Category,
+    ) {
+        unarchiveJob?.cancel()
+        unarchiveJob = viewModelScope.launch {
+            log.debug {
+                "unarchiveCategory(): unarchiving:" +
+                        "\ncategoryToUnarchive=$categoryToUnarchive"
+            }
+
+            unarchiveCategoryUseCase
+                .invoke(
+                    categoryToUnarchive = categoryToUnarchive,
+                )
+                .onFailure { error ->
+                    log.error(error) {
+                        "unarchiveCategory(): failed to unarchive category"
+                    }
+                }
+                .onSuccess {
+                    log.info {
+                        "Unarchived category $categoryToUnarchive"
+                    }
+
+                    log.debug {
+                        "unarchiveCategory(): category unarchived"
                     }
 
                     _events.emit(Event.Done)

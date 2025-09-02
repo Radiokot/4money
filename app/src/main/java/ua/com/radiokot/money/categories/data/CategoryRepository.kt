@@ -37,5 +37,8 @@ interface CategoryRepository {
 
     suspend fun archiveCategory(categoryId: String)
 
-    suspend fun unarchiveCategory(categoryId: String)
+    suspend fun unarchiveCategory(
+        categoryId: String,
+        newPosition: Double,
+    )
 }

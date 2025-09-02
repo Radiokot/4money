@@ -148,12 +148,19 @@ class PowerSyncCategoryRepository(
 
     override suspend fun unarchiveCategory(
         categoryId: String,
+        newPosition: Double,
     ) {
         database.writeTransaction { transaction ->
 
             updateArchived(
                 categoryId = categoryId,
                 isArchived = false,
+                transaction = transaction,
+            )
+
+            updatePosition(
+                categoryId = categoryId,
+                newPosition = newPosition,
                 transaction = transaction,
             )
         }
@@ -168,6 +175,20 @@ class PowerSyncCategoryRepository(
             sql = UPDATE_ARCHIVED_BY_ID,
             parameters = listOf(
                 isArchived,
+                categoryId,
+            )
+        )
+    }
+
+    fun updatePosition(
+        categoryId: String,
+        newPosition: Double,
+        transaction: PowerSyncTransaction,
+    ) {
+        transaction.execute(
+            sql = UPDATE_POSITION_BY_ID,
+            parameters = listOf(
+                newPosition.toString(),
                 categoryId,
             )
         )
@@ -378,4 +399,14 @@ private const val UPDATE_CATEGORY_BY_ID =
 private const val UPDATE_ARCHIVED_BY_ID =
     "UPDATE ${DbSchema.CATEGORIES_TABLE} SET " +
             "${DbSchema.CATEGORY_IS_ARCHIVED} = ? " +
+            "WHERE ${DbSchema.ID} = ?"
+
+/**
+ * Params:
+ * 1. New position
+ * 2. ID
+ */
+private const val UPDATE_POSITION_BY_ID =
+    "UPDATE ${DbSchema.CATEGORIES_TABLE} " +
+            "SET ${DbSchema.CATEGORY_POSITION} = ? " +
             "WHERE ${DbSchema.ID} = ?"
