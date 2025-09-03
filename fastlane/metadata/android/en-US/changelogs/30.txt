@@ -1,0 +1,5 @@
+Added:
+- Ability to archive and unarchive categories
+
+Changed:
+- Made the Archived switch on the account edit screen prettier

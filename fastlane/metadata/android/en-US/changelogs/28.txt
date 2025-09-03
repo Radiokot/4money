@@ -1,3 +1,0 @@
-Fixed:
-- Crashing when trying to create an account
-
