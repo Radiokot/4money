@@ -70,6 +70,8 @@ fun CategoryActionSheetRoot(
         title = viewModel.title.collectAsState(),
         onEditClicked = remember { viewModel::onEditClicked },
         onActivityClicked = remember { viewModel::onActivityClicked },
+        isUnarchiveVisible = viewModel.isUnarchiveVisible.collectAsState(),
+        onUnarchiveClicked = remember { viewModel::onUnarchiveClicked },
         modifier = modifier,
     )
 }
@@ -81,8 +83,10 @@ private fun CategoryActionSheet(
     statsAmount: State<ViewAmount>,
     colorScheme: State<ItemColorScheme>,
     title: State<String>,
+    isUnarchiveVisible: State<Boolean>,
     onEditClicked: () -> Unit,
     onActivityClicked: () -> Unit,
+    onUnarchiveClicked: () -> Unit,
 ) = Column(
     modifier = modifier
         .background(Color(0xFFF9FBE7))
@@ -123,6 +127,17 @@ private fun CategoryActionSheet(
                     onClick = onActivityClicked,
                 )
         )
+
+        if (isUnarchiveVisible.value) {
+            TextButton(
+                text = "⤴️ Restore",
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(
+                        onClick = onUnarchiveClicked,
+                    )
+            )
+        }
     }
 }
 
@@ -201,7 +216,9 @@ private fun Preview(
             .getValue("Purple2")
             .let(::mutableStateOf),
         title = "Health".let(::mutableStateOf),
+        isUnarchiveVisible = true.let(::mutableStateOf),
         onEditClicked = {},
         onActivityClicked = {},
+        onUnarchiveClicked = {},
     )
 }

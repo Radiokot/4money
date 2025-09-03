@@ -51,6 +51,7 @@ data class CategoryActionSheetRoute(
 }
 
 fun NavGraphBuilder.categoryActionSheet(
+    onDone: () -> Unit,
     onProceedToEdit: (Category) -> Unit,
     onProceedToFilteredActivity: (TransferCounterparty.Category) -> Unit,
 ) = bottomSheet<CategoryActionSheetRoute> { entry ->
@@ -74,6 +75,9 @@ fun NavGraphBuilder.categoryActionSheet(
 
                 is CategoryActionSheetViewModel.Event.ProceedToFilteredActivity ->
                     onProceedToFilteredActivity(event.categoryCounterparty)
+
+                is CategoryActionSheetViewModel.Event.Done ->
+                    onDone()
             }
         }
     }

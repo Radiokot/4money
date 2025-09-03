@@ -21,6 +21,7 @@ package ua.com.radiokot.money.categories.view
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,13 +29,16 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.CategoryWithAmount
 import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountUseCase
+import ua.com.radiokot.money.categories.logic.UnarchiveCategoryUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
+import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.map
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
@@ -43,8 +47,10 @@ import ua.com.radiokot.money.transfers.history.view.ViewHistoryPeriod
 class CategoryActionSheetViewModel(
     parameters: Parameters,
     private val getCategoriesWithAmountUseCase: GetCategoriesWithAmountUseCase,
+    private val unarchiveCategoryUseCase: UnarchiveCategoryUseCase,
 ) : ViewModel() {
 
+    private val log by lazyLogger("CategoryActionSheetVM")
     private val categoryWithAmount: StateFlow<CategoryWithAmount> = runBlocking {
         getCategoriesWithAmountUseCase(
             isIncome = parameters.isIncome,
@@ -80,6 +86,12 @@ class CategoryActionSheetViewModel(
         category
             .map(viewModelScope, Category::colorScheme)
 
+    val isUnarchiveVisible: StateFlow<Boolean> =
+        categoryWithAmount
+            .map(viewModelScope) { (category, _) ->
+                category.isArchived
+            }
+
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
 
@@ -101,6 +113,45 @@ class CategoryActionSheetViewModel(
         )
     }
 
+    fun onUnarchiveClicked() {
+        unarchiveCategory()
+    }
+
+    private var unarchiveJob: Job? = null
+    private fun unarchiveCategory() {
+        unarchiveJob?.cancel()
+        unarchiveJob = viewModelScope.launch {
+
+            val category = category.value
+
+            log.debug {
+                "unarchiveCategory(): unarchiving:" +
+                        "\naccount=$category"
+            }
+
+            unarchiveCategoryUseCase
+                .invoke(
+                    categoryToUnarchive = category,
+                )
+                .onFailure { error ->
+                    log.error(error) {
+                        "unarchiveCategory(): failed to unarchive category"
+                    }
+                }
+                .onSuccess {
+                    log.info {
+                        "Unarchived category $category"
+                    }
+
+                    log.debug {
+                        "unarchiveCategory(): category unarchived"
+                    }
+
+                    _events.emit(Event.Done)
+                }
+        }
+    }
+
     sealed interface Event {
 
         class ProceedToEdit(
@@ -110,6 +161,8 @@ class CategoryActionSheetViewModel(
         class ProceedToFilteredActivity(
             val categoryCounterparty: TransferCounterparty.Category,
         ) : Event
+
+        object Done : Event
     }
 
     class Parameters(

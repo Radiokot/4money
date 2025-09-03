@@ -140,6 +140,7 @@ val categoriesModule = module {
                     "CategoryActionSheetViewModel.Parameters are required"
                 },
                 getCategoriesWithAmountUseCase = get(),
+                unarchiveCategoryUseCase = get(),
             )
         } bind CategoryActionSheetViewModel::class
     }

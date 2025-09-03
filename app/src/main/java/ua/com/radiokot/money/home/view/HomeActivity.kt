@@ -239,7 +239,8 @@ private fun HomeScreen(
                             }
                         }
                     )
-                }
+                },
+                onDone = navController::navigateUp,
             )
 
             activityScreen(
