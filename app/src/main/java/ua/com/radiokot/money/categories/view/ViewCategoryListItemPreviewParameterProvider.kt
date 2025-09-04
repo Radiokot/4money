@@ -21,7 +21,6 @@ package ua.com.radiokot.money.categories.view
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
-import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import java.math.BigInteger
@@ -44,6 +43,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                     )
                 ),
                 colorScheme = colorSchemesByName.getValue("Blue2"),
+                isArchived = false,
                 isIncognito = false,
             ),
             ViewCategoryListItem(
@@ -56,6 +56,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                     )
                 ),
                 colorScheme = colorSchemesByName.getValue("Turquoise3"),
+                isArchived = true,
                 isIncognito = true,
             ),
         )
@@ -72,6 +73,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                     )
                 ),
                 colorScheme = colorSchemesByName.getValue("Red1"),
+                isArchived = false,
                 isIncognito = false,
             ),
             ViewCategoryListItem(
@@ -84,6 +86,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                     )
                 ),
                 colorScheme = colorSchemesByName.getValue("Green1"),
+                isArchived = false,
                 isIncognito = false,
             ),
             ViewCategoryListItem(
@@ -96,6 +99,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                     )
                 ),
                 colorScheme = colorSchemesByName.getValue("Orange2"),
+                isArchived = true,
                 isIncognito = true,
             )
         )

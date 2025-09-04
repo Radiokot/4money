@@ -75,13 +75,7 @@ class CategoriesScreenViewModel(
 
     val categoryItemList: StateFlow<List<ViewCategoryListItem>> =
         categoriesWithAmountAndTotalSharedFlow
-            .map { it.categories.toSortedViewItemList(isArchived = false) }
-            .flowOn(Dispatchers.Default)
-            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-    val categoryArchiveItemList: StateFlow<List<ViewCategoryListItem>> =
-        categoriesWithAmountAndTotalSharedFlow
-            .map { it.categories.toSortedViewItemList(isArchived = true) }
+            .map { it.categories.toSortedViewItemList(includeArchived = true) }
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 

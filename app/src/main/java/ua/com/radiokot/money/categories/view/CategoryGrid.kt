@@ -24,6 +24,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -50,10 +51,23 @@ fun CategoryGrid(
     onItemLongClicked: ((ViewCategoryListItem) -> Unit)? = null,
     isAddShown: Boolean,
     onAddClicked: (() -> Unit)? = null,
-    archiveItemList: State<List<ViewCategoryListItem>>? = null,
 ) {
     val gridState = rememberLazyGridState()
     val space = 6.dp
+    val visibleItemList = remember {
+        derivedStateOf {
+            itemList
+                .value
+                .filterNot(ViewCategoryListItem::isArchived)
+        }
+    }
+    val archiveItemList = remember {
+        derivedStateOf {
+            itemList
+                .value
+                .filter(ViewCategoryListItem::isArchived)
+        }
+    }
     val isArchiveExpanded = remember { mutableStateOf(false) }
 
     LazyVerticalGrid(
@@ -68,7 +82,7 @@ fun CategoryGrid(
         modifier = modifier
     ) {
         categoryItems(
-            itemList = itemList,
+            itemList = visibleItemList,
             onItemClicked = onItemClicked,
             onItemLongClicked = onItemLongClicked,
         )
@@ -86,7 +100,7 @@ fun CategoryGrid(
             }
         }
 
-        if (!archiveItemList?.value.isNullOrEmpty()) {
+        if (archiveItemList.value.isNotEmpty()) {
             item(
                 key = "archive",
                 span = { GridItemSpan(maxLineSpan) }
@@ -278,11 +292,9 @@ private fun AddItem(
 )
 private fun CategoryGridPreview(
 ) {
-    val (itemList, archiveItemList) =
-        ViewCategoryListItemPreviewParameterProvider()
-            .values
-            .toList()
-            .chunked(3)
+    val itemList = ViewCategoryListItemPreviewParameterProvider()
+        .values
+        .toList()
 
     CategoryGrid(
         itemList = itemList.let(::mutableStateOf),
@@ -290,7 +302,6 @@ private fun CategoryGridPreview(
         onItemLongClicked = {},
         isAddShown = true,
         onAddClicked = {},
-        archiveItemList = archiveItemList.let(::mutableStateOf),
         modifier = Modifier
             .fillMaxWidth()
     )

@@ -33,6 +33,7 @@ class ViewCategoryListItem(
     val amount: ViewAmount,
     val isIncognito: Boolean,
     val colorScheme: ItemColorScheme,
+    val isArchived: Boolean,
     val source: Category? = null,
     val key: Any = source?.hashCode() ?: Random.nextInt(),
 ) {
@@ -48,6 +49,7 @@ class ViewCategoryListItem(
             currency = category.currency,
         ),
         colorScheme = category.colorScheme,
+        isArchived = category.isArchived,
         isIncognito = isIncognito,
         source = category,
     )
@@ -60,6 +62,7 @@ class ViewCategoryListItem(
         if (amount != other.amount) return false
         if (isIncognito != other.isIncognito) return false
         if (colorScheme != other.colorScheme) return false
+        if (isArchived != other.isArchived) return false
         if (key != other.key) return false
 
         return true
@@ -70,15 +73,16 @@ class ViewCategoryListItem(
         result = 31 * result + amount.hashCode()
         result = 31 * result + isIncognito.hashCode()
         result = 31 * result + colorScheme.hashCode()
+        result = 31 * result + isArchived.hashCode()
         result = 31 * result + key.hashCode()
         return result
     }
 }
 
 fun List<Category>.toSortedIncognitoViewItemList(
-    isArchived: Boolean = false,
+    includeArchived: Boolean = false,
 ): List<ViewCategoryListItem> =
-    filter { it.isArchived == isArchived }
+    filter { includeArchived || !it.isArchived }
         .sorted()
         .map { category ->
             ViewCategoryListItem(
@@ -91,9 +95,9 @@ fun List<Category>.toSortedIncognitoViewItemList(
 private val categoryWithAmountComparator = compareBy(CategoryWithAmount::category)
 
 fun List<CategoryWithAmount>.toSortedViewItemList(
-    isArchived: Boolean = false,
+    includeArchived: Boolean = false,
 ): List<ViewCategoryListItem> =
-    filter { it.category.isArchived == isArchived }
+    filter { includeArchived || !it.category.isArchived }
         .sortedWith(categoryWithAmountComparator)
         .map { (category, amount) ->
             ViewCategoryListItem(
