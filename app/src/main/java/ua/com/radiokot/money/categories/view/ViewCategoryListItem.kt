@@ -37,6 +37,8 @@ class ViewCategoryListItem(
     val source: Category? = null,
     val key: Any = source?.hashCode() ?: Random.nextInt(),
 ) {
+    val isNotArchived: Boolean
+        get() = !isArchived
 
     constructor(
         category: Category,

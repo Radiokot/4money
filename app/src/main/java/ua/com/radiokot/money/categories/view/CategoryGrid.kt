@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastFilter
 import com.composeunstyled.Text
 import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
@@ -58,14 +59,14 @@ fun CategoryGrid(
         derivedStateOf {
             itemList
                 .value
-                .filterNot(ViewCategoryListItem::isArchived)
+                .fastFilter(ViewCategoryListItem::isNotArchived)
         }
     }
     val archiveItemList = remember {
         derivedStateOf {
             itemList
                 .value
-                .filter(ViewCategoryListItem::isArchived)
+                .fastFilter(ViewCategoryListItem::isArchived)
         }
     }
     val isArchiveExpanded = remember { mutableStateOf(false) }
