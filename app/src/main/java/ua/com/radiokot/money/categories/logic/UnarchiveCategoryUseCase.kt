@@ -37,7 +37,7 @@ class UnarchiveCategoryUseCase(
             .getCategories(
                 isIncome = categoryToUnarchive.isIncome,
             )
-            .lastOrNull { it.isIncome == categoryToUnarchive.isIncome }
+            .lastOrNull { !it.isArchived }
 
         val newPosition = SternBrocotTreeSearch()
             .goBetween(

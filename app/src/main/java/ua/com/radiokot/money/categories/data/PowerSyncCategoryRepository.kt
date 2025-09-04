@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.runBlocking
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
 import ua.com.radiokot.money.currency.data.Currency
@@ -215,19 +214,9 @@ class PowerSyncCategoryRepository(
         currency: Currency,
         isIncome: Boolean,
         colorScheme: ItemColorScheme,
+        position: Double,
         transaction: PowerSyncTransaction,
     ): Category {
-        val categoryToPlaceBefore: Category? = runBlocking {
-            getCategories(isIncome)
-                .minOrNull()
-        }
-
-        val position = SternBrocotTreeSearch()
-            .goBetween(
-                lowerBound = categoryToPlaceBefore?.position ?: 0.0,
-                upperBound = Double.POSITIVE_INFINITY,
-            )
-            .value
 
         val category = Category(
             title = title,

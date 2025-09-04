@@ -24,6 +24,7 @@ import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
 import ua.com.radiokot.money.categories.data.SubcategoryToUpdate
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.data.Currency
+import ua.com.radiokot.money.util.SternBrocotTreeSearch
 
 class PowerSyncAddCategoryUseCase(
     private val database: PowerSyncDatabase,
@@ -38,6 +39,19 @@ class PowerSyncAddCategoryUseCase(
         subcategories: List<SubcategoryToUpdate>,
     ): Result<Unit> = runCatching {
 
+        val firstCategoryOfTargetType = categoryRepository
+            .getCategories(
+                isIncome = isIncome,
+            )
+            .firstOrNull { !it.isArchived }
+
+        val position = SternBrocotTreeSearch()
+            .goBetween(
+                lowerBound = firstCategoryOfTargetType?.position ?: 0.0,
+                upperBound = Double.POSITIVE_INFINITY,
+            )
+            .value
+
         database.writeTransaction { transaction ->
 
             val addedCategory = categoryRepository.addCategory(
@@ -45,6 +59,7 @@ class PowerSyncAddCategoryUseCase(
                 currency = currency,
                 isIncome = isIncome,
                 colorScheme = colorScheme,
+                position = position,
                 transaction = transaction,
             )
 
