@@ -35,7 +35,7 @@ import ua.com.radiokot.money.currency.data.Currency
 
 
 private const val SAVED_STATE_KEY_SELECTED_COLOR_SCHEME = "selected-color-scheme"
-private const val SAVED_STATE_KEY_SELECTED_ICON = "selecte-icon"
+private const val SAVED_STATE_KEY_SELECTED_ICON = "selected-icon"
 private const val SAVED_STATE_KEY_SELECTED_CURRENCY = "selected-currency"
 private const val SAVED_STATE_KEY_SELECTED_TYPE = "selected-type"
 

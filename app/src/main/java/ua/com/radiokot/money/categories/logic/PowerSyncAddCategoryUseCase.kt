@@ -23,6 +23,7 @@ import com.powersync.PowerSyncDatabase
 import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
 import ua.com.radiokot.money.categories.data.SubcategoryToUpdate
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.util.SternBrocotTreeSearch
 
@@ -36,6 +37,7 @@ class PowerSyncAddCategoryUseCase(
         currency: Currency,
         isIncome: Boolean,
         colorScheme: ItemColorScheme,
+        icon: ItemIcon?,
         subcategories: List<SubcategoryToUpdate>,
     ): Result<Unit> = runCatching {
 
@@ -59,6 +61,7 @@ class PowerSyncAddCategoryUseCase(
                 currency = currency,
                 isIncome = isIncome,
                 colorScheme = colorScheme,
+                icon = icon,
                 position = position,
                 transaction = transaction,
             )

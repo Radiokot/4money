@@ -21,6 +21,7 @@ package ua.com.radiokot.money.categories.logic
 
 import ua.com.radiokot.money.categories.data.SubcategoryToUpdate
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.data.Currency
 
 interface AddCategoryUseCase {
@@ -30,6 +31,7 @@ interface AddCategoryUseCase {
         currency: Currency,
         isIncome: Boolean,
         colorScheme: ItemColorScheme,
+        icon: ItemIcon?,
         subcategories: List<SubcategoryToUpdate>,
     ): Result<Unit>
 }

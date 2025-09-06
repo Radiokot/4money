@@ -21,6 +21,7 @@ package ua.com.radiokot.money.categories.logic
 
 import ua.com.radiokot.money.categories.data.SubcategoryToUpdate
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 
 interface EditCategoryUseCase {
 
@@ -28,6 +29,7 @@ interface EditCategoryUseCase {
         categoryId: String,
         newTitle: String,
         newColorScheme: ItemColorScheme,
+        newIcon: ItemIcon?,
         subcategories: List<SubcategoryToUpdate>,
     ): Result<Unit>
 }

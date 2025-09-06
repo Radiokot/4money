@@ -96,14 +96,18 @@ private fun Content(
     ) {
 
         editCategoryScreen(
-            onProceedToLogoCustomization = { currentTitle, currentColorScheme ->
+            onProceedToLogoCustomization = {
+                    currentTitle,
+                    currentColorScheme,
+                    icon,
+                ->
                 softwareKeyboardController?.hide()
                 navController.navigate(
                     ItemLogoScreenRoute(
                         logoType = ItemLogoType.Category,
                         itemTitle = currentTitle,
                         initialColorSchemeName = currentColorScheme.name,
-                        initialIconName = null,
+                        initialIconName = icon?.name,
                     ),
                 )
             },
@@ -134,6 +138,10 @@ private fun Content(
                 navController.navigateUp()
                 EditCategoryScreenRoute.setSelectedColorScheme(
                     selectedColorScheme = colorScheme,
+                    navController = navController,
+                )
+                EditCategoryScreenRoute.setSelectedIcon(
+                    selectedIcon = icon,
                     navController = navController,
                 )
             },

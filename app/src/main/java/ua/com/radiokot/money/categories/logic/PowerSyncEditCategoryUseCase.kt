@@ -23,6 +23,7 @@ import com.powersync.PowerSyncDatabase
 import ua.com.radiokot.money.categories.data.PowerSyncCategoryRepository
 import ua.com.radiokot.money.categories.data.SubcategoryToUpdate
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 
 class PowerSyncEditCategoryUseCase(
     private val categoryRepository: PowerSyncCategoryRepository,
@@ -33,6 +34,7 @@ class PowerSyncEditCategoryUseCase(
         categoryId: String,
         newTitle: String,
         newColorScheme: ItemColorScheme,
+        newIcon: ItemIcon?,
         subcategories: List<SubcategoryToUpdate>,
     ): Result<Unit> = runCatching {
 
@@ -45,6 +47,7 @@ class PowerSyncEditCategoryUseCase(
                 categoryId = categoryId,
                 newTitle = newTitle,
                 newColorScheme = newColorScheme,
+                newIcon = newIcon,
                 transaction = transaction,
             )
 

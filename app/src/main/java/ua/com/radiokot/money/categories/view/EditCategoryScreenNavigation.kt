@@ -31,10 +31,12 @@ import org.koin.core.parameter.parametersOf
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.SubcategoryToUpdate
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.data.Currency
 
 
 private const val SAVED_STATE_KEY_SELECTED_COLOR_SCHEME = "selected-color-scheme"
+private const val SAVED_STATE_KEY_SELECTED_ICON = "selected-icon"
 private const val SAVED_STATE_KEY_SELECTED_CURRENCY = "selected-currency"
 private const val SAVED_STATE_KEY_SUBCATEGORY_TO_UPDATE = "subcategory-to-update"
 
@@ -59,6 +61,14 @@ data class EditCategoryScreenRoute(
             ?.savedStateHandle
             ?.set(SAVED_STATE_KEY_SELECTED_COLOR_SCHEME, selectedColorScheme)
 
+        fun setSelectedIcon(
+            selectedIcon: ItemIcon?,
+            navController: NavController,
+        ) = navController
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(SAVED_STATE_KEY_SELECTED_ICON, selectedIcon to Unit)
+
         fun setSelectedCurrency(
             selectedCurrency: Currency,
             navController: NavController,
@@ -81,6 +91,7 @@ fun NavGraphBuilder.editCategoryScreen(
     onProceedToLogoCustomization: (
         currentTitle: String,
         currentColorScheme: ItemColorScheme,
+        icon: ItemIcon?,
     ) -> Unit,
     onProceedToCurrencySelection: (currentCurrency: Currency) -> Unit,
     onProceedToSubcategoryEdit: (
@@ -109,6 +120,7 @@ fun NavGraphBuilder.editCategoryScreen(
                     onProceedToLogoCustomization(
                         event.currentTitle,
                         event.currentColorScheme,
+                        event.currentIcon,
                     )
 
                 is EditCategoryScreenViewModel.Event.ProceedToCurrencySelection ->
@@ -137,6 +149,18 @@ fun NavGraphBuilder.editCategoryScreen(
             )
             .filterNotNull()
             .collect(viewModel::onColorSchemeSelected)
+    }
+
+    LaunchedEffect(route) {
+        entry.savedStateHandle
+            .getStateFlow<Pair<ItemIcon?, Unit>?>(
+                key = SAVED_STATE_KEY_SELECTED_ICON,
+                initialValue = null,
+            )
+            .filterNotNull()
+            .collect { (icon) ->
+                viewModel.onIconSelected(icon)
+            }
     }
 
     LaunchedEffect(route) {

@@ -40,6 +40,7 @@ import ua.com.radiokot.money.categories.logic.EditCategoryUseCase
 import ua.com.radiokot.money.categories.logic.UnarchiveCategoryUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyRepository
@@ -86,6 +87,10 @@ class EditCategoryScreenViewModel(
                 )
     )
     val colorScheme = _colorScheme.asStateFlow()
+    private val _icon: MutableStateFlow<ItemIcon?> = MutableStateFlow(
+        categoryToEdit?.icon
+    )
+    val icon = _icon.asStateFlow()
     private val _currency: MutableStateFlow<Currency> = MutableStateFlow(runBlocking {
         categoryToEdit?.currency
             ?: (currencyRepository
@@ -148,6 +153,7 @@ class EditCategoryScreenViewModel(
             Event.ProceedToLogoCustomization(
                 currentTitle = _title.value,
                 currentColorScheme = _colorScheme.value,
+                currentIcon = _icon.value,
             )
         )
     }
@@ -161,6 +167,17 @@ class EditCategoryScreenViewModel(
         }
 
         _colorScheme.value = newColorScheme
+    }
+
+    fun onIconSelected(
+        newIcon: ItemIcon?,
+    ) {
+        log.debug {
+            "onIconSelected(): changing icon:" +
+                    "\nnewIcon=$newIcon"
+        }
+
+        _icon.value = newIcon
     }
 
     fun onCurrencyClicked() {
@@ -288,7 +305,7 @@ class EditCategoryScreenViewModel(
 
         if (isArchived.value && !categoryToEdit.isArchived) {
             archiveCategory(categoryToEdit)
-        } else if (!isArchived.value && categoryToEdit.isArchived){
+        } else if (!isArchived.value && categoryToEdit.isArchived) {
             unarchiveCategory(categoryToEdit)
         } else {
             editCategory(categoryToEdit)
@@ -305,12 +322,14 @@ class EditCategoryScreenViewModel(
             val title = _title.value
             val colorScheme = _colorScheme.value
             val subcategories = _subcategories.value
+            val icon = _icon.value
 
             log.debug {
                 "editCategory(): editing:" +
                         "\ncategoryToEdit=$categoryToEdit," +
                         "\ntitle=$title," +
                         "\ncolorScheme=$colorScheme," +
+                        "\nicon=$_icon," +
                         "\nsubcategories=${subcategories.size}"
             }
 
@@ -319,6 +338,7 @@ class EditCategoryScreenViewModel(
                     categoryId = categoryToEdit.id,
                     newTitle = title,
                     newColorScheme = colorScheme,
+                    newIcon = icon,
                     subcategories = subcategories,
                 )
                 .onFailure { error ->
@@ -349,6 +369,7 @@ class EditCategoryScreenViewModel(
             val title = _title.value
             val currency = _currency.value
             val colorScheme = _colorScheme.value
+            val icon = _icon.value
             val isIncome = isIncome
             val subcategories = _subcategories.value
 
@@ -357,6 +378,7 @@ class EditCategoryScreenViewModel(
                         "\ntitle=$title," +
                         "\ncurrency=$currency," +
                         "\ncolorScheme=$colorScheme," +
+                        "\nicon=$icon," +
                         "\nisIncome=$isIncome," +
                         "\nsubcategories=${subcategories.size}"
             }
@@ -367,6 +389,7 @@ class EditCategoryScreenViewModel(
                     currency = currency,
                     isIncome = isIncome,
                     colorScheme = colorScheme,
+                    icon = icon,
                     subcategories = subcategories,
                 )
                 .onFailure { error ->
@@ -466,6 +489,7 @@ class EditCategoryScreenViewModel(
         class ProceedToLogoCustomization(
             val currentTitle: String,
             val currentColorScheme: ItemColorScheme,
+            val currentIcon: ItemIcon?,
         ) : Event
 
         class ProceedToCurrencySelection(

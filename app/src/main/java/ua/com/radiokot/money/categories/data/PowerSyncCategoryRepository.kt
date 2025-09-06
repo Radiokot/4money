@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.colors.data.ItemIconRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.powersync.DbSchema
@@ -202,6 +203,7 @@ class PowerSyncCategoryRepository(
         categoryId: String,
         newTitle: String,
         newColorScheme: ItemColorScheme,
+        newIcon: ItemIcon?,
         transaction: PowerSyncTransaction,
     ) {
         transaction.execute(
@@ -209,6 +211,7 @@ class PowerSyncCategoryRepository(
             parameters = listOf(
                 newTitle,
                 newColorScheme.name,
+                newIcon?.name,
                 categoryId,
             )
         )
@@ -219,6 +222,7 @@ class PowerSyncCategoryRepository(
         currency: Currency,
         isIncome: Boolean,
         colorScheme: ItemColorScheme,
+        icon: ItemIcon?,
         position: Double,
         transaction: PowerSyncTransaction,
     ): Category {
@@ -228,7 +232,7 @@ class PowerSyncCategoryRepository(
             currency = currency,
             isIncome = isIncome,
             colorScheme = colorScheme,
-            icon = null,
+            icon = icon,
             isArchived = false,
             position = position,
         )
@@ -241,6 +245,7 @@ class PowerSyncCategoryRepository(
                 category.currency.id,
                 category.isIncome,
                 category.colorScheme.name,
+                category.icon?.name,
                 category.position,
             )
         )
@@ -274,6 +279,7 @@ class PowerSyncCategoryRepository(
                     parentCategory.id,
                     parentCategory.isIncome,
                     parentCategory.colorScheme.name,
+                    parentCategory.icon?.name,
                     sternBrocotTree.value,
                 )
             )
@@ -335,7 +341,8 @@ private const val SELECT_CATEGORIES_THEN_SUBCATEGORIES =
  * 3. Currency ID
  * 4. Is income boolean
  * 5. Color scheme name
- * 6. Position
+ * 6. Icon name or null
+ * 7. Position
  */
 private const val INSERT_CATEGORY =
     "INSERT INTO ${DbSchema.CATEGORIES_TABLE} " +
@@ -346,10 +353,11 @@ private const val INSERT_CATEGORY =
             "${DbSchema.CATEGORY_PARENT_ID}, " +
             "${DbSchema.CATEGORY_IS_INCOME}, " +
             "${DbSchema.CATEGORY_COLOR_SCHEME}, " +
+            "${DbSchema.CATEGORY_ICON}, " +
             "${DbSchema.CATEGORY_POSITION}, " +
             "${DbSchema.CATEGORY_IS_ARCHIVED} " +
             ") " +
-            "VALUES(?, ?, ?, NULL, ?, ?, ?, 0)"
+            "VALUES(?, ?, ?, NULL, ?, ?, ?, ?, 0)"
 
 /**
  * Params:
@@ -359,7 +367,8 @@ private const val INSERT_CATEGORY =
  * 4. Parent category ID
  * 5. Is income boolean
  * 6. Color scheme name
- * 7. Position
+ * 7. Icon name or null
+ * 8. Position
  */
 private const val INSERT_OR_REPLACE_SUBCATEGORY =
     "INSERT OR REPLACE INTO ${DbSchema.CATEGORIES_TABLE} " +
@@ -370,21 +379,24 @@ private const val INSERT_OR_REPLACE_SUBCATEGORY =
             "${DbSchema.CATEGORY_PARENT_ID}, " +
             "${DbSchema.CATEGORY_IS_INCOME}, " +
             "${DbSchema.CATEGORY_COLOR_SCHEME}, " +
+            "${DbSchema.CATEGORY_ICON}, " +
             "${DbSchema.CATEGORY_POSITION}, " +
             "${DbSchema.CATEGORY_IS_ARCHIVED} " +
             ") " +
-            "VALUES(?, ?, ?, ?, ?, ?, ?, 0)"
+            "VALUES(?, ?, ?, ?, ?, ?, ?, ?, 0)"
 
 /**
  * Params:
  * 1. Title
  * 2. Color scheme name
- * 3. ID
+ * 3. Icon name or null
+ * 4. ID
  */
 private const val UPDATE_CATEGORY_BY_ID =
     "UPDATE ${DbSchema.CATEGORIES_TABLE} SET " +
             "${DbSchema.CATEGORY_TITLE} = ?, " +
-            "${DbSchema.CATEGORY_COLOR_SCHEME} = ? " +
+            "${DbSchema.CATEGORY_COLOR_SCHEME} = ?, " +
+            "${DbSchema.CATEGORY_ICON} = ? " +
             "WHERE ${DbSchema.ID} = ? "
 
 /**
