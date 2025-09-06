@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.first
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.accounts.data.PowerSyncAccountRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.util.SternBrocotTreeSearch
 
@@ -38,6 +39,7 @@ class PowerSyncAddAccountUseCase(
         currency: Currency,
         type: Account.Type,
         colorScheme: ItemColorScheme,
+        icon: ItemIcon?,
     ): Result<Unit> = runCatching {
 
         val firstAccountOfTargetType = getVisibleAccountsUseCase()
@@ -58,6 +60,7 @@ class PowerSyncAddAccountUseCase(
                 currency = currency,
                 type = type,
                 colorScheme = colorScheme,
+                icon = icon,
                 position = position,
                 transaction = transaction,
             )

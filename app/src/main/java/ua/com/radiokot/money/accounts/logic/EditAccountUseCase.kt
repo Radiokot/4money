@@ -21,6 +21,7 @@ package ua.com.radiokot.money.accounts.logic
 
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 
 interface EditAccountUseCase {
 
@@ -29,5 +30,6 @@ interface EditAccountUseCase {
         newTitle: String,
         newType: Account.Type,
         newColorScheme: ItemColorScheme,
+        newIcon: ItemIcon?,
     ): Result<Unit>
 }

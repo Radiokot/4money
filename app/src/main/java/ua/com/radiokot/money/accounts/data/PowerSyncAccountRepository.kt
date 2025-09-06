@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.colors.data.ItemIconRepository
 import ua.com.radiokot.money.currency.data.Amount
 import ua.com.radiokot.money.currency.data.Currency
@@ -138,6 +139,7 @@ class PowerSyncAccountRepository(
         currency: Currency,
         type: Account.Type,
         colorScheme: ItemColorScheme,
+        icon: ItemIcon?,
         position: Double,
         transaction: PowerSyncTransaction,
     ): Account {
@@ -149,7 +151,7 @@ class PowerSyncAccountRepository(
                 currency = currency,
             ),
             colorScheme = colorScheme,
-            icon = null,
+            icon = icon,
             type = type,
             isArchived = false,
             position = position,
@@ -164,6 +166,7 @@ class PowerSyncAccountRepository(
                 account.currency.id,
                 account.position,
                 account.colorScheme.name,
+                account.icon?.name,
                 account.type.slug,
             )
         )
@@ -181,6 +184,7 @@ class PowerSyncAccountRepository(
         newTitle: String,
         newType: Account.Type,
         newColorScheme: ItemColorScheme,
+        newIcon: ItemIcon?,
         transaction: PowerSyncTransaction,
     ) {
         transaction.execute(
@@ -189,6 +193,7 @@ class PowerSyncAccountRepository(
                 newTitle,
                 newType.slug,
                 newColorScheme.name,
+                newIcon?.name,
                 accountId,
             )
         )
@@ -314,13 +319,15 @@ private const val UPDATE_TYPE_BY_ID =
  * 1. Title
  * 2. Type slug
  * 3. Color scheme name
- * 4. ID
+ * 4. Icon name or null
+ * 5. ID
  */
 private const val UPDATE_ACCOUNT_BY_ID =
     "UPDATE ${DbSchema.ACCOUNTS_TABLE} SET " +
             "${DbSchema.ACCOUNT_TITLE} = ?, " +
             "${DbSchema.ACCOUNT_TYPE} = ?, " +
-            "${DbSchema.ACCOUNT_COLOR_SCHEME} = ? " +
+            "${DbSchema.ACCOUNT_COLOR_SCHEME} = ?, " +
+            "${DbSchema.ACCOUNT_ICON} = ? " +
             "WHERE ${DbSchema.ID} = ? "
 
 /**
@@ -341,7 +348,8 @@ private const val UPDATE_ARCHIVED_BY_ID =
  * 4. Currency ID
  * 5. Position string
  * 6. Color scheme name
- * 7. Type slug
+ * 7. Icon name or null
+ * 8. Type slug
  */
 private const val INSERT_ACCOUNT =
     "INSERT INTO ${DbSchema.ACCOUNTS_TABLE} " +
@@ -352,7 +360,8 @@ private const val INSERT_ACCOUNT =
             "${DbSchema.ACCOUNT_CURRENCY_ID}, " +
             "${DbSchema.ACCOUNT_POSITION}, " +
             "${DbSchema.ACCOUNT_COLOR_SCHEME}, " +
+            "${DbSchema.ACCOUNT_ICON}, " +
             "${DbSchema.ACCOUNT_TYPE}, " +
             "${DbSchema.ACCOUNT_IS_ARCHIVED} " +
             ") " +
-            "VALUES(?, ?, ?, ?, ?, ?, ?, 0)"
+            "VALUES(?, ?, ?, ?, ?, ?, ?, ?, 0)"

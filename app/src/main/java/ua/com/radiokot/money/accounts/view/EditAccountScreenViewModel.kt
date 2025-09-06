@@ -237,13 +237,15 @@ class EditAccountScreenViewModel(
             val title = _title.value
             val type = _type.value
             val colorScheme = _colorScheme.value
+            val icon = _icon.value
 
             log.debug {
                 "editAccount(): editing:" +
                         "\naccountToEdit=$accountToEdit," +
                         "\ntitle=$title," +
                         "\ntype=$type," +
-                        "\ncolorScheme=$colorScheme"
+                        "\ncolorScheme=$colorScheme," +
+                        "\nicon=$icon"
             }
 
             editAccountUseCase
@@ -252,6 +254,7 @@ class EditAccountScreenViewModel(
                     newTitle = title,
                     newType = type,
                     newColorScheme = colorScheme,
+                    newIcon = icon,
                 )
                 .onFailure { error ->
                     log.error(error) {
@@ -352,13 +355,15 @@ class EditAccountScreenViewModel(
             val type = _type.value
             val currency = _currency.value
             val colorScheme = _colorScheme.value
+            val icon = _icon.value
 
             log.debug {
                 "addAccount(): adding:" +
                         "\ntitle=$title," +
                         "\ntype=$type," +
                         "\ncurrency=$currency," +
-                        "\ncolorScheme=$colorScheme"
+                        "\ncolorScheme=$colorScheme," +
+                        "\nicon=$icon"
             }
 
             addAccountUseCase(
@@ -366,6 +371,7 @@ class EditAccountScreenViewModel(
                 currency = currency,
                 type = type,
                 colorScheme = colorScheme,
+                icon = icon,
             )
                 .onFailure { error ->
                     log.error(error) {
