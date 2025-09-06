@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.categories.view
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import ua.com.radiokot.money.colors.data.DrawableResItemIconRepository
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewCurrency
@@ -30,6 +31,8 @@ class ViewCategoryListItemPreviewParameterProvider :
 
     private val colorSchemesByName = HardcodedItemColorSchemeRepository()
         .getItemColorSchemesByName()
+    private val iconsByName = DrawableResItemIconRepository()
+        .getItemIconsByName()
 
     val income: Sequence<ViewCategoryListItem>
         get() = sequenceOf(
@@ -43,6 +46,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                     )
                 ),
                 colorScheme = colorSchemesByName.getValue("Blue2"),
+                icon = iconsByName["other_14"],
                 isArchived = false,
                 isIncognito = false,
             ),
@@ -56,6 +60,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                     )
                 ),
                 colorScheme = colorSchemesByName.getValue("Turquoise3"),
+                icon = iconsByName["socializing_15"],
                 isArchived = true,
                 isIncognito = true,
             ),
@@ -73,6 +78,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                     )
                 ),
                 colorScheme = colorSchemesByName.getValue("Red1"),
+                icon = null,
                 isArchived = false,
                 isIncognito = false,
             ),
@@ -86,6 +92,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                     )
                 ),
                 colorScheme = colorSchemesByName.getValue("Green1"),
+                icon = null,
                 isArchived = false,
                 isIncognito = false,
             ),
@@ -99,6 +106,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                     )
                 ),
                 colorScheme = colorSchemesByName.getValue("Orange2"),
+                icon = null,
                 isArchived = true,
                 isIncognito = true,
             )

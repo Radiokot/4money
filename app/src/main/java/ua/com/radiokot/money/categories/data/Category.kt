@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.categories.data
 
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.data.Currency
 import java.util.UUID
 
@@ -28,6 +29,7 @@ class Category(
     val currency: Currency,
     val isIncome: Boolean,
     val colorScheme: ItemColorScheme,
+    val icon: ItemIcon?,
     val isArchived: Boolean,
     val position: Double,
     val id: String = UUID.randomUUID().toString(),

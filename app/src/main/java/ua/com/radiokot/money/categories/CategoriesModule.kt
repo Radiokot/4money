@@ -52,6 +52,7 @@ val categoriesModule = module {
         scoped {
             PowerSyncCategoryRepository(
                 colorSchemeRepository = get(),
+                iconRepository = get(),
                 database = get(),
             )
         } bind CategoryRepository::class

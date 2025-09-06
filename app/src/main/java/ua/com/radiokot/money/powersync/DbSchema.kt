@@ -201,6 +201,8 @@ object DbSchema {
     const val CATEGORY_SELECTED_IS_ARCHIVED = CATEGORIES_TABLE + CATEGORY_IS_ARCHIVED
     const val CATEGORY_POSITION = "position"
     const val CATEGORY_SELECTED_POSITION = CATEGORIES_TABLE + CATEGORY_POSITION
+    const val CATEGORY_ICON = "icon"
+    const val CATEGORY_SELECTED_ICON = CATEGORIES_TABLE + CATEGORY_ICON
 
     const val CATEGORY_SELECT_COLUMNS = "" +
             "$CATEGORIES_TABLE.$ID as $CATEGORY_SELECTED_ID, " +
@@ -210,7 +212,8 @@ object DbSchema {
             "$CATEGORIES_TABLE.$CATEGORY_IS_INCOME as $CATEGORY_SELECTED_IS_INCOME, " +
             "$CATEGORIES_TABLE.$CATEGORY_COLOR_SCHEME as $CATEGORY_SELECTED_COLOR_SCHEME, " +
             "$CATEGORIES_TABLE.$CATEGORY_IS_ARCHIVED as $CATEGORY_SELECTED_IS_ARCHIVED, " +
-            "$CATEGORIES_TABLE.$CATEGORY_POSITION as $CATEGORY_SELECTED_POSITION "
+            "$CATEGORIES_TABLE.$CATEGORY_POSITION as $CATEGORY_SELECTED_POSITION, " +
+            "$CATEGORIES_TABLE.$CATEGORY_ICON as $CATEGORY_SELECTED_ICON "
 
     const val SUBCATEGORY_SELECT_COLUMNS = "" +
             "$CATEGORIES_TABLE.$ID as $CATEGORY_SELECTED_ID, " +
@@ -230,6 +233,7 @@ object DbSchema {
             // Real (float8) can't provide sufficient precision,
             // leading to frequent healing.
             Column.text(CATEGORY_POSITION),
+            Column.text(CATEGORY_ICON),
         ),
         ignoreEmptyUpdates = true,
     )
@@ -241,6 +245,7 @@ object DbSchema {
     fun toCategory(
         sqlCursor: SqlCursor,
         colorSchemesByName: Map<String, ItemColorScheme>,
+        iconsByName: Map<String, ItemIcon>,
     ): Category = with(sqlCursor) {
         Category(
             id = getString(CATEGORY_SELECTED_ID),
@@ -254,6 +259,9 @@ object DbSchema {
                 },
             isArchived = getBooleanOptional(CATEGORY_SELECTED_IS_ARCHIVED) == true,
             position = getDouble(CATEGORY_SELECTED_POSITION),
+            icon = getStringOptional(CATEGORY_SELECTED_ICON)
+                ?.trim()
+                .let(iconsByName::get),
             currency = toCurrency(sqlCursor),
         )
     }

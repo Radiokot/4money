@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemIconRepository
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.powersync.DbSchema
 import ua.com.radiokot.money.util.SternBrocotTreeSearch
@@ -41,10 +42,14 @@ import java.util.UUID
 
 class PowerSyncCategoryRepository(
     colorSchemeRepository: ItemColorSchemeRepository,
+    iconRepository: ItemIconRepository,
     private val database: PowerSyncDatabase,
 ) : CategoryRepository {
 
-    private val colorSchemesByName = colorSchemeRepository.getItemColorSchemesByName()
+    private val colorSchemesByName
+            by lazy(colorSchemeRepository::getItemColorSchemesByName)
+    private val iconsByName
+            by lazy(iconRepository::getItemIconsByName)
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val categoriesSharedFlow = database
@@ -223,6 +228,7 @@ class PowerSyncCategoryRepository(
             currency = currency,
             isIncome = isIncome,
             colorScheme = colorScheme,
+            icon = null,
             isArchived = false,
             position = position,
         )
@@ -280,6 +286,7 @@ class PowerSyncCategoryRepository(
         DbSchema.toCategory(
             sqlCursor = sqlCursor,
             colorSchemesByName = colorSchemesByName,
+            iconsByName = iconsByName,
         )
 }
 
