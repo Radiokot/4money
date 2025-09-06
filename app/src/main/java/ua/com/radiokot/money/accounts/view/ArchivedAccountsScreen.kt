@@ -138,6 +138,7 @@ private fun Preview(
                 ),
                 isIncognito = false,
                 colorScheme = colorSchemesByName.getValue("Purple1"),
+                icon = null,
                 key = "acc1",
             ),
         ).let(::mutableStateOf),

@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import ua.com.radiokot.money.colors.data.DrawableResItemIconRepository
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.currency.view.ViewAmount
@@ -257,6 +258,8 @@ fun MovableAccountList(
 private fun AccountListPreview() {
     val colorSchemesByName = HardcodedItemColorSchemeRepository()
         .getItemColorSchemesByName()
+    val iconsByName = DrawableResItemIconRepository()
+        .getItemIconsByName()
 
     AccountList(
         itemList = listOf(
@@ -282,6 +285,7 @@ private fun AccountListPreview() {
                 ),
                 isIncognito = false,
                 colorScheme = colorSchemesByName.getValue("Purple1"),
+                icon = null,
                 key = "acc1",
             ),
             ViewAccountListItem.Account(
@@ -295,6 +299,7 @@ private fun AccountListPreview() {
                 ),
                 isIncognito = false,
                 colorScheme = colorSchemesByName.getValue("Red4"),
+                icon = null,
                 key = "acc2",
             ),
             ViewAccountListItem.Header(
@@ -319,6 +324,7 @@ private fun AccountListPreview() {
                 ),
                 isIncognito = true,
                 colorScheme = colorSchemesByName.getValue("Green3"),
+                icon = iconsByName["finances_34"],
                 key = "acc3",
             ),
         ).let(::mutableStateOf),
@@ -391,7 +397,7 @@ private fun AccountItem(
     ItemLogo(
         title = item.title,
         colorScheme = item.colorScheme,
-        icon = null,
+        icon = item.icon,
         modifier = Modifier
             .size(38.dp)
     )

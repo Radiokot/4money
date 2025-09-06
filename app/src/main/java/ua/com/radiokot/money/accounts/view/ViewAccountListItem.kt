@@ -21,6 +21,7 @@ package ua.com.radiokot.money.accounts.view
 
 import androidx.compose.runtime.Immutable
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.view.ViewAmount
 import kotlin.random.Random
 
@@ -61,6 +62,7 @@ sealed interface ViewAccountListItem {
         val balance: ViewAmount,
         val isIncognito: Boolean,
         val colorScheme: ItemColorScheme,
+        val icon: ItemIcon?,
         val source: ua.com.radiokot.money.accounts.data.Account? = null,
         override val key: Any = source?.hashCode() ?: Random.nextInt(),
     ) : ViewAccountListItem {
@@ -75,6 +77,7 @@ sealed interface ViewAccountListItem {
             balance = ViewAmount(account.balance),
             isIncognito = isIncognito,
             colorScheme = account.colorScheme,
+            icon = account.icon,
             source = account,
         )
 
@@ -86,6 +89,7 @@ sealed interface ViewAccountListItem {
             if (balance != other.balance) return false
             if (isIncognito != other.isIncognito) return false
             if (colorScheme != other.colorScheme) return false
+            if (icon != other.icon) return false
             if (key != other.key) return false
 
             return true
@@ -96,6 +100,7 @@ sealed interface ViewAccountListItem {
             result = 31 * result + balance.hashCode()
             result = 31 * result + isIncognito.hashCode()
             result = 31 * result + colorScheme.hashCode()
+            result = 31 * result + (icon?.hashCode() ?: 0)
             result = 31 * result + key.hashCode()
             return result
         }

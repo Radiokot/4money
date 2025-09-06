@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemIconRepository
 import ua.com.radiokot.money.currency.data.Amount
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.lazyLogger
@@ -41,11 +42,15 @@ import java.math.BigInteger
 
 class PowerSyncAccountRepository(
     colorSchemeRepository: ItemColorSchemeRepository,
+    iconRepository: ItemIconRepository,
     private val database: PowerSyncDatabase,
 ) : AccountRepository {
 
     private val log by lazyLogger("PowerSyncAccountRepo")
-    private val colorSchemesByName = colorSchemeRepository.getItemColorSchemesByName()
+    private val colorSchemesByName
+            by lazy(colorSchemeRepository::getItemColorSchemesByName)
+    private val iconsByName
+            by lazy(iconRepository::getItemIconsByName)
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val accountsSharedFlow = database
@@ -144,6 +149,7 @@ class PowerSyncAccountRepository(
                 currency = currency,
             ),
             colorScheme = colorScheme,
+            icon = null,
             type = type,
             isArchived = false,
             position = position,
@@ -269,6 +275,7 @@ class PowerSyncAccountRepository(
         DbSchema.toAccount(
             sqlCursor = sqlCursor,
             colorSchemesByName = colorSchemesByName,
+            iconsByName = iconsByName,
         )
 }
 

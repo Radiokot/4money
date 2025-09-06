@@ -37,6 +37,7 @@ import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.categories.data.Category
 import ua.com.radiokot.money.categories.data.Subcategory
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.data.Amount
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.powersync.DbSchema.ACCOUNT_SELECT_COLUMNS
@@ -120,6 +121,8 @@ object DbSchema {
     const val ACCOUNT_SELECTED_ARCHIVED = ACCOUNTS_TABLE + ACCOUNT_IS_ARCHIVED
     const val ACCOUNT_CURRENCY_ID = "currency_id"
     const val ACCOUNT_SELECTED_CURRENCY_ID = ACCOUNTS_TABLE + ACCOUNT_CURRENCY_ID
+    const val ACCOUNT_ICON = "icon"
+    const val ACCOUNT_SELECTED_ICON = ACCOUNTS_TABLE + ACCOUNT_ICON
 
     const val ACCOUNT_SELECT_COLUMNS = "" +
             "$ACCOUNTS_TABLE.$ID as $ACCOUNT_SELECTED_ID, " +
@@ -129,6 +132,7 @@ object DbSchema {
             "$ACCOUNTS_TABLE.$ACCOUNT_COLOR_SCHEME as $ACCOUNT_SELECTED_COLOR_SCHEME, " +
             "$ACCOUNTS_TABLE.$ACCOUNT_TYPE as $ACCOUNT_SELECTED_TYPE, " +
             "$ACCOUNTS_TABLE.$ACCOUNT_IS_ARCHIVED as $ACCOUNT_SELECTED_ARCHIVED, " +
+            "$ACCOUNTS_TABLE.$ACCOUNT_ICON as $ACCOUNT_SELECTED_ICON, " +
             "$ACCOUNTS_TABLE.$ACCOUNT_CURRENCY_ID as $ACCOUNT_SELECTED_CURRENCY_ID "
 
     private fun getPowerSyncAccountsTable() = Table(
@@ -143,6 +147,7 @@ object DbSchema {
             Column.text(ACCOUNT_COLOR_SCHEME),
             Column.text(ACCOUNT_TYPE),
             Column.integer(ACCOUNT_IS_ARCHIVED),
+            Column.text(ACCOUNT_ICON),
         ),
         ignoreEmptyUpdates = true,
     )
@@ -154,6 +159,7 @@ object DbSchema {
     fun toAccount(
         sqlCursor: SqlCursor,
         colorSchemesByName: Map<String, ItemColorScheme>,
+        iconsByName: Map<String, ItemIcon>,
     ): Account = with(sqlCursor) {
         Account(
             id = getString(ACCOUNT_SELECTED_ID),
@@ -169,6 +175,9 @@ object DbSchema {
                     colorSchemesByName[colorSchemeName]
                         ?: error("Can't find '$colorSchemeName' color scheme")
                 },
+            icon = getStringOptional(ACCOUNT_SELECTED_ICON)
+                ?.trim()
+                .let(iconsByName::get),
             type = getString(ACCOUNT_SELECTED_TYPE)
                 .trim()
                 .let(Account.Type::fromSlug),

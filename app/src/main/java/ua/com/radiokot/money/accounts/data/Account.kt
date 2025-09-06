@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.accounts.data
 
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.data.Amount
 import ua.com.radiokot.money.currency.data.Currency
 import java.util.UUID
@@ -29,6 +30,7 @@ class Account(
     val balance: Amount,
     val position: Double,
     val colorScheme: ItemColorScheme,
+    val icon: ItemIcon?,
     val type: Type,
     val isArchived: Boolean,
     val id: String = UUID.randomUUID().toString(),
