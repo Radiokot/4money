@@ -30,10 +30,12 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.data.Currency
 
 
 private const val SAVED_STATE_KEY_SELECTED_COLOR_SCHEME = "selected-color-scheme"
+private const val SAVED_STATE_KEY_SELECTED_ICON = "selecte-icon"
 private const val SAVED_STATE_KEY_SELECTED_CURRENCY = "selected-currency"
 private const val SAVED_STATE_KEY_SELECTED_TYPE = "selected-type"
 
@@ -50,6 +52,14 @@ data class EditAccountScreenRoute(
             .currentBackStackEntry
             ?.savedStateHandle
             ?.set(SAVED_STATE_KEY_SELECTED_COLOR_SCHEME, selectedColorScheme)
+
+        fun setSelectedIcon(
+            selectedIcon: ItemIcon?,
+            navController: NavController,
+        ) = navController
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(SAVED_STATE_KEY_SELECTED_ICON, selectedIcon to Unit)
 
         fun setSelectedCurrency(
             selectedCurrency: Currency,
@@ -74,6 +84,7 @@ fun NavGraphBuilder.editAccountScreen(
     onProceedToLogoCustomization: (
         currentTitle: String,
         currentColorScheme: ItemColorScheme,
+        currentIcon: ItemIcon?,
     ) -> Unit,
     onProceedToCurrencySelection: (currentCurrency: Currency) -> Unit,
     onClose: () -> Unit,
@@ -99,6 +110,7 @@ fun NavGraphBuilder.editAccountScreen(
                     onProceedToLogoCustomization(
                         event.currentTitle,
                         event.currentColorScheme,
+                        event.currentIcon,
                     )
 
                 is EditAccountScreenViewModel.Event.ProceedToCurrencySelection ->
@@ -121,6 +133,18 @@ fun NavGraphBuilder.editAccountScreen(
             )
             .filterNotNull()
             .collect(viewModel::onColorSchemeSelected)
+    }
+
+    LaunchedEffect(route) {
+        entry.savedStateHandle
+            .getStateFlow<Pair<ItemIcon?, Unit>?>(
+                key = SAVED_STATE_KEY_SELECTED_ICON,
+                initialValue = null,
+            )
+            .filterNotNull()
+            .collect { (icon) ->
+                viewModel.onIconSelected(icon)
+            }
     }
 
     LaunchedEffect(route) {

@@ -58,6 +58,7 @@ import com.composeunstyled.Text
 import ua.com.radiokot.money.accounts.data.Account
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.uikit.RedToggleSwitch
 import ua.com.radiokot.money.uikit.TextButton
@@ -70,6 +71,7 @@ private fun EditAccountScreen(
     title: State<String>,
     onTitleChanged: (String) -> Unit,
     colorScheme: State<ItemColorScheme>,
+    icon: State<ItemIcon?>,
     onLogoClicked: () -> Unit,
     currencyCode: State<String>,
     isCurrencyChangeEnabled: Boolean,
@@ -147,6 +149,7 @@ private fun EditAccountScreen(
         title = title,
         onTitleChanged = onTitleChanged,
         colorScheme = colorScheme,
+        icon = icon,
         onLogoClicked = onLogoClicked,
         modifier = Modifier
             .fillMaxWidth()
@@ -280,6 +283,7 @@ private fun LogoAndTitleRow(
     title: State<String>,
     onTitleChanged: (String) -> Unit,
     colorScheme: State<ItemColorScheme>,
+    icon: State<ItemIcon?>,
     onLogoClicked: () -> Unit,
 ) = Row(
     modifier = modifier,
@@ -317,7 +321,7 @@ private fun LogoAndTitleRow(
     ItemLogo(
         title = title.value,
         colorScheme = colorScheme.value,
-        icon = null,
+        icon = icon.value,
         modifier = Modifier
             .padding(
                 start = 16.dp,
@@ -340,6 +344,7 @@ fun EditAccountScreenRoot(
         title = viewModel.title.collectAsState(),
         onTitleChanged = remember { viewModel::onTitleChanged },
         colorScheme = viewModel.colorScheme.collectAsState(),
+        icon = viewModel.icon.collectAsState(),
         onLogoClicked = remember { viewModel::onLogoClicked },
         currencyCode = viewModel.currencyCode.collectAsState(),
         isCurrencyChangeEnabled = viewModel.isCurrencyChangeEnabled,
@@ -373,6 +378,7 @@ private fun EditAccountScreenPreview(
             .getItemColorSchemesByName()
             .getValue("Purple2")
             .let(::mutableStateOf),
+        icon = null.let(::mutableStateOf),
         onLogoClicked = {},
         currencyCode = "PLN".let(::mutableStateOf),
         isCurrencyChangeEnabled = true,

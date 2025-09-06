@@ -103,13 +103,19 @@ private fun Content(
                     )
                 )
             },
-            onProceedToLogoCustomization = { currentTitle, currentColorScheme ->
+            onProceedToLogoCustomization = {
+                    currentTitle,
+                    currentColorScheme,
+                    currentIcon,
+                ->
+
                 softwareKeyboardController?.hide()
                 navController.navigate(
                     ItemLogoScreenRoute(
                         logoType = ItemLogoType.Account,
                         itemTitle = currentTitle,
                         initialColorSchemeName = currentColorScheme.name,
+                        initialIconName = currentIcon?.name,
                     ),
                 )
             },
@@ -127,10 +133,14 @@ private fun Content(
 
         itemLogoScreen(
             onClose = navController::navigateUp,
-            onDone = { colorScheme ->
+            onDone = { colorScheme, icon ->
                 navController.popBackStack()
                 EditAccountScreenRoute.setSelectedColorScheme(
                     selectedColorScheme = colorScheme,
+                    navController = navController,
+                )
+                EditAccountScreenRoute.setSelectedIcon(
+                    selectedIcon = icon,
                     navController = navController,
                 )
             },

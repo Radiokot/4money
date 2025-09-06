@@ -103,6 +103,7 @@ private fun Content(
                         logoType = ItemLogoType.Category,
                         itemTitle = currentTitle,
                         initialColorSchemeName = currentColorScheme.name,
+                        initialIconName = null,
                     ),
                 )
             },
@@ -129,7 +130,7 @@ private fun Content(
 
         itemLogoScreen(
             onClose = navController::navigateUp,
-            onDone = { colorScheme ->
+            onDone = { colorScheme, icon ->
                 navController.navigateUp()
                 EditCategoryScreenRoute.setSelectedColorScheme(
                     selectedColorScheme = colorScheme,

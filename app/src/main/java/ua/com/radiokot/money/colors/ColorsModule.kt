@@ -47,6 +47,7 @@ val colorsModule = module {
                     "ItemLogoScreenViewModel.Parameters are required"
                 },
                 itemColorSchemeRepository = get(),
+                itemIconRepository = get(),
             )
         }
     }

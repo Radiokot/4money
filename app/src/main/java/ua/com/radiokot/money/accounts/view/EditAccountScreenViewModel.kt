@@ -38,6 +38,7 @@ import ua.com.radiokot.money.accounts.logic.EditAccountUseCase
 import ua.com.radiokot.money.accounts.logic.UnarchiveAccountUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.data.Currency
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.currency.data.CurrencyRepository
@@ -73,6 +74,9 @@ class EditAccountScreenViewModel(
         accountToEdit?.colorScheme
             ?: itemColorSchemeRepository.getItemColorSchemesByName().getValue("Green3")
     )
+    private val _icon: MutableStateFlow<ItemIcon?> = MutableStateFlow(
+        accountToEdit?.icon
+    )
     private val _type: MutableStateFlow<Account.Type> = MutableStateFlow(
         accountToEdit?.type ?: Account.Type.Regular
     )
@@ -95,6 +99,8 @@ class EditAccountScreenViewModel(
     val title = _title.asStateFlow()
 
     val colorScheme = _colorScheme.asStateFlow()
+
+    val icon = _icon.asStateFlow()
 
     val type = _type.asStateFlow()
 
@@ -135,6 +141,7 @@ class EditAccountScreenViewModel(
             Event.ProceedToLogoCustomization(
                 currentTitle = _title.value,
                 currentColorScheme = _colorScheme.value,
+                currentIcon = _icon.value,
             )
         )
     }
@@ -148,6 +155,17 @@ class EditAccountScreenViewModel(
         }
 
         _colorScheme.value = newColorScheme
+    }
+
+    fun onIconSelected(
+        newIcon: ItemIcon?,
+    ) {
+        log.debug {
+            "onIconSelected(): changing icon:" +
+                    "\nnewIcon=$newIcon"
+        }
+
+        _icon.value = newIcon
     }
 
     fun onCurrencyClicked() {
@@ -381,6 +399,7 @@ class EditAccountScreenViewModel(
         class ProceedToLogoCustomization(
             val currentTitle: String,
             val currentColorScheme: ItemColorScheme,
+            val currentIcon: ItemIcon?,
         ) : Event
 
         class ProceedToCurrencySelection(

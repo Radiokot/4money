@@ -28,6 +28,7 @@ import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.colors.data.ItemLogoType
 
 @Serializable
@@ -35,11 +36,15 @@ data class ItemLogoScreenRoute(
     val logoType: ItemLogoType,
     val itemTitle: String,
     val initialColorSchemeName: String,
+    val initialIconName: String?,
 )
 
 fun NavGraphBuilder.itemLogoScreen(
     onClose: () -> Unit,
-    onDone: (colorScheme: ItemColorScheme) -> Unit,
+    onDone: (
+        colorScheme: ItemColorScheme,
+        icon: ItemIcon?,
+    ) -> Unit,
 ) = composable<ItemLogoScreenRoute>(
     enterTransition = {
         slideIntoContainer(
@@ -60,6 +65,7 @@ fun NavGraphBuilder.itemLogoScreen(
                 logoType = route.logoType,
                 itemTitle = route.itemTitle,
                 initialColorSchemeName = route.initialColorSchemeName,
+                initialIconName = route.initialIconName,
             )
         )
     }
@@ -73,6 +79,7 @@ fun NavGraphBuilder.itemLogoScreen(
                 is ItemLogoScreenViewModel.Event.Done ->
                     onDone(
                         event.colorScheme,
+                        event.icon,
                     )
             }
         }

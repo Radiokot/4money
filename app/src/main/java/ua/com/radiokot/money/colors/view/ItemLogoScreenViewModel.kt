@@ -26,17 +26,23 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemIcon
+import ua.com.radiokot.money.colors.data.ItemIconRepository
 import ua.com.radiokot.money.colors.data.ItemLogoType
 import ua.com.radiokot.money.eventSharedFlow
 
 class ItemLogoScreenViewModel(
     parameters: Parameters,
     itemColorSchemeRepository: ItemColorSchemeRepository,
+    itemIconRepository: ItemIconRepository,
 ) : ViewModel() {
 
     private val _colorSchemeList: MutableStateFlow<List<ItemColorScheme>> =
         MutableStateFlow(itemColorSchemeRepository.getItemColorSchemes())
     val colorSchemeList = _colorSchemeList.asStateFlow()
+    private val _iconList: MutableStateFlow<List<ItemIcon>> =
+        MutableStateFlow(itemIconRepository.getItemIcons())
+    val iconList = _iconList.asStateFlow()
     private val _selectedColorScheme: MutableStateFlow<ItemColorScheme> =
         MutableStateFlow(
             itemColorSchemeRepository
@@ -44,6 +50,13 @@ class ItemLogoScreenViewModel(
                 .getValue(parameters.initialColorSchemeName)
         )
     val selectedColorScheme = _selectedColorScheme.asStateFlow()
+    private val _selectedIcon: MutableStateFlow<ItemIcon?> =
+        MutableStateFlow(
+            itemIconRepository
+                .getItemIconsByName()
+                [parameters.initialIconName]
+        )
+    val selectedIcon = _selectedIcon.asStateFlow()
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
     val logoType = parameters.logoType
@@ -51,6 +64,10 @@ class ItemLogoScreenViewModel(
 
     fun onColorSchemeClicked(colorScheme: ItemColorScheme) {
         _selectedColorScheme.value = colorScheme
+    }
+
+    fun onIconClicked(icon: ItemIcon?) {
+        _selectedIcon.value = icon
     }
 
     fun onCloseClicked() {
@@ -61,6 +78,7 @@ class ItemLogoScreenViewModel(
         _events.tryEmit(
             Event.Done(
                 colorScheme = _selectedColorScheme.value,
+                icon = _selectedIcon.value,
             )
         )
     }
@@ -71,6 +89,7 @@ class ItemLogoScreenViewModel(
 
         class Done(
             val colorScheme: ItemColorScheme,
+            val icon: ItemIcon?,
         ) : Event
     }
 
@@ -78,5 +97,6 @@ class ItemLogoScreenViewModel(
         val logoType: ItemLogoType,
         val itemTitle: String,
         val initialColorSchemeName: String,
+        val initialIconName: String?,
     )
 }
