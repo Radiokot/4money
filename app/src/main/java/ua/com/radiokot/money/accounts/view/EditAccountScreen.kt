@@ -317,6 +317,7 @@ private fun LogoAndTitleRow(
     ItemLogo(
         title = title.value,
         colorScheme = colorScheme.value,
+        icon = null,
         modifier = Modifier
             .padding(
                 start = 16.dp,

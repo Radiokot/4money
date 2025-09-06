@@ -37,18 +37,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composeunstyled.Icon
+import ua.com.radiokot.money.colors.data.DrawableResItemIconRepository
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 
 @Composable
 fun ItemLogo(
     modifier: Modifier = Modifier,
     title: String,
     colorScheme: ItemColorScheme,
+    icon: ItemIcon?,
     shape: Shape = RoundedCornerShape(12.dp),
 ) = BoxWithConstraints(
     contentAlignment = Alignment.Center,
@@ -58,6 +63,18 @@ fun ItemLogo(
             shape = shape,
         )
 ) {
+    if (icon != null) {
+        Icon(
+            painter = painterResource(icon.resId),
+            contentDescription = "icon",
+            tint = Color(colorScheme.onPrimary),
+            modifier = Modifier
+                .size((maxWidth * 0.5f))
+        )
+        return@BoxWithConstraints
+    }
+
+    // Fallback to letter (grapheme).
     val fontSizeSp = (maxWidth * 0.5f).value.sp / LocalDensity.current.fontScale
 
     val firstGrapheme = remember(title) {
@@ -110,6 +127,20 @@ private fun Preview(
                 title = title,
                 colorScheme = HardcodedItemColorSchemeRepository()
                     .getItemColorSchemesByName()["Turquoise4"]!!,
+                icon = null,
+                modifier = Modifier
+                    .size(42.dp)
+                    .padding(1.dp)
+            )
+        }
+
+        item {
+            ItemLogo(
+                title = "Oleg",
+                colorScheme = HardcodedItemColorSchemeRepository()
+                    .getItemColorSchemesByName()["Yellow4"]!!,
+                icon = DrawableResItemIconRepository()
+                    .getItemIconsByName()["finances_34"]!!,
                 modifier = Modifier
                     .size(42.dp)
                     .padding(1.dp)

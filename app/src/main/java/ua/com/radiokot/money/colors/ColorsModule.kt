@@ -23,8 +23,10 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.auth.logic.sessionScope
+import ua.com.radiokot.money.colors.data.DrawableResItemIconRepository
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemIconRepository
 import ua.com.radiokot.money.colors.view.ItemLogoScreenViewModel
 
 val colorsModule = module {
@@ -32,6 +34,10 @@ val colorsModule = module {
     single {
         HardcodedItemColorSchemeRepository()
     } bind ItemColorSchemeRepository::class
+
+    single {
+        DrawableResItemIconRepository()
+    } bind ItemIconRepository::class
 
     sessionScope {
 

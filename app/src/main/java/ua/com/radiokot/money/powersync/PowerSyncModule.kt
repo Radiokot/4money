@@ -63,7 +63,7 @@ val powerSyncModule = module {
                         options = SyncOptions(
                             // Check https://github.com/powersync-ja/powersync-kotlin/issues/243
                             // before enabling.
-                            newClientImplementation = false,
+                            newClientImplementation = true,
                             userAgent = "4Money/${BuildConfig.VERSION_NAME}",
                         )
                     )

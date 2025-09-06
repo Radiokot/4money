@@ -209,6 +209,7 @@ private fun CategoryListItem(
     ItemLogo(
         title = title,
         colorScheme = item.colorScheme,
+        icon = null,
         shape = CircleShape,
         modifier = Modifier
             .size(LOGO_SIZE_DP.dp)

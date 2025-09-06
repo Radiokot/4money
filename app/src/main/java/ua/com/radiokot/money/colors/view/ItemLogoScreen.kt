@@ -151,6 +151,7 @@ private fun ItemLogoScreen(
         ItemLogo(
             title = itemTitle,
             colorScheme = colorScheme,
+            icon = null,
             modifier = Modifier
                 .size(72.dp)
         )

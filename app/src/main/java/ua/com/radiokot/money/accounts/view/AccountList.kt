@@ -391,6 +391,7 @@ private fun AccountItem(
     ItemLogo(
         title = item.title,
         colorScheme = item.colorScheme,
+        icon = null,
         modifier = Modifier
             .size(38.dp)
     )
