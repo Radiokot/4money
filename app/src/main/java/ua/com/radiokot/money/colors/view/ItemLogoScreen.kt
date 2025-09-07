@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -68,6 +69,7 @@ import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.colors.data.ItemLogoType
+import ua.com.radiokot.money.plus
 import ua.com.radiokot.money.uikit.TextButton
 
 @Composable
@@ -236,6 +238,13 @@ private fun ItemLogoScreen(
 
     Spacer(modifier = Modifier.height(8.dp))
 
+    val pickerContentPadding =
+        PaddingValues(
+            vertical = 16.dp,
+        ) + WindowInsets
+            .navigationBars
+            .asPaddingValues()
+
     HorizontalPager(
         state = pagerState,
         beyondViewportPageCount = pages.size - 1,
@@ -251,10 +260,7 @@ private fun ItemLogoScreen(
                     iconList = iconList,
                     selectedIcon = selectedIcon,
                     onIconClicked = onIconClicked,
-                    contentPadding = PaddingValues(
-                        horizontal = 0.dp,
-                        vertical = 16.dp,
-                    ),
+                    contentPadding = pickerContentPadding,
                     modifier = Modifier
                         .padding(
                             horizontal = 16.dp,
@@ -267,10 +273,7 @@ private fun ItemLogoScreen(
                     colorSchemeList = colorSchemeList,
                     selectedColorScheme = selectedColorScheme,
                     onColorSchemeClicked = onColorSchemeClicked,
-                    contentPadding = PaddingValues(
-                        horizontal = 0.dp,
-                        vertical = 16.dp,
-                    ),
+                    contentPadding = pickerContentPadding,
                     modifier = Modifier
                         .padding(
                             horizontal = 16.dp,
