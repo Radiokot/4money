@@ -185,9 +185,8 @@ fun MoneyAppModalBottomSheetHost(
         state = sheetState,
         onDismiss = bottomSheetNavigator::onDismiss,
     ) {
-        val modalWindow: Window = LocalModalWindow.current
-
-        LaunchedEffect(modalWindow) {
+        ImmediateLaunchedEffect {
+            val modalWindow: Window = LocalModalWindow.current
             WindowInsetsControllerCompat(modalWindow, modalWindow.decorView)
                 .isAppearanceLightNavigationBars = true
             // This removes the default navigation bar scrim.
