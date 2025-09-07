@@ -1,0 +1,6 @@
+Added:
+- Ability to set an icon for an account or category
+- Showing account and category icons in the lists
+
+Fixed:
+- Showing archived actions on unarchived category
