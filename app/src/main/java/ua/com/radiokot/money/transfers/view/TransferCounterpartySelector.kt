@@ -25,8 +25,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.BasicText
@@ -48,6 +51,7 @@ import ua.com.radiokot.money.accounts.view.AccountList
 import ua.com.radiokot.money.accounts.view.ViewAccountListItem
 import ua.com.radiokot.money.categories.view.CategoryGrid
 import ua.com.radiokot.money.categories.view.ViewCategoryListItem
+import ua.com.radiokot.money.plus
 
 @Composable
 fun TransferCounterpartySelector(
@@ -97,10 +101,10 @@ fun TransferCounterpartySelector(
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
                     textDecoration =
-                    if (pagerState.currentPage == pageIndex)
-                        TextDecoration.Underline
-                    else
-                        null,
+                        if (pagerState.currentPage == pageIndex)
+                            TextDecoration.Underline
+                        else
+                            null,
                 ),
                 modifier = Modifier
                     .clickable {
@@ -121,10 +125,10 @@ fun TransferCounterpartySelector(
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
                     textDecoration =
-                    if (pagerState.currentPage == pageIndex)
-                        TextDecoration.Underline
-                    else
-                        null,
+                        if (pagerState.currentPage == pageIndex)
+                            TextDecoration.Underline
+                        else
+                            null,
                 ),
                 modifier = Modifier
                     .clickable {
@@ -141,18 +145,18 @@ fun TransferCounterpartySelector(
             val pageIndex = pages.indexOf(Page.Account)
             BasicText(
                 text =
-                if (isForSource == false)
-                    "To account"
-                else
-                    "From account",
+                    if (isForSource == false)
+                        "To account"
+                    else
+                        "From account",
                 style = TextStyle(
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
                     textDecoration =
-                    if (pagerState.currentPage == pageIndex)
-                        TextDecoration.Underline
-                    else
-                        null,
+                        if (pagerState.currentPage == pageIndex)
+                            TextDecoration.Underline
+                        else
+                            null,
                 ),
                 modifier = Modifier
                     .clickable {
@@ -168,6 +172,11 @@ fun TransferCounterpartySelector(
 
     Spacer(modifier = Modifier.height(12.dp))
 
+    val navigationBarsPadding =
+        WindowInsets
+            .navigationBars
+            .asPaddingValues()
+
     HorizontalPager(
         state = pagerState,
         beyondViewportPageCount = pages.size - 1,
@@ -182,6 +191,9 @@ fun TransferCounterpartySelector(
                     itemList = incomeCategoryItemList!!,
                     onItemClicked = onCategoryItemClicked,
                     isAddShown = false,
+                    contentPadding = PaddingValues(
+                        all = 6.dp,
+                    ) + navigationBarsPadding,
                 )
             }
 
@@ -190,6 +202,9 @@ fun TransferCounterpartySelector(
                     itemList = expenseCategoryItemList!!,
                     onItemClicked = onCategoryItemClicked,
                     isAddShown = false,
+                    contentPadding = PaddingValues(
+                        all = 6.dp,
+                    ) + navigationBarsPadding,
                 )
             }
 
@@ -199,7 +214,7 @@ fun TransferCounterpartySelector(
                     contentPadding = PaddingValues(
                         vertical = 8.dp,
                         horizontal = 16.dp,
-                    ),
+                    ) + navigationBarsPadding,
                     onAccountItemClicked = onAccountItemClicked,
                 )
             }

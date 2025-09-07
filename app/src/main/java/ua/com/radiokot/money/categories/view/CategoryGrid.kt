@@ -52,9 +52,10 @@ fun CategoryGrid(
     onItemLongClicked: ((ViewCategoryListItem) -> Unit)? = null,
     isAddShown: Boolean,
     onAddClicked: (() -> Unit)? = null,
+    contentPadding: PaddingValues = PaddingValues(6.dp),
 ) {
     val gridState = rememberLazyGridState()
-    val space = 6.dp
+    val spaceBy = 6.dp
     val visibleItemList = remember {
         derivedStateOf {
             itemList
@@ -73,12 +74,9 @@ fun CategoryGrid(
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(72.dp),
-        contentPadding = PaddingValues(
-            vertical = space,
-            horizontal = space,
-        ),
-        horizontalArrangement = Arrangement.spacedBy(space),
-        verticalArrangement = Arrangement.spacedBy(space, Alignment.Top),
+        contentPadding = contentPadding,
+        horizontalArrangement = Arrangement.spacedBy(spaceBy),
+        verticalArrangement = Arrangement.spacedBy(spaceBy, Alignment.Top),
         state = gridState,
         modifier = modifier
     ) {
