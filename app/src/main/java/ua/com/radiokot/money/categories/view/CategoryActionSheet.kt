@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -40,16 +41,22 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composeunstyled.Icon
 import com.composeunstyled.Text
+import ua.com.radiokot.money.colors.data.DrawableResItemIconRepository
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
@@ -68,6 +75,7 @@ fun CategoryActionSheetRoot(
         statsAmount = viewModel.statsAmount.collectAsState(),
         colorScheme = viewModel.colorScheme.collectAsState(),
         title = viewModel.title.collectAsState(),
+        icon = viewModel.icon.collectAsState(),
         onEditClicked = remember { viewModel::onEditClicked },
         onActivityClicked = remember { viewModel::onActivityClicked },
         isUnarchiveVisible = viewModel.isUnarchiveVisible.collectAsState(),
@@ -83,6 +91,7 @@ private fun CategoryActionSheet(
     statsAmount: State<ViewAmount>,
     colorScheme: State<ItemColorScheme>,
     title: State<String>,
+    icon: State<ItemIcon?>,
     isUnarchiveVisible: State<Boolean>,
     onEditClicked: () -> Unit,
     onActivityClicked: () -> Unit,
@@ -98,6 +107,7 @@ private fun CategoryActionSheet(
         statsAmount = statsAmount,
         colorScheme = colorScheme,
         title = title,
+        icon = icon,
         modifier = Modifier
             .fillMaxWidth()
     )
@@ -148,6 +158,7 @@ private fun Header(
     statsAmount: State<ViewAmount>,
     colorScheme: State<ItemColorScheme>,
     title: State<String>,
+    icon: State<ItemIcon?>,
 ) = Column(
     modifier = modifier
         .background(Color(colorScheme.value.primary))
@@ -162,11 +173,31 @@ private fun Header(
         }
     }
 
-    Text(
-        text = title.value,
-        fontSize = 24.sp,
-        color = textColor,
-    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val icon = icon.value
+        if (icon != null) {
+            Icon(
+                painter = painterResource(icon.resId),
+                contentDescription = "icon",
+                tint = Color(colorScheme.value.onPrimary),
+                modifier = Modifier
+                    .padding(
+                        end = 8.dp,
+                    )
+                    .size(22.dp)
+            )
+        }
+
+        Text(
+            text = title.value,
+            fontSize = 24.sp,
+            color = textColor,
+            modifier = Modifier
+                .weight(1f)
+        )
+    }
 
     Spacer(modifier = Modifier.height(8.dp))
 
@@ -216,6 +247,10 @@ private fun Preview(
             .getValue("Purple2")
             .let(::mutableStateOf),
         title = "Health".let(::mutableStateOf),
+        icon = DrawableResItemIconRepository()
+            .getItemIcons()
+            .get(22)
+            .let(::mutableStateOf),
         isUnarchiveVisible = true.let(::mutableStateOf),
         onEditClicked = {},
         onActivityClicked = {},

@@ -36,6 +36,7 @@ import ua.com.radiokot.money.categories.data.CategoryWithAmount
 import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountUseCase
 import ua.com.radiokot.money.categories.logic.UnarchiveCategoryUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
@@ -69,6 +70,10 @@ class CategoryActionSheetViewModel(
     val title: StateFlow<String> =
         category
             .map(viewModelScope, Category::title)
+
+    val icon: StateFlow<ItemIcon?> =
+        category
+            .map(viewModelScope, Category::icon)
 
     val statsPeriod: ViewHistoryPeriod =
         ViewHistoryPeriod.fromHistoryPeriod(parameters.statsPeriod)
