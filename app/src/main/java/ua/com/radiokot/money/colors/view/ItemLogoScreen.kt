@@ -147,6 +147,21 @@ private fun ItemLogoScreen(
 
     Spacer(modifier = Modifier.height(8.dp))
 
+    if (itemTitle.isNotEmpty()) {
+        Text(
+            text = itemTitle,
+            fontSize = 24.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp,
+                )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+
     val logoTransitionSpec = remember {
 
         fun AnimatedContentTransitionScope<Pair<ItemColorScheme, ItemIcon?>>.() =
