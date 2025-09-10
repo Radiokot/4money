@@ -26,6 +26,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -145,23 +146,68 @@ private fun ItemLogoScreen(
         )
     }
 
-    Spacer(modifier = Modifier.height(8.dp))
-
-    if (itemTitle.isNotEmpty()) {
-        Text(
-            text = itemTitle,
-            fontSize = 24.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = 16.dp,
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        if (maxWidth > 600.dp) {
+            Row {
+                TitleAndLogo(
+                    itemTitle = itemTitle,
+                    selectedColorScheme = selectedColorScheme,
+                    selectedIcon = selectedIcon,
+                    modifier = Modifier
+                        .weight(3f)
+                        .align(Alignment.CenterVertically)
                 )
-        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Pickers(
+                    colorSchemeList = colorSchemeList,
+                    selectedColorScheme = selectedColorScheme,
+                    onColorSchemeClicked = onColorSchemeClicked,
+                    iconList = iconList,
+                    selectedIcon = selectedIcon,
+                    onIconClicked = onIconClicked,
+                    modifier = Modifier
+                        .weight(4f)
+                )
+            }
+        } else {
+            Column {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TitleAndLogo(
+                    itemTitle = itemTitle,
+                    selectedColorScheme = selectedColorScheme,
+                    selectedIcon = selectedIcon,
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Pickers(
+                    colorSchemeList = colorSchemeList,
+                    selectedColorScheme = selectedColorScheme,
+                    onColorSchemeClicked = onColorSchemeClicked,
+                    iconList = iconList,
+                    selectedIcon = selectedIcon,
+                    onIconClicked = onIconClicked,
+                )
+            }
+        }
     }
+}
 
+@Composable
+private fun TitleAndLogo(
+    modifier: Modifier = Modifier,
+    itemTitle: String,
+    selectedColorScheme: State<ItemColorScheme>,
+    selectedIcon: State<ItemIcon?>,
+) = Column(
+    modifier = modifier,
+) {
     val logoTransitionSpec = remember {
 
         fun AnimatedContentTransitionScope<Pair<ItemColorScheme, ItemIcon?>>.() =
@@ -189,8 +235,34 @@ private fun ItemLogoScreen(
         )
     }
 
-    Spacer(modifier = Modifier.height(24.dp))
+    if (itemTitle.isNotEmpty()) {
+        Spacer(modifier = Modifier.height(16.dp))
 
+        Text(
+            text = itemTitle,
+            fontSize = 24.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp,
+                )
+        )
+    }
+}
+
+@Composable
+private fun Pickers(
+    modifier: Modifier = Modifier,
+    colorSchemeList: State<List<ItemColorScheme>>,
+    selectedColorScheme: State<ItemColorScheme>,
+    onColorSchemeClicked: (ItemColorScheme) -> Unit,
+    iconList: State<List<ItemIcon>>,
+    selectedIcon: State<ItemIcon?>,
+    onIconClicked: (ItemIcon?) -> Unit,
+) = Column(
+    modifier = modifier,
+) {
     val pages: List<Page> = remember {
         listOf(
             Page.Icon,
@@ -206,7 +278,7 @@ private fun ItemLogoScreen(
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
         modifier = Modifier
-            .fillMaxWidth()
+            .align(Alignment.CenterHorizontally)
     ) {
         BasicText(
             text = "Icon",
@@ -258,6 +330,7 @@ private fun ItemLogoScreen(
             vertical = 16.dp,
         ) + WindowInsets
             .navigationBars
+            .only(WindowInsetsSides.Bottom)
             .asPaddingValues()
 
     HorizontalPager(
