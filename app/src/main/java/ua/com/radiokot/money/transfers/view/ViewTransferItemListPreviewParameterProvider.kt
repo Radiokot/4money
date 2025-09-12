@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import ua.com.radiokot.money.colors.data.DrawableResItemIconRepository
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import java.math.BigInteger
@@ -29,6 +30,8 @@ class ViewTransferItemListPreviewParameterProvider :
 
     private val colorSchemesByName = HardcodedItemColorSchemeRepository()
         .getItemColorSchemesByName()
+    private val icons = DrawableResItemIconRepository()
+        .getItemIcons()
 
     override val values: Sequence<List<ViewTransferListItem>>
         get() = sequenceOf(
@@ -44,7 +47,8 @@ class ViewTransferItemListPreviewParameterProvider :
                             symbol = "$",
                             precision = 2,
                         ),
-                        colorSchemesByName.getValue("Blue4"),
+                        colorScheme = colorSchemesByName.getValue("Blue4"),
+                        icon = null,
                     ),
                     primaryAmount = BigInteger("10000"),
                     secondaryCounterparty = ViewTransferCounterparty.Account(
@@ -53,7 +57,8 @@ class ViewTransferItemListPreviewParameterProvider :
                             symbol = "$",
                             precision = 2,
                         ),
-                        colorSchemesByName.getValue("Red1"),
+                        colorScheme = colorSchemesByName.getValue("Red1"),
+                        icon = icons[3],
                     ),
                     secondaryAmount = BigInteger("10000"),
                     type = ViewTransferListItem.Transfer.Type.Expense,
@@ -69,7 +74,8 @@ class ViewTransferItemListPreviewParameterProvider :
                             symbol = "$",
                             precision = 2,
                         ),
-                        colorSchemesByName.getValue("Orange1"),
+                        colorScheme = colorSchemesByName.getValue("Orange1"),
+                        icon=null,
                     ),
                     primaryAmount = BigInteger("5000"),
                     secondaryCounterparty = ViewTransferCounterparty.Account(
@@ -78,7 +84,8 @@ class ViewTransferItemListPreviewParameterProvider :
                             symbol = "г",
                             precision = 2,
                         ),
-                        colorSchemesByName.getValue("Blue4"),
+                        colorScheme =      colorSchemesByName.getValue("Blue4"),
+                        icon = icons[26],
                     ),
                     secondaryAmount = BigInteger("217000"),
                     type = ViewTransferListItem.Transfer.Type.Expense,

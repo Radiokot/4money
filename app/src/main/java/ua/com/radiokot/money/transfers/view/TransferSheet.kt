@@ -75,6 +75,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ua.com.radiokot.money.categories.view.SelectableSubcategoryRow
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItemPreviewParameterProvider
+import ua.com.radiokot.money.colors.data.DrawableResItemIconRepository
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
@@ -422,8 +423,12 @@ private fun TransferSheetPreview(
     val isSaveEnabledOptions = listOf(true, false)
     val colorSchemesByName = HardcodedItemColorSchemeRepository()
         .getItemColorSchemesByName()
+    val icons = DrawableResItemIconRepository()
+        .getItemIcons()
     val categoryColorScheme = colorSchemesByName.getValue("Green2")
+    val categoryIcon = icons[45]
     val accountColorScheme = colorSchemesByName.getValue("Yellow4")
+    val accountIcon = icons[66]
 
     isSourceInputShownOptions.forEach { isSourceInputShown ->
         isSaveEnabledOptions.forEach { isSaveEnabled ->
@@ -441,6 +446,7 @@ private fun TransferSheetPreview(
                         precision = 2,
                     ),
                     colorScheme = accountColorScheme,
+                    icon = accountIcon,
                 ),
                 sourceAmountValue = BigInteger("133").let(::mutableStateOf),
                 onNewSourceAmountValueParsed = {},
@@ -452,6 +458,7 @@ private fun TransferSheetPreview(
                         precision = 2,
                     ),
                     colorScheme = categoryColorScheme,
+                    icon = categoryIcon,
                 ),
                 destinationAmountValue = BigInteger("331").let(::mutableStateOf),
                 onNewDestinationAmountValueParsed = {},

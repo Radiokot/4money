@@ -24,6 +24,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.res.stringResource
 import ua.com.radiokot.money.R
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.transfers.data.TransferCounterparty
 
@@ -37,10 +38,13 @@ sealed interface ViewTransferCounterparty {
 
     val colorScheme: ItemColorScheme
 
+    val icon: ItemIcon?
+
     class Account(
         val accountTitle: String,
         override val currency: ViewCurrency,
         override val colorScheme: ItemColorScheme,
+        override val icon: ItemIcon?,
     ) : ViewTransferCounterparty {
 
         override val title: String
@@ -54,6 +58,7 @@ sealed interface ViewTransferCounterparty {
             if (accountTitle != other.accountTitle) return false
             if (currency != other.currency) return false
             if (colorScheme != other.colorScheme) return false
+            if (icon != other.icon) return false
 
             return true
         }
@@ -62,6 +67,7 @@ sealed interface ViewTransferCounterparty {
             var result = accountTitle.hashCode()
             result = 31 * result + currency.hashCode()
             result = 31 * result + colorScheme.hashCode()
+            result = 31 * result + (icon?.hashCode() ?: 0)
             return result
         }
     }
@@ -71,6 +77,7 @@ sealed interface ViewTransferCounterparty {
         val subcategoryTitle: String?,
         override val currency: ViewCurrency,
         override val colorScheme: ItemColorScheme,
+        override val icon: ItemIcon?,
     ) : ViewTransferCounterparty {
 
         override val title: String
@@ -93,6 +100,7 @@ sealed interface ViewTransferCounterparty {
             if (subcategoryTitle != other.subcategoryTitle) return false
             if (currency != other.currency) return false
             if (colorScheme != other.colorScheme) return false
+            if (icon != other.icon) return false
 
             return true
         }
@@ -102,6 +110,7 @@ sealed interface ViewTransferCounterparty {
             result = 31 * result + (subcategoryTitle?.hashCode() ?: 0)
             result = 31 * result + currency.hashCode()
             result = 31 * result + colorScheme.hashCode()
+            result = 31 * result + (icon?.hashCode() ?: 0)
             return result
         }
     }
@@ -117,6 +126,7 @@ sealed interface ViewTransferCounterparty {
                         currency = counterparty.account.currency,
                     ),
                     colorScheme = counterparty.account.colorScheme,
+                    icon = counterparty.account.icon,
                 )
 
             is TransferCounterparty.Category ->
@@ -127,6 +137,7 @@ sealed interface ViewTransferCounterparty {
                         currency = counterparty.category.currency,
                     ),
                     colorScheme = counterparty.category.colorScheme,
+                    icon = counterparty.category.icon,
                 )
         }
     }
