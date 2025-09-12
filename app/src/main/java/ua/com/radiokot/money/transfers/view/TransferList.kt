@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -58,6 +59,7 @@ import kotlinx.datetime.format.DateTimeFormat
 import kotlinx.datetime.format.DayOfWeekNames
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
+import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 
@@ -183,16 +185,16 @@ private fun HeaderItem(
     ) {
         BasicText(
             text =
-            when (item.date.specificType) {
-                ViewDate.SpecificType.Today ->
-                    "Today"
+                when (item.date.specificType) {
+                    ViewDate.SpecificType.Today ->
+                        "Today"
 
-                ViewDate.SpecificType.Yesterday ->
-                    "Yesterday"
+                    ViewDate.SpecificType.Yesterday ->
+                        "Yesterday"
 
-                null ->
-                    dayFormat.format(item.date.localDate)
-            },
+                    null ->
+                        dayFormat.format(item.date.localDate)
+                },
             style = TextStyle(
                 fontSize = 12.sp,
                 fontWeight = FontWeight(200)
@@ -212,10 +214,21 @@ private fun TransferItem(
     modifier: Modifier = Modifier,
     item: ViewTransferListItem.Transfer,
     amountFormat: ViewAmountFormat,
-) = Column(
+) = Row(
     modifier = modifier
         .fillMaxWidth(),
 ) {
+    ItemLogo(
+        title = item.primaryCounterparty.title,
+        colorScheme = item.primaryCounterparty.colorScheme,
+        icon = item.primaryCounterparty.icon,
+        modifier = Modifier
+            .padding(
+                end = 12.dp,
+            )
+            .size(38.dp)
+    )
+
     val amountColor = remember {
         when (item.type) {
             ViewTransferListItem.Transfer.Type.Income ->
@@ -229,84 +242,90 @@ private fun TransferItem(
         }
     }
 
-    Row(
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        BasicText(
-            text = item.primaryCounterparty.title,
-            overflow = TextOverflow.Ellipsis,
-            maxLines = 1,
-            style = TextStyle(
-                fontSize = 16.sp,
-            ),
-            modifier = Modifier
-                .weight(1f)
-                .alignByBaseline(),
-        )
-
-        BasicText(
-            text = amountFormat(
-                amount = ViewAmount(
-                    value = item.primaryAmount,
-                    currency = item.primaryCounterparty.currency,
-                ),
-                customColor = amountColor,
-            ),
-            style = TextStyle(
-                fontSize = 18.sp,
-            ),
-            modifier = Modifier
-                .alignBy(LastBaseline),
-        )
-    }
-
-    Row(
-        verticalAlignment = Alignment.Top,
+    Column(
         modifier = Modifier
-            .padding(
-                top = 2.dp,
-            )
+            .weight(1f)
     ) {
-        BasicText(
-            text = item.secondaryCounterparty.title,
-            overflow = TextOverflow.Ellipsis,
-            maxLines = 1,
-            style = TextStyle(
-                fontSize = 14.sp,
-            ),
-            modifier = Modifier.weight(1f),
-        )
 
-        if (item.primaryCounterparty.currency != item.secondaryCounterparty.currency) {
+        Row(
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            BasicText(
+                text = item.primaryCounterparty.title,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+                style = TextStyle(
+                    fontSize = 16.sp,
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .alignByBaseline(),
+            )
+
             BasicText(
                 text = amountFormat(
                     amount = ViewAmount(
-                        value = item.secondaryAmount,
-                        currency = item.secondaryCounterparty.currency,
+                        value = item.primaryAmount,
+                        currency = item.primaryCounterparty.currency,
                     ),
                     customColor = amountColor,
                 ),
                 style = TextStyle(
-                    fontSize = 14.sp,
-                )
+                    fontSize = 18.sp,
+                ),
+                modifier = Modifier
+                    .alignBy(LastBaseline),
             )
         }
-    }
 
-    if (item.memo != null) {
-        BasicText(
-            text = item.memo,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = TextStyle(
-                color = Color.Gray,
-                fontSize = 14.sp,
-                fontStyle = FontStyle.Italic,
-            ),
+        Row(
+            verticalAlignment = Alignment.Top,
             modifier = Modifier
                 .padding(
                     top = 2.dp,
                 )
-        )
+        ) {
+            BasicText(
+                text = item.secondaryCounterparty.title,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+                style = TextStyle(
+                    fontSize = 14.sp,
+                ),
+                modifier = Modifier.weight(1f),
+            )
+
+            if (item.primaryCounterparty.currency != item.secondaryCounterparty.currency) {
+                BasicText(
+                    text = amountFormat(
+                        amount = ViewAmount(
+                            value = item.secondaryAmount,
+                            currency = item.secondaryCounterparty.currency,
+                        ),
+                        customColor = amountColor,
+                    ),
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                    )
+                )
+            }
+        }
+
+        if (item.memo != null) {
+            BasicText(
+                text = item.memo,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = TextStyle(
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    fontStyle = FontStyle.Italic,
+                ),
+                modifier = Modifier
+                    .padding(
+                        top = 2.dp,
+                    )
+            )
+        }
     }
 }
