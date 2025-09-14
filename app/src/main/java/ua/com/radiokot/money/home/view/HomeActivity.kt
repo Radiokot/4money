@@ -48,12 +48,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -61,12 +64,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
+import com.composeunstyled.Text
+import kotlinx.coroutines.flow.mapNotNull
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
 import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
@@ -150,9 +158,7 @@ private fun HomeScreen(
     ) {
         NavHost(
             navController = navController,
-            startDestination = AccountsScreenRoute(
-                isIncognito = false,
-            ),
+            startDestination = AccountsScreenRoute,
             enterTransition = { fadeIn(tween(150)) },
             exitTransition = { fadeOut(tween(150)) },
             modifier = Modifier
@@ -234,7 +240,7 @@ private fun HomeScreen(
                     navController.navigate(
                         route = ActivityScreenRoute,
                         navOptions = navOptions {
-                            popUpTo<CategoriesScreenRoute> {
+                            popUpTo(CategoriesScreenRoute) {
                                 inclusive = true
                             }
                         }
@@ -294,7 +300,7 @@ private fun HomeScreen(
                     navController.navigate(
                         route = ActivityScreenRoute,
                         navOptions = navOptions {
-                            popUpTo<AccountsScreenRoute> {
+                            popUpTo(AccountsScreenRoute) {
                                 inclusive = true
                             }
                         }
@@ -340,34 +346,7 @@ private fun HomeScreen(
         }
 
         BottomNavigation(
-            onAccountsClicked = {
-                navController.popBackStack()
-                navController.navigate(
-                    route = AccountsScreenRoute(
-                        isIncognito = false,
-                    ),
-                )
-            },
-            onCategoriesClicked = {
-                navController.popBackStack()
-                navController.navigate(
-                    route = CategoriesScreenRoute(
-                        isIncognito = false,
-                    ),
-                )
-            },
-            onActivityClicked = {
-                navController.popBackStack()
-                navController.navigate(
-                    route = ActivityScreenRoute,
-                )
-            },
-            onMoreClicked = {
-                navController.popBackStack()
-                navController.navigate(
-                    route = PreferencesScreenRoute,
-                )
-            },
+            navController = navController,
             hasMoreNotice = viewModel.hasMoreNotice.collectAsState(),
         )
     }
@@ -377,12 +356,10 @@ private fun HomeScreen(
     )
 }
 
+@SuppressLint("ProduceStateDoesNotAssignValue")
 @Composable
 private fun BottomNavigation(
-    onAccountsClicked: () -> Unit,
-    onCategoriesClicked: () -> Unit,
-    onActivityClicked: () -> Unit,
-    onMoreClicked: () -> Unit,
+    navController: NavController,
     hasMoreNotice: State<Boolean>,
 ) = Row(
     horizontalArrangement = Arrangement.SpaceAround,
@@ -395,47 +372,77 @@ private fun BottomNavigation(
         .displayCutoutPadding()
         .navigationBarsPadding()
         .padding(
-            vertical = 12.dp,
+            vertical = 8.dp,
         )
 ) {
+    // Specifically track the visited route within the bottom navigation routes
+    // so the current entry doesn't loose indication when a bottom sheet appears.
+    val lastVisitedBottomRoute: String? by produceState(null) {
+        navController
+            .currentBackStackEntryFlow
+            .mapNotNull { entry ->
+                entry
+                    .destination
+                    .route
+                    .takeIf(bottomNavigationRoutes::contains)
+            }
+            .collect(this::value::set)
+    }
+
     BottomNavigationEntry(
         text = "Accounts",
         icon = "👛",
+        isCurrent = lastVisitedBottomRoute == AccountsScreenRoute,
         modifier = Modifier
             .weight(1f)
             .clickable(
-                onClick = onAccountsClicked,
+                onClick = {
+                    navController.popBackStack()
+                    navController.navigate(AccountsScreenRoute)
+                },
             )
     )
 
     BottomNavigationEntry(
         text = "Categories",
         icon = "📊",
+        isCurrent = lastVisitedBottomRoute == CategoriesScreenRoute,
         modifier = Modifier
             .weight(1f)
             .clickable(
-                onClick = onCategoriesClicked,
+                onClick = {
+                    navController.popBackStack()
+                    navController.navigate(CategoriesScreenRoute)
+                }
             )
     )
 
     BottomNavigationEntry(
         text = "Activity",
         icon = "📜",
+        isCurrent = lastVisitedBottomRoute == ActivityScreenRoute,
         modifier = Modifier
             .weight(1f)
             .clickable(
-                onClick = onActivityClicked,
+                onClick = {
+                    navController.popBackStack()
+                    navController.navigate(ActivityScreenRoute)
+                },
             )
     )
 
     BottomNavigationEntry(
         text = "More",
         icon = "⚙️",
+        isCurrent = lastVisitedBottomRoute == PreferencesScreenRoute,
         hasNotice = hasMoreNotice.value,
         modifier = Modifier
             .weight(1f)
             .clickable(
-                onClick = onMoreClicked,
+                onClick = {
+                    navController.popBackStack()
+                    navController.navigate(PreferencesScreenRoute)
+                },
             )
     )
 }
@@ -445,19 +452,37 @@ private fun BottomNavigationEntry(
     modifier: Modifier = Modifier,
     text: String,
     icon: String,
+    isCurrent: Boolean,
     hasNotice: Boolean = false,
 ) = Column(
-    modifier = modifier
-        .width(IntrinsicSize.Max),
+    horizontalAlignment = Alignment.CenterHorizontally,
+    modifier = Modifier
+        .then(modifier)
+        .width(IntrinsicSize.Max)
 ) {
-    BasicText(
+    Text(
         text = icon,
         style = TextStyle(
             fontSize = 16.sp,
             textAlign = TextAlign.Center,
         ),
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth(0.65f)
+            .then(
+                other =
+                    if (isCurrent)
+                        Modifier.background(
+                            color = Color(0xFFD8CCE1),
+                            shape = RoundedCornerShape(
+                                percent = 50,
+                            )
+                        )
+                    else
+                        Modifier
+            )
+            .padding(
+                vertical = 4.dp,
+            )
             .run {
                 if (!hasNotice) {
                     return@run this
@@ -484,18 +509,30 @@ private fun BottomNavigationEntry(
             }
     )
 
-    Spacer(modifier = Modifier.height(6.dp))
+    Spacer(modifier = Modifier.height(4.dp))
 
-    BasicText(
+    Text(
         text = text,
         style = TextStyle(
             fontSize = 13.sp,
             textAlign = TextAlign.Center,
+            fontWeight =
+                if (isCurrent)
+                    FontWeight.SemiBold
+                else
+                    FontWeight.Normal
         ),
         modifier = Modifier
             .fillMaxWidth()
     )
 }
+
+private val bottomNavigationRoutes: Set<String> = setOf(
+    AccountsScreenRoute,
+    CategoriesScreenRoute,
+    ActivityScreenRoute,
+    PreferencesScreenRoute,
+)
 
 @Preview(
     apiLevel = 34,
@@ -504,9 +541,6 @@ private fun BottomNavigationEntry(
 private fun BottomNavigation2Preview(
 
 ) = BottomNavigation(
-    onAccountsClicked = { },
-    onCategoriesClicked = { },
-    onActivityClicked = { },
-    onMoreClicked = { },
+    navController = rememberNavController(),
     hasMoreNotice = true.let(::mutableStateOf),
 )

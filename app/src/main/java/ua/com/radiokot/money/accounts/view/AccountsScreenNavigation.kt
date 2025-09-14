@@ -24,27 +24,20 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
-import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import ua.com.radiokot.money.accounts.data.Account
 
-@Serializable
-data class AccountsScreenRoute(
-    val isIncognito: Boolean,
-)
+const val AccountsScreenRoute = "accounts"
 
 fun NavGraphBuilder.accountsScreen(
     onProceedToAccountActions: (account: Account) -> Unit,
     onProceedToAccountAdd: () -> Unit,
     onProceedToArchivedAccounts: () -> Unit,
-) = composable<AccountsScreenRoute> { entry ->
+) = composable(AccountsScreenRoute) { entry ->
 
-    val isIncognito = entry.toRoute<AccountsScreenRoute>()
-        .isIncognito
     val viewModel = koinViewModel<AccountsViewModel>()
 
-    LaunchedEffect(isIncognito) {
+    LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 is AccountsViewModel.Event.ProceedToAccountActions ->

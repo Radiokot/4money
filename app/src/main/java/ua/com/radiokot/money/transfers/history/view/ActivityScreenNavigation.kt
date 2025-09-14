@@ -27,19 +27,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ua.com.radiokot.money.home.view.HomeViewModel
 import ua.com.radiokot.money.transfers.data.Transfer
 
-@Serializable
-object ActivityScreenRoute
+const val ActivityScreenRoute = "activity"
 
 fun NavGraphBuilder.activityScreen(
     homeViewModel: HomeViewModel,
     onProceedToEditingTransfer: (transferToEdit: Transfer) -> Unit,
-) = composable<ActivityScreenRoute> {
+) = composable(ActivityScreenRoute) {
 
     val activity: Activity? = LocalActivity.current
     val viewModel: ActivityViewModel = koinViewModel {
