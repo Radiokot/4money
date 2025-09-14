@@ -31,6 +31,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,6 +53,40 @@ fun SelectableSubcategoryRow(
 ) {
     val rowState = rememberLazyListState()
     val space = 12.dp
+
+    // Place the selected subcategory more or less at the center
+    // if it is not currently visible.
+    // Especially useful in the edit mode when the subcategory
+    // is already selected
+    LaunchedEffect(itemList.value) {
+        val selectedSubcategoryIndex = itemList
+            .value
+            .indexOfFirst(ViewSelectableSubcategoryListItem::isSelected)
+
+        if (selectedSubcategoryIndex < 0) {
+            return@LaunchedEffect
+        }
+
+        val rowLayoutInfo = rowState.layoutInfo
+        val rowStartOffset = rowLayoutInfo.viewportStartOffset
+        val rowEndOffset = rowLayoutInfo.viewportEndOffset
+
+        val isSelectedSubcategoryFullyVisible =
+            rowLayoutInfo
+                .visibleItemsInfo
+                .any { visibleItem ->
+                    visibleItem.index == selectedSubcategoryIndex
+                            && visibleItem.offset >= rowStartOffset
+                            && (visibleItem.offset + visibleItem.size) <= rowEndOffset
+                }
+
+        if (!isSelectedSubcategoryFullyVisible) {
+            rowState.animateScrollToItem(
+                index = selectedSubcategoryIndex,
+                scrollOffset = -((rowEndOffset - rowStartOffset) / 3),
+            )
+        }
+    }
 
     LazyRow(
         state = rowState,
