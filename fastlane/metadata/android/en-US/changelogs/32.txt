@@ -1,8 +1,0 @@
-Added:
-- Showing icons on the Activity screen
-- Showing category icon in the action sheet
-- Showing the item title on the icon and color customization screen
-- Landscape layout for the icon and color customization screen
-
-Fixed:
-- Navigation bar flicker when opening a sheet

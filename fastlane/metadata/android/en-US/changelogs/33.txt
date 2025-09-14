@@ -1,0 +1,3 @@
+Added:
+- Scrolling to selected subcategory on the transfer sheet if it's far away
+- Highlighting the current tab in the bottom navigation bar on the home screen
