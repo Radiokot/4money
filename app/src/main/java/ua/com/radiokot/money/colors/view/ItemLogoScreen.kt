@@ -182,6 +182,8 @@ private fun ItemLogoScreen(
                     itemTitle = itemTitle,
                     selectedColorScheme = selectedColorScheme,
                     selectedIcon = selectedIcon,
+                    modifier = Modifier
+                        .fillMaxWidth()
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
