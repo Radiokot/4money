@@ -126,7 +126,7 @@ dependencies {
     implementation "androidx.paging:paging-compose:3.3.6"
     implementation "androidx.work:work-runtime-ktx:2.10.3"
 
-    implementation platform("androidx.compose:compose-bom:2025.08.01")
+    implementation platform("androidx.compose:compose-bom:2025.09.00")
     implementation "androidx.compose.foundation:foundation"
     implementation "androidx.compose.foundation:foundation-layout"
     debugImplementation "androidx.compose.ui:ui-tooling"
