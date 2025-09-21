@@ -1,0 +1,325 @@
+/* Copyright 2025 Oleg Koretsky
+
+   This file is part of the 4Money,
+   a budget tracking Android app.
+
+   4Money is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   4Money is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+   See the GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with 4Money. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package ua.com.radiokot.money.currency.view
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.composeunstyled.Text
+import java.math.BigInteger
+
+@Composable
+fun AmountKeyboard(
+    modifier: Modifier = Modifier,
+    inputState: ViewAmountInputState,
+) = BoxWithConstraints(
+    modifier = modifier,
+) {
+
+    val buttonGap = 8.dp
+    val buttonWidth = (maxWidth - buttonGap * 4) / 5
+    val buttonHeight = (maxHeight - buttonGap * 3) / 4
+    val onButtonClicked = inputState::acceptInput
+    val actionBackground = Modifier.background(Color(0xfff3f0f6))
+
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        Column(
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(4f)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Button(
+                    symbol = ViewAmountInputState.Operator.Divide.symbol,
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                        .then(actionBackground)
+                )
+                Button(
+                    symbol = '7',
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                )
+                Button(
+                    symbol = '8',
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                )
+                Button(
+                    symbol = '9',
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                )
+            }
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Button(
+                    symbol = ViewAmountInputState.Operator.Multiply.symbol,
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                        .then(actionBackground)
+                )
+                Button(
+                    symbol = '4',
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                )
+                Button(
+                    symbol = '5',
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                )
+                Button(
+                    symbol = '6',
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                )
+            }
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Button(
+                    symbol = ViewAmountInputState.Operator.Minus.symbol,
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                        .then(actionBackground)
+                )
+                Button(
+                    symbol = '1',
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                )
+                Button(
+                    symbol = '2',
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                )
+                Button(
+                    symbol = '3',
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                )
+            }
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Button(
+                    symbol = ViewAmountInputState.Operator.Plus.symbol,
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                        .then(actionBackground)
+                )
+                Button(
+                    symbol = '0',
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth * 2 + buttonGap,
+                            height = buttonHeight,
+                        )
+                )
+                Button(
+                    symbol = inputState.decimalSeparator,
+                    onClicked = onButtonClicked,
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                )
+            }
+        }
+
+        Column(
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(1f)
+        ) {
+            Button(
+                symbol = '<',
+                onClicked = onButtonClicked,
+                modifier = Modifier
+                    .size(
+                        width = buttonWidth,
+                        height = buttonHeight,
+                    )
+                    .then(actionBackground)
+            )
+//            Button(
+//                symbol = 'Ж',
+//                onClicked = onButtonClicked,
+//                modifier = Modifier
+//                    .size(
+//                        width = buttonWidth,
+//                        height = buttonHeight,
+//                    )
+//            )
+            Button(
+                symbol = '=',
+                onClicked = onButtonClicked,
+                modifier = Modifier
+                    .size(
+                        width = buttonWidth,
+                        height = buttonHeight * 3 + buttonGap * 2,
+                    )
+                    .then(actionBackground)
+            )
+        }
+    }
+}
+
+@Composable
+private fun Button(
+    modifier: Modifier = Modifier,
+    symbol: Char,
+    onClicked: (Char) -> Unit,
+) {
+    val shape = RoundedCornerShape(12.dp)
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .clip(shape)
+            .then(modifier)
+            .border(
+                width = 1.dp,
+                color = Color.DarkGray,
+                shape = shape,
+            )
+            .clickable(
+                onClick = {
+                    onClicked(symbol)
+                },
+            )
+    ) {
+        Text(
+            text = symbol.toString(),
+            fontSize = 28.sp,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun Preview(
+
+) {
+    AmountKeyboard(
+        inputState = rememberViewAmountInputState(
+            currency = ViewCurrency(
+                symbol = "$",
+                precision = 2,
+            ),
+            initialValue = BigInteger.ZERO,
+        ),
+        modifier = Modifier
+            .size(
+                width = 250.dp,
+                height = 200.dp,
+            )
+    )
+}

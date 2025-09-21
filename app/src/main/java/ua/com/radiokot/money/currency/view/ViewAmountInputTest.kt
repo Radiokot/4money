@@ -19,21 +19,12 @@
 
 package ua.com.radiokot.money.currency.view
 
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -63,81 +54,11 @@ fun ViewAmountInputTest() {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        ButtonsRow(
-            state,
-            ViewAmountInputState.Operator.Divide.symbol,
-            '7',
-            '8',
-            '9',
+        AmountKeyboard(
+            inputState = state,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(400.dp)
         )
-        ButtonsRow(
-            state,
-            ViewAmountInputState.Operator.Multiply.symbol,
-            '4',
-            '5',
-            '6',
-        )
-        ButtonsRow(
-            state,
-            ViewAmountInputState.Operator.Minus.symbol,
-            '1',
-            '2',
-            '3',
-        )
-        ButtonsRow(
-            state,
-            ViewAmountInputState.Operator.Plus.symbol,
-            state.decimalSeparator,
-            '0',
-            '<',
-        )
-        Row {
-            Spacer(modifier = Modifier.width(ButtonSize))
-            Button(
-                symbol = '=',
-                modifier = Modifier
-                    .width(ButtonSize * 3)
-                    .clickable {
-                        state.acceptInput('=')
-                    }
-            )
-        }
     }
 }
-
-@Composable
-fun Button(
-    modifier: Modifier = Modifier,
-    symbol: Char,
-) = Box(
-    contentAlignment = Alignment.Center,
-    modifier = modifier
-        .size(ButtonSize)
-        .border(
-            width = 1.dp,
-            shape = RoundedCornerShape(8.dp),
-            color = Color.Black,
-        )
-) {
-    Text(text = symbol.toString())
-}
-
-@Composable
-fun ButtonsRow(
-    state: ViewAmountInputState,
-    vararg symbols: Char,
-) = Row {
-    symbols.forEach { symbol ->
-        key(symbol) {
-            Button(
-                symbol = symbol,
-                modifier = Modifier
-                    .clickable {
-                        state.acceptInput(symbol)
-                    }
-            )
-        }
-    }
-}
-
-private val ButtonSize = 42.dp
