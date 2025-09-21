@@ -46,6 +46,10 @@ class ViewAmountFormat(
                 || it == decimalFormatSymbols.minusSign
                 || it == decimalFormatSymbols.decimalSeparator
     }
+    val minusSign: Char =
+        decimalFormatSymbols.minusSign
+    val decimalSeparator: Char =
+        decimalFormatSymbols.decimalSeparator
 
     operator fun invoke(
         amount: ViewAmount,
@@ -65,16 +69,16 @@ class ViewAmountFormat(
         )
 
         if (amount.value.signum() < 0) {
-            append(decimalFormatSymbols.minusSign)
+            append(minusSign)
         }
 
         append(NumberFormat.getNumberInstance(locale).format(integerPart.abs()))
 
         if (decimalPart.signum() != 0) {
-            append(decimalFormatSymbols.decimalSeparator)
+            append(decimalSeparator)
             append(
                 decimalPart.toString()
-                    .trimStart(decimalFormatSymbols.minusSign)
+                    .trimStart(minusSign)
                     .padStart(amount.currency.precision, '0')
             )
         }
@@ -96,21 +100,21 @@ class ViewAmountFormat(
             .divideAndRemainder(BigInteger.TEN.pow(currency.precision))
 
         if (value.signum() < 0) {
-            append(decimalFormatSymbols.minusSign)
+            append(minusSign)
         }
 
         append(
             integerPart
                 .toString()
-                .trimStart(decimalFormatSymbols.minusSign)
+                .trimStart(minusSign)
         )
 
         if (decimalPart.signum() != 0) {
-            append(decimalFormatSymbols.decimalSeparator)
+            append(decimalSeparator)
             append(
                 decimalPart
                     .toString()
-                    .trimStart(decimalFormatSymbols.minusSign)
+                    .trimStart(minusSign)
                     .padStart(currency.precision, '0')
                     .trimEnd('0')
             )
@@ -134,12 +138,12 @@ class ViewAmountFormat(
         }
 
         if (!input.all(allowedInputCharPredicate)
-            || input.lastIndexOf(decimalFormatSymbols.minusSign) > 0
+            || input.lastIndexOf(minusSign) > 0
         ) {
             return null
         }
 
-        val splitByDecimalSeparator = input.split(decimalFormatSymbols.decimalSeparator)
+        val splitByDecimalSeparator = input.split(decimalSeparator)
 
         if (currency.precision == 0) {
             if (splitByDecimalSeparator.size > 1) {
@@ -156,7 +160,7 @@ class ViewAmountFormat(
 
             val integerPart = runCatching {
                 splitByDecimalSeparator[0]
-                    .let { if (it == decimalFormatSymbols.minusSign.toString() || it.isEmpty()) "0" else it }
+                    .let { if (it == minusSign.toString() || it.isEmpty()) "0" else it }
                     .let(::BigInteger)
             }.getOrNull() ?: return null
 
@@ -168,7 +172,7 @@ class ViewAmountFormat(
                     ?.let(::BigInteger)
             }.getOrNull() ?: return null
 
-            return if (input.startsWith(decimalFormatSymbols.minusSign))
+            return if (input.startsWith(minusSign))
                 integerPart * BigInteger.TEN.pow(currency.precision) - decimalPart
             else
                 integerPart * BigInteger.TEN.pow(currency.precision) + decimalPart
@@ -184,5 +188,5 @@ class ViewAmountFormat(
     fun unifyDecimalSeparators(
         rawInput: String,
     ): String =
-        rawInput.replace(decimalSeparatorsRegex, decimalFormatSymbols.decimalSeparator.toString())
+        rawInput.replace(decimalSeparatorsRegex, decimalSeparator.toString())
 }
