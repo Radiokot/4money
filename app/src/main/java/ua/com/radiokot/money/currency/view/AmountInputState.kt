@@ -148,6 +148,12 @@ class AmountInputState(
         }
     }
 
+    fun clear() {
+        valueA = "0"
+        operator = null
+        valueB = ""
+    }
+
     private fun evaluate() {
         val intValueA = format.parseInput(valueA, currency)
             ?: BigInteger.ZERO

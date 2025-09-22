@@ -22,6 +22,7 @@ package ua.com.radiokot.money.currency.view
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -242,6 +243,9 @@ fun AmountKeyboard(
             Button(
                 symbol = '<',
                 onClicked = onButtonClicked,
+                onLongClicked = {
+                    inputState.clear()
+                },
                 modifier = Modifier
                     .size(
                         width = buttonWidth,
@@ -268,6 +272,7 @@ private fun Button(
     modifier: Modifier = Modifier,
     symbol: Char,
     onClicked: (Char) -> Unit,
+    onLongClicked: ((Char) -> Unit)? = null,
 ) {
     val shape = RoundedCornerShape(12.dp)
 
@@ -281,10 +286,16 @@ private fun Button(
                 color = Color.DarkGray,
                 shape = shape,
             )
-            .clickable(
-                onClick = {
-                    onClicked(symbol)
-                },
+            .then(
+                if (onLongClicked != null)
+                    Modifier.combinedClickable(
+                        onClick = { onClicked(symbol) },
+                        onLongClick = { onLongClicked(symbol) },
+                    )
+                else
+                    Modifier.clickable(
+                        onClick = { onClicked(symbol) },
+                    )
             )
     ) {
         Text(
