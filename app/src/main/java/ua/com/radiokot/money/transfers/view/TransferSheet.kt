@@ -20,7 +20,9 @@
 package ua.com.radiokot.money.transfers.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -40,6 +42,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -58,12 +61,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -72,15 +72,16 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.composeunstyled.Text
 import ua.com.radiokot.money.categories.view.SelectableSubcategoryRow
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItemPreviewParameterProvider
 import ua.com.radiokot.money.colors.data.DrawableResItemIconRepository
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
-import ua.com.radiokot.money.currency.view.ViewAmountFormat
+import ua.com.radiokot.money.currency.view.AmountKeyboard
 import ua.com.radiokot.money.currency.view.ViewCurrency
-import ua.com.radiokot.money.uikit.AmountInputField
+import ua.com.radiokot.money.currency.view.rememberViewAmountInputState
 import ua.com.radiokot.money.uikit.TextButton
 import java.math.BigInteger
 
@@ -144,11 +145,6 @@ private fun TransferSheet(
             maxHeight
         else
             maxHeight * 0.8f
-
-    val locale = LocalConfiguration.current.locales.get(0)
-    val amountFormat = remember(locale) {
-        ViewAmountFormat(locale)
-    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -241,6 +237,28 @@ private fun TransferSheet(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
+        val sourceAmountInputState = rememberViewAmountInputState(
+            currency = source.currency,
+            initialValue = sourceAmountValue.value,
+        )
+        LaunchedEffect(sourceAmountInputState) {
+            sourceAmountInputState
+                .valueFlow
+                .collect(onNewSourceAmountValueParsed)
+        }
+        val destinationAmountInputState = rememberViewAmountInputState(
+            currency = destination.currency,
+            initialValue = destinationAmountValue.value,
+        )
+        LaunchedEffect(destinationAmountInputState) {
+            destinationAmountInputState
+                .valueFlow
+                .collect(onNewDestinationAmountValueParsed)
+        }
+        var isEnteringSourceAmount by remember(isSourceInputShown) {
+            mutableStateOf(isSourceInputShown)
+        }
+
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
@@ -249,18 +267,31 @@ private fun TransferSheet(
                     horizontal = 16.dp,
                 )
         ) {
-            val softKeyboard = LocalSoftwareKeyboardController.current
-            val sourceAmountFocusRequester = remember {
-                FocusRequester()
-            }
-            val destinationAmountFocusRequester = remember {
-                FocusRequester()
-            }
+            val sourceAmountFocusRequester = remember(::FocusRequester)
+            val destinationAmountFocusRequester = remember(::FocusRequester)
 
             if (isSourceInputShown) {
                 Column(
                     modifier = Modifier
                         .weight(1f)
+                        .then(
+                            if (isEnteringSourceAmount)
+                                Modifier.border(
+                                    width = 1.dp,
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(source.colorScheme.primary),
+                                )
+                            else
+                                Modifier
+                        )
+                        .focusRequester(sourceAmountFocusRequester)
+                        .focusable()
+                        .clickable(
+                            onClick = {
+                                isEnteringSourceAmount = true
+                                sourceAmountFocusRequester.requestFocus()
+                            }
+                        )
                 ) {
                     BasicText(
                         text = "Source amount",
@@ -271,20 +302,15 @@ private fun TransferSheet(
                             .fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    AmountInputField(
-                        value = sourceAmountValue,
-                        currency = source.currency,
-                        amountFormat = amountFormat,
-                        onNewValueParsed = onNewSourceAmountValueParsed,
-                        onKeyboardSubmit = {
-                            destinationAmountFocusRequester.requestFocus()
-                        },
-                        imeAction = ImeAction.Next,
+                    Text(
+                        text = sourceAmountInputState.text,
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .focusRequester(sourceAmountFocusRequester)
                     )
                 }
             }
@@ -292,6 +318,24 @@ private fun TransferSheet(
             Column(
                 modifier = Modifier
                     .weight(1f)
+                    .then(
+                        if (!isEnteringSourceAmount)
+                            Modifier.border(
+                                width = 1.dp,
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(destination.colorScheme.primary),
+                            )
+                        else
+                            Modifier
+                    )
+                    .focusRequester(destinationAmountFocusRequester)
+                    .focusable()
+                    .clickable(
+                        onClick = {
+                            isEnteringSourceAmount = false
+                            destinationAmountFocusRequester.requestFocus()
+                        }
+                    )
             ) {
                 BasicText(
                     text = "Destination amount",
@@ -302,31 +346,18 @@ private fun TransferSheet(
                         .fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                AmountInputField(
-                    value = destinationAmountValue,
-                    currency = destination.currency,
-                    amountFormat = amountFormat,
-                    onNewValueParsed = onNewDestinationAmountValueParsed,
-                    onKeyboardSubmit = {
-                        if (isSaveEnabled.value) {
-                            softKeyboard?.hide()
-                            onSaveClicked()
-                        }
-                    },
+                Text(
+                    text = destinationAmountInputState.text,
+                    textAlign = TextAlign.Center,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .focusRequester(destinationAmountFocusRequester)
+                        .focusRequester(sourceAmountFocusRequester)
+                        .focusable()
                 )
-            }
-
-            LaunchedEffect(isSourceInputShown) {
-                if (isSourceInputShown) {
-                    sourceAmountFocusRequester.requestFocus()
-                } else {
-                    destinationAmountFocusRequester.requestFocus()
-                }
             }
         }
 
@@ -393,7 +424,20 @@ private fun TransferSheet(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        AmountKeyboard(
+            inputState =
+                if (isEnteringSourceAmount)
+                    sourceAmountInputState
+                else
+                    destinationAmountInputState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 8.dp,
+                )
+                .height(maxSheetHeightDp / 2.5f)
+        )
 
         TextButton(
             text = "Save",
@@ -466,10 +510,10 @@ private fun TransferSheetPreview(
                 date = ViewDate.today().let(::mutableStateOf),
                 onMemoUpdated = {},
                 subcategoryItemList =
-                ViewSelectableSubcategoryListItemPreviewParameterProvider()
-                    .values
-                    .toList()
-                    .let(::mutableStateOf),
+                    ViewSelectableSubcategoryListItemPreviewParameterProvider()
+                        .values
+                        .toList()
+                        .let(::mutableStateOf),
                 subcategoriesColorScheme = categoryColorScheme.let(::mutableStateOf),
                 onSubcategoryItemClicked = {},
                 isSaveEnabled = isSaveEnabled.let(::mutableStateOf),

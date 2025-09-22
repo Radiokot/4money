@@ -45,7 +45,7 @@ import java.math.BigInteger
 @Composable
 fun AmountKeyboard(
     modifier: Modifier = Modifier,
-    inputState: ViewAmountInputState,
+    inputState: AmountInputState,
 ) = BoxWithConstraints(
     modifier = modifier,
 ) {
@@ -73,7 +73,7 @@ fun AmountKeyboard(
                     .fillMaxWidth()
             ) {
                 Button(
-                    symbol = ViewAmountInputState.Operator.Divide.symbol,
+                    symbol = AmountInputState.Operator.Divide.symbol,
                     onClicked = onButtonClicked,
                     modifier = Modifier
                         .size(
@@ -116,7 +116,7 @@ fun AmountKeyboard(
                     .fillMaxWidth()
             ) {
                 Button(
-                    symbol = ViewAmountInputState.Operator.Multiply.symbol,
+                    symbol = AmountInputState.Operator.Multiply.symbol,
                     onClicked = onButtonClicked,
                     modifier = Modifier
                         .size(
@@ -159,7 +159,7 @@ fun AmountKeyboard(
                     .fillMaxWidth()
             ) {
                 Button(
-                    symbol = ViewAmountInputState.Operator.Minus.symbol,
+                    symbol = AmountInputState.Operator.Minus.symbol,
                     onClicked = onButtonClicked,
                     modifier = Modifier
                         .size(
@@ -202,7 +202,7 @@ fun AmountKeyboard(
                     .fillMaxWidth()
             ) {
                 Button(
-                    symbol = ViewAmountInputState.Operator.Plus.symbol,
+                    symbol = AmountInputState.Operator.Plus.symbol,
                     onClicked = onButtonClicked,
                     modifier = Modifier
                         .size(
@@ -249,15 +249,6 @@ fun AmountKeyboard(
                     )
                     .then(actionBackground)
             )
-//            Button(
-//                symbol = 'Ж',
-//                onClicked = onButtonClicked,
-//                modifier = Modifier
-//                    .size(
-//                        width = buttonWidth,
-//                        height = buttonHeight,
-//                    )
-//            )
             Button(
                 symbol = '=',
                 onClicked = onButtonClicked,

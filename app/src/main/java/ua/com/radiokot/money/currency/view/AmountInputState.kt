@@ -26,12 +26,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalConfiguration
+import kotlinx.coroutines.flow.Flow
 import java.math.BigInteger
 import kotlin.reflect.KMutableProperty0
 
 @Stable
-class ViewAmountInputState(
+class AmountInputState(
     val currency: ViewCurrency,
     initialValue: BigInteger,
     private val format: ViewAmountFormat,
@@ -40,19 +42,16 @@ class ViewAmountInputState(
     private val currencyPrecisionMultiplier =
         BigInteger.TEN.pow(currency.precision)
 
-    var valueA: String by mutableStateOf(
+    private var valueA: String by mutableStateOf(
         format.formatForInput(
             value = initialValue,
             currency = currency,
         )
     )
-        private set
 
-    var operator: Operator? by mutableStateOf(null)
-        private set
+    private var operator: Operator? by mutableStateOf(null)
 
-    var valueB: String by mutableStateOf("")
-        private set
+    private var valueB: String by mutableStateOf("")
 
     val text: String by derivedStateOf {
         val operator = operator
@@ -64,6 +63,11 @@ class ViewAmountInputState(
 
         "$value ${currency.symbol}"
     }
+
+    val valueFlow: Flow<BigInteger> =
+        snapshotFlow {
+            format.parseInput(valueA, currency)!!
+        }
 
     val decimalSeparator: Char =
         format.decimalSeparator
@@ -201,11 +205,12 @@ class ViewAmountInputState(
 fun rememberViewAmountInputState(
     currency: ViewCurrency,
     initialValue: BigInteger,
-): ViewAmountInputState {
+): AmountInputState {
+
     val locale = LocalConfiguration.current.locales.get(0)
 
     return remember(locale, currency) {
-        ViewAmountInputState(
+        AmountInputState(
             currency = currency,
             initialValue = initialValue,
             format = ViewAmountFormat(locale),
