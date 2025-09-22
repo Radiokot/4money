@@ -1,0 +1,5 @@
+Added:
+- An arithmetical keyboard to enter transfer amounts
+
+Fixed:
+- Incorrect alignment on the item logo screen when there's no title
