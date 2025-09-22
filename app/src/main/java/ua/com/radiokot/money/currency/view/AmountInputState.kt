@@ -28,6 +28,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import kotlinx.coroutines.flow.Flow
 import java.math.BigInteger
 import kotlin.reflect.KMutableProperty0
@@ -53,15 +55,22 @@ class AmountInputState(
 
     private var valueB: String by mutableStateOf("")
 
-    val text: String by derivedStateOf {
-        val operator = operator
-        val value =
-            if (operator != null)
-                "$valueA ${operator.symbol} $valueB"
-            else
-                valueA
+    val text: AnnotatedString by derivedStateOf {
 
-        "$value ${currency.symbol}"
+        val operator = operator
+
+        buildAnnotatedString {
+
+            if (operator != null)
+                append("$valueA ${operator.symbol} $valueB")
+            else
+                append(valueA)
+
+            pushStyle(format.currencySymbolSpanStyle)
+
+            append(" ")
+            append(currency.symbol)
+        }
     }
 
     val valueFlow: Flow<BigInteger> =

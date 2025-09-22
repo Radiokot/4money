@@ -50,6 +50,10 @@ class ViewAmountFormat(
         decimalFormatSymbols.minusSign
     val decimalSeparator: Char =
         decimalFormatSymbols.decimalSeparator
+    val currencySymbolSpanStyle =
+        SpanStyle(
+            fontSize = 0.8.em,
+        )
 
     operator fun invoke(
         amount: ViewAmount,
@@ -83,11 +87,7 @@ class ViewAmountFormat(
             )
         }
 
-        pushStyle(
-            style = SpanStyle(
-                fontSize = 0.8.em,
-            ),
-        )
+        pushStyle(currencySymbolSpanStyle)
 
         append(" ${amount.currency.symbol}")
     }
