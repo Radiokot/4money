@@ -160,7 +160,7 @@ class TransferSheetViewModel(
             .map { (source, destination) ->
                 source.currency != destination.currency
             }
-            .stateIn(viewModelScope, SharingStarted.Lazily, false)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val isSaveEnabled: StateFlow<Boolean> =
         // Only enable save if the input is valid.
@@ -171,7 +171,7 @@ class TransferSheetViewModel(
                 (!isSourceInputRequired || sourceAmountValue.signum() > 0)
                         && destAmountValue.signum() > 0
             }
-            .stateIn(viewModelScope, SharingStarted.Lazily, false)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val date: StateFlow<ViewDate> =
         dateTime

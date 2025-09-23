@@ -80,9 +80,9 @@ import ua.com.radiokot.money.colors.data.DrawableResItemIconRepository
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.AmountKeyboard
+import ua.com.radiokot.money.currency.view.AmountKeyboardMainAction
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.currency.view.rememberViewAmountInputState
-import ua.com.radiokot.money.uikit.TextButton
 import java.math.BigInteger
 
 @Composable
@@ -105,7 +105,6 @@ fun TransferSheetRoot(
         subcategoryItemList = viewModel.subcategoryItemList.collectAsState(),
         subcategoriesColorScheme = viewModel.subcategoriesColorScheme.collectAsState(),
         onSubcategoryItemClicked = remember { viewModel::onSubcategoryItemClicked },
-        isSaveEnabled = viewModel.isSaveEnabled.collectAsState(),
         onSaveClicked = remember { viewModel::onSaveClicked },
         onDateClicked = remember { viewModel::onDateClicked },
         onSourceClicked = remember { viewModel::onSourceClicked },
@@ -129,7 +128,6 @@ private fun TransferSheet(
     subcategoryItemList: State<List<ViewSelectableSubcategoryListItem>>,
     subcategoriesColorScheme: State<ItemColorScheme?>,
     onSubcategoryItemClicked: (ViewSelectableSubcategoryListItem) -> Unit,
-    isSaveEnabled: State<Boolean>,
     onSaveClicked: () -> Unit,
     onDateClicked: () -> Unit,
     onSourceClicked: () -> Unit,
@@ -435,6 +433,21 @@ private fun TransferSheet(
                     source.colorScheme
                 else
                     destination.colorScheme,
+            mainAction =
+                if (isEnteringSourceAmount)
+                    AmountKeyboardMainAction.Next
+                else
+                    AmountKeyboardMainAction.Done,
+            onMainActionClicked = { action ->
+                when (action) {
+
+                    AmountKeyboardMainAction.Done ->
+                        onSaveClicked()
+
+                    AmountKeyboardMainAction.Next ->
+                        isEnteringSourceAmount = false
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
@@ -442,19 +455,6 @@ private fun TransferSheet(
                     vertical = 8.dp,
                 )
                 .height(maxSheetHeightDp / 2.5f)
-        )
-
-        TextButton(
-            text = "Save",
-            isEnabled = isSaveEnabled.value,
-            modifier = Modifier
-                .clickable(
-                    onClick = onSaveClicked,
-                )
-                .fillMaxWidth()
-                .padding(
-                    horizontal = 16.dp,
-                )
         )
 
         Spacer(modifier = Modifier.height(22.dp))
@@ -521,7 +521,6 @@ private fun TransferSheetPreview(
                         .let(::mutableStateOf),
                 subcategoriesColorScheme = categoryColorScheme.let(::mutableStateOf),
                 onSubcategoryItemClicked = {},
-                isSaveEnabled = isSaveEnabled.let(::mutableStateOf),
                 onSaveClicked = {},
                 onDateClicked = {},
                 onSourceClicked = { },

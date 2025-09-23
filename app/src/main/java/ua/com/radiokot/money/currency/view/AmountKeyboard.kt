@@ -50,6 +50,8 @@ fun AmountKeyboard(
     modifier: Modifier = Modifier,
     inputState: AmountInputState,
     colorScheme: ItemColorScheme,
+    mainAction: AmountKeyboardMainAction = AmountKeyboardMainAction.Done,
+    onMainActionClicked: ((AmountKeyboardMainAction) -> Unit)? = null,
 ) = BoxWithConstraints(
     modifier = modifier,
 ) {
@@ -244,7 +246,7 @@ fun AmountKeyboard(
                 .weight(1f)
         ) {
             Button(
-                symbol = '<',
+                symbol = '⌫',
                 onClicked = onButtonClicked,
                 onLongClicked = {
                     inputState.clear()
@@ -257,8 +259,25 @@ fun AmountKeyboard(
                     .then(actionBackground)
             )
             Button(
-                symbol = '=',
-                onClicked = onButtonClicked,
+                symbol =
+                    if (inputState.isEvaluationNeeded)
+                        '='
+                    else
+                        when (mainAction) {
+
+                            AmountKeyboardMainAction.Done ->
+                                '✓'
+
+                            AmountKeyboardMainAction.Next ->
+                                '❭'
+                        },
+                onClicked = {
+                    if (inputState.isEvaluationNeeded) {
+                        inputState.acceptInput('=')
+                    } else {
+                        onMainActionClicked?.invoke(mainAction)
+                    }
+                },
                 textColor = Color(colorScheme.onPrimary),
                 modifier = Modifier
                     .size(
@@ -311,6 +330,12 @@ private fun Button(
             color = textColor,
         )
     }
+}
+
+enum class AmountKeyboardMainAction {
+    Done,
+    Next,
+    ;
 }
 
 @Preview

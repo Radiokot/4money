@@ -78,6 +78,10 @@ class AmountInputState(
             format.parseInput(valueA, currency)!!
         }
 
+    val isEvaluationNeeded: Boolean by derivedStateOf {
+        operator != null
+    }
+
     val decimalSeparator: Char =
         format.decimalSeparator
 
@@ -93,7 +97,7 @@ class AmountInputState(
                 this::valueA
 
         when {
-            symbol == '<' -> {
+            symbol == '⌫' -> {
 
                 if (valueB.isNotEmpty()) {
                     valueB = valueB.dropLast(1)
