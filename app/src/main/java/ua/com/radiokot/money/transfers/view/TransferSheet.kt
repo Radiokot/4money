@@ -430,6 +430,11 @@ private fun TransferSheet(
                     sourceAmountInputState
                 else
                     destinationAmountInputState,
+            colorScheme =
+                if (isEnteringSourceAmount)
+                    source.colorScheme
+                else
+                    destination.colorScheme,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(

@@ -41,12 +41,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composeunstyled.Text
+import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemColorScheme
 import java.math.BigInteger
 
 @Composable
 fun AmountKeyboard(
     modifier: Modifier = Modifier,
     inputState: AmountInputState,
+    colorScheme: ItemColorScheme,
 ) = BoxWithConstraints(
     modifier = modifier,
 ) {
@@ -256,12 +259,15 @@ fun AmountKeyboard(
             Button(
                 symbol = '=',
                 onClicked = onButtonClicked,
+                textColor = Color(colorScheme.onPrimary),
                 modifier = Modifier
                     .size(
                         width = buttonWidth,
                         height = buttonHeight * 3 + buttonGap * 2,
                     )
-                    .then(actionBackground)
+                    .background(
+                        color = Color(colorScheme.primary),
+                    )
             )
         }
     }
@@ -271,6 +277,7 @@ fun AmountKeyboard(
 private fun Button(
     modifier: Modifier = Modifier,
     symbol: Char,
+    textColor: Color = Color.Unspecified,
     onClicked: (Char) -> Unit,
     onLongClicked: ((Char) -> Unit)? = null,
 ) {
@@ -301,6 +308,7 @@ private fun Button(
         Text(
             text = symbol.toString(),
             fontSize = 28.sp,
+            color = textColor,
         )
     }
 }
@@ -318,6 +326,8 @@ private fun Preview(
             ),
             initialValue = BigInteger.ZERO,
         ),
+        colorScheme = HardcodedItemColorSchemeRepository()
+            .getItemColorSchemes()[22],
         modifier = Modifier
             .size(
                 width = 250.dp,
