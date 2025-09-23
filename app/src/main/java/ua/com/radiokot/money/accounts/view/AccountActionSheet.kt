@@ -34,7 +34,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
@@ -47,8 +46,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
@@ -56,12 +53,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composeunstyled.Text
+import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.currency.view.AmountKeyboard
+import ua.com.radiokot.money.currency.view.AmountKeyboardMainAction
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
-import ua.com.radiokot.money.uikit.AmountInputField
+import ua.com.radiokot.money.currency.view.rememberViewAmountInputState
 import ua.com.radiokot.money.uikit.TextButton
 import java.math.BigInteger
 
@@ -73,6 +76,7 @@ fun AccountActionSheet(
     AccountActionSheet(
         title = viewModel.title,
         balance = viewModel.balance,
+        colorScheme = viewModel.colorScheme,
         mode = viewModel.mode.collectAsState(),
         balanceInputValue = viewModel.balanceInputValue.collectAsState(),
         onBalanceClicked = remember { viewModel::onBalanceClicked },
@@ -93,6 +97,7 @@ private fun AccountActionSheet(
     modifier: Modifier = Modifier,
     title: String,
     balance: ViewAmount,
+    colorScheme: ItemColorScheme,
     mode: State<ViewAccountActionSheetMode>,
     balanceInputValue: State<BigInteger>,
     onBalanceClicked: () -> Unit,
@@ -194,10 +199,11 @@ private fun AccountActionSheet(
             ViewAccountActionSheetMode.Balance ->
                 BalanceModeContent(
                     currency = balance.currency,
+                    colorScheme = colorScheme,
                     balanceInputValue = balanceInputValue,
-                    amountFormat = amountFormat,
                     onNewBalanceInputValueParsed = onNewBalanceInputValueParsed,
                     onBalanceInputSubmit = onBalanceInputSubmit,
+                    keyboardHeight = maxSheetHeightDp / 2.5f,
                 )
         }
     }
@@ -225,6 +231,8 @@ private fun AccountActionSheetPreview(
                     precision = 2,
                 )
             ),
+            colorScheme = HardcodedItemColorSchemeRepository()
+                .getItemColorSchemes()[20],
             mode = mode.let(::mutableStateOf),
             balanceInputValue = BigInteger("9856").let(::mutableStateOf),
             onBalanceClicked = {},
@@ -370,11 +378,12 @@ private fun ArchivedActionsModeContent(
 @Composable
 private fun BalanceModeContent(
     currency: ViewCurrency,
+    colorScheme: ItemColorScheme,
     balanceInputValue: State<BigInteger>,
-    amountFormat: ViewAmountFormat,
     onNewBalanceInputValueParsed: (BigInteger) -> Unit,
     onBalanceInputSubmit: () -> Unit,
-) = Row(
+    keyboardHeight: Dp,
+) = Column(
     modifier = Modifier
         .padding(
             start = 16.dp,
@@ -382,32 +391,47 @@ private fun BalanceModeContent(
             bottom = 24.dp,
         )
 ) {
-    val focusRequester = remember {
-        FocusRequester()
-    }
 
-    AmountInputField(
-        value = balanceInputValue,
+    val balanceInputState = rememberViewAmountInputState(
         currency = currency,
-        amountFormat = amountFormat,
-        onNewValueParsed = onNewBalanceInputValueParsed,
-        onKeyboardSubmit = onBalanceInputSubmit,
-        modifier = Modifier
-            .weight(1f)
-            .focusRequester(focusRequester)
+        initialValue = balanceInputValue.value,
     )
 
-    LaunchedEffect(focusRequester) {
-        focusRequester.requestFocus()
+    LaunchedEffect(balanceInputState) {
+        balanceInputState
+            .valueFlow
+            .collect(onNewBalanceInputValueParsed)
     }
 
-    Spacer(modifier = Modifier.width(24.dp))
-
-    TextButton(
-        text = "Save",
+    Text(
+        text = "New balance",
+        textAlign = TextAlign.Center,
         modifier = Modifier
-            .clickable(
-                onClick = onBalanceInputSubmit,
-            )
+            .fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Text(
+        text = balanceInputState.text,
+        textAlign = TextAlign.Center,
+        fontSize = 20.sp,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier
+            .fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(24.dp))
+
+    AmountKeyboard(
+        inputState = balanceInputState,
+        colorScheme = colorScheme,
+        mainAction = AmountKeyboardMainAction.Done,
+        onMainActionClicked = {
+            onBalanceInputSubmit()
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(keyboardHeight)
     )
 }
