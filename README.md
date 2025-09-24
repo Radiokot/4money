@@ -6,10 +6,10 @@ The bar for such applications is quite high. My current goal is not to build a g
 but only to cover the needs of my family and have some fun meanwhile. It's also my first Compose app, so I am actively learning.
 
 <p float="left">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width=200 />
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width=200 />
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width=200 />
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width=200 />
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width=200 />
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width=200 />
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg" width=200 />
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" width=200 />
 </p>
 
 ## Key aspects
