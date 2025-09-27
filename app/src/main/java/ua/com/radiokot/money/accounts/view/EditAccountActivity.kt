@@ -50,6 +50,8 @@ class EditAccountActivity : MoneyAppActivity() {
             return
         }
 
+        unlockAppIfNeeded()
+
         enableEdgeToEdge()
 
         setContent {

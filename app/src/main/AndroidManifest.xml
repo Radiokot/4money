@@ -71,5 +71,10 @@
             android:name=".accounts.view.ArchivedAccountsActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustNothing" />
+
+        <activity
+            android:name=".lock.view.UnlockActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
     </application>
 </manifest>

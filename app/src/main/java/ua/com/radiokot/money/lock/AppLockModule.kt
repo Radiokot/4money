@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.lock
 
 import android.content.Context
+import org.koin.android.ext.koin.androidApplication
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -31,7 +32,7 @@ val appLockModule = module {
 
     single {
         AppLockPreferencesOnPrefs(
-            sharedPreferences = androidContext().getSharedPreferences(
+            sharedPreferences = androidApplication().getSharedPreferences(
                 "lock",
                 Context.MODE_PRIVATE
             )

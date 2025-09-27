@@ -30,7 +30,7 @@ class AppLock(
     val isLocked: Boolean
         get() =
             preferences.appLockPasscode.value != null
-                    && isUnlocked
+                    && !isUnlocked
 
     fun unlock(passcode: String): Boolean {
         isUnlocked = preferences.appLockPasscode.value == passcode

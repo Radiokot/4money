@@ -77,6 +77,7 @@ import com.composeunstyled.Text
 import kotlinx.coroutines.flow.mapNotNull
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
+import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
 import ua.com.radiokot.money.accounts.view.AccountActionSheetRoute
 import ua.com.radiokot.money.accounts.view.AccountsScreenRoute
@@ -86,7 +87,6 @@ import ua.com.radiokot.money.accounts.view.EditAccountScreenRoute
 import ua.com.radiokot.money.accounts.view.accountActionSheet
 import ua.com.radiokot.money.accounts.view.accountsScreen
 import ua.com.radiokot.money.auth.logic.UserSessionScope
-import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.categories.view.CategoriesScreenRoute
 import ua.com.radiokot.money.categories.view.CategoryActionSheetRoute
 import ua.com.radiokot.money.categories.view.EditCategoryActivity
@@ -114,6 +114,8 @@ class HomeActivity : MoneyAppActivity() {
         if (goToAuthIfNoSession()) {
             return
         }
+
+        unlockAppIfNeeded()
 
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.light(

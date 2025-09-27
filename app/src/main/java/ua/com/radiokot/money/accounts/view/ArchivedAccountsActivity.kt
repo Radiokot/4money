@@ -45,6 +45,8 @@ class ArchivedAccountsActivity : MoneyAppActivity() {
             return
         }
 
+        unlockAppIfNeeded()
+
         enableEdgeToEdge()
 
         setContent {

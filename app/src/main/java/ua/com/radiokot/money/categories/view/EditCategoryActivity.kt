@@ -49,6 +49,8 @@ class EditCategoryActivity : MoneyAppActivity() {
             return
         }
 
+        unlockAppIfNeeded()
+
         enableEdgeToEdge()
 
         setContent {
