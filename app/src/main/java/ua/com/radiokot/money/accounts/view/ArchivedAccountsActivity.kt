@@ -33,10 +33,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
 import ua.com.radiokot.money.auth.logic.UserSessionScope
-import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
+import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.rememberMoneyAppNavController
 
-class ArchivedAccountsActivity : UserSessionScopeActivity() {
+class ArchivedAccountsActivity : MoneyAppActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -86,7 +86,7 @@ import ua.com.radiokot.money.accounts.view.EditAccountScreenRoute
 import ua.com.radiokot.money.accounts.view.accountActionSheet
 import ua.com.radiokot.money.accounts.view.accountsScreen
 import ua.com.radiokot.money.auth.logic.UserSessionScope
-import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
+import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.categories.view.CategoriesScreenRoute
 import ua.com.radiokot.money.categories.view.CategoryActionSheetRoute
 import ua.com.radiokot.money.categories.view.EditCategoryActivity
@@ -104,7 +104,7 @@ import ua.com.radiokot.money.transfers.view.TransfersNavigator
 import ua.com.radiokot.money.transfers.view.transferCounterpartySelectionSheet
 import ua.com.radiokot.money.transfers.view.transferSheet
 
-class HomeActivity : UserSessionScopeActivity() {
+class HomeActivity : MoneyAppActivity() {
 
     private val viewModel: HomeViewModel by viewModel()
 

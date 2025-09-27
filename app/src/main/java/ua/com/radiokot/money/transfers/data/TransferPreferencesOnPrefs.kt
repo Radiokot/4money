@@ -36,6 +36,13 @@ class TransferPreferencesOnPrefs(
     private val lastUsedAccountsByCategoryStateFlow =
         MutableStateFlow(getLastUsedAccountsByCategoryMap())
 
+    init {
+        val versionKey = "version"
+        preferences.edit {
+            putInt(versionKey, 1)
+        }
+    }
+
     private fun getLastUsedAccountByCategoryKey(categoryId: String) =
         "transfer_last_used_acc_$categoryId"
 

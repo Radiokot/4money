@@ -43,6 +43,7 @@ import ua.com.radiokot.money.auth.data.UserSession
 import ua.com.radiokot.money.auth.logic.UserSessionHolder
 import ua.com.radiokot.money.currency.logic.CurrencyPricesUpdateWorker
 import ua.com.radiokot.money.home.homeModule
+import ua.com.radiokot.money.lock.appLockModule
 import ua.com.radiokot.money.powersync.BackgroundPowerSyncWorker
 import ua.com.radiokot.money.util.KermitSlf4jLogWriter
 import ua.com.radiokot.money.util.KoinSlf4jLogger
@@ -72,6 +73,7 @@ class MoneyApp : Application() {
 
             modules(
                 authModule,
+                appLockModule,
                 homeModule,
             )
         }

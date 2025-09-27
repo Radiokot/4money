@@ -34,11 +34,11 @@ import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.koinInject
 import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
 import ua.com.radiokot.money.auth.logic.UserSessionScope
-import ua.com.radiokot.money.auth.view.UserSessionScopeActivity
+import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.rememberMoneyAppNavController
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
-class TransferShortcutActivity : UserSessionScopeActivity() {
+class TransferShortcutActivity : MoneyAppActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
