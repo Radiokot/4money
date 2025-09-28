@@ -47,7 +47,7 @@ import com.composeunstyled.Text
 
 @Composable
 fun PasscodeInput(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     passcode: State<String>,
     onPasscodeChanged: (String) -> Unit,
     onBackspaceClicked: () -> Unit,
@@ -61,7 +61,7 @@ fun PasscodeInput(
         length = length,
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(32.dp))
 
     val onNumberClicked = remember(passcode, onPasscodeChanged) {
         { number: Int ->
