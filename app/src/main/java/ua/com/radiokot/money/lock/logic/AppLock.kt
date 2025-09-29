@@ -19,21 +19,64 @@
 
 package ua.com.radiokot.money.lock.logic
 
+import android.os.SystemClock
+import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.lock.data.AppLockPreferences
 
 class AppLock(
     private val preferences: AppLockPreferences,
 ) {
+    private val log by lazyLogger("AppLock")
+    private var wentToBackgroundAtMs: Long = 0
 
-    private var isUnlocked = false
+    private val canBeLocked: Boolean
+        get() = preferences.appLockPasscode.value != null
 
-    val isLocked: Boolean
-        get() =
-            preferences.appLockPasscode.value != null
-                    && !isUnlocked
+    var isLocked: Boolean = canBeLocked
+        private set
 
-    fun unlock(passcode: String): Boolean {
-        isUnlocked = preferences.appLockPasscode.value == passcode
-        return isUnlocked
+    fun unlock(passcode: String): Boolean =
+        if (preferences.appLockPasscode.value == passcode) {
+            isLocked = false
+
+            log.debug {
+                "unlock(): unlocked"
+            }
+
+            true
+        } else {
+            false
+        }
+
+    fun onAppWentToBackground() {
+        wentToBackgroundAtMs = SystemClock.uptimeMillis()
+
+        log.debug {
+            "onAppWentToBackground(): timestamp saved:" +
+                    "\nwentToBackgroundAtMs=$wentToBackgroundAtMs"
+        }
+    }
+
+    fun onAppReturnedToForeground() {
+
+        if (!canBeLocked || isLocked) {
+            return
+        }
+
+        if (SystemClock.uptimeMillis() - wentToBackgroundAtMs > 3000) {
+
+            log.debug {
+                "onAppReturnedToForeground(): locking as been in background long enough:" +
+                        "\nwentToBackgroundAtMs=$wentToBackgroundAtMs"
+            }
+
+            isLocked = true
+        } else {
+
+            log.debug {
+                "onAppReturnedToForeground(): not locking as not been in background long enough:" +
+                        "\nwentToBackgroundAtMs=$wentToBackgroundAtMs"
+            }
+        }
     }
 }

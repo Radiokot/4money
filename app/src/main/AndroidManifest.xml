@@ -75,6 +75,6 @@
         <activity
             android:name=".lock.view.UnlockActivity"
             android:exported="false"
-            android:launchMode="singleTop" />
+            android:launchMode="singleInstance" />
     </application>
 </manifest>

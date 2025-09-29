@@ -27,11 +27,13 @@ abstract class MoneyAppActivity(
     protected val unlockLauncher = registerForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
         callback = { result ->
+            isUnlockLaunched = false
             if (result.resultCode != RESULT_OK) {
                 finishAffinity()
             }
         },
     )
+    private var isUnlockLaunched = false
 
     protected open val hasSession: Boolean
         get() = scope.getOrNull<UserSession>() != null
@@ -43,14 +45,17 @@ abstract class MoneyAppActivity(
             return
         }
 
-        if (requiresUnlocking) {
-            unlockAppIfNeeded()
-        }
+        unlockAppIfNeeded()
 
         onCreateAllowed(savedInstanceState)
     }
 
     abstract fun onCreateAllowed(savedInstanceState: Bundle?)
+
+    override fun onResume() {
+        super.onResume()
+        unlockAppIfNeeded()
+    }
 
     /**
      * @return true if there is no session and switching to the auth screen has been called.
@@ -67,7 +72,14 @@ abstract class MoneyAppActivity(
         }
 
     protected open fun unlockAppIfNeeded() {
-        if (lock.isLocked) {
+        if (requiresUnlocking && lock.isLocked && !isUnlockLaunched) {
+
+            log.debug {
+                "unlockAppIfNeeded(): launching the unlock screen"
+            }
+
+            isUnlockLaunched = true
+
             unlockLauncher.launch(Intent(this, UnlockActivity::class.java))
         }
     }

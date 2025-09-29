@@ -23,6 +23,9 @@ import android.app.Application
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Environment
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -44,6 +47,7 @@ import ua.com.radiokot.money.auth.logic.UserSessionHolder
 import ua.com.radiokot.money.currency.logic.CurrencyPricesUpdateWorker
 import ua.com.radiokot.money.home.homeModule
 import ua.com.radiokot.money.lock.appLockModule
+import ua.com.radiokot.money.lock.logic.AppLock
 import ua.com.radiokot.money.powersync.BackgroundPowerSyncWorker
 import ua.com.radiokot.money.util.KermitSlf4jLogWriter
 import ua.com.radiokot.money.util.KoinSlf4jLogger
@@ -81,6 +85,7 @@ class MoneyApp : Application() {
         initSessionHolder()
         initBackgroundSync()
         initCurrencyPricesUpdate()
+        initLock()
     }
 
     private fun initLogging() {
@@ -227,5 +232,21 @@ class MoneyApp : Application() {
                 ExistingPeriodicWorkPolicy.UPDATE,
                 workRequest,
             )
+    }
+
+    private fun initLock() {
+
+        val lock: AppLock = get()
+
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+
+            override fun onStart(owner: LifecycleOwner) {
+                lock.onAppReturnedToForeground()
+            }
+
+            override fun onStop(owner: LifecycleOwner) {
+                lock.onAppWentToBackground()
+            }
+        })
     }
 }

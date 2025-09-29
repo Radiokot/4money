@@ -21,7 +21,6 @@ package ua.com.radiokot.money.lock
 
 import android.content.Context
 import org.koin.android.ext.koin.androidApplication
-import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.lock.data.AppLockPreferences
