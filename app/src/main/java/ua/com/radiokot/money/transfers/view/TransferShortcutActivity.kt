@@ -32,20 +32,18 @@ import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.koinInject
+import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
 import ua.com.radiokot.money.auth.logic.UserSessionScope
-import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.rememberMoneyAppNavController
 import ua.com.radiokot.money.transfers.data.TransferCounterpartyId
 
-class TransferShortcutActivity : MoneyAppActivity() {
+class TransferShortcutActivity : MoneyAppActivity(
+    requiresUnlocking = false,
+    requiresSession = true,
+) {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        if (goToAuthIfNoSession()) {
-            return
-        }
+    override fun onCreateAllowed(savedInstanceState: Bundle?) {
 
         enableEdgeToEdge()
 

@@ -31,9 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.navigation.compose.NavHost
 import kotlinx.serialization.json.Json
+import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
 import ua.com.radiokot.money.auth.logic.UserSessionScope
-import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.colors.data.ItemLogoType
 import ua.com.radiokot.money.colors.view.ItemLogoScreenRoute
 import ua.com.radiokot.money.colors.view.itemLogoScreen
@@ -41,16 +41,12 @@ import ua.com.radiokot.money.currency.view.CurrencySelectionScreenRoute
 import ua.com.radiokot.money.currency.view.currencySelectionScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
 
-class EditAccountActivity : MoneyAppActivity() {
+class EditAccountActivity : MoneyAppActivity(
+    requiresUnlocking = true,
+    requiresSession = true,
+) {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        if (goToAuthIfNoSession()) {
-            return
-        }
-
-        unlockAppIfNeeded()
+    override fun onCreateAllowed(savedInstanceState: Bundle?) {
 
         enableEdgeToEdge()
 

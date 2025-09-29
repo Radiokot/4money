@@ -31,21 +31,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
+import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.MoneyAppModalBottomSheetHost
 import ua.com.radiokot.money.auth.logic.UserSessionScope
-import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.rememberMoneyAppNavController
 
-class ArchivedAccountsActivity : MoneyAppActivity() {
+class ArchivedAccountsActivity : MoneyAppActivity(
+    requiresUnlocking = true,
+    requiresSession = true,
+) {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        if (goToAuthIfNoSession()) {
-            return
-        }
-
-        unlockAppIfNeeded()
+    override fun onCreateAllowed(savedInstanceState: Bundle?) {
 
         enableEdgeToEdge()
 

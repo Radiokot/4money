@@ -104,18 +104,14 @@ import ua.com.radiokot.money.transfers.view.TransfersNavigator
 import ua.com.radiokot.money.transfers.view.transferCounterpartySelectionSheet
 import ua.com.radiokot.money.transfers.view.transferSheet
 
-class HomeActivity : MoneyAppActivity() {
+class HomeActivity : MoneyAppActivity(
+    requiresSession = true,
+    requiresUnlocking = true,
+) {
 
     private val viewModel: HomeViewModel by viewModel()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        if (goToAuthIfNoSession()) {
-            return
-        }
-
-        unlockAppIfNeeded()
+    override fun onCreateAllowed(savedInstanceState: Bundle?) {
 
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.light(

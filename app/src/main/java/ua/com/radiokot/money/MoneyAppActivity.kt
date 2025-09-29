@@ -1,6 +1,7 @@
 package ua.com.radiokot.money
 
 import android.content.Intent
+import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import org.koin.android.ext.android.inject
@@ -12,7 +13,10 @@ import ua.com.radiokot.money.auth.view.AuthActivity
 import ua.com.radiokot.money.lock.logic.AppLock
 import ua.com.radiokot.money.lock.view.UnlockActivity
 
-abstract class MoneyAppActivity :
+abstract class MoneyAppActivity(
+    protected open val requiresUnlocking: Boolean,
+    protected open val requiresSession: Boolean,
+) :
     AppCompatActivity(),
     AndroidScopeComponent {
 
@@ -32,6 +36,22 @@ abstract class MoneyAppActivity :
     protected open val hasSession: Boolean
         get() = scope.getOrNull<UserSession>() != null
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        if (requiresSession && goToAuthIfNoSession()) {
+            return
+        }
+
+        if (requiresUnlocking) {
+            unlockAppIfNeeded()
+        }
+
+        onCreateAllowed(savedInstanceState)
+    }
+
+    abstract fun onCreateAllowed(savedInstanceState: Bundle?)
+
     /**
      * @return true if there is no session and switching to the auth screen has been called.
      */
@@ -41,20 +61,6 @@ abstract class MoneyAppActivity :
                 "goToAuthIfNoSession(): going"
             }
             goToAuth()
-            true
-        } else {
-            false
-        }
-
-    /**
-     * @return true if there is no session and finishing has been called.
-     */
-    open fun finishIfNoSession(): Boolean =
-        if (!hasSession) {
-            log.debug {
-                "finishIfNoSession(): finishing"
-            }
-            finishAffinity()
             true
         } else {
             false

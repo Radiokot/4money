@@ -22,6 +22,7 @@ package ua.com.radiokot.money.lock.view
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -46,10 +47,14 @@ import com.composeunstyled.Text
 import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.R
 
-class UnlockActivity : MoneyAppActivity() {
+class UnlockActivity : MoneyAppActivity(
+    requiresUnlocking = false,
+    requiresSession = false,
+) {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onCreateAllowed(savedInstanceState: Bundle?) {
+
+        enableEdgeToEdge()
 
         setResult(RESULT_CANCELED)
 
