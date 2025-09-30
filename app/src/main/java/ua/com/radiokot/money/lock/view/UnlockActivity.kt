@@ -23,6 +23,8 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -52,6 +54,15 @@ class UnlockActivity : MoneyAppActivity(
     requiresSession = false,
 ) {
 
+    private val biometricManager: BiometricManager by lazy {
+        BiometricManager.from(this)
+    }
+    private val canUseBiometrics: Boolean
+        get() =
+            biometricManager
+                .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+                    BiometricManager.BIOMETRIC_SUCCESS
+
     override fun onCreateAllowed(savedInstanceState: Bundle?) {
 
         enableEdgeToEdge()
@@ -61,6 +72,29 @@ class UnlockActivity : MoneyAppActivity(
         setContent {
             Content()
         }
+
+        if (canUseBiometrics) {
+            showBiometricsPrompt()
+        }
+    }
+
+    private fun showBiometricsPrompt() {
+        val prompt = BiometricPrompt(
+            this,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    lock.unlock(result)
+                    setResult(RESULT_OK)
+                    finish()
+                }
+            }
+        )
+        prompt.authenticate(
+            BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Unlock 4Money")
+                .setNegativeButtonText("Use passcode")
+                .build()
+        )
     }
 
     @Composable
@@ -105,6 +139,7 @@ class UnlockActivity : MoneyAppActivity(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 PasscodeInput(
+                    length = length,
                     passcode = passcode,
                     onPasscodeChanged = { newValue: String ->
 
@@ -127,10 +162,11 @@ class UnlockActivity : MoneyAppActivity(
                             }
                         }
                     },
-                    length = length,
                     onBackspaceClicked = {
                         passcode.value = passcode.value.dropLast(1)
                     },
+                    isBiometricsButtonShown = canUseBiometrics,
+                    onBiometricsClicked = ::showBiometricsPrompt,
                     modifier = Modifier
                         .size(
                             width = inputWidth,

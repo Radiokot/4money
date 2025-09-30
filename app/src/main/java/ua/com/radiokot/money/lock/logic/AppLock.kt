@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.lock.logic
 
 import android.os.SystemClock
+import androidx.biometric.BiometricPrompt
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.lock.data.AppLockPreferences
 
@@ -40,13 +41,23 @@ class AppLock(
             isLocked = false
 
             log.debug {
-                "unlock(): unlocked"
+                "unlock(): unlocked with passcode"
             }
 
             true
         } else {
             false
         }
+
+    fun unlock(biometricPromptResult: BiometricPrompt.AuthenticationResult) {
+        // Whatever.
+        isLocked = false
+
+        log.debug {
+            "unlock(): unlocked with biometrics:" +
+                    "\ntype=${biometricPromptResult.authenticationType}"
+        }
+    }
 
     fun onAppWentToBackground() {
         wentToBackgroundAtMs = SystemClock.uptimeMillis()

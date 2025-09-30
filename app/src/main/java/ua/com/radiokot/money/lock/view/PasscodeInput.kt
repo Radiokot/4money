@@ -48,10 +48,12 @@ import com.composeunstyled.Text
 @Composable
 fun PasscodeInput(
     modifier: Modifier = Modifier,
+    length: Int,
     passcode: State<String>,
     onPasscodeChanged: (String) -> Unit,
     onBackspaceClicked: () -> Unit,
-    length: Int,
+    isBiometricsButtonShown: Boolean,
+    onBiometricsClicked: () -> Unit,
 ) = Column(
     horizontalAlignment = Alignment.CenterHorizontally,
     modifier = modifier,
@@ -75,6 +77,8 @@ fun PasscodeInput(
     Keyboard(
         onNumberClicked = onNumberClicked,
         onBackspaceClicked = onBackspaceClicked,
+        isBiometricsButtonShown = isBiometricsButtonShown,
+        onBiometricsClicked = onBiometricsClicked,
         modifier = Modifier
             .weight(1f)
     )
@@ -118,6 +122,8 @@ private fun Keyboard(
     modifier: Modifier = Modifier,
     onNumberClicked: (Int) -> Unit,
     onBackspaceClicked: () -> Unit,
+    isBiometricsButtonShown: Boolean,
+    onBiometricsClicked: () -> Unit,
 ) = BoxWithConstraints(
     modifier = modifier
 ) {
@@ -169,12 +175,19 @@ private fun Keyboard(
         Row(
             horizontalArrangement = Arrangement.spacedBy(buttonGap),
         ) {
-            ActionButton(
-                text = "🤷",
-                onClick = {},
-                modifier = Modifier
-                    .size(buttonSize)
-            )
+            if (isBiometricsButtonShown) {
+                ActionButton(
+                    text = "\uD83E\uDEC6",
+                    onClick = onBiometricsClicked,
+                    modifier = Modifier
+                        .size(buttonSize)
+                )
+            } else {
+                Spacer(
+                    modifier = Modifier
+                        .size(buttonSize)
+                )
+            }
             NumberButton(
                 number = 0,
                 onClick = onNumberClicked,
@@ -264,6 +277,10 @@ private fun Preview() {
             passcode.value = passcode.value.dropLast(1)
         },
         length = length,
+        isBiometricsButtonShown = true,
+        onBiometricsClicked = {
+            passcode.value = "XXXX"
+        },
         modifier = Modifier
             .size(
                 width = 250.dp,
