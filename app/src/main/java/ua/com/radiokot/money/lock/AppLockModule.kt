@@ -26,6 +26,7 @@ import org.koin.dsl.module
 import ua.com.radiokot.money.lock.data.AppLockPreferences
 import ua.com.radiokot.money.lock.data.AppLockPreferencesOnPrefs
 import ua.com.radiokot.money.lock.logic.AppLock
+import ua.com.radiokot.money.lock.logic.DisableAppLockUseCase
 
 val appLockModule = module {
 
@@ -43,4 +44,10 @@ val appLockModule = module {
             preferences = get(),
         )
     } bind AppLock::class
+
+    single {
+        DisableAppLockUseCase(
+            preferences = get(),
+        )
+    } bind DisableAppLockUseCase::class
 }

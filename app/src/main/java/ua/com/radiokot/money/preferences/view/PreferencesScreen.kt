@@ -211,7 +211,7 @@ fun PreferencesScreen(
     userId = viewModel.userId.collectAsState(),
     isSyncErrorsNoticeVisible = viewModel.isSyncErrorsNoticeVisible.collectAsState(),
     isAppLockEnabled = viewModel.isAppLockEnabled.collectAsState(),
-    onAppLockClicked = remember { {} },
+    onAppLockClicked = remember { viewModel::onAppLockClicked },
 )
 
 @Preview(

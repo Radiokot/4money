@@ -45,6 +45,7 @@ val preferencesModule = module {
                 syncErrorRepository = get(),
                 signOutUseCase = get(),
                 appLock = get(),
+                disableAppLockUseCase = get(),
             )
         } bind PreferencesScreenViewModel::class
     }

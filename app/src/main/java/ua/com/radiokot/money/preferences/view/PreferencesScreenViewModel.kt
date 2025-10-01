@@ -38,6 +38,7 @@ import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.lock.logic.AppLock
+import ua.com.radiokot.money.lock.logic.DisableAppLockUseCase
 import ua.com.radiokot.money.syncerrors.data.SyncErrorRepository
 
 class PreferencesScreenViewModel(
@@ -45,7 +46,8 @@ class PreferencesScreenViewModel(
     session: UserSession,
     syncErrorRepository: SyncErrorRepository,
     private val signOutUseCase: SignOutUseCase,
-    private val appLock: AppLock,
+    appLock: AppLock,
+    private val disableAppLockUseCase: DisableAppLockUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("PreferencesScreenVM")
@@ -117,6 +119,38 @@ class PreferencesScreenViewModel(
                 .onFailure { error ->
                     log.error(error) {
                         "signOut(): failed to sign out"
+                    }
+                }
+        }
+    }
+
+    fun onAppLockClicked() {
+        if (isAppLockEnabled.value) {
+            disableAppLock()
+        } else {
+            // TODO: Enable app lock.
+        }
+    }
+
+    private var disableAppLockJob: Job? = null
+    private fun disableAppLock() {
+
+        disableAppLockJob?.cancel()
+        disableAppLockJob = viewModelScope.launch {
+            log.debug {
+                "disableAppLock(): disabling"
+            }
+
+            disableAppLockUseCase
+                .invoke()
+                .onSuccess {
+                    log.debug {
+                        "disableAppLock(): successfully disabled"
+                    }
+                }
+                .onFailure { error ->
+                    log.error(error) {
+                        "disableAppLock(): failed to disable"
                     }
                 }
         }
