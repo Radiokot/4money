@@ -37,6 +37,7 @@ import ua.com.radiokot.money.auth.logic.SignOutUseCase
 import ua.com.radiokot.money.currency.data.CurrencyPreferences
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
+import ua.com.radiokot.money.lock.logic.AppLock
 import ua.com.radiokot.money.syncerrors.data.SyncErrorRepository
 
 class PreferencesScreenViewModel(
@@ -44,6 +45,7 @@ class PreferencesScreenViewModel(
     session: UserSession,
     syncErrorRepository: SyncErrorRepository,
     private val signOutUseCase: SignOutUseCase,
+    private val appLock: AppLock,
 ) : ViewModel() {
 
     private val log by lazyLogger("PreferencesScreenVM")
@@ -71,6 +73,9 @@ class PreferencesScreenViewModel(
             .getErrorCountFlow()
             .map { it > 0 }
             .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val isAppLockEnabled: StateFlow<Boolean> =
+        appLock.isEnabled
 
     fun onPrimaryCurrencyCodeChanged(newValue: String) {
         _primaryCurrencyCodeValue.value = newValue

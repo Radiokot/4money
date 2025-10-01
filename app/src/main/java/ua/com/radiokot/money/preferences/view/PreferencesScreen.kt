@@ -23,6 +23,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -37,6 +38,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +49,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composeunstyled.Text
+import ua.com.radiokot.money.uikit.RedToggleSwitch
 import ua.com.radiokot.money.uikit.TextButton
 
 @Composable
@@ -56,6 +59,8 @@ private fun PreferencesScreen(
     onPrimaryCurrencyCodeChanged: (String) -> Unit,
     isSaveCurrencyPreferencesEnabled: State<Boolean>,
     onSaveCurrencyPreferencesClicked: () -> Unit,
+    isAppLockEnabled: State<Boolean>,
+    onAppLockClicked: () -> Unit,
     userId: State<String>,
     onSignOutClicked: () -> Unit,
     isSyncErrorsNoticeVisible: State<Boolean>,
@@ -134,6 +139,35 @@ private fun PreferencesScreen(
     Spacer(modifier = Modifier.height(40.dp))
 
     Text(
+        text = "Security",
+        fontSize = 16.sp,
+        fontWeight = FontWeight(500),
+    )
+
+    Spacer(modifier = Modifier.height(18.dp))
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clickable(
+                onClick = onAppLockClicked,
+            )
+    ) {
+        Text(
+            text = "Lock the app with a passcode",
+            modifier = Modifier
+                .weight(1f)
+        )
+
+        RedToggleSwitch(
+            isToggled = isAppLockEnabled,
+            onToggled = { onAppLockClicked() }
+        )
+    }
+
+    Spacer(modifier = Modifier.height(40.dp))
+
+    Text(
         text = "User",
         fontSize = 16.sp,
         fontWeight = FontWeight(500),
@@ -176,6 +210,8 @@ fun PreferencesScreen(
     onSignOutClicked = remember { viewModel::onSignOutClicked },
     userId = viewModel.userId.collectAsState(),
     isSyncErrorsNoticeVisible = viewModel.isSyncErrorsNoticeVisible.collectAsState(),
+    isAppLockEnabled = viewModel.isAppLockEnabled.collectAsState(),
+    onAppLockClicked = remember { {} },
 )
 
 @Preview(
@@ -188,6 +224,8 @@ private fun PreferencesScreenPreview(
     onPrimaryCurrencyCodeChanged = {},
     isSaveCurrencyPreferencesEnabled = true.let(::mutableStateOf),
     onSaveCurrencyPreferencesClicked = {},
+    isAppLockEnabled = true.let(::mutableStateOf),
+    onAppLockClicked = {},
     userId = "uid".let(::mutableStateOf),
     onSignOutClicked = {},
     isSyncErrorsNoticeVisible = true.let(::mutableStateOf),

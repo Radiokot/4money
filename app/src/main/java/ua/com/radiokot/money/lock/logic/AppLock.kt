@@ -21,19 +21,29 @@ package ua.com.radiokot.money.lock.logic
 
 import android.os.SystemClock
 import androidx.biometric.BiometricPrompt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.StateFlow
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.lock.data.AppLockPreferences
+import ua.com.radiokot.money.map
 
 class AppLock(
     private val preferences: AppLockPreferences,
 ) {
     private val log by lazyLogger("AppLock")
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var wentToBackgroundAtMs: Long = 0
 
-    private val canBeLocked: Boolean
-        get() = preferences.appLockPasscode.value != null
+    val isEnabled: StateFlow<Boolean> =
+        preferences
+            .appLockPasscode
+            .map(coroutineScope) { passcode ->
+                passcode != null
+            }
 
-    var isLocked: Boolean = canBeLocked
+    var isLocked: Boolean = isEnabled.value
         private set
 
     fun unlock(passcode: String): Boolean =
@@ -70,7 +80,7 @@ class AppLock(
 
     fun onAppReturnedToForeground() {
 
-        if (!canBeLocked || isLocked) {
+        if (!isEnabled.value || isLocked) {
             return
         }
 
