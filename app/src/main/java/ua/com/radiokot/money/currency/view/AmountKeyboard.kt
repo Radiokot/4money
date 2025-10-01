@@ -33,10 +33,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,8 +62,17 @@ fun AmountKeyboard(
     val buttonGap = 8.dp
     val buttonWidth = (maxWidth - buttonGap * 4) / 5
     val buttonHeight = (maxHeight - buttonGap * 3) / 4
-    val onButtonClicked = inputState::acceptInput
     val actionBackground = Modifier.background(Color(0xfff3f0f6))
+
+    val hapticFeedback = LocalHapticFeedback.current
+    val onButtonClicked = remember(inputState) {
+        { symbol: Char ->
+            hapticFeedback.performHapticFeedback(
+                HapticFeedbackType.KeyboardTap
+            )
+            inputState.acceptInput(symbol)
+        }
+    }
 
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -273,8 +285,11 @@ fun AmountKeyboard(
                         },
                 onClicked = {
                     if (inputState.isEvaluationNeeded) {
-                        inputState.acceptInput('=')
+                        onButtonClicked('=')
                     } else {
+                        hapticFeedback.performHapticFeedback(
+                            HapticFeedbackType.Confirm
+                        )
                         onMainActionClicked?.invoke(mainAction)
                     }
                 },
