@@ -32,12 +32,12 @@ import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.lock.logic.EnableAppLockUseCase
 
 class SetUpPasscodeScreenViewModel(
+    val passcodeLength: Int,
     private val enableAppLockUseCase: EnableAppLockUseCase,
 ) : ViewModel() {
 
     private val log by lazyLogger("SetUpPasscodeScreenVM")
 
-    val passcodeLength = 4
     private val _isRepeating: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRepeating = _isRepeating.asStateFlow()
     private val _passcode: MutableStateFlow<String> = MutableStateFlow("")

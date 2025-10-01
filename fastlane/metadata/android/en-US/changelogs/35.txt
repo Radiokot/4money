@@ -1,6 +1,0 @@
-Added:
-- Color to the arithmetical keyboard
-- Ability to edit account balance with the arithmetical keyboard
-
-Changed:
-- Now the "=" button on the arithmetical keyboard is used instead ot the Save button

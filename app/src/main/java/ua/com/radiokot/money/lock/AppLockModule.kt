@@ -62,6 +62,7 @@ val appLockModule = module {
 
     viewModel {
         SetUpPasscodeScreenViewModel(
+            passcodeLength = 4,
             enableAppLockUseCase = get(),
         )
     }

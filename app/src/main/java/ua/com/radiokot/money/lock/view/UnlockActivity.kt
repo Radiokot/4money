@@ -100,10 +100,10 @@ class UnlockActivity : MoneyAppActivity(
     @Composable
     private fun Content() {
 
-        val passcode = rememberSaveable {
+        val enteredPasscode = rememberSaveable {
             mutableStateOf("")
         }
-        val length = 4
+        val length = lock.currentPasscodeLength
 
         BoxWithConstraints(
             contentAlignment = Alignment.Center,
@@ -140,17 +140,17 @@ class UnlockActivity : MoneyAppActivity(
 
                 PasscodeInput(
                     length = length,
-                    passcode = passcode,
+                    passcode = enteredPasscode,
                     onPasscodeChanged = { newValue: String ->
 
-                        passcode.value = newValue
+                        enteredPasscode.value = newValue
 
                         if (newValue.length == length) {
                             if (lock.unlock(newValue)) {
                                 setResult(RESULT_OK)
                                 finish()
                             } else {
-                                passcode.value = ""
+                                enteredPasscode.value = ""
 
                                 Toast
                                     .makeText(
@@ -163,7 +163,7 @@ class UnlockActivity : MoneyAppActivity(
                         }
                     },
                     onBackspaceClicked = {
-                        passcode.value = passcode.value.dropLast(1)
+                        enteredPasscode.value = enteredPasscode.value.dropLast(1)
                     },
                     isBiometricsButtonShown = canUseBiometrics,
                     onBiometricsClicked = ::showBiometricsPrompt,

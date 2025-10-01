@@ -25,16 +25,36 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
+import ua.com.radiokot.money.MoneyAppActivity
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.lock.data.AppLockPreferences
 import ua.com.radiokot.money.map
 
+/**
+ * A lock for app screens.
+ * Locks if the passcode is set up and the app has been in background long enough.
+ * It is purely visual, no encryption/decryption is happening under the hood.
+ *
+ * @see MoneyAppActivity.requiresUnlocking
+ */
 class AppLock(
     private val preferences: AppLockPreferences,
 ) {
     private val log by lazyLogger("AppLock")
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var wentToBackgroundAtMs: Long = 0
+
+    /**
+     * If [isEnabled], length of the current passcode,
+     * 0 otherwise.
+     */
+    val currentPasscodeLength: Int
+        get() =
+            preferences
+                .appLockPasscode
+                .value
+                ?.length
+                ?: 0
 
     val isEnabled: StateFlow<Boolean> =
         preferences

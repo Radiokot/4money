@@ -1,0 +1,2 @@
+Added:
+- Ability to lock the app with a passcode
