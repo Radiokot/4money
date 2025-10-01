@@ -48,7 +48,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -154,6 +156,7 @@ fun MovableAccountList(
         }
     }
     val listState = rememberLazyListState()
+    val hapticFeedback = LocalHapticFeedback.current
     val reorderableState = rememberReorderableLazyListState(
         lazyListState = listState,
         onMove = { from, to ->
@@ -169,6 +172,10 @@ fun MovableAccountList(
                     as? ViewAccountListItem.Account
             itemToPlaceAfter = movableItemList.getOrNull(to.index - 1)
                     as? ViewAccountListItem.Account
+
+            hapticFeedback.performHapticFeedback(
+                HapticFeedbackType.SegmentTick
+            )
         },
     )
 
