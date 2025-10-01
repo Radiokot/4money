@@ -39,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
@@ -209,6 +211,7 @@ private fun NumberButton(
     onClick: (Int) -> Unit,
 ) {
     val shape = CircleShape
+    val hapticFeedback = LocalHapticFeedback.current
 
     Box(
         contentAlignment = Alignment.Center,
@@ -217,6 +220,9 @@ private fun NumberButton(
             .then(modifier)
             .clickable(
                 onClick = {
+                    hapticFeedback.performHapticFeedback(
+                        HapticFeedbackType.VirtualKey
+                    )
                     onClick(number)
                 },
             )
@@ -240,6 +246,7 @@ private fun ActionButton(
     onClick: () -> Unit,
 ) {
     val shape = CircleShape
+    val hapticFeedback = LocalHapticFeedback.current
 
     Box(
         contentAlignment = Alignment.Center,
@@ -247,7 +254,12 @@ private fun ActionButton(
             .clip(shape)
             .then(modifier)
             .clickable(
-                onClick = onClick,
+                onClick = {
+                    hapticFeedback.performHapticFeedback(
+                        HapticFeedbackType.KeyboardTap
+                    )
+                    onClick()
+                },
             )
             .background(
                 color = Color(0xfff3f0f6)
