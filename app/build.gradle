@@ -28,8 +28,8 @@ android {
         targetSdk 35
         minSdk 26
 
-        versionCode 36
-        versionName "0.21.0"
+        versionCode 37
+        versionName "0.22.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
