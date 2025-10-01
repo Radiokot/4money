@@ -79,8 +79,6 @@ fun PasscodeInput(
         onBackspaceClicked = onBackspaceClicked,
         isBiometricsButtonShown = isBiometricsButtonShown,
         onBiometricsClicked = onBiometricsClicked,
-        modifier = Modifier
-            .weight(1f)
     )
 }
 

@@ -31,6 +31,7 @@ import org.koin.compose.viewmodel.koinViewModel
 const val PreferencesScreenRoute = "preferences"
 
 fun NavGraphBuilder.preferencesScreen(
+    onProceedToPasscodeSetup: () -> Unit,
     onSignedOut: () -> Unit,
 ) = composable(PreferencesScreenRoute) {
 
@@ -39,6 +40,9 @@ fun NavGraphBuilder.preferencesScreen(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
+                PreferencesScreenViewModel.Event.ProceedToPasscodeSetup ->
+                    onProceedToPasscodeSetup()
+
                 PreferencesScreenViewModel.Event.SignedOut ->
                     onSignedOut()
             }

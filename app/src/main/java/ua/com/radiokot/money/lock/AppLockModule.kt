@@ -21,12 +21,15 @@ package ua.com.radiokot.money.lock
 
 import android.content.Context
 import org.koin.android.ext.koin.androidApplication
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import ua.com.radiokot.money.lock.data.AppLockPreferences
 import ua.com.radiokot.money.lock.data.AppLockPreferencesOnPrefs
 import ua.com.radiokot.money.lock.logic.AppLock
 import ua.com.radiokot.money.lock.logic.DisableAppLockUseCase
+import ua.com.radiokot.money.lock.logic.EnableAppLockUseCase
+import ua.com.radiokot.money.lock.view.SetUpPasscodeScreenViewModel
 
 val appLockModule = module {
 
@@ -46,8 +49,20 @@ val appLockModule = module {
     } bind AppLock::class
 
     single {
+        EnableAppLockUseCase(
+            preferences = get(),
+        )
+    } bind EnableAppLockUseCase::class
+
+    single {
         DisableAppLockUseCase(
             preferences = get(),
         )
     } bind DisableAppLockUseCase::class
+
+    viewModel {
+        SetUpPasscodeScreenViewModel(
+            enableAppLockUseCase = get(),
+        )
+    }
 }

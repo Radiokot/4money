@@ -128,7 +128,7 @@ class PreferencesScreenViewModel(
         if (isAppLockEnabled.value) {
             disableAppLock()
         } else {
-            // TODO: Enable app lock.
+            _events.tryEmit(Event.ProceedToPasscodeSetup)
         }
     }
 
@@ -158,6 +158,7 @@ class PreferencesScreenViewModel(
 
     sealed interface Event {
 
+        object ProceedToPasscodeSetup : Event
         object SignedOut : Event
     }
 }

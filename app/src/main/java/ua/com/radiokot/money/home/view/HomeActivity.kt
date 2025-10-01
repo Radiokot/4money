@@ -93,6 +93,7 @@ import ua.com.radiokot.money.categories.view.EditCategoryActivity
 import ua.com.radiokot.money.categories.view.EditCategoryScreenRoute
 import ua.com.radiokot.money.categories.view.categoriesScreen
 import ua.com.radiokot.money.categories.view.categoryActionSheet
+import ua.com.radiokot.money.lock.view.SetUpPasscodeActivity
 import ua.com.radiokot.money.preferences.view.PreferencesScreenRoute
 import ua.com.radiokot.money.preferences.view.preferencesScreen
 import ua.com.radiokot.money.rememberMoneyAppNavController
@@ -253,6 +254,11 @@ private fun HomeScreen(
             )
 
             preferencesScreen(
+                onProceedToPasscodeSetup = {
+                    context.startActivity(
+                        Intent(context, SetUpPasscodeActivity::class.java)
+                    )
+                },
                 onSignedOut = goToAuth,
             )
 

@@ -76,5 +76,9 @@
             android:name=".lock.view.UnlockActivity"
             android:exported="false"
             android:launchMode="singleInstance" />
+
+        <activity
+            android:name=".lock.view.SetUpPasscodeActivity"
+            android:exported="false" />
     </application>
 </manifest>
