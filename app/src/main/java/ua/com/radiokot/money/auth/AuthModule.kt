@@ -112,6 +112,7 @@ val authModule = module {
                 supabaseClient = get(),
                 userSessionHolder = get(),
                 database = get(),
+                disableAppLockUseCase = get(),
             )
         } bind SignOutUseCase::class
     }
