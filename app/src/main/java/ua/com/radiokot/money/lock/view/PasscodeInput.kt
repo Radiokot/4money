@@ -177,7 +177,7 @@ private fun Keyboard(
         ) {
             if (isBiometricsButtonShown) {
                 ActionButton(
-                    text = "\uD83E\uDEC6",
+                    text = "🫆",
                     onClick = onBiometricsClicked,
                     modifier = Modifier
                         .size(buttonSize)
@@ -195,7 +195,7 @@ private fun Keyboard(
                     .size(buttonSize)
             )
             ActionButton(
-                text = "⌫",
+                text = "🔙",
                 onClick = onBackspaceClicked,
                 modifier = Modifier
                     .size(buttonSize)
