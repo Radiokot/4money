@@ -55,23 +55,29 @@ class AmountInputState(
 
     private var valueB: String by mutableStateOf("")
 
-    val text: AnnotatedString by derivedStateOf {
+    val inputText: String by derivedStateOf {
 
         val operator = operator
 
-        buildAnnotatedString {
-
-            if (operator != null)
-                append("$valueA ${operator.symbol} $valueB")
-            else
+        buildString {
+            if (operator != null) {
                 append(valueA)
-
-            pushStyle(format.currencySymbolSpanStyle)
-
-            append(" ")
-            append(currency.symbol)
+                append(' ')
+                append(operator.symbol)
+                append(' ')
+                append(valueB)
+            } else {
+                append(valueA)
+            }
         }
     }
+
+    val currencySignText: AnnotatedString =
+        buildAnnotatedString {
+            pushStyle(format.currencySymbolSpanStyle)
+            append(' ')
+            append(currency.symbol)
+        }
 
     val valueFlow: Flow<BigInteger> =
         snapshotFlow {
@@ -221,7 +227,7 @@ class AmountInputState(
 }
 
 @Composable
-fun rememberViewAmountInputState(
+fun rememberAmountInputState(
     currency: ViewCurrency,
     initialValue: BigInteger,
 ): AmountInputState {

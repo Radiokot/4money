@@ -72,7 +72,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.composeunstyled.Text
 import ua.com.radiokot.money.categories.view.SelectableSubcategoryRow
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItemPreviewParameterProvider
@@ -81,8 +80,9 @@ import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.AmountKeyboard
 import ua.com.radiokot.money.currency.view.AmountKeyboardMainAction
+import ua.com.radiokot.money.currency.view.AnimatedAmountInputText
 import ua.com.radiokot.money.currency.view.ViewCurrency
-import ua.com.radiokot.money.currency.view.rememberViewAmountInputState
+import ua.com.radiokot.money.currency.view.rememberAmountInputState
 import java.math.BigInteger
 
 @Composable
@@ -235,7 +235,7 @@ private fun TransferSheet(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        val sourceAmountInputState = rememberViewAmountInputState(
+        val sourceAmountInputState = rememberAmountInputState(
             currency = source.currency,
             initialValue = sourceAmountValue.value,
         )
@@ -244,7 +244,7 @@ private fun TransferSheet(
                 .valueFlow
                 .collect(onNewSourceAmountValueParsed)
         }
-        val destinationAmountInputState = rememberViewAmountInputState(
+        val destinationAmountInputState = rememberAmountInputState(
             currency = destination.currency,
             initialValue = destinationAmountValue.value,
         )
@@ -270,6 +270,7 @@ private fun TransferSheet(
 
             if (isSourceInputShown) {
                 Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .weight(1f)
                         .then(
@@ -302,18 +303,16 @@ private fun TransferSheet(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = sourceAmountInputState.text,
-                        textAlign = TextAlign.Center,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
+                    AnimatedAmountInputText(
+                        amountInputState = sourceAmountInputState,
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .fillMaxWidth(0.9f)
                     )
                 }
             }
 
             Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .weight(1f)
                     .then(
@@ -346,15 +345,10 @@ private fun TransferSheet(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = destinationAmountInputState.text,
-                    textAlign = TextAlign.Center,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
+                AnimatedAmountInputText(
+                    amountInputState = destinationAmountInputState,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(sourceAmountFocusRequester)
-                        .focusable()
+                        .fillMaxWidth(0.9f)
                 )
             }
         }

@@ -359,7 +359,7 @@ private fun Preview(
 
 ) {
     AmountKeyboard(
-        inputState = rememberViewAmountInputState(
+        inputState = rememberAmountInputState(
             currency = ViewCurrency(
                 symbol = "$",
                 precision = 2,

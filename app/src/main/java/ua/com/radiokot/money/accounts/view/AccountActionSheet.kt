@@ -61,10 +61,11 @@ import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.currency.view.AmountKeyboard
 import ua.com.radiokot.money.currency.view.AmountKeyboardMainAction
+import ua.com.radiokot.money.currency.view.AnimatedAmountInputText
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
-import ua.com.radiokot.money.currency.view.rememberViewAmountInputState
+import ua.com.radiokot.money.currency.view.rememberAmountInputState
 import ua.com.radiokot.money.uikit.TextButton
 import java.math.BigInteger
 
@@ -392,7 +393,7 @@ private fun BalanceModeContent(
         )
 ) {
 
-    val balanceInputState = rememberViewAmountInputState(
+    val balanceInputState = rememberAmountInputState(
         currency = currency,
         initialValue = balanceInputValue.value,
     )
@@ -412,11 +413,8 @@ private fun BalanceModeContent(
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    Text(
-        text = balanceInputState.text,
-        textAlign = TextAlign.Center,
-        fontSize = 20.sp,
-        fontWeight = FontWeight.SemiBold,
+    AnimatedAmountInputText(
+        amountInputState = balanceInputState,
         modifier = Modifier
             .fillMaxWidth()
     )
