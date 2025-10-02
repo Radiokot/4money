@@ -1,3 +1,0 @@
-Added:
-- Haptic feedback for passcode and amount keyboards
-- Haptic feedback for reordering accounts
