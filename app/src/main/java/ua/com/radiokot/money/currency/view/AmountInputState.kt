@@ -69,13 +69,13 @@ class AmountInputState(
             } else {
                 append(valueA)
             }
+            append(' ')
         }
     }
 
     val currencySignText: AnnotatedString =
         buildAnnotatedString {
             pushStyle(format.currencySymbolSpanStyle)
-            append(' ')
             append(currency.symbol)
         }
 

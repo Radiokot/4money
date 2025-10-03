@@ -26,8 +26,17 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,6 +58,13 @@ fun AnimatedAmountInputText(
     modifier: Modifier,
     amountInputState: AmountInputState,
 ) {
+    val textStyle = TextStyle(
+        textAlign = TextAlign.End,
+        fontSize = 20.sp,
+        fontWeight = FontWeight.SemiBold,
+    )
+    val textFadingEdgeWidth = textStyle.fontSize.value
+
     Layout(
         content = {
             AnimatedContent(
@@ -60,22 +76,40 @@ fun AnimatedAmountInputText(
                     )
                 },
                 label = "amount-input-text",
+                modifier = Modifier
+                    .graphicsLayer(
+                        compositingStrategy = CompositingStrategy.Offscreen
+                    )
+                    .drawWithContent {
+                        drawContent()
+                        drawRect(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(Color.Black, Color.Transparent),
+                                startX = this.size.width - textFadingEdgeWidth,
+                            ),
+                            blendMode = BlendMode.SrcIn,
+                            size = Size(
+                                width = textFadingEdgeWidth,
+                                height = this.size.height,
+                            ),
+                            topLeft = Offset(
+                                x = this.size.width - textFadingEdgeWidth,
+                                y = 0f,
+                            )
+                        )
+                    }
             ) { amountInputText ->
                 Text(
                     text = amountInputText,
-                    textAlign = TextAlign.End,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = textStyle,
                     singleLine = true,
-                    overflow = TextOverflow.StartEllipsis
+                    overflow = TextOverflow.StartEllipsis,
                 )
             }
 
             Text(
                 text = amountInputState.currencySignText,
-                textAlign = TextAlign.Start,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = textStyle,
             )
         },
         measurePolicy = { measurables, constraints ->
