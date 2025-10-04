@@ -19,6 +19,8 @@
 
 package ua.com.radiokot.money.currency.view
 
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.TweenSpec
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -30,6 +32,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import java.math.BigInteger
 import kotlin.reflect.KMutableProperty0
@@ -158,10 +161,12 @@ class AmountInputState(
         }
     }
 
-    fun clear() {
-        valueA = "0"
-        operator = null
-        valueB = ""
+    suspend fun animateClear() {
+        val delayDuration = 250L / inputText.length
+        while (valueA != "0") {
+            acceptInput('⌫')
+            delay(delayDuration)
+        }
     }
 
     private fun evaluate() {

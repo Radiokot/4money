@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +45,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composeunstyled.Text
+import kotlinx.coroutines.launch
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import java.math.BigInteger
@@ -71,6 +73,15 @@ fun AmountKeyboard(
                 HapticFeedbackType.KeyboardTap
             )
             inputState.acceptInput(symbol)
+        }
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+    val animateClear = remember(inputState) {
+        {
+            coroutineScope.launch {
+                inputState.animateClear()
+            }
         }
     }
 
@@ -261,7 +272,7 @@ fun AmountKeyboard(
                 symbol = '⌫',
                 onClicked = onButtonClicked,
                 onLongClicked = {
-                    inputState.clear()
+                    animateClear()
                 },
                 modifier = Modifier
                     .size(
