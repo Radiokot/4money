@@ -66,6 +66,7 @@ import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
+import ua.com.radiokot.money.currency.view.animateBigIntegerAsState
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 import java.math.BigInteger
 
@@ -174,7 +175,7 @@ fun MovableAccountList(
                     as? ViewAccountListItem.Account
 
             hapticFeedback.performHapticFeedback(
-                HapticFeedbackType.SegmentTick
+                HapticFeedbackType.GestureEnd
             )
         },
     )
@@ -367,9 +368,15 @@ private fun HeaderItem(
             val amountFormat = remember(locale) {
                 ViewAmountFormat(locale)
             }
+            val animatedAmount = animateBigIntegerAsState(
+                targetValue = amount.value
+            )
 
             BasicText(
-                text = amountFormat(amount),
+                text = amountFormat(
+                    value = animatedAmount.value,
+                    currency = amount.currency,
+                ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = TextStyle(
@@ -433,9 +440,15 @@ private fun AccountItem(
             val amountFormat = remember(locale) {
                 ViewAmountFormat(locale)
             }
+            val animatedAmount = animateBigIntegerAsState(
+                targetValue = item.balance.value,
+            )
 
             BasicText(
-                text = amountFormat(item.balance),
+                text = amountFormat(
+                    value = animatedAmount.value,
+                    currency = item.balance.currency,
+                ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = TextStyle(

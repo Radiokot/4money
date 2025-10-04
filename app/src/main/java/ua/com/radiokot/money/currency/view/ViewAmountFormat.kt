@@ -37,9 +37,6 @@ import java.util.Locale
 class ViewAmountFormat(
     private val locale: Locale,
 ) {
-    private val decimalSeparatorsRegex by lazy {
-        "[.,٬٫]".toRegex()
-    }
     private val decimalFormatSymbols = DecimalFormatSymbols.getInstance(locale)
     private val allowedInputCharPredicate = { it: Char ->
         it.isDigit()
@@ -58,13 +55,24 @@ class ViewAmountFormat(
     operator fun invoke(
         amount: ViewAmount,
         customColor: Color? = null,
+    ): AnnotatedString =
+        invoke(
+            value = amount.value,
+            currency = amount.currency,
+            customColor = customColor,
+        )
+
+    operator fun invoke(
+        value: BigInteger,
+        currency: ViewCurrency,
+        customColor: Color? = null,
     ): AnnotatedString = buildAnnotatedString {
-        val (integerPart, decimalPart) = amount.value
-            .divideAndRemainder(BigInteger.TEN.pow(amount.currency.precision))
+        val (integerPart, decimalPart) = value
+            .divideAndRemainder(BigInteger.TEN.pow(currency.precision))
 
         pushStyle(
             style = SpanStyle(
-                color = customColor ?: when (amount.value.signum()) {
+                color = customColor ?: when (value.signum()) {
                     1 -> Color(0xff50af99)
                     -1 -> Color(0xffd85e8c)
                     else -> Color(0xff757575)
@@ -72,7 +80,7 @@ class ViewAmountFormat(
             )
         )
 
-        if (amount.value.signum() < 0) {
+        if (value.signum() < 0) {
             append(minusSign)
         }
 
@@ -83,13 +91,14 @@ class ViewAmountFormat(
             append(
                 decimalPart.toString()
                     .trimStart(minusSign)
-                    .padStart(amount.currency.precision, '0')
+                    .padStart(currency.precision, '0')
             )
         }
 
         pushStyle(currencySymbolSpanStyle)
 
-        append(" ${amount.currency.symbol}")
+        append(' ')
+        append(currency.symbol)
     }
 
     fun formatForInput(
@@ -120,14 +129,6 @@ class ViewAmountFormat(
             )
         }
     }
-
-    fun formatForInput(
-        amount: ViewAmount,
-    ): String =
-        formatForInput(
-            value = amount.value,
-            currency = amount.currency,
-        )
 
     fun parseInput(
         input: String,
@@ -178,15 +179,4 @@ class ViewAmountFormat(
                 integerPart * BigInteger.TEN.pow(currency.precision) + decimalPart
         }
     }
-
-    /**
-     * A method suitable when accepting input from a soft keyboard.
-     *
-     * @return a [rawInput] where all the possible decimal separators have been replaced
-     * with the one of the current locale.
-     */
-    fun unifyDecimalSeparators(
-        rawInput: String,
-    ): String =
-        rawInput.replace(decimalSeparatorsRegex, decimalSeparator.toString())
 }
