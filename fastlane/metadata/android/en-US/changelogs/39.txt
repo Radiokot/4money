@@ -1,0 +1,3 @@
+Added:
+- Animation of the amount input clearing
+- Fading edge for the amount input animation
