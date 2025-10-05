@@ -1,0 +1,3 @@
+Added:
+- Animation of amount changes on the accounts screen
+- Animation of category amount changes on the categories screen
