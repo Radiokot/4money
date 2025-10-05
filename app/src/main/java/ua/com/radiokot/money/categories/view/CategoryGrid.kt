@@ -43,6 +43,7 @@ import androidx.compose.ui.util.fastFilter
 import com.composeunstyled.Text
 import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
+import ua.com.radiokot.money.currency.view.animateAmountValueAsState
 
 @Composable
 fun CategoryGrid(
@@ -127,7 +128,7 @@ private fun LazyGridScope.categoryItems(
 ) {
     items(
         items = itemList.value,
-        ViewCategoryListItem::key,
+        key = ViewCategoryListItem::key,
     ) { item ->
         CategoryListItem(
             item = item,
@@ -221,8 +222,16 @@ private fun CategoryListItem(
             ViewAmountFormat(locale)
         }
 
+
+        val animatedAmountValue = animateAmountValueAsState(
+            targetAmount = amount,
+        )
+
         BasicText(
-            text = amountFormat(amount),
+            text = amountFormat(
+                value = animatedAmountValue.value,
+                currency = amount.currency,
+            ),
             style = TextStyle(
                 textAlign = TextAlign.Center,
             ),

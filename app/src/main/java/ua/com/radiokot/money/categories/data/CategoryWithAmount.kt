@@ -20,6 +20,7 @@
 package ua.com.radiokot.money.categories.data
 
 import ua.com.radiokot.money.currency.data.Amount
+import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import java.math.BigInteger
 
 data class CategoryWithAmount(
@@ -33,4 +34,5 @@ class CategoriesWithAmountAndTotal(
      */
     val totalInPrimaryCurrency: Amount?,
     val categories: List<CategoryWithAmount>,
+    val period: HistoryPeriod,
 )

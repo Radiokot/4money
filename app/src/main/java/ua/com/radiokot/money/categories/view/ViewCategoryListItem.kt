@@ -25,6 +25,7 @@ import ua.com.radiokot.money.categories.data.CategoryWithAmount
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.currency.view.ViewAmount
+import ua.com.radiokot.money.transfers.history.data.HistoryPeriod
 import java.math.BigInteger
 import kotlin.random.Random
 
@@ -37,7 +38,12 @@ class ViewCategoryListItem(
     val icon: ItemIcon?,
     val isArchived: Boolean,
     val source: Category? = null,
-    val key: Any = source?.hashCode() ?: Random.nextInt(),
+    /**
+     * Although it is not shown, the period is used to differentiate
+     * between the same category items showing data from different time.
+     */
+    period: HistoryPeriod?,
+    val key: Any = (source ?: Random.nextInt()) to period,
 ) {
     val isNotArchived: Boolean
         get() = !isArchived
@@ -46,6 +52,7 @@ class ViewCategoryListItem(
         category: Category,
         amount: BigInteger,
         isIncognito: Boolean,
+        period: HistoryPeriod?,
     ) : this(
         title = category.title,
         amount = ViewAmount(
@@ -56,6 +63,7 @@ class ViewCategoryListItem(
         icon = category.icon,
         isArchived = category.isArchived,
         isIncognito = isIncognito,
+        period = period,
         source = category,
     )
 
@@ -96,6 +104,7 @@ fun List<Category>.toSortedIncognitoViewItemList(
                 category = category,
                 amount = BigInteger.ZERO,
                 isIncognito = true,
+                period = null,
             )
         }
 
@@ -103,6 +112,7 @@ private val categoryWithAmountComparator = compareBy(CategoryWithAmount::categor
 
 fun List<CategoryWithAmount>.toSortedViewItemList(
     includeArchived: Boolean = false,
+    period: HistoryPeriod? = null,
 ): List<ViewCategoryListItem> =
     filter { includeArchived || !it.category.isArchived }
         .sortedWith(categoryWithAmountComparator)
@@ -111,5 +121,6 @@ fun List<CategoryWithAmount>.toSortedViewItemList(
                 category = category,
                 amount = amount,
                 isIncognito = false,
+                period = period,
             )
         }

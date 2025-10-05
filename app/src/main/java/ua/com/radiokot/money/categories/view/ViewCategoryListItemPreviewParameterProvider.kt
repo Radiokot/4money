@@ -49,6 +49,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                 icon = iconsByName["other_14"],
                 isArchived = false,
                 isIncognito = false,
+                period = null,
             ),
             ViewCategoryListItem(
                 title = "Gifts",
@@ -63,6 +64,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                 icon = iconsByName["socializing_15"],
                 isArchived = true,
                 isIncognito = true,
+                period = null,
             ),
         )
 
@@ -81,6 +83,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                 icon = null,
                 isArchived = false,
                 isIncognito = false,
+                period = null,
             ),
             ViewCategoryListItem(
                 title = "😽 Грушá with long name",
@@ -95,6 +98,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                 icon = null,
                 isArchived = false,
                 isIncognito = false,
+                period = null,
             ),
             ViewCategoryListItem(
                 title = "Incognito",
@@ -109,6 +113,7 @@ class ViewCategoryListItemPreviewParameterProvider :
                 icon = null,
                 isArchived = true,
                 isIncognito = true,
+                period = null,
             )
         )
 

@@ -146,6 +146,7 @@ class GetCategoriesWithAmountsAndTotalUseCase(
                     )
                 },
                 categories = categoriesWithTotal,
+                period = period,
             )
         }.flowOn(Dispatchers.Default)
 }
