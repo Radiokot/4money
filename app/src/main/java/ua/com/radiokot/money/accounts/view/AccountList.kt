@@ -66,7 +66,7 @@ import ua.com.radiokot.money.colors.view.ItemLogo
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.currency.view.ViewCurrency
-import ua.com.radiokot.money.currency.view.animateBigIntegerAsState
+import ua.com.radiokot.money.currency.view.animateAmountValueAsState
 import ua.com.radiokot.money.uikit.ViewAmountPreviewParameterProvider
 import java.math.BigInteger
 
@@ -368,8 +368,8 @@ private fun HeaderItem(
             val amountFormat = remember(locale) {
                 ViewAmountFormat(locale)
             }
-            val animatedAmount = animateBigIntegerAsState(
-                targetValue = amount.value
+            val animatedAmount = animateAmountValueAsState(
+                targetAmount = amount
             )
 
             BasicText(
@@ -440,8 +440,8 @@ private fun AccountItem(
             val amountFormat = remember(locale) {
                 ViewAmountFormat(locale)
             }
-            val animatedAmount = animateBigIntegerAsState(
-                targetValue = item.balance.value,
+            val animatedAmount = animateAmountValueAsState(
+                targetAmount = item.balance,
             )
 
             BasicText(
