@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.currency.view
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,12 +34,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,6 +51,7 @@ import com.composeunstyled.Text
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.uikit.ScaleIndication
 import java.math.BigInteger
 
 @Composable
@@ -85,235 +89,241 @@ fun AmountKeyboard(
         }
     }
 
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
+    CompositionLocalProvider(
+        LocalIndication provides remember(::ScaleIndication),
     ) {
-        Column(
-            verticalArrangement = Arrangement.SpaceBetween,
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
-                .fillMaxHeight()
-                .weight(4f)
+                .fillMaxWidth()
         ) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
+            Column(
+                verticalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .graphicsLayer()
+                    .weight(4f)
             ) {
-                Button(
-                    symbol = AmountInputState.Operator.Divide.symbol,
-                    onClicked = onButtonClicked,
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                        .then(actionBackground)
-                )
-                Button(
-                    symbol = '7',
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                )
-                Button(
-                    symbol = '8',
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                )
-                Button(
-                    symbol = '9',
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                )
-            }
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                Button(
-                    symbol = AmountInputState.Operator.Multiply.symbol,
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                        .then(actionBackground)
-                )
-                Button(
-                    symbol = '4',
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                )
-                Button(
-                    symbol = '5',
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                )
-                Button(
-                    symbol = '6',
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                )
-            }
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                Button(
-                    symbol = AmountInputState.Operator.Minus.symbol,
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                        .then(actionBackground)
-                )
-                Button(
-                    symbol = '1',
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                )
-                Button(
-                    symbol = '2',
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                )
-                Button(
-                    symbol = '3',
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                )
-            }
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                Button(
-                    symbol = AmountInputState.Operator.Plus.symbol,
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                        .then(actionBackground)
-                )
-                Button(
-                    symbol = '0',
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth * 2 + buttonGap,
-                            height = buttonHeight,
-                        )
-                )
-                Button(
-                    symbol = inputState.decimalSeparator,
-                    onClicked = onButtonClicked,
-                    modifier = Modifier
-                        .size(
-                            width = buttonWidth,
-                            height = buttonHeight,
-                        )
-                )
-            }
-        }
-
-        Column(
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.End,
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(1f)
-        ) {
-            Button(
-                symbol = '⌫',
-                onClicked = onButtonClicked,
-                onLongClicked = {
-                    animateClear()
-                },
-                modifier = Modifier
-                    .size(
-                        width = buttonWidth,
-                        height = buttonHeight,
+                        .fillMaxWidth()
+                ) {
+                    Button(
+                        symbol = AmountInputState.Operator.Divide.symbol,
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                            .then(actionBackground)
                     )
-                    .then(actionBackground)
-            )
-            Button(
-                symbol =
-                    if (inputState.isEvaluationNeeded)
-                        '='
-                    else
-                        when (mainAction) {
+                    Button(
+                        symbol = '7',
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                    )
+                    Button(
+                        symbol = '8',
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                    )
+                    Button(
+                        symbol = '9',
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                    )
+                }
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Button(
+                        symbol = AmountInputState.Operator.Multiply.symbol,
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                            .then(actionBackground)
+                    )
+                    Button(
+                        symbol = '4',
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                    )
+                    Button(
+                        symbol = '5',
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                    )
+                    Button(
+                        symbol = '6',
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                    )
+                }
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Button(
+                        symbol = AmountInputState.Operator.Minus.symbol,
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                            .then(actionBackground)
+                    )
+                    Button(
+                        symbol = '1',
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                    )
+                    Button(
+                        symbol = '2',
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                    )
+                    Button(
+                        symbol = '3',
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                    )
+                }
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Button(
+                        symbol = AmountInputState.Operator.Plus.symbol,
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                            .then(actionBackground)
+                    )
+                    Button(
+                        symbol = '0',
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth * 2 + buttonGap,
+                                height = buttonHeight,
+                            )
+                    )
+                    Button(
+                        symbol = inputState.decimalSeparator,
+                        onClicked = onButtonClicked,
+                        modifier = Modifier
+                            .size(
+                                width = buttonWidth,
+                                height = buttonHeight,
+                            )
+                    )
+                }
+            }
 
-                            AmountKeyboardMainAction.Done ->
-                                '✓'
-
-                            AmountKeyboardMainAction.Next ->
-                                '❭'
-                        },
-                onClicked = {
-                    if (inputState.isEvaluationNeeded) {
-                        onButtonClicked('=')
-                    } else {
-                        hapticFeedback.performHapticFeedback(
-                            HapticFeedbackType.Confirm
-                        )
-                        onMainActionClicked?.invoke(mainAction)
-                    }
-                },
-                textColor = Color(colorScheme.onPrimary),
+            Column(
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.End,
                 modifier = Modifier
-                    .size(
-                        width = buttonWidth,
-                        height = buttonHeight * 3 + buttonGap * 2,
-                    )
-                    .background(
-                        color = Color(colorScheme.primary),
-                    )
-            )
+                    .fillMaxHeight()
+                    .weight(1f)
+            ) {
+                Button(
+                    symbol = '⌫',
+                    onClicked = onButtonClicked,
+                    onLongClicked = {
+                        animateClear()
+                    },
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight,
+                        )
+                        .then(actionBackground)
+                )
+                Button(
+                    symbol =
+                        if (inputState.isEvaluationNeeded)
+                            '='
+                        else
+                            when (mainAction) {
+
+                                AmountKeyboardMainAction.Done ->
+                                    '✓'
+
+                                AmountKeyboardMainAction.Next ->
+                                    '❭'
+                            },
+                    onClicked = {
+                        if (inputState.isEvaluationNeeded) {
+                            onButtonClicked('=')
+                        } else {
+                            hapticFeedback.performHapticFeedback(
+                                HapticFeedbackType.Confirm
+                            )
+                            onMainActionClicked?.invoke(mainAction)
+                        }
+                    },
+                    textColor = Color(colorScheme.onPrimary),
+                    modifier = Modifier
+                        .size(
+                            width = buttonWidth,
+                            height = buttonHeight * 3 + buttonGap * 2,
+                        )
+                        .background(
+                            color = Color(colorScheme.primary),
+                        )
+                )
+            }
         }
     }
 }
@@ -333,11 +343,6 @@ private fun Button(
         modifier = Modifier
             .clip(shape)
             .then(modifier)
-            .border(
-                width = 1.dp,
-                color = Color.DarkGray,
-                shape = shape,
-            )
             .then(
                 if (onLongClicked != null)
                     Modifier.combinedClickable(
@@ -348,6 +353,11 @@ private fun Button(
                     Modifier.clickable(
                         onClick = { onClicked(symbol) },
                     )
+            )
+            .border(
+                width = 1.dp,
+                color = Color.DarkGray,
+                shape = shape,
             )
     ) {
         Text(

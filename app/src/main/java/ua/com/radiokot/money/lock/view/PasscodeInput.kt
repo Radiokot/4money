@@ -19,6 +19,7 @@
 
 package ua.com.radiokot.money.lock.view
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,6 +33,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import com.composeunstyled.Text
+import ua.com.radiokot.money.uikit.ScaleIndication
 
 @Composable
 fun PasscodeInput(
@@ -76,12 +79,16 @@ fun PasscodeInput(
         }
     }
 
-    Keyboard(
-        onNumberClicked = onNumberClicked,
-        onBackspaceClicked = onBackspaceClicked,
-        isBiometricsButtonShown = isBiometricsButtonShown,
-        onBiometricsClicked = onBiometricsClicked,
-    )
+    CompositionLocalProvider(
+        LocalIndication provides remember(::ScaleIndication),
+    ) {
+        Keyboard(
+            onNumberClicked = onNumberClicked,
+            onBackspaceClicked = onBackspaceClicked,
+            isBiometricsButtonShown = isBiometricsButtonShown,
+            onBiometricsClicked = onBiometricsClicked,
+        )
+    }
 }
 
 @Composable
@@ -262,7 +269,8 @@ private fun ActionButton(
                 },
             )
             .background(
-                color = Color(0xfff3f0f6)
+                color = Color(0xfff3f0f6),
+                shape = shape,
             )
     ) {
         Text(
