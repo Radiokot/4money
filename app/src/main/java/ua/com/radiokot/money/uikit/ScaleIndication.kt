@@ -76,22 +76,35 @@ class ScaleIndication(
 
         override fun onAttach() {
             coroutineScope.launch {
-                var pressCount = 0
-                var hoverCount = 0
-                var focusCount = 0
+                val collectedPresses = mutableSetOf<PressInteraction>()
+                val collectedHovers = mutableSetOf<HoverInteraction>()
+                val collectedFocuses = mutableSetOf<FocusInteraction>()
                 interactionSource.interactions.collect { interaction ->
                     when (interaction) {
-                        is PressInteraction.Press -> pressCount++
-                        is PressInteraction.Release -> pressCount--
-                        is PressInteraction.Cancel -> pressCount--
-                        is HoverInteraction.Enter -> hoverCount++
-                        is HoverInteraction.Exit -> hoverCount--
-                        is FocusInteraction.Focus -> focusCount++
-                        is FocusInteraction.Unfocus -> focusCount--
+                        is PressInteraction.Press ->
+                            collectedPresses.add(interaction)
+
+                        is PressInteraction.Release ->
+                            collectedPresses.remove(interaction.press)
+
+                        is PressInteraction.Cancel ->
+                            collectedPresses.remove(interaction.press)
+
+                        is HoverInteraction.Enter ->
+                            collectedHovers.add(interaction)
+
+                        is HoverInteraction.Exit ->
+                            collectedHovers.remove(interaction.enter)
+
+                        is FocusInteraction.Focus ->
+                            collectedFocuses.add(interaction)
+
+                        is FocusInteraction.Unfocus ->
+                            collectedFocuses.remove(interaction.focus)
                     }
-                    val pressed = pressCount > 0
-                    val hovered = hoverCount > 0
-                    val focused = focusCount > 0
+                    val pressed = collectedPresses.isNotEmpty()
+                    val hovered = collectedHovers.isNotEmpty()
+                    val focused = collectedFocuses.isNotEmpty()
                     var invalidateNeeded = false
                     if (isPressed != pressed) {
                         isPressed = pressed
