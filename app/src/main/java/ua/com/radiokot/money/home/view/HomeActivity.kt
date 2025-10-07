@@ -28,6 +28,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +51,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -104,6 +106,7 @@ import ua.com.radiokot.money.transfers.view.TransferCounterpartySelectionSheetRo
 import ua.com.radiokot.money.transfers.view.TransfersNavigator
 import ua.com.radiokot.money.transfers.view.transferCounterpartySelectionSheet
 import ua.com.radiokot.money.transfers.view.transferSheet
+import ua.com.radiokot.money.uikit.ScaleIndication
 
 class HomeActivity : MoneyAppActivity(
     requiresSession = true,
@@ -349,10 +352,14 @@ private fun HomeScreen(
             )
         }
 
-        BottomNavigation(
-            navController = navController,
-            hasMoreNotice = viewModel.hasMoreNotice.collectAsState(),
-        )
+        CompositionLocalProvider(
+            LocalIndication provides remember(::ScaleIndication),
+        ) {
+            BottomNavigation(
+                navController = navController,
+                hasMoreNotice = viewModel.hasMoreNotice.collectAsState(),
+            )
+        }
     }
 
     MoneyAppModalBottomSheetHost(
