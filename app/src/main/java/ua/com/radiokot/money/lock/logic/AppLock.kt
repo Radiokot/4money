@@ -38,6 +38,7 @@ import ua.com.radiokot.money.map
  * @see MoneyAppActivity.requiresUnlocking
  */
 class AppLock(
+    private val backgroundLockThresholdMs: Long,
     private val preferences: AppLockPreferences,
 ) {
     private val log by lazyLogger("AppLock")
@@ -104,7 +105,7 @@ class AppLock(
             return
         }
 
-        if (SystemClock.uptimeMillis() - wentToBackgroundAtMs > 3000) {
+        if (SystemClock.uptimeMillis() - wentToBackgroundAtMs > backgroundLockThresholdMs) {
 
             log.debug {
                 "onAppReturnedToForeground(): locking as been in background long enough:" +

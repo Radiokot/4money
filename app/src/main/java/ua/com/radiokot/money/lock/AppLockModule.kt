@@ -44,6 +44,7 @@ val appLockModule = module {
 
     single {
         AppLock(
+            backgroundLockThresholdMs = 10000,
             preferences = get(),
         )
     } bind AppLock::class
