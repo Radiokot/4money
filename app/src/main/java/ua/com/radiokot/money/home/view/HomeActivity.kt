@@ -25,6 +25,10 @@ import android.os.Bundle
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -32,6 +36,7 @@ import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -40,6 +45,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
@@ -63,8 +69,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -445,7 +453,8 @@ private fun BottomNavigation(
     BottomNavigationEntry(
         text = "More",
         icon = "⚙️",
-        isCurrent = lastVisitedBottomRoute == PreferencesScreenRoute,
+        isCurrent = lastVisitedBottomRoute == PreferencesScreenRoute
+                || LocalInspectionMode.current,
         hasNotice = hasMoreNotice.value,
         modifier = Modifier
             .weight(1f)
@@ -471,67 +480,95 @@ private fun BottomNavigationEntry(
         .then(modifier)
         .width(IntrinsicSize.Max)
 ) {
-    Text(
-        text = icon,
-        style = TextStyle(
-            fontSize = 16.sp,
-            textAlign = TextAlign.Center,
-        ),
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = Modifier
-            .fillMaxWidth(0.65f)
-            .then(
-                other =
-                    if (isCurrent)
-                        Modifier.background(
-                            color = Color(0xFFD8CCE1),
-                            shape = RoundedCornerShape(
-                                percent = 50,
-                            )
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+    ) {
+        val indicationScaleX = animateFloatAsState(
+            targetValue =
+                if (isCurrent)
+                    1f
+                else
+                    0.5f,
+            animationSpec = spring(
+                stiffness = Spring.StiffnessMediumLow,
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+            )
+        )
+        this@Column.AnimatedVisibility(
+            visible = isCurrent,
+            enter = fadeIn(initialAlpha = 0.5f),
+            exit = fadeOut(),
+            modifier = Modifier
+                .fillMaxWidth(0.65f)
+                .fillMaxHeight()
+                .graphicsLayer {
+                    scaleX =
+                        if (isCurrent)
+                            indicationScaleX.value
+                        else
+                            1f
+                }
+        ) {
+            Box(
+                modifier = Modifier
+                    .background(
+                        color = Color(0xFFD8CCE1),
+                        shape = RoundedCornerShape(
+                            percent = 50,
+                        ),
+                    )
+            )
+        }
+
+        Text(
+            text = icon,
+            style = TextStyle(
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+            ),
+            modifier = Modifier
+                .fillMaxWidth(0.65f)
+                .padding(
+                    vertical = 4.dp,
+                )
+                .run {
+                    if (!hasNotice) {
+                        return@run this
+                    }
+
+                    val noticeCircleRadiusPx: Float
+                    val noticeCircleOffset: Offset
+                    with(LocalDensity.current) {
+                        noticeCircleRadiusPx = 4.dp.toPx()
+                        noticeCircleOffset = Offset(
+                            x = 18.dp.toPx(),
+                            y = (-8).dp.toPx(),
                         )
-                    else
-                        Modifier
-            )
-            .padding(
-                vertical = 4.dp,
-            )
-            .run {
-                if (!hasNotice) {
-                    return@run this
+                    }
+
+                    then(Modifier.drawWithContent {
+                        drawContent()
+                        drawCircle(
+                            color = Color.Red,
+                            radius = noticeCircleRadiusPx,
+                            center = center + noticeCircleOffset
+                        )
+                    })
                 }
+        )
+    }
 
-                val noticeCircleRadiusPx: Float
-                val noticeCircleOffset: Offset
-                with(LocalDensity.current) {
-                    noticeCircleRadiusPx = 4.dp.toPx()
-                    noticeCircleOffset = Offset(
-                        x = 18.dp.toPx(),
-                        y = (-8).dp.toPx(),
-                    )
-                }
-
-                then(Modifier.drawWithContent {
-                    drawContent()
-                    drawCircle(
-                        color = Color.Red,
-                        radius = noticeCircleRadiusPx,
-                        center = center + noticeCircleOffset
-                    )
-                })
-            }
-    )
-
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(2.dp))
 
     Text(
         text = text,
         style = TextStyle(
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             textAlign = TextAlign.Center,
-            fontWeight =
-                if (isCurrent)
-                    FontWeight.SemiBold
-                else
-                    FontWeight.Normal
+            fontWeight = FontWeight.SemiBold,
         ),
         modifier = Modifier
             .fillMaxWidth()
