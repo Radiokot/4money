@@ -27,14 +27,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -47,19 +49,18 @@ import androidx.compose.ui.unit.min
 import com.composeunstyled.Icon
 import ua.com.radiokot.money.colors.data.DrawableResItemIconRepository
 import ua.com.radiokot.money.colors.data.ItemIcon
+import ua.com.radiokot.money.colors.data.ItemIconCategory
 
 @Composable
 fun IconPicker(
     modifier: Modifier = Modifier,
-    iconList: State<List<ItemIcon>>,
+    iconCategories: List<ItemIconCategory>,
     selectedIcon: State<ItemIcon?>,
     onIconClicked: (ItemIcon?) -> Unit,
     contentPadding: PaddingValues = PaddingValues(8.dp),
 ) {
-    val noIconAndIcons = remember {
-        derivedStateOf {
-            listOf<ItemIcon?>(null) + iconList.value
-        }
+    val noIconAndIcons = remember(iconCategories) {
+        listOf(listOf<ItemIcon?>(null)) + iconCategories
     }
 
     LazyVerticalGrid(
@@ -69,64 +70,77 @@ fun IconPicker(
         contentPadding = contentPadding,
         modifier = modifier,
     ) {
+        noIconAndIcons.forEach { categoryIcons ->
+            items(
+                items = categoryIcons,
+                key = { it?.name ?: "noicon" },
+            ) { icon ->
 
-        items(
-            items = noIconAndIcons.value,
-            key = { it?.name ?: "noicon" },
-        ) { icon ->
+                val isThisIconSelected = icon == selectedIcon.value
 
-            val isThisIconSelected = icon == selectedIcon.value
+                BoxWithConstraints {
+                    val circleSize = min(maxWidth, maxHeight)
 
-            BoxWithConstraints {
-                val circleSize = min(maxWidth, maxHeight)
+                    val backgroundColor = animateColorAsState(
+                        if (isThisIconSelected)
+                            Color.DarkGray
+                        else
+                            Color(0xFFFBEBE7)
+                    )
 
-                val backgroundColor = animateColorAsState(
-                    if (isThisIconSelected)
-                        Color.DarkGray
-                    else
-                        Color(0xFFFBEBE7)
-                )
+                    val iconColor = animateColorAsState(
+                        if (isThisIconSelected)
+                            Color.White
+                        else
+                            Color.DarkGray
+                    )
 
-                val iconColor = animateColorAsState(
-                    if (isThisIconSelected)
-                        Color.White
-                    else
-                        Color.DarkGray
-                )
-
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(circleSize)
-                        .then(
-                            if (icon != null)
-                                Modifier.background(
-                                    color = backgroundColor.value,
-                                    shape = CircleShape,
-                                )
-                            else
-                                Modifier.border(
-                                    color = backgroundColor.value,
-                                    width = circleSize * 0.08f,
-                                    shape = CircleShape,
-                                )
-                        )
-                        .clickable(
-                            onClick = {
-                                onIconClicked(icon)
-                            },
-                        )
-                ) {
-                    if (icon != null) {
-                        Icon(
-                            painter = painterResource(icon.resId),
-                            contentDescription = icon.name,
-                            tint = iconColor.value,
-                            modifier = Modifier
-                                .size(circleSize * 0.525f)
-                        )
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(circleSize)
+                            .then(
+                                if (icon != null)
+                                    Modifier.background(
+                                        color = backgroundColor.value,
+                                        shape = CircleShape,
+                                    )
+                                else
+                                    Modifier.border(
+                                        color = backgroundColor.value,
+                                        width = circleSize * 0.08f,
+                                        shape = CircleShape,
+                                    )
+                            )
+                            .clickable(
+                                onClick = {
+                                    onIconClicked(icon)
+                                },
+                            )
+                    ) {
+                        if (icon != null) {
+                            Icon(
+                                painter = painterResource(icon.resId),
+                                contentDescription = icon.name,
+                                tint = iconColor.value,
+                                modifier = Modifier
+                                    .size(circleSize * 0.525f)
+                            )
+                        }
                     }
                 }
+            }
+
+            if (categoryIcons != noIconAndIcons.last()) {
+                item(
+                    key = categoryIcons,
+                    span = { GridItemSpan(maxLineSpan) },
+                    content = {
+                        Spacer(
+                            modifier = Modifier.height(16.dp)
+                        )
+                    },
+                )
             }
         }
     }
@@ -138,11 +152,10 @@ private fun Preview(
 
 ) {
 
-    val icons = DrawableResItemIconRepository().getItemIcons()
     val selectedIcon = remember { mutableStateOf<ItemIcon?>(null) }
 
     IconPicker(
-        iconList = icons.let(::mutableStateOf),
+        iconCategories = DrawableResItemIconRepository().getItemIconCategories(),
         selectedIcon = selectedIcon,
         onIconClicked = { selectedIcon.value = it },
     )

@@ -19,11 +19,5 @@
 
 package ua.com.radiokot.money.colors.data
 
-interface ItemIconRepository {
-
-    fun getItemIcons(): List<ItemIcon>
-
-    fun getItemIconsByName(): Map<String, ItemIcon>
-
-    fun getItemIconCategories(): List<ItemIconCategory>
-}
+// Category structure to be clarified later.
+typealias ItemIconCategory = List<ItemIcon>

@@ -40,9 +40,7 @@ class ItemLogoScreenViewModel(
     private val _colorSchemeList: MutableStateFlow<List<ItemColorScheme>> =
         MutableStateFlow(itemColorSchemeRepository.getItemColorSchemes())
     val colorSchemeList = _colorSchemeList.asStateFlow()
-    private val _iconList: MutableStateFlow<List<ItemIcon>> =
-        MutableStateFlow(itemIconRepository.getItemIcons())
-    val iconList = _iconList.asStateFlow()
+    val iconCategories = itemIconRepository.getItemIconCategories()
     private val _selectedColorScheme: MutableStateFlow<ItemColorScheme> =
         MutableStateFlow(
             itemColorSchemeRepository

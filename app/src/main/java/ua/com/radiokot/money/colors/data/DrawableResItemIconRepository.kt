@@ -28,26 +28,32 @@ import ua.com.radiokot.money.R
  */
 class DrawableResItemIconRepository : ItemIconRepository {
 
-    private val icons: List<ItemIcon> by lazy {
+    private val iconCategories: List<ItemIconCategory> by lazy {
 
-        R.drawable::class.java.fields.mapNotNull { drawableIdField ->
-
-            val iconName =
-                drawableIdField
-                    .name
-                    .substringBeforeLast(
-                        delimiter = "_itemicon",
-                        missingDelimiterValue = "",
-                    )
-                    .takeIf(String::isNotEmpty)
-                    ?: return@mapNotNull null
-
-            ItemIcon(
-                name = iconName,
-                resId = drawableIdField.getInt(null),
-            )
-        }
+        R.drawable::class.java
+            .fields
+            .mapNotNull { drawableIdField ->
+                ItemIcon(
+                    name =
+                        drawableIdField
+                            .name
+                            .substringBeforeLast(
+                                delimiter = "_itemicon",
+                                missingDelimiterValue = "",
+                            )
+                            .takeIf(String::isNotEmpty)
+                            ?: return@mapNotNull null,
+                    resId = drawableIdField.getInt(null),
+                )
+            }
+            .groupBy { icon ->
+                icon.name.substringBefore('_')
+            }
+            .values
+            .toList()
     }
+
+    private val icons: List<ItemIcon> by lazy(iconCategories::flatten)
 
     private val iconsByName: Map<String, ItemIcon> by lazy {
         icons.associateBy(ItemIcon::name)
@@ -58,4 +64,7 @@ class DrawableResItemIconRepository : ItemIconRepository {
 
     override fun getItemIconsByName(): Map<String, ItemIcon> =
         iconsByName
+
+    override fun getItemIconCategories(): List<ItemIconCategory> =
+        iconCategories
 }

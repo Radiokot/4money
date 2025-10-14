@@ -69,6 +69,7 @@ import ua.com.radiokot.money.colors.data.DrawableResItemIconRepository
 import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemIcon
+import ua.com.radiokot.money.colors.data.ItemIconCategory
 import ua.com.radiokot.money.colors.data.ItemLogoType
 import ua.com.radiokot.money.plus
 import ua.com.radiokot.money.uikit.TextButton
@@ -81,7 +82,7 @@ private fun ItemLogoScreen(
     colorSchemeList: State<List<ItemColorScheme>>,
     selectedColorScheme: State<ItemColorScheme>,
     onColorSchemeClicked: (ItemColorScheme) -> Unit,
-    iconList: State<List<ItemIcon>>,
+    iconCategories: List<ItemIconCategory>,
     selectedIcon: State<ItemIcon?>,
     onIconClicked: (ItemIcon?) -> Unit,
     onCloseClicked: () -> Unit,
@@ -167,7 +168,7 @@ private fun ItemLogoScreen(
                     colorSchemeList = colorSchemeList,
                     selectedColorScheme = selectedColorScheme,
                     onColorSchemeClicked = onColorSchemeClicked,
-                    iconList = iconList,
+                    iconCategories = iconCategories,
                     selectedIcon = selectedIcon,
                     onIconClicked = onIconClicked,
                     modifier = Modifier
@@ -192,7 +193,7 @@ private fun ItemLogoScreen(
                     colorSchemeList = colorSchemeList,
                     selectedColorScheme = selectedColorScheme,
                     onColorSchemeClicked = onColorSchemeClicked,
-                    iconList = iconList,
+                    iconCategories = iconCategories,
                     selectedIcon = selectedIcon,
                     onIconClicked = onIconClicked,
                 )
@@ -259,7 +260,7 @@ private fun Pickers(
     colorSchemeList: State<List<ItemColorScheme>>,
     selectedColorScheme: State<ItemColorScheme>,
     onColorSchemeClicked: (ItemColorScheme) -> Unit,
-    iconList: State<List<ItemIcon>>,
+    iconCategories: List<ItemIconCategory>,
     selectedIcon: State<ItemIcon?>,
     onIconClicked: (ItemIcon?) -> Unit,
 ) = Column(
@@ -347,7 +348,7 @@ private fun Pickers(
 
             Page.Icon -> {
                 IconPicker(
-                    iconList = iconList,
+                    iconCategories = iconCategories,
                     selectedIcon = selectedIcon,
                     onIconClicked = onIconClicked,
                     contentPadding = pickerContentPadding,
@@ -385,7 +386,7 @@ fun ItemLogoScreenRoot(
         colorSchemeList = viewModel.colorSchemeList.collectAsState(),
         selectedColorScheme = viewModel.selectedColorScheme.collectAsState(),
         onColorSchemeClicked = remember { viewModel::onColorSchemeClicked },
-        iconList = viewModel.iconList.collectAsState(),
+        iconCategories = viewModel.iconCategories,
         selectedIcon = viewModel.selectedIcon.collectAsState(),
         onIconClicked = remember { viewModel::onIconClicked },
         onCloseClicked = remember { viewModel::onCloseClicked },
@@ -404,8 +405,6 @@ private fun Preview(
     val selectedColorScheme = remember {
         mutableStateOf(colorSchemes[12])
     }
-    val icons = DrawableResItemIconRepository()
-        .getItemIcons()
     val selectedIcon = remember {
         mutableStateOf<ItemIcon?>(null)
     }
@@ -418,9 +417,7 @@ private fun Preview(
                 .let(::mutableStateOf),
         selectedColorScheme = selectedColorScheme,
         onColorSchemeClicked = { selectedColorScheme.value = it },
-        iconList =
-            icons
-                .let(::mutableStateOf),
+        iconCategories = DrawableResItemIconRepository().getItemIconCategories(),
         selectedIcon = selectedIcon,
         onIconClicked = { selectedIcon.value = it },
         onCloseClicked = { },
