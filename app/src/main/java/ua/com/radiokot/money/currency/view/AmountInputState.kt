@@ -19,8 +19,6 @@
 
 package ua.com.radiokot.money.currency.view
 
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.TweenSpec
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -48,7 +46,7 @@ class AmountInputState(
         BigInteger.TEN.pow(currency.precision)
 
     private var valueA: String by mutableStateOf(
-        format.formatForInput(
+        format.formatInput(
             value = initialValue,
             currency = currency,
         )
@@ -109,14 +107,16 @@ class AmountInputState(
             symbol == '⌫' -> {
 
                 if (valueB.isNotEmpty()) {
-                    valueB = valueB.dropLast(1)
+                    currentValueProperty.setIfValidInput(valueB.dropLast(1))
                 } else if (currentOperator != null) {
                     operator = null
                 } else if (valueA != "0") {
-                    valueA = valueA
-                        .dropLast(1)
-                        .orZeroIfEmpty()
-                    if (valueA.startsWith(format.minusSign)) {
+                    currentValueProperty.setIfValidInput(
+                        valueA
+                            .dropLast(1)
+                            .orZeroIfEmpty()
+                    )
+                    if (valueA == "-" || valueA == "-0") {
                         valueA = "0"
                     }
                 }
@@ -195,7 +195,7 @@ class AmountInputState(
                 intValueA + intValueB
         }
 
-        valueA = format.formatForInput(
+        valueA = format.formatInput(
             value = result,
             currency = currency,
         )
@@ -208,7 +208,7 @@ class AmountInputState(
 
     private fun KMutableProperty0<String>.setIfValidInput(input: String) {
         if (format.parseInput(input, currency) != null) {
-            set(input)
+            set(format.formatInput(input))
         }
     }
 

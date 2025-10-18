@@ -46,35 +46,35 @@ class ViewAmountFormatTest {
 
         Assert.assertEquals(
             "-0.0000005",
-            format.formatForInput(
+            format.formatInput(
                 value = BigInteger("-50"),
                 currency = btc,
             )
         )
         Assert.assertEquals(
-            "10000000,05",
-            formatFr.formatForInput(
+            "10 000 000,05",
+            formatFr.formatInput(
                 value = BigInteger("1000000005"),
                 currency = usd,
             )
         )
         Assert.assertEquals(
-            "10000000.05",
-            format.formatForInput(
+            "10,000,000.05",
+            format.formatInput(
                 value = BigInteger("1000000005"),
                 currency = usd,
             )
         )
         Assert.assertEquals(
             "1,05",
-            formatFr.formatForInput(
+            formatFr.formatInput(
                 value = BigInteger("105"),
                 currency = usd,
             )
         )
         Assert.assertEquals(
             "1.05",
-            format.formatForInput(
+            format.formatInput(
                 value = BigInteger("105"),
                 currency = usd,
             )
@@ -85,6 +85,9 @@ class ViewAmountFormatTest {
     fun parseInput_IfCorrect() {
         val format = ViewAmountFormat(
             locale = Locale.ENGLISH,
+        )
+        val formatFr = ViewAmountFormat(
+            locale = Locale.FRENCH,
         )
 
         Assert.assertEquals(
@@ -208,7 +211,14 @@ class ViewAmountFormatTest {
         Assert.assertEquals(
             BigInteger("38050202415100"),
             format.parseInput(
-                input = "380502024151",
+                input = "380,502,024,151",
+                currency = usd,
+            )
+        )
+        Assert.assertEquals(
+            BigInteger("38050202415121"),
+            formatFr.parseInput(
+                input = "380 502 024 151,21",
                 currency = usd,
             )
         )
@@ -223,18 +233,6 @@ class ViewAmountFormatTest {
         Assert.assertNull(
             format.parseInput(
                 input = "2.43$", // Input must not contain the currency symbol.
-                currency = usd,
-            )
-        )
-        Assert.assertNull(
-            format.parseInput(
-                input = "+380502024151",
-                currency = btc,
-            )
-        )
-        Assert.assertNull(
-            format.parseInput(
-                input = "1,25", // Wrong decimal separator for the given locale
                 currency = usd,
             )
         )
@@ -259,12 +257,6 @@ class ViewAmountFormatTest {
         Assert.assertNull(
             format.parseInput(
                 input = "O", // letter O
-                currency = usd,
-            )
-        )
-        Assert.assertNull(
-            format.parseInput(
-                input = "+1",
                 currency = usd,
             )
         )
