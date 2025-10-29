@@ -127,7 +127,7 @@ dependencies {
     implementation "androidx.paging:paging-compose:3.3.6"
     implementation "androidx.work:work-runtime-ktx:2.10.5"
 
-    implementation platform("androidx.compose:compose-bom:2025.10.00")
+    implementation platform("androidx.compose:compose-bom:2025.10.01")
     implementation "androidx.compose.foundation:foundation"
     implementation "androidx.compose.foundation:foundation-layout"
     debugImplementation "androidx.compose.ui:ui-tooling"
@@ -157,7 +157,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0"
     implementation "sh.calvin.reorderable:reorderable:3.0.0"
     implementation "cash.z.ecc.android:kotlin-bip39:1.0.9"
-    implementation "com.composables:core:1.46.0"
+    implementation "com.composables:core:1.47.1"
     implementation "org.bouncycastle:bcprov-lts8on:2.73.8"
     implementation "app.cash.sqldelight:android-driver:2.1.0"
     implementation "androidx.biometric:biometric:1.1.0"
