@@ -111,7 +111,7 @@ sqldelight {
 ext {
     // Requires Gradle update.
     activityVersion = "1.10.1"
-    powersyncVersion = "1.6.0"
+    powersyncVersion = "1.8.1"
     supabaseVersion = "3.1.4"
 }
 
@@ -142,8 +142,6 @@ dependencies {
 
     implementation "com.powersync:core:$powersyncVersion"
     implementation "com.powersync:connector-supabase:$powersyncVersion"
-    // TODO remove when PowerSync is updated to 1.6.1
-    implementation "com.powersync:powersync-sqlite-core:0.4.6"
 
     implementation "io.github.jan-tennert.supabase:functions-kt:$supabaseVersion"
     implementation "io.github.jan-tennert.supabase:postgrest-kt:$supabaseVersion"
