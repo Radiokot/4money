@@ -22,6 +22,7 @@ package ua.com.radiokot.money.accounts.view
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +36,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -52,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -60,6 +63,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.composeunstyled.RelativeAlignment
 import com.composeunstyled.Text
 import com.composeunstyled.Tooltip
 import com.composeunstyled.TooltipPanel
@@ -293,6 +297,9 @@ private fun TotalPage(
         val tooltipShape = remember {
             RoundedCornerShape(4.dp)
         }
+        val tooltipColor = remember {
+            Color(0xBE000000)
+        }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -323,25 +330,51 @@ private fun TotalPage(
                     Tooltip(
                         enabled = amountInPrimaryCurrency != null,
                         longPressShowDurationMillis = 2500,
+                        placement = RelativeAlignment.CenterStart,
                         panel = {
                             if (amountInPrimaryCurrency != null) {
                                 TooltipPanel(
                                     enter = fadeIn(tooltipAnimationSpec),
                                     exit = fadeOut(tooltipAnimationSpec),
-                                    shape = tooltipShape,
-                                    contentPadding = PaddingValues(8.dp),
-                                    backgroundColor = Color(0xBE000000),
+                                    arrow = {
+                                        Canvas(
+                                            modifier = Modifier
+                                                .size(
+                                                    width = 6.dp,
+                                                    height = 12.dp,
+                                                )
+                                        ) {
+                                            val trianglePath = Path().apply {
+                                                lineTo(size.width, size.height / 2f)
+                                                lineTo(0f, size.height)
+                                                close()
+                                            }
+                                            drawPath(
+                                                path = trianglePath,
+                                                color = tooltipColor,
+                                            )
+                                        }
+                                    },
+                                    content = {
+                                        Text(
+                                            text = amountFormat(
+                                                amount = amountInPrimaryCurrency,
+                                                customColor = Color.White,
+                                            ),
+                                            modifier = Modifier
+                                                .background(
+                                                    color = tooltipColor,
+                                                    shape = tooltipShape,
+                                                )
+                                                .padding(8.dp)
+                                        )
+                                    },
                                     modifier = Modifier
                                         .zIndex(10f)
-                                        .padding(8.dp)
-                                ) {
-                                    Text(
-                                        text = amountFormat(
-                                            amount = amountInPrimaryCurrency,
-                                            customColor = Color.White,
-                                        ),
-                                    )
-                                }
+                                        .padding(
+                                            horizontal = 4.dp,
+                                        )
+                                )
                             }
                         },
                         anchor = {
