@@ -19,6 +19,9 @@
 
 package ua.com.radiokot.money.accounts.view
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +38,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -55,7 +59,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.composeunstyled.Text
+import com.composeunstyled.Tooltip
+import com.composeunstyled.TooltipPanel
 import kotlinx.coroutines.launch
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.currency.view.ViewAmountFormat
@@ -87,7 +94,7 @@ private fun AccountsScreen(
         itemToPlaceBefore: ViewAccountListItem.Account?,
         itemToPlaceAfter: ViewAccountListItem.Account?,
     ) -> Unit,
-    totalAmountPerCurrencyList: State<List<ViewAmount>>,
+    totalAmountPerCurrencyList: State<List<Pair<ViewAmount, ViewAmount?>>>,
     totalAmount: State<ViewAmount?>,
     onAddClicked: () -> Unit,
     isArchiveVisible: State<Boolean>,
@@ -139,10 +146,10 @@ private fun AccountsScreen(
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
                         textDecoration =
-                        if (pagerState.currentPage == pageIndex)
-                            TextDecoration.Underline
-                        else
-                            null,
+                            if (pagerState.currentPage == pageIndex)
+                                TextDecoration.Underline
+                            else
+                                null,
                     ),
                     modifier = Modifier
                         .clickable {
@@ -163,10 +170,10 @@ private fun AccountsScreen(
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
                         textDecoration =
-                        if (pagerState.currentPage == pageIndex)
-                            TextDecoration.Underline
-                        else
-                            null,
+                            if (pagerState.currentPage == pageIndex)
+                                TextDecoration.Underline
+                            else
+                                null,
                     ),
                     modifier = Modifier
                         .clickable {
@@ -209,20 +216,20 @@ private fun AccountsScreen(
                     onAccountItemClicked = onAccountItemClicked,
                     onAccountItemMoved = onAccountItemMoved,
                     bottomContent =
-                    if (isArchiveVisible.value) {
-                        {
-                            item {
-                                BottomArchiveLink(
-                                    modifier = Modifier
-                                        .clickable(
-                                            onClick = onArchiveClicked,
-                                        )
-                                )
+                        if (isArchiveVisible.value) {
+                            {
+                                item {
+                                    BottomArchiveLink(
+                                        modifier = Modifier
+                                            .clickable(
+                                                onClick = onArchiveClicked,
+                                            )
+                                    )
+                                }
                             }
+                        } else {
+                            null
                         }
-                    } else {
-                        null
-                    }
                 )
 
             Page.Total ->
@@ -261,7 +268,7 @@ private fun BottomArchiveLink(
 @Composable
 private fun TotalPage(
     modifier: Modifier = Modifier,
-    amountPerCurrencyList: State<List<ViewAmount>>,
+    amountPerCurrencyList: State<List<Pair<ViewAmount, ViewAmount?>>>,
     totalAmount: State<ViewAmount?>,
 ) = Column(
     modifier = modifier
@@ -280,13 +287,19 @@ private fun TotalPage(
                 fontSize = 18.sp,
             )
         }
+        val tooltipAnimationSpec = remember {
+            tween<Float>(300)
+        }
+        val tooltipShape = remember {
+            RoundedCornerShape(4.dp)
+        }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .width(IntrinsicSize.Max)
         ) {
-            amountPerCurrencyList.value.forEach { amount ->
+            amountPerCurrencyList.value.forEach { (amount, _) ->
                 key(amount.currency) {
                     BasicText(
                         text = amount.currency.symbol,
@@ -305,15 +318,42 @@ private fun TotalPage(
             modifier = Modifier
                 .weight(1f)
         ) {
-            amountPerCurrencyList.value.forEach { amount ->
-                key(amount.currency) {
-                    BasicText(
-                        text = amountFormat(amount),
-                        style = textStyle,
-                        modifier = Modifier
-                            .padding(
-                                vertical = 4.dp,
+            amountPerCurrencyList.value.forEach { (amount, amountInPrimaryCurrency) ->
+                key(amount.currency, amountInPrimaryCurrency) {
+                    Tooltip(
+                        enabled = amountInPrimaryCurrency != null,
+                        longPressShowDurationMillis = 2500,
+                        panel = {
+                            if (amountInPrimaryCurrency != null) {
+                                TooltipPanel(
+                                    enter = fadeIn(tooltipAnimationSpec),
+                                    exit = fadeOut(tooltipAnimationSpec),
+                                    shape = tooltipShape,
+                                    contentPadding = PaddingValues(8.dp),
+                                    backgroundColor = Color(0xBE000000),
+                                    modifier = Modifier
+                                        .zIndex(10f)
+                                        .padding(8.dp)
+                                ) {
+                                    Text(
+                                        text = amountFormat(
+                                            amount = amountInPrimaryCurrency,
+                                            customColor = Color.White,
+                                        ),
+                                    )
+                                }
+                            }
+                        },
+                        anchor = {
+                            BasicText(
+                                text = amountFormat(amount),
+                                style = textStyle,
+                                modifier = Modifier
+                                    .padding(
+                                        vertical = 4.dp,
+                                    )
                             )
+                        }
                     )
                 }
             }

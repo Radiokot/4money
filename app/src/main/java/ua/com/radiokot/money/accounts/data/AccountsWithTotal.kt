@@ -23,7 +23,11 @@ import ua.com.radiokot.money.currency.data.Amount
 
 data class AccountsOfTypeWithTotal(
     val type: Account.Type,
-    val accountsOfType: List<Account>,
+    /**
+     * Accounts and their balances in primary currency,
+     * which is null if the primary currency doesn't exist.
+     */
+    val accountsOfType: List<Pair<Account, Amount?>>,
     /**
      * Null if the primary currency doesn't exist.
      */

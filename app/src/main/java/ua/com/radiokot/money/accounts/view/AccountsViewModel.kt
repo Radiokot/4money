@@ -44,6 +44,7 @@ import ua.com.radiokot.money.accounts.logic.MoveAccountUseCase
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
+import java.math.BigInteger
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AccountsViewModel(
@@ -73,24 +74,41 @@ class AccountsViewModel(
                                     ?.let(::ViewAmount),
                                 key = type.slug,
                             )
-                        ) + accountsOfType.map(ViewAccountListItem::Account)
+                        ) + accountsOfType.map { (account, _) ->
+                            ViewAccountListItem.Account(account)
+                        }
                     }
             }
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    val totalAmountsPerCurrency: StateFlow<List<ViewAmount>> =
+    val totalAmountsPerCurrency: StateFlow<List<Pair<ViewAmount, ViewAmount?>>> =
         visibleAccountsWithTotalSharedFlow
-            .map { it.accountsOfTypes }
-            .map { accountsOfType ->
-                accountsOfType
+            .map { accountsWithTotal ->
+                accountsWithTotal
+                    .accountsOfTypes
                     .flatMap(AccountsOfTypeWithTotal::accountsOfType)
-                    .groupBy(Account::currency)
+                    .groupBy { (account, _) -> account.currency }
                     .map { (currency, accountsInThisCurrency) ->
-                        ViewAmount(
-                            value = accountsInThisCurrency.sumOf { it.balance.value },
-                            currency = currency,
-                        )
+                        val totalInThisCurrency =
+                            ViewAmount(
+                                value = accountsInThisCurrency.sumOf { (account, _) ->
+                                    account.balance.value
+                                },
+                                currency = currency,
+                            )
+                        val totalInPrimaryCurrency =
+                            if (accountsWithTotal.totalInPrimaryCurrency != null)
+                                ViewAmount(
+                                    value = accountsInThisCurrency.sumOf { (_, amountInPrimaryCurrency) ->
+                                        amountInPrimaryCurrency?.value ?: BigInteger.ZERO
+                                    },
+                                    currency = accountsWithTotal.totalInPrimaryCurrency.currency,
+                                )
+                            else
+                                null
+
+                        totalInThisCurrency to totalInPrimaryCurrency
                     }
             }
             .flowOn(Dispatchers.Default)

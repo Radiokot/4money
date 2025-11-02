@@ -60,9 +60,39 @@ class GetVisibleAccountsWithTotalUseCase(
                 else
                     null
 
-            val types: List<AccountsOfTypeWithTotal> = accounts
+            var totalInPrimaryCurrency = BigInteger.ZERO
+
+            val accountsOfTypes: List<AccountsOfTypeWithTotal> = accounts
                 .groupBy(Account::type)
                 .map { (type, accountsOfType) ->
+
+                    var typeTotalInPrimaryCurrency = BigInteger.ZERO
+
+                    val accountsOfType: List<Pair<Account, Amount?>> =
+                        accountsOfType.map { account ->
+
+                            if (primaryCurrency == null) {
+                                return@map account to null
+                            }
+
+                            account to latestPrices
+                                ?.get(
+                                    base = account.currency,
+                                    quote = primaryCurrency,
+                                )
+                                ?.baseToQuote(account.balance.value)
+                                ?.let { balanceInPrimaryCurrency ->
+
+                                    typeTotalInPrimaryCurrency += balanceInPrimaryCurrency
+
+                                    Amount(
+                                        value = balanceInPrimaryCurrency,
+                                        currency = primaryCurrency,
+                                    )
+                                }
+                        }
+
+                    totalInPrimaryCurrency += typeTotalInPrimaryCurrency
 
                     AccountsOfTypeWithTotal(
                         type = type,
@@ -71,16 +101,7 @@ class GetVisibleAccountsWithTotalUseCase(
                             if (primaryCurrency != null)
                                 Amount(
                                     currency = primaryCurrency,
-                                    value = accountsOfType
-                                        .sumOf { account ->
-                                            latestPrices
-                                                ?.get(
-                                                    base = account.currency,
-                                                    quote = primaryCurrency,
-                                                )
-                                                ?.baseToQuote(account.balance.value)
-                                                ?: BigInteger.ZERO
-                                        }
+                                    value = typeTotalInPrimaryCurrency,
                                 )
                             else
                                 null,
@@ -88,15 +109,12 @@ class GetVisibleAccountsWithTotalUseCase(
                 }
 
             AccountsWithTotal(
-                accountsOfTypes = types,
+                accountsOfTypes = accountsOfTypes,
                 totalInPrimaryCurrency =
                     if (primaryCurrency != null)
                         Amount(
                             currency = primaryCurrency,
-                            value = types.sumOf { typeWithTotal ->
-                                typeWithTotal.totalInPrimaryCurrency?.value
-                                    ?: BigInteger.ZERO
-                            },
+                            value = totalInPrimaryCurrency,
                         )
                     else
                         null,
