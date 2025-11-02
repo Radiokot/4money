@@ -1,3 +1,0 @@
-Added:
-- Animation of pressed amount and passcode keyboard keys
-- Animation of the bottom navigation bar entries

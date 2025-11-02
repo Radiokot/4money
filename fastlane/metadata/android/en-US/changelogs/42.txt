@@ -1,0 +1,7 @@
+Added:
+- Spaces between thousands when entering amounts
+- On the Accounts Total tab, showing the value in the primary currency
+  when long pressing a particular currency amount
+
+Changed:
+- On the logo screen, the icons are now grouped by categories
