@@ -68,28 +68,21 @@ class GetVisibleAccountsWithTotalUseCase(
 
                     var typeTotalInPrimaryCurrency = BigInteger.ZERO
 
-                    val accountsOfType: List<Pair<Account, Amount?>> =
+                    val accountsOfType: List<Pair<Account, BigInteger>> =
                         accountsOfType.map { account ->
 
                             if (primaryCurrency == null) {
-                                return@map account to null
+                                return@map account to BigInteger.ZERO
                             }
 
-                            account to latestPrices
+                            account to (latestPrices
                                 ?.get(
                                     base = account.currency,
                                     quote = primaryCurrency,
                                 )
                                 ?.baseToQuote(account.balance.value)
-                                ?.let { balanceInPrimaryCurrency ->
-
-                                    typeTotalInPrimaryCurrency += balanceInPrimaryCurrency
-
-                                    Amount(
-                                        value = balanceInPrimaryCurrency,
-                                        currency = primaryCurrency,
-                                    )
-                                }
+                                ?.also { typeTotalInPrimaryCurrency += it }
+                                ?: BigInteger.ZERO)
                         }
 
                     totalInPrimaryCurrency += typeTotalInPrimaryCurrency

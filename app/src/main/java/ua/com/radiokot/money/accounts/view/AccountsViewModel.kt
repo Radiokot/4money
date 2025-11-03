@@ -100,10 +100,11 @@ class AccountsViewModel(
                         val totalInPrimaryCurrency =
                             if (accountsWithTotal.totalInPrimaryCurrency != null)
                                 ViewAmount(
-                                    value = accountsInThisCurrency.sumOf { (_, amountInPrimaryCurrency) ->
-                                        amountInPrimaryCurrency?.value ?: BigInteger.ZERO
-                                    },
-                                    currency = accountsWithTotal.totalInPrimaryCurrency.currency,
+                                    value = accountsInThisCurrency
+                                        .sumOf(Pair<*, BigInteger>::second),
+                                    currency = accountsWithTotal
+                                        .totalInPrimaryCurrency
+                                        .currency,
                                 )
                             else
                                 null

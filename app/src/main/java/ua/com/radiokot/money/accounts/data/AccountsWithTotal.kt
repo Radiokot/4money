@@ -20,14 +20,15 @@
 package ua.com.radiokot.money.accounts.data
 
 import ua.com.radiokot.money.currency.data.Amount
+import java.math.BigInteger
 
 data class AccountsOfTypeWithTotal(
     val type: Account.Type,
     /**
      * Accounts and their balances in primary currency,
-     * which is null if the primary currency doesn't exist.
+     * which are zero if there's no rate or the primary currency doesn't exist.
      */
-    val accountsOfType: List<Pair<Account, Amount?>>,
+    val accountsOfType: List<Pair<Account, BigInteger>>,
     /**
      * Null if the primary currency doesn't exist.
      */
