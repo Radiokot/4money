@@ -155,7 +155,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0"
     implementation "sh.calvin.reorderable:reorderable:3.0.0"
     implementation "cash.z.ecc.android:kotlin-bip39:1.0.9"
-    implementation "com.composables:core:1.47.1"
+    implementation "com.composables:core:1.47.2"
     implementation "org.bouncycastle:bcprov-lts8on:2.73.8"
     implementation "app.cash.sqldelight:android-driver:2.1.0"
     implementation "androidx.biometric:biometric:1.1.0"

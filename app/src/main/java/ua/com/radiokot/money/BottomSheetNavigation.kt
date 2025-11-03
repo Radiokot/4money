@@ -164,7 +164,7 @@ fun MoneyAppModalBottomSheetHost(
 
     val sheetState = rememberModalBottomSheetState(
         initialDetent = SheetDetent.Hidden,
-        animationSpec = tween(150),
+        animationSpec = tween(200),
     )
 
     LaunchedEffect(sheetState) {
