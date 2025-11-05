@@ -1,0 +1,5 @@
+Fixed:
+- Bottom sheets disappearing instantly
+
+Changed:
+- Slow down bottom sheet appearance a bit
