@@ -23,14 +23,15 @@ import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -83,6 +84,13 @@ class BottomSheetNavigator : Navigator<BottomSheetNavigator.Destination>() {
                 state.backStack
             else
                 MutableStateFlow(emptyList())
+
+    val transitionsInProgress: StateFlow<Set<NavBackStackEntry>>
+        get() =
+            if (isAttached)
+                state.transitionsInProgress
+            else
+                MutableStateFlow(emptySet())
 
     override fun navigate(
         entries: List<NavBackStackEntry>,
@@ -199,6 +207,16 @@ fun MoneyAppModalBottomSheetHost(
             )
         }
 
+        @Suppress("UnusedReceiverParameter")
+        val sheetContentTransition = remember {
+            fun AnimatedContentTransitionScope<NavBackStackEntry>.() =
+                ContentTransform(
+                    targetContentEnter = fadeIn(),
+                    initialContentExit = fadeOut(),
+                    sizeTransform = null,
+                )
+        }
+
         Scrim(
             enter = fadeIn(scrimFadeAnimationSpec),
             exit = fadeOut(scrimFadeAnimationSpec),
@@ -209,40 +227,40 @@ fun MoneyAppModalBottomSheetHost(
             modifier = Modifier
                 .fillMaxWidth()
                 .defaultMinSize(minWidth = 1.dp, minHeight = 1.dp)
-                .clip(
-                    RoundedCornerShape(
-                        topStart = 24.dp,
-                        topEnd = 24.dp,
-                    )
-                )
         ) SheetContent@{
 
             val backStack by bottomSheetNavigator.backStack.collectAsState()
+            val transitionsInProgress by bottomSheetNavigator.transitionsInProgress.collectAsState()
             val topBackStackEntry by remember {
-                derivedStateOf { backStack.lastOrNull() }
+                derivedStateOf {
+                    backStack.lastOrNull()
+                        ?: transitionsInProgress.lastOrNull()
+                }
+            }
+            val isBackHandlerEnabled by remember {
+                derivedStateOf { backStack.size > 1 }
             }
 
             AnimatedContent(
                 targetState = topBackStackEntry
                     ?: return@SheetContent,
                 contentAlignment = Alignment.BottomCenter,
-                transitionSpec = {
-                    ContentTransform(
-                        targetContentEnter = fadeIn(),
-                        initialContentExit = ExitTransition.None,
-                        sizeTransform = null,
-                    )
-                },
+                transitionSpec = sheetContentTransition,
                 label = "sheet-content-transition",
             ) { shownBackStackEntry ->
-
-                shownBackStackEntry.LocalOwnersProvider(saveableStateHolder) {
-                    (shownBackStackEntry.destination as BottomSheetNavigator.Destination)
-                        .content(this@SheetContent, shownBackStackEntry)
-                }
-
-                val isBackHandlerEnabled by remember {
-                    derivedStateOf { backStack.size > 1 }
+                Box(
+                    modifier = Modifier
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 24.dp,
+                                topEnd = 24.dp,
+                            )
+                        )
+                ) {
+                    shownBackStackEntry.LocalOwnersProvider(saveableStateHolder) {
+                        (shownBackStackEntry.destination as BottomSheetNavigator.Destination)
+                            .content(this@SheetContent, shownBackStackEntry)
+                    }
                 }
 
                 BackHandler(
