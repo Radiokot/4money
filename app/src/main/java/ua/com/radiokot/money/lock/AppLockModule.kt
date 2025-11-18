@@ -30,6 +30,7 @@ import ua.com.radiokot.money.lock.logic.AppLock
 import ua.com.radiokot.money.lock.logic.DisableAppLockUseCase
 import ua.com.radiokot.money.lock.logic.EnableAppLockUseCase
 import ua.com.radiokot.money.lock.view.SetUpPasscodeScreenViewModel
+import kotlin.time.Duration.Companion.minutes
 
 val appLockModule = module {
 
@@ -44,7 +45,7 @@ val appLockModule = module {
 
     single {
         AppLock(
-            backgroundLockThresholdMs = 10000,
+            backgroundLockThresholdMs = 4.minutes.inWholeMilliseconds,
             preferences = get(),
         )
     } bind AppLock::class
