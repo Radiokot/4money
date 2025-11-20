@@ -139,15 +139,14 @@ class TransferSheetViewModel(
         combine(
             _sourceCounterparty,
             _destinationCounterparty,
-            transform = ::Pair
-        )
-            .map { (source, destination) ->
+            transform = { (source, destination) ->
                 val categoryCounterparty =
                     (source as? TransferCounterparty.Category)
                         ?: (destination as? TransferCounterparty.Category)
-                        ?: return@map null
+                        ?: return@combine null
                 categoryCounterparty.category.colorScheme
             }
+        )
             .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     val isSourceInputShown: StateFlow<Boolean> =
@@ -155,23 +154,19 @@ class TransferSheetViewModel(
         combine(
             source,
             destination,
-            transform = ::Pair
-        )
-            .map { (source, destination) ->
+            transform = { source, destination ->
                 source.currency != destination.currency
             }
+        )
             .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    val isSaveEnabled: StateFlow<Boolean> =
-        // Only enable save if the input is valid.
-        sourceAmountValue.combine(destinationAmountValue, ::Pair)
-            .combine(isSourceInputShown, ::Pair)
-            .map { (amounts, isSourceInputRequired) ->
-                val (sourceAmountValue, destAmountValue) = amounts
-                (!isSourceInputRequired || sourceAmountValue.signum() > 0)
-                        && destAmountValue.signum() > 0
-            }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val isSwapCounterpartiesShown: Boolean
+        get() = _sourceCounterparty.value is TransferCounterparty.Account &&
+                _destinationCounterparty.value is TransferCounterparty.Account
+
+    private val isSaveEnabled: Boolean
+        get() = (!isSourceInputShown.value || sourceAmountValue.value.signum() > 0)
+                && destinationAmountValue.value.signum() > 0
 
     val date: StateFlow<ViewDate> =
         dateTime
@@ -371,7 +366,7 @@ class TransferSheetViewModel(
     }
 
     fun onSaveClicked() {
-        if (!isSaveEnabled.value) {
+        if (!isSaveEnabled) {
             log.warn {
                 "onSaveClicked(): ignoring as save is not enabled"
             }
@@ -383,6 +378,20 @@ class TransferSheetViewModel(
         } else {
             transferFunds()
         }
+    }
+
+    fun onSwapCounterpartiesClicked() {
+        val currentSource = _sourceCounterparty.value
+        val currentDestination = _destinationCounterparty.value
+
+        log.debug {
+            "onSwapCounterpartiesClicked(): swapping counterparties:" +
+                    "\ncurrentSource=$currentSource," +
+                    "\ncurrentDestination=$currentDestination"
+        }
+
+        _sourceCounterparty.value = currentDestination
+        _destinationCounterparty.value = currentSource
     }
 
     private var editTransferJob: Job? = null

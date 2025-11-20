@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -83,6 +84,7 @@ import ua.com.radiokot.money.currency.view.AmountKeyboardMainAction
 import ua.com.radiokot.money.currency.view.AnimatedAmountInputText
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.currency.view.rememberAmountInputState
+import ua.com.radiokot.money.uikit.TextButton
 import java.math.BigInteger
 
 @Composable
@@ -93,6 +95,7 @@ fun TransferSheetRoot(
     TransferSheet(
         modifier = modifier,
         isSourceInputShown = viewModel.isSourceInputShown.collectAsState().value,
+        isSwapCounterpartiesShown = viewModel.isSwapCounterpartiesShown,
         source = viewModel.source.collectAsState().value,
         sourceAmountValue = viewModel.sourceAmountValue.collectAsState(),
         onNewSourceAmountValueParsed = remember { viewModel::onNewSourceAmountValueParsed },
@@ -109,6 +112,7 @@ fun TransferSheetRoot(
         onDateClicked = remember { viewModel::onDateClicked },
         onSourceClicked = remember { viewModel::onSourceClicked },
         onDestinationClicked = remember { viewModel::onDestinationClicked },
+        onSwapCounterpartiesClicked = remember { viewModel::onSwapCounterpartiesClicked },
     )
 }
 
@@ -116,6 +120,7 @@ fun TransferSheetRoot(
 private fun TransferSheet(
     modifier: Modifier = Modifier,
     isSourceInputShown: Boolean,
+    isSwapCounterpartiesShown: Boolean,
     source: ViewTransferCounterparty,
     sourceAmountValue: State<BigInteger>,
     onNewSourceAmountValueParsed: (BigInteger) -> Unit,
@@ -132,6 +137,7 @@ private fun TransferSheet(
     onDateClicked: () -> Unit,
     onSourceClicked: () -> Unit,
     onDestinationClicked: () -> Unit,
+    onSwapCounterpartiesClicked: () -> Unit,
 ) = BoxWithConstraints(
     modifier = modifier
         .background(Color.White)
@@ -153,70 +159,92 @@ private fun TransferSheet(
             )
             .verticalScroll(rememberScrollState())
     ) {
-        Row(
-            modifier = Modifier
-                .height(IntrinsicSize.Max)
+        Box(
+            contentAlignment = Alignment.Center,
         ) {
-            val shortSourceTitle: String? = remember(source) {
-                (source as? ViewTransferCounterparty.Category)?.categoryTitle
-            }
-            val shortDestinationTitle: String? = remember(destination) {
-                (destination as? ViewTransferCounterparty.Category)?.categoryTitle
-            }
-            val sourcePrimaryColor = remember(source) {
-                Color(source.colorScheme.primary)
-            }
-            val sourceOnPrimaryColor = remember(source) {
-                Color(source.colorScheme.onPrimary)
-            }
-            val destinationPrimaryColor = remember(destination) {
-                Color(destination.colorScheme.primary)
-            }
-            val destinationOnPrimaryColor = remember(destination) {
-                Color(destination.colorScheme.onPrimary)
+            Row(
+                modifier = Modifier
+                    .height(IntrinsicSize.Max)
+            ) {
+                val shortSourceTitle: String? = remember(source) {
+                    (source as? ViewTransferCounterparty.Category)?.categoryTitle
+                }
+                val shortDestinationTitle: String? = remember(destination) {
+                    (destination as? ViewTransferCounterparty.Category)?.categoryTitle
+                }
+                val sourcePrimaryColor = remember(source) {
+                    Color(source.colorScheme.primary)
+                }
+                val sourceOnPrimaryColor = remember(source) {
+                    Color(source.colorScheme.onPrimary)
+                }
+                val destinationPrimaryColor = remember(destination) {
+                    Color(destination.colorScheme.primary)
+                }
+                val destinationOnPrimaryColor = remember(destination) {
+                    Color(destination.colorScheme.onPrimary)
+                }
+                val textPadding = remember(isSwapCounterpartiesShown) {
+                    if (isSwapCounterpartiesShown)
+                        PaddingValues(
+                            vertical = 24.dp,
+                            horizontal = 18.dp,
+                        )
+                    else
+                        PaddingValues(
+                            vertical = 24.dp,
+                            horizontal = 8.dp,
+                        )
+                }
+
+                BasicText(
+                    text = shortSourceTitle ?: source.title,
+                    style = TextStyle(
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = sourceOnPrimaryColor,
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(sourcePrimaryColor)
+                        .clickable(
+                            onClick = onSourceClicked,
+                        )
+                        .padding(textPadding)
+                )
+
+                BasicText(
+                    text = shortDestinationTitle ?: destination.title,
+                    style = TextStyle(
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = destinationOnPrimaryColor,
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(destinationPrimaryColor)
+                        .clickable(
+                            onClick = onDestinationClicked,
+                        )
+                        .padding(textPadding)
+                )
             }
 
-            BasicText(
-                text = shortSourceTitle ?: source.title,
-                style = TextStyle(
-                    textAlign = TextAlign.Center,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = sourceOnPrimaryColor,
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .background(sourcePrimaryColor)
-                    .clickable(
-                        onClick = onSourceClicked,
-                    )
-                    .padding(
-                        vertical = 24.dp,
-                        horizontal = 8.dp,
-                    )
-            )
-
-            BasicText(
-                text = shortDestinationTitle ?: destination.title,
-                style = TextStyle(
-                    textAlign = TextAlign.Center,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = destinationOnPrimaryColor,
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .background(destinationPrimaryColor)
-                    .clickable(
-                        onClick = onDestinationClicked,
-                    )
-                    .padding(
-                        vertical = 24.dp,
-                        horizontal = 8.dp,
-                    )
-            )
+            if (isSwapCounterpartiesShown) {
+                TextButton(
+                    text = "🔄",
+                    padding = PaddingValues(6.dp),
+                    modifier = Modifier
+                        .background(Color.White)
+                        .clickable(
+                            onClick = onSwapCounterpartiesClicked,
+                        )
+                )
+            }
         }
 
         if (subcategoryItemList.value.isNotEmpty()
@@ -463,7 +491,6 @@ private fun TransferSheet(
 private fun TransferSheetPreview(
 ) = Column {
     val isSourceInputShownOptions = listOf(true, false)
-    val isSaveEnabledOptions = listOf(true, false)
     val colorSchemesByName = HardcodedItemColorSchemeRepository()
         .getItemColorSchemesByName()
     val icons = DrawableResItemIconRepository()
@@ -474,52 +501,55 @@ private fun TransferSheetPreview(
     val accountIcon = icons[66]
 
     isSourceInputShownOptions.forEach { isSourceInputShown ->
-        isSaveEnabledOptions.forEach { isSaveEnabled ->
-            BasicText(
-                text = "Source input shown: $isSourceInputShown," +
-                        "\nSave enabled: $isSaveEnabled",
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
-            TransferSheet(
-                isSourceInputShown = isSourceInputShown,
-                source = ViewTransferCounterparty.Account(
-                    accountTitle = "Source",
-                    currency = ViewCurrency(
-                        symbol = "A",
-                        precision = 2,
-                    ),
-                    colorScheme = accountColorScheme,
-                    icon = accountIcon,
+        BasicText(
+            text = "Source input shown: $isSourceInputShown",
+            modifier = Modifier.padding(vertical = 16.dp)
+        )
+        TransferSheet(
+            isSourceInputShown = isSourceInputShown,
+            isSwapCounterpartiesShown = true,
+            source = ViewTransferCounterparty.Account(
+                accountTitle = "Source he he he he",
+                currency = ViewCurrency(
+                    symbol = "A",
+                    precision = 2,
                 ),
-                sourceAmountValue = BigInteger("133").let(::mutableStateOf),
-                onNewSourceAmountValueParsed = {},
-                destination = ViewTransferCounterparty.Category(
-                    categoryTitle = "Destination",
-                    subcategoryTitle = null,
-                    currency = ViewCurrency(
-                        symbol = "B",
-                        precision = 2,
-                    ),
-                    colorScheme = categoryColorScheme,
-                    icon = categoryIcon,
+                colorScheme = accountColorScheme,
+                icon = accountIcon,
+            ),
+            sourceAmountValue = BigInteger("133").let(::mutableStateOf),
+            onNewSourceAmountValueParsed = {},
+            destination = ViewTransferCounterparty.Category(
+                categoryTitle = "Destination",
+                subcategoryTitle = null,
+                currency = ViewCurrency(
+                    symbol = "B",
+                    precision = 2,
                 ),
-                destinationAmountValue = BigInteger("331").let(::mutableStateOf),
-                onNewDestinationAmountValueParsed = {},
-                memo = "".let(::mutableStateOf),
-                date = ViewDate.today().let(::mutableStateOf),
-                onMemoUpdated = {},
-                subcategoryItemList =
-                    ViewSelectableSubcategoryListItemPreviewParameterProvider()
-                        .values
-                        .toList()
-                        .let(::mutableStateOf),
-                subcategoriesColorScheme = categoryColorScheme.let(::mutableStateOf),
-                onSubcategoryItemClicked = {},
-                onSaveClicked = {},
-                onDateClicked = {},
-                onSourceClicked = { },
-                onDestinationClicked = { },
-            )
-        }
+                colorScheme = categoryColorScheme,
+                icon = categoryIcon,
+            ),
+            destinationAmountValue = BigInteger("331").let(::mutableStateOf),
+            onNewDestinationAmountValueParsed = {},
+            memo = "".let(::mutableStateOf),
+            date = ViewDate.today().let(::mutableStateOf),
+            onMemoUpdated = {},
+            subcategoryItemList =
+                ViewSelectableSubcategoryListItemPreviewParameterProvider()
+                    .values
+                    .toList()
+                    .let(::mutableStateOf),
+            subcategoriesColorScheme = categoryColorScheme.let(::mutableStateOf),
+            onSubcategoryItemClicked = {},
+            onSaveClicked = {},
+            onDateClicked = {},
+            onSourceClicked = { },
+            onDestinationClicked = { },
+            onSwapCounterpartiesClicked = { },
+            modifier = Modifier
+                .heightIn(
+                    max = 600.dp,
+                )
+        )
     }
 }
