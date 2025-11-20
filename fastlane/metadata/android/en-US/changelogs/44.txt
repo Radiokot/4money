@@ -1,2 +1,0 @@
-Changed:
-- The app is now locked after 4 minutes in background
