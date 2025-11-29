@@ -1,0 +1,2 @@
+Fixed:
+- Bottom sheets being prone to closing by accident
