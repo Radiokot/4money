@@ -46,6 +46,8 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.FloatingWindow
@@ -170,9 +172,17 @@ fun MoneyAppModalBottomSheetHost(
         .navigatorProvider
         .getNavigator(BottomSheetNavigator::class.java)
 
+    val sheetDragThresholdDp = with(LocalResources.current.displayMetrics) {
+        // Drag the sheet vertically for 20 mm or more to dismiss.
+        (20 * ydpi / (25.4f * density)).dp
+    }
+
     val sheetState = rememberModalBottomSheetState(
         initialDetent = SheetDetent.Hidden,
         animationSpec = tween(200),
+        positionalThreshold = { sheetDragThresholdDp },
+        // Prevent closing by accident.
+        velocityThreshold = { Dp.Infinity },
     )
 
     LaunchedEffect(sheetState) {
