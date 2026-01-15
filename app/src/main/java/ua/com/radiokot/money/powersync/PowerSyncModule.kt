@@ -61,9 +61,12 @@ val powerSyncModule = module {
                             powerSyncEndpoint = BuildConfig.POWERSYNC_URL,
                         ),
                         options = SyncOptions(
-                            newClientImplementation = true,
                             userAgent = "4Money/${BuildConfig.VERSION_NAME}",
-                        )
+                        ),
+                        appMetadata = mapOf(
+                            "v" to BuildConfig.VERSION_NAME,
+                            "debug" to BuildConfig.DEBUG.toString(),
+                        ),
                     )
                 }
             }

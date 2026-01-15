@@ -111,7 +111,7 @@ sqldelight {
 ext {
     // Requires Gradle update.
     activityVersion = "1.10.1"
-    powersyncVersion = "1.8.1"
+    powersyncVersion = "1.10.2"
     supabaseVersion = "3.1.4"
 }
 
