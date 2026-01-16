@@ -72,6 +72,16 @@ Take a look at:
 - `BottomSheetNavigation`
 - `AccountActionSheetNavigation`
 
+### Counter-like amount animation
+Amount changes in the app are animated:
+
+<img src="amount-animation.gif" width=300 alt="Animation example"/>
+
+Since a `BigInteger` amount can't be put in an `Animatable` as is,
+an integer animation from 0 to 1,000 is used instead, the animated value is then used as a multiplier.
+The display amount is calculated as `(targetAmount - startAmount) * multiplier / 1000`.
+Check out the full implementation in `animateAmountValueAsState` function.
+
 ### Synchronizing 150,000 daily currency price records
 The app keeps daily prices for all the currencies since 2023 for accurate tallying.
 Although PowerSync works fine with this amount of data, it quickly drains sync operation limits.

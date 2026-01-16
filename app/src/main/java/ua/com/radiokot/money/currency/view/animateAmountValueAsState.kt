@@ -65,19 +65,15 @@ fun animateAmountValueAsState(
     val animatedValueState: State<BigInteger> = remember {
         derivedStateOf {
             val interpolationMultiplier = animatableInterpolationMultiplier.value
-            if (interpolationMultiplier >= InterpolationAccuracy) {
-                return@derivedStateOf endValue
-            }
 
-            var interpolated = (endValue - startValue)
-                .multiply(interpolationMultiplier.toBigInteger())
-                .divide(InterpolationAccuracyBI)
+            var interpolated = ((endValue - startValue) * interpolationMultiplier.toBigInteger()) /
+                    InterpolationAccuracyBI
 
             if (!animateDecimals) {
-                interpolated -= interpolated.remainder(precisionMultiplier)
+                interpolated -= interpolated % precisionMultiplier
             }
 
-            startValue.add(interpolated)
+            startValue + interpolated
         }
     }
 
