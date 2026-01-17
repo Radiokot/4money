@@ -25,17 +25,21 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -72,18 +76,25 @@ fun ItemLogoColorSchemePicker(
         )
     }
 
+    val columnCount = 6
+
     LazyVerticalGrid(
-        columns = GridCells.Fixed(6),
+        columns = GridCells.Fixed(columnCount),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = contentPadding,
         modifier = modifier,
     ) {
+        val selectedItemRowIndex: Int? =
+            colorSchemeList.value
+                .indexOf(selectedColorScheme.value)
+                .takeIf { it >= 0 }
+                ?.let { it / columnCount }
 
-        items(
+        itemsIndexed(
             items = colorSchemeList.value,
-            key = ItemColorScheme::name,
-        ) { colorScheme ->
+            key = { _, colorScheme -> colorScheme.name },
+        ) { index, colorScheme ->
 
             BoxWithConstraints(
                 contentAlignment = Alignment.Center,
@@ -104,22 +115,52 @@ fun ItemLogoColorSchemePicker(
                         )
                 )
 
-                    AnimatedVisibility(
-                        visible = selectedColorScheme.value == colorScheme,
-                        enter = selectionIndicatorEnterTransition,
-                        exit = selectionIndicatorExitTransition,
-                        label = "selection-indicator",
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(circleSize * 0.86f)
-                                .border(
-                                    width = circleSize * 0.05f,
-                                    color = Color(colorScheme.onPrimary),
-                                    shape = CircleShape,
-                                )
+                AnimatedVisibility(
+                    visible = selectedColorScheme.value == colorScheme,
+                    enter = selectionIndicatorEnterTransition,
+                    exit = selectionIndicatorExitTransition,
+                    label = "selection-indicator",
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(circleSize * 0.86f)
+                            .border(
+                                width = circleSize * 0.05f,
+                                color = Color(colorScheme.onPrimary),
+                                shape = CircleShape,
+                            )
+                    )
+                }
+
+                // Indicator for a row containing selected icon.
+                AnimatedVisibility(
+                    visible = selectedItemRowIndex != null
+                            && index % columnCount == 0
+                            && index / columnCount == selectedItemRowIndex,
+                    enter = selectionIndicatorEnterTransition,
+                    exit = selectionIndicatorExitTransition,
+                    label = "row-selection-indicator",
+                    modifier = Modifier
+                        .offset(
+                            x = (-10).dp,
                         )
-                    }
+
+                        .align(Alignment.CenterStart)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(
+                                width = 3.dp,
+                                height = circleSize / 2,
+                            )
+                            .background(
+                                color = Color(selectedColorScheme.value.primary),
+                                shape = RoundedCornerShape(
+                                    percent = 50,
+                                ),
+                            )
+                    )
+                }
             }
         }
     }

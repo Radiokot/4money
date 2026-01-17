@@ -25,6 +25,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,12 +34,14 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -84,18 +87,26 @@ fun ItemLogoIconPicker(
         )
     }
 
+    val columnCount = 6
+
     LazyVerticalGrid(
-        columns = GridCells.Fixed(6),
+        columns = GridCells.Fixed(columnCount),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = contentPadding,
         modifier = modifier,
     ) {
         noIconAndIcons.forEach { categoryIcons ->
-            items(
+            val selectedItemRowIndex: Int? =
+                categoryIcons
+                    .indexOf(selectedIcon.value)
+                    .takeIf { it >= 0 }
+                    ?.let { it / columnCount }
+
+            itemsIndexed(
                 items = categoryIcons,
-                key = { it?.name ?: "noicon" },
-            ) { icon ->
+                key = { _, icon -> icon?.name ?: "noicon" },
+            ) { index, icon ->
 
                 BoxWithConstraints(
                     contentAlignment = Alignment.Center,
@@ -129,6 +140,36 @@ fun ItemLogoIconPicker(
                                     width = circleSize * 0.05f,
                                     color = Color(colorScheme.value.onPrimary),
                                     shape = CircleShape,
+                                )
+                        )
+                    }
+
+                    // Indicator for a row containing selected icon.
+                    AnimatedVisibility(
+                        visible = selectedItemRowIndex != null
+                                && index % columnCount == 0
+                                && index / columnCount == selectedItemRowIndex,
+                        enter = selectionIndicatorEnterTransition,
+                        exit = selectionIndicatorExitTransition,
+                        label = "row-selection-indicator",
+                        modifier = Modifier
+                            .offset(
+                                x = (-10).dp,
+                            )
+
+                            .align(Alignment.CenterStart)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(
+                                    width = 3.dp,
+                                    height = circleSize / 2,
+                                )
+                                .background(
+                                    color = Color(colorScheme.value.primary),
+                                    shape = RoundedCornerShape(
+                                        percent = 50,
+                                    ),
                                 )
                         )
                     }
