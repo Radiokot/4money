@@ -59,7 +59,7 @@ import ua.com.radiokot.money.colors.data.ItemIconCategory
 fun ItemLogoIconPicker(
     modifier: Modifier = Modifier,
     iconCategories: List<ItemIconCategory>,
-    noIconTitle: String,
+    itemTitle: String,
     colorScheme: State<ItemColorScheme>,
     selectedIcon: State<ItemIcon?>,
     onIconClicked: (ItemIcon?) -> Unit,
@@ -101,10 +101,9 @@ fun ItemLogoIconPicker(
                     contentAlignment = Alignment.Center,
                 ) {
                     val circleSize = min(maxWidth, maxHeight)
-                    val isThisIconSelected = icon == selectedIcon.value
 
                     ItemLogo(
-                        title = noIconTitle,
+                        title = itemTitle,
                         colorScheme = colorScheme.value,
                         icon = icon,
                         shape = CircleShape,
@@ -118,7 +117,7 @@ fun ItemLogoIconPicker(
                     )
 
                     AnimatedVisibility(
-                        visible = isThisIconSelected,
+                        visible = icon == selectedIcon.value,
                         enter = selectionIndicatorEnterTransition,
                         exit = selectionIndicatorExitTransition,
                         label = "selection-indicator",
@@ -160,7 +159,7 @@ private fun Preview(
     val selectedIcon = remember { mutableStateOf<ItemIcon?>(null) }
 
     ItemLogoIconPicker(
-        noIconTitle = "My",
+        itemTitle = "My",
         iconCategories =
             DrawableResItemIconRepository()
                 .getItemIconCategories(),

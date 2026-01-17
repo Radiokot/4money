@@ -352,7 +352,7 @@ private fun Pickers(
             Page.Icon -> {
                 ItemLogoIconPicker(
                     iconCategories = iconCategories,
-                    noIconTitle = itemTitle,
+                    itemTitle = itemTitle,
                     colorScheme = selectedColorScheme,
                     selectedIcon = selectedIcon,
                     onIconClicked = onIconClicked,
@@ -365,7 +365,7 @@ private fun Pickers(
             }
 
             Page.Color -> {
-                ColorSchemePicker(
+                ItemLogoColorSchemePicker(
                     colorSchemeList = colorSchemeList,
                     selectedColorScheme = selectedColorScheme,
                     onColorSchemeClicked = onColorSchemeClicked,

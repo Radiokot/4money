@@ -22,11 +22,9 @@ package ua.com.radiokot.money.colors.view
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -52,7 +50,7 @@ import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 
 @Composable
-fun ColorSchemePicker(
+fun ItemLogoColorSchemePicker(
     modifier: Modifier = Modifier,
     colorSchemeList: State<List<ItemColorScheme>>,
     selectedColorScheme: State<ItemColorScheme>,
@@ -87,23 +85,24 @@ fun ColorSchemePicker(
             key = ItemColorScheme::name,
         ) { colorScheme ->
 
-            BoxWithConstraints {
+            BoxWithConstraints(
+                contentAlignment = Alignment.Center,
+            ) {
                 val circleSize = min(maxWidth, maxHeight)
 
-                Box(
-                    contentAlignment = Alignment.Center,
+                ItemLogo(
+                    title = "•",
+                    colorScheme = colorScheme,
+                    icon = null,
+                    shape = CircleShape,
                     modifier = Modifier
                         .size(circleSize)
-                        .background(
-                            color = Color(colorScheme.primary),
-                            shape = CircleShape,
-                        )
                         .clickable(
                             onClick = {
                                 onColorSchemeClicked(colorScheme)
                             },
                         )
-                ) {
+                )
 
                     AnimatedVisibility(
                         visible = selectedColorScheme.value == colorScheme,
@@ -113,15 +112,14 @@ fun ColorSchemePicker(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(circleSize * 0.8f)
+                                .size(circleSize * 0.86f)
                                 .border(
-                                    width = circleSize * 0.08f,
+                                    width = circleSize * 0.05f,
                                     color = Color(colorScheme.onPrimary),
                                     shape = CircleShape,
                                 )
                         )
                     }
-                }
             }
         }
     }
@@ -137,7 +135,7 @@ private fun Preview(
 
     val itemColorSchemeRepository = HardcodedItemColorSchemeRepository()
 
-    ColorSchemePicker(
+    ItemLogoColorSchemePicker(
         colorSchemeList = itemColorSchemeRepository.getItemColorSchemes().let(::mutableStateOf),
         selectedColorScheme = itemColorSchemeRepository.getItemColorSchemes()[7].let(::mutableStateOf),
         onColorSchemeClicked = {},
