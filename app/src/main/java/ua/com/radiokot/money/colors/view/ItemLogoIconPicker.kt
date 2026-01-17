@@ -19,8 +19,12 @@
 
 package ua.com.radiokot.money.colors.view
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,25 +46,42 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
-import com.composeunstyled.Icon
 import ua.com.radiokot.money.colors.data.DrawableResItemIconRepository
+import ua.com.radiokot.money.colors.data.HardcodedItemColorSchemeRepository
+import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemIcon
 import ua.com.radiokot.money.colors.data.ItemIconCategory
 
 @Composable
-fun IconPicker(
+fun ItemLogoIconPicker(
     modifier: Modifier = Modifier,
     iconCategories: List<ItemIconCategory>,
+    noIconTitle: String,
+    colorScheme: State<ItemColorScheme>,
     selectedIcon: State<ItemIcon?>,
     onIconClicked: (ItemIcon?) -> Unit,
     contentPadding: PaddingValues = PaddingValues(8.dp),
 ) {
     val noIconAndIcons = remember(iconCategories) {
         listOf(listOf<ItemIcon?>(null)) + iconCategories
+    }
+
+    val selectionIndicatorEnterTransition = remember {
+        scaleIn(
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+            )
+        )
+    }
+    val selectionIndicatorExitTransition = remember {
+        scaleOut() + fadeOut(
+            animationSpec = spring(
+                stiffness = Spring.StiffnessMedium,
+            )
+        )
     }
 
     LazyVerticalGrid(
@@ -76,57 +97,41 @@ fun IconPicker(
                 key = { it?.name ?: "noicon" },
             ) { icon ->
 
-                val isThisIconSelected = icon == selectedIcon.value
-
-                BoxWithConstraints {
+                BoxWithConstraints(
+                    contentAlignment = Alignment.Center,
+                ) {
                     val circleSize = min(maxWidth, maxHeight)
+                    val isThisIconSelected = icon == selectedIcon.value
 
-                    val backgroundColor = animateColorAsState(
-                        if (isThisIconSelected)
-                            Color.DarkGray
-                        else
-                            Color(0xFFFBEBE7)
-                    )
-
-                    val iconColor = animateColorAsState(
-                        if (isThisIconSelected)
-                            Color.White
-                        else
-                            Color.DarkGray
-                    )
-
-                    Box(
-                        contentAlignment = Alignment.Center,
+                    ItemLogo(
+                        title = noIconTitle,
+                        colorScheme = colorScheme.value,
+                        icon = icon,
+                        shape = CircleShape,
                         modifier = Modifier
                             .size(circleSize)
-                            .then(
-                                if (icon != null)
-                                    Modifier.background(
-                                        color = backgroundColor.value,
-                                        shape = CircleShape,
-                                    )
-                                else
-                                    Modifier.border(
-                                        color = backgroundColor.value,
-                                        width = circleSize * 0.08f,
-                                        shape = CircleShape,
-                                    )
-                            )
                             .clickable(
                                 onClick = {
                                     onIconClicked(icon)
                                 },
                             )
+                    )
+
+                    AnimatedVisibility(
+                        visible = isThisIconSelected,
+                        enter = selectionIndicatorEnterTransition,
+                        exit = selectionIndicatorExitTransition,
+                        label = "selection-indicator",
                     ) {
-                        if (icon != null) {
-                            Icon(
-                                painter = painterResource(icon.resId),
-                                contentDescription = icon.name,
-                                tint = iconColor.value,
-                                modifier = Modifier
-                                    .size(circleSize * 0.525f)
-                            )
-                        }
+                        Box(
+                            modifier = Modifier
+                                .size(circleSize * 0.86f)
+                                .border(
+                                    width = circleSize * 0.05f,
+                                    color = Color(colorScheme.value.onPrimary),
+                                    shape = CircleShape,
+                                )
+                        )
                     }
                 }
             }
@@ -154,9 +159,17 @@ private fun Preview(
 
     val selectedIcon = remember { mutableStateOf<ItemIcon?>(null) }
 
-    IconPicker(
-        iconCategories = DrawableResItemIconRepository().getItemIconCategories(),
+    ItemLogoIconPicker(
+        noIconTitle = "My",
+        iconCategories =
+            DrawableResItemIconRepository()
+                .getItemIconCategories(),
         selectedIcon = selectedIcon,
+        colorScheme =
+            HardcodedItemColorSchemeRepository()
+                .getItemColorSchemesByName()
+                ["Pink1"]!!
+                .let(::mutableStateOf),
         onIconClicked = { selectedIcon.value = it },
     )
 }

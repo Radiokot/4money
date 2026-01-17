@@ -168,6 +168,7 @@ private fun ItemLogoScreen(
                     colorSchemeList = colorSchemeList,
                     selectedColorScheme = selectedColorScheme,
                     onColorSchemeClicked = onColorSchemeClicked,
+                    itemTitle = itemTitle,
                     iconCategories = iconCategories,
                     selectedIcon = selectedIcon,
                     onIconClicked = onIconClicked,
@@ -193,6 +194,7 @@ private fun ItemLogoScreen(
                     colorSchemeList = colorSchemeList,
                     selectedColorScheme = selectedColorScheme,
                     onColorSchemeClicked = onColorSchemeClicked,
+                    itemTitle = itemTitle,
                     iconCategories = iconCategories,
                     selectedIcon = selectedIcon,
                     onIconClicked = onIconClicked,
@@ -260,6 +262,7 @@ private fun Pickers(
     colorSchemeList: State<List<ItemColorScheme>>,
     selectedColorScheme: State<ItemColorScheme>,
     onColorSchemeClicked: (ItemColorScheme) -> Unit,
+    itemTitle: String,
     iconCategories: List<ItemIconCategory>,
     selectedIcon: State<ItemIcon?>,
     onIconClicked: (ItemIcon?) -> Unit,
@@ -347,8 +350,10 @@ private fun Pickers(
         when (pages[pageIndex]) {
 
             Page.Icon -> {
-                IconPicker(
+                ItemLogoIconPicker(
                     iconCategories = iconCategories,
+                    noIconTitle = itemTitle,
+                    colorScheme = selectedColorScheme,
                     selectedIcon = selectedIcon,
                     onIconClicked = onIconClicked,
                     contentPadding = pickerContentPadding,

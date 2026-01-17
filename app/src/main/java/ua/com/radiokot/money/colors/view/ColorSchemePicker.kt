@@ -22,6 +22,8 @@ package ua.com.radiokot.money.colors.view
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
@@ -65,7 +67,11 @@ fun ColorSchemePicker(
         )
     }
     val selectionIndicatorExitTransition = remember {
-        scaleOut()
+        scaleOut() + fadeOut(
+            animationSpec = spring(
+                stiffness = Spring.StiffnessMedium,
+            )
+        )
     }
 
     LazyVerticalGrid(
