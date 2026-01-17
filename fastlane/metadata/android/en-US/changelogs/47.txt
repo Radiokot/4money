@@ -1,0 +1,3 @@
+Changed:
+- On the icon selection screen, icons are now shown in selected color
+- On icon and color selection screens, the row with the selected item is now highlighted
