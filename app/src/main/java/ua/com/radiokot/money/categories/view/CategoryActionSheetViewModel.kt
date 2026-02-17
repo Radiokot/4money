@@ -23,10 +23,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -36,6 +34,7 @@ import ua.com.radiokot.money.categories.logic.GetCategoryAmountsBySubcategoryUse
 import ua.com.radiokot.money.categories.logic.UnarchiveCategoryUseCase
 import ua.com.radiokot.money.colors.data.ItemColorScheme
 import ua.com.radiokot.money.colors.data.ItemIcon
+import ua.com.radiokot.money.coroutineScopeThatCancelsWith
 import ua.com.radiokot.money.currency.view.ViewAmount
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
@@ -52,32 +51,33 @@ class CategoryActionSheetViewModel(
 ) : ViewModel() {
 
     private val log by lazyLogger("CategoryActionSheetVM")
+    private val stateFlowScope = coroutineScopeThatCancelsWith(viewModelScope)
     private val categoryWithAmounts: StateFlow<CategoryWithAmountsBySubcategory> = runBlocking {
         getCategoryAmountsBySubcategoryUseCase(
             categoryId = parameters.categoryId,
             period = parameters.statsPeriod,
         )
-            .run { stateIn(viewModelScope, SharingStarted.Eagerly, first()) }
+            .stateIn(stateFlowScope)
     }
 
     private val category: StateFlow<Category> =
         categoryWithAmounts
-            .map(viewModelScope, CategoryWithAmountsBySubcategory::category)
+            .map(stateFlowScope, CategoryWithAmountsBySubcategory::category)
 
     val title: StateFlow<String> =
         category
-            .map(viewModelScope, Category::title)
+            .map(stateFlowScope, Category::title)
 
     val icon: StateFlow<ItemIcon?> =
         category
-            .map(viewModelScope, Category::icon)
+            .map(stateFlowScope, Category::icon)
 
     val statsPeriod: ViewHistoryPeriod =
         ViewHistoryPeriod.fromHistoryPeriod(parameters.statsPeriod)
 
     val statsAmount: StateFlow<ViewAmount> =
         categoryWithAmounts
-            .map(viewModelScope) { (category, amounts) ->
+            .map(stateFlowScope) { (category, amounts) ->
                 ViewAmount(
                     value = amounts.values.fold(BigInteger.ZERO, BigInteger::add),
                     currency = category.currency,
@@ -86,7 +86,7 @@ class CategoryActionSheetViewModel(
 
     val subcategoryAmounts: StateFlow<List<Pair<String?, ViewAmount>>> =
         categoryWithAmounts
-            .map(viewModelScope) { (category, amounts) ->
+            .map(stateFlowScope) { (category, amounts) ->
                 // If the only subcategory amount is uncategorized,
                 // no point in showing it as it is equal to the statsAmount.
                 if (amounts.size == 1 && amounts.containsKey(null)) {
@@ -117,11 +117,11 @@ class CategoryActionSheetViewModel(
 
     val colorScheme: StateFlow<ItemColorScheme> =
         category
-            .map(viewModelScope, Category::colorScheme)
+            .map(stateFlowScope, Category::colorScheme)
 
     val isUnarchiveVisible: StateFlow<Boolean> =
         category
-            .map(viewModelScope, Category::isArchived)
+            .map(stateFlowScope, Category::isArchived)
 
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()

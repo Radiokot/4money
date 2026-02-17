@@ -45,6 +45,7 @@ import ua.com.radiokot.money.accounts.data.AccountRepository
 import ua.com.radiokot.money.categories.data.CategoryRepository
 import ua.com.radiokot.money.categories.view.ViewSelectableSubcategoryListItem
 import ua.com.radiokot.money.colors.data.ItemColorScheme
+import ua.com.radiokot.money.coroutineScopeThatCancelsWith
 import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.lazyLogger
@@ -97,14 +98,15 @@ class TransferSheetViewModel(
         )
     private val _events: MutableSharedFlow<Event> = eventSharedFlow()
     val events = _events.asSharedFlow()
+    private val stateFlowScope = coroutineScopeThatCancelsWith(viewModelScope)
 
     val source: StateFlow<ViewTransferCounterparty> =
         _sourceCounterparty
-            .map(viewModelScope, ViewTransferCounterparty::fromCounterparty)
+            .map(stateFlowScope, ViewTransferCounterparty::fromCounterparty)
 
     val destination: StateFlow<ViewTransferCounterparty> =
         _destinationCounterparty
-            .map(viewModelScope, ViewTransferCounterparty::fromCounterparty)
+            .map(stateFlowScope, ViewTransferCounterparty::fromCounterparty)
 
     val subcategoryItemList: StateFlow<List<ViewSelectableSubcategoryListItem>> =
         combine(
@@ -133,7 +135,7 @@ class TransferSheetViewModel(
                     }
 
             }
-            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+            .stateIn(stateFlowScope, SharingStarted.Lazily, emptyList())
 
     val subcategoriesColorScheme: StateFlow<ItemColorScheme?> =
         combine(
@@ -147,7 +149,7 @@ class TransferSheetViewModel(
                 categoryCounterparty.category.colorScheme
             }
         )
-            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+            .stateIn(stateFlowScope, SharingStarted.Lazily, null)
 
     val isSourceInputShown: StateFlow<Boolean> =
         // Only require source input if currencies are different.
@@ -158,7 +160,7 @@ class TransferSheetViewModel(
                 source.currency != destination.currency
             }
         )
-            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+            .run { runBlocking { stateIn(stateFlowScope) } }
 
     val isSwapCounterpartiesShown: Boolean
         get() = _sourceCounterparty.value is TransferCounterparty.Account &&
@@ -170,7 +172,7 @@ class TransferSheetViewModel(
 
     val date: StateFlow<ViewDate> =
         dateTime
-            .map(viewModelScope, ::ViewDate)
+            .map(stateFlowScope, ::ViewDate)
 
     // Reset amounts if counterparty currency changes.
     init {
