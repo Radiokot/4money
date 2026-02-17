@@ -113,6 +113,50 @@ class PowerSyncHistoryStatsRepository(
                 dailyAmountsByCategoryId
             }
             .flowOn(Dispatchers.Default)
+
+    override fun getCategoryAmountsBySubcategoryFlow(
+        categoryId: String,
+        isIncome: Boolean,
+        period: HistoryPeriod,
+    ): Flow<CategoryAmountsBySubcategoryId> =
+        database
+            .watch(
+                sql =
+                    if (isIncome)
+                        SELECT_FOR_INCOME_CATEGORY
+                    else
+                        SELECT_FOR_EXPENSE_CATEGORY,
+                parameters = listOf(
+                    categoryId,
+                    categoryId,
+                    period.startInclusive.toDbDayString(),
+                    period.endExclusive.toDbDayString(),
+                ),
+                mapper = { sqlCursor ->
+                    // Transfer counterparty is either a subcategory
+                    // or the category itself when no subcategory has been selected.
+                    val categoryOrSubcategoryId =
+                        sqlCursor.getString(TRANSFER_SELECTED_COUNTERPARTY_ID)
+                    val subcategoryId =
+                        if (categoryOrSubcategoryId == categoryId)
+                            null
+                        else
+                            categoryOrSubcategoryId
+                    subcategoryId to sqlCursor.getString(TRANSFER_SELECTED_AMOUNT).trim()
+                }
+            )
+            .map { transfersToSum ->
+                val amountsBySubcategoryId = mutableMapOf<String?, BigInteger>()
+
+                transfersToSum.forEach { (subcategoryId, stringAmount) ->
+                    amountsBySubcategoryId.compute(subcategoryId) { _, total ->
+                        (total ?: BigInteger.ZERO) + BigInteger(stringAmount)
+                    }
+                }
+
+                amountsBySubcategoryId
+            }
+            .flowOn(Dispatchers.Default)
 }
 
 private const val TRANSFER_SELECTED_COUNTERPARTY_ID = "transferCounterpartyId"
@@ -122,6 +166,10 @@ private const val TRANSFER_SELECTED_DAY_STRING = "transferDay"
 private const val TRANSFER_DAY_IN_PERIOD =
     "$TRANSFER_SELECTED_DAY_STRING >= ? " +
             "AND $TRANSFER_SELECTED_DAY_STRING < ?"
+
+private const val SELECT_CATEGORY_AND_ITS_SUBCATEGORY_IDS =
+    "SELECT ${DbSchema.ID} FROM ${DbSchema.CATEGORIES_TABLE} " +
+            "WHERE ${DbSchema.ID} = ? OR ${DbSchema.CATEGORY_PARENT_ID} = ?"
 
 private const val SELECT_FOR_INCOME_CATEGORIES =
     "SELECT " +
@@ -135,6 +183,15 @@ private const val SELECT_FOR_INCOME_CATEGORIES =
             "AND $TRANSFER_SELECTED_COUNTERPARTY_ID = ${DbSchema.CATEGORIES_TABLE}.${DbSchema.ID} " +
             "AND $TRANSFER_DAY_IN_PERIOD"
 
+private const val SELECT_FOR_INCOME_CATEGORY =
+    "SELECT " +
+            "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_SOURCE_ID} as $TRANSFER_SELECTED_COUNTERPARTY_ID, " +
+            "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_SOURCE_AMOUNT} as $TRANSFER_SELECTED_AMOUNT, " +
+            "substr(${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_TIME}, 1, 10) as $TRANSFER_SELECTED_DAY_STRING " +
+            "FROM ${DbSchema.TRANSFERS_TABLE} " +
+            "WHERE $TRANSFER_SELECTED_COUNTERPARTY_ID in ($SELECT_CATEGORY_AND_ITS_SUBCATEGORY_IDS) " +
+            "AND $TRANSFER_DAY_IN_PERIOD"
+
 private const val SELECT_FOR_EXPENSE_CATEGORIES =
     "SELECT " +
             "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_DESTINATION_ID} as $TRANSFER_SELECTED_COUNTERPARTY_ID, " +
@@ -145,4 +202,13 @@ private const val SELECT_FOR_EXPENSE_CATEGORIES =
             "WHERE $TRANSFER_SELECTED_COUNTERPARTY_ID in " +
             "(SELECT ${DbSchema.ID} FROM ${DbSchema.CATEGORIES_TABLE} WHERE ${DbSchema.CATEGORY_IS_INCOME} = 0) " +
             "AND $TRANSFER_SELECTED_COUNTERPARTY_ID = ${DbSchema.CATEGORIES_TABLE}.${DbSchema.ID} " +
+            "AND $TRANSFER_DAY_IN_PERIOD"
+
+private const val SELECT_FOR_EXPENSE_CATEGORY =
+    "SELECT " +
+            "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_DESTINATION_ID} as $TRANSFER_SELECTED_COUNTERPARTY_ID, " +
+            "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_DESTINATION_AMOUNT} as $TRANSFER_SELECTED_AMOUNT, " +
+            "substr(${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_TIME}, 1, 10) as $TRANSFER_SELECTED_DAY_STRING " +
+            "FROM ${DbSchema.TRANSFERS_TABLE} " +
+            "WHERE $TRANSFER_SELECTED_COUNTERPARTY_ID in ($SELECT_CATEGORY_AND_ITS_SUBCATEGORY_IDS) " +
             "AND $TRANSFER_DAY_IN_PERIOD"

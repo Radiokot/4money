@@ -30,6 +30,7 @@ import ua.com.radiokot.money.categories.logic.ArchiveCategoryUseCase
 import ua.com.radiokot.money.categories.logic.EditCategoryUseCase
 import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountUseCase
 import ua.com.radiokot.money.categories.logic.GetCategoriesWithAmountsAndTotalUseCase
+import ua.com.radiokot.money.categories.logic.GetCategoryAmountsBySubcategoryUseCase
 import ua.com.radiokot.money.categories.logic.PowerSyncAddCategoryUseCase
 import ua.com.radiokot.money.categories.logic.PowerSyncEditCategoryUseCase
 import ua.com.radiokot.money.categories.logic.UnarchiveCategoryUseCase
@@ -73,6 +74,13 @@ val categoriesModule = module {
                 historyStatsRepository = get(),
             )
         } bind GetCategoriesWithAmountsAndTotalUseCase::class
+
+        scoped {
+            GetCategoryAmountsBySubcategoryUseCase(
+                categoryRepository = get(),
+                historyStatsRepository = get(),
+            )
+        } bind GetCategoryAmountsBySubcategoryUseCase::class
 
         viewModel { parameters ->
             CategoriesScreenViewModel(
@@ -140,7 +148,7 @@ val categoriesModule = module {
                 parameters = checkNotNull(getOrNull()) {
                     "CategoryActionSheetViewModel.Parameters are required"
                 },
-                getCategoriesWithAmountUseCase = get(),
+                getCategoryAmountsBySubcategoryUseCase = get(),
                 unarchiveCategoryUseCase = get(),
             )
         } bind CategoryActionSheetViewModel::class

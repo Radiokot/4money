@@ -22,6 +22,7 @@ package ua.com.radiokot.money.categories.view
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,12 +40,12 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -73,6 +74,7 @@ fun CategoryActionSheetRoot(
     CategoryActionSheet(
         statsPeriod = viewModel.statsPeriod,
         statsAmount = viewModel.statsAmount.collectAsState(),
+        subcategoryAmounts = viewModel.subcategoryAmounts.collectAsState(),
         colorScheme = viewModel.colorScheme.collectAsState(),
         title = viewModel.title.collectAsState(),
         icon = viewModel.icon.collectAsState(),
@@ -89,6 +91,7 @@ private fun CategoryActionSheet(
     modifier: Modifier = Modifier,
     statsPeriod: ViewHistoryPeriod,
     statsAmount: State<ViewAmount>,
+    subcategoryAmounts: State<List<Pair<String?, ViewAmount>>>,
     colorScheme: State<ItemColorScheme>,
     title: State<String>,
     icon: State<ItemIcon?>,
@@ -105,6 +108,7 @@ private fun CategoryActionSheet(
     Header(
         statsPeriod = statsPeriod,
         statsAmount = statsAmount,
+        subcategoryAmounts = subcategoryAmounts,
         colorScheme = colorScheme,
         title = title,
         icon = icon,
@@ -156,6 +160,7 @@ private fun Header(
     modifier: Modifier = Modifier,
     statsPeriod: ViewHistoryPeriod,
     statsAmount: State<ViewAmount>,
+    subcategoryAmounts: State<List<Pair<String?, ViewAmount>>>,
     colorScheme: State<ItemColorScheme>,
     title: State<String>,
     icon: State<ItemIcon?>,
@@ -201,16 +206,17 @@ private fun Header(
 
     Spacer(modifier = Modifier.height(8.dp))
 
+    val locale = LocalConfiguration.current.locales[0]
+    val amountFormat = remember(locale) {
+        ViewAmountFormat(locale)
+    }
+
     Row {
         Text(
             text = statsPeriod.getText(),
             color = textColor,
+            fontSize = 18.sp,
         )
-
-        val locale = LocalConfiguration.current.locales[0]
-        val amountFormat = remember(locale) {
-            ViewAmountFormat(locale)
-        }
 
         Text(
             text = amountFormat(
@@ -218,9 +224,52 @@ private fun Header(
                 customColor = textColor,
             ),
             textAlign = TextAlign.End,
+            fontSize = 18.sp,
             modifier = Modifier
                 .weight(1f)
         )
+    }
+
+    if (subcategoryAmounts.value.isNotEmpty()) {
+        Box(
+            modifier = Modifier
+                .padding(
+                    vertical = 8.dp,
+                )
+                .height(1.dp)
+                .fillMaxWidth()
+                .background(textColor)
+        )
+
+        subcategoryAmounts.value.forEachIndexed { i, (title, amount) ->
+            key(i, title) {
+                Row(
+                    modifier = Modifier
+                        .padding(
+                            top =
+                                if (i != 0)
+                                    4.dp
+                                else
+                                    0.dp
+                        )
+                ) {
+                    Text(
+                        text = title ?: "Other",
+                        color = textColor,
+                    )
+
+                    Text(
+                        text = amountFormat(
+                            amount = amount,
+                            customColor = textColor,
+                        ),
+                        textAlign = TextAlign.End,
+                        modifier = Modifier
+                            .weight(1f)
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -241,6 +290,22 @@ private fun Preview(
                 symbol = "$",
                 precision = 2,
             )
+        ).let(::mutableStateOf),
+        subcategoryAmounts = listOf(
+            "Pharmacy" to ViewAmount(
+                value = BigInteger("10000"),
+                currency = ViewCurrency(
+                    symbol = "$",
+                    precision = 2,
+                )
+            ),
+            null to ViewAmount(
+                value = BigInteger("5000"),
+                currency = ViewCurrency(
+                    symbol = "$",
+                    precision = 2,
+                )
+            ),
         ).let(::mutableStateOf),
         colorScheme = HardcodedItemColorSchemeRepository()
             .getItemColorSchemesByName()

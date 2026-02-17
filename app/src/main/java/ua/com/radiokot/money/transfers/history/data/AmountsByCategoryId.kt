@@ -31,3 +31,9 @@ typealias AmountsByCategoryId = Map<String, BigInteger>
  * there's a map of total transfer amounts by day in YYYY-MM-DD format.
  */
 typealias DailyAmountsByCategoryId = Map<String, Map<String, BigInteger>>
+
+/**
+ * For each present subcategory ID there's a total transfer amount,
+ * and the `null` key is for the transfers without a subcategory.
+ */
+typealias CategoryAmountsBySubcategoryId = Map<String?, BigInteger>

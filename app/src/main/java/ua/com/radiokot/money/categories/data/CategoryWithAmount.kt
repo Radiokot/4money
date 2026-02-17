@@ -36,3 +36,11 @@ class CategoriesWithAmountAndTotal(
     val categories: List<CategoryWithAmount>,
     val period: HistoryPeriod,
 )
+
+data class CategoryWithAmountsBySubcategory(
+    val category: Category,
+    /**
+     * The `null` key is for transfers without subcategory.
+     */
+    val amountBySubcategory: Map<Subcategory?, BigInteger>,
+)
