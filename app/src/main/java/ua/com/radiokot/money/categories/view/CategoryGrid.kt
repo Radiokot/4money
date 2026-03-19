@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
@@ -117,6 +118,17 @@ fun CategoryGrid(
                     onItemLongClicked = onItemLongClicked,
                 )
             }
+        }
+    }
+
+    // Ensure the archive is visible when expanded.
+    LaunchedEffect(isArchiveExpanded.value) {
+        if (isArchiveExpanded.value) {
+            var firstArchivedItemIndex = visibleItemList.value.size + 1
+            if (isAddShown) {
+                firstArchivedItemIndex++
+            }
+            gridState.animateScrollToItem(firstArchivedItemIndex)
         }
     }
 }
