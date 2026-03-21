@@ -19,6 +19,9 @@
 
 package ua.com.radiokot.money.preferences.view
 
+import android.app.Activity
+import androidx.activity.compose.LocalActivity
+import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +38,7 @@ fun NavGraphBuilder.preferencesScreen(
     onSignedOut: () -> Unit,
 ) = composable(PreferencesScreenRoute) {
 
+    val activity: Activity? = LocalActivity.current
     val viewModel = koinViewModel<PreferencesScreenViewModel>()
 
     LaunchedEffect(viewModel) {
@@ -45,6 +49,21 @@ fun NavGraphBuilder.preferencesScreen(
 
                 PreferencesScreenViewModel.Event.SignedOut ->
                     onSignedOut()
+
+                PreferencesScreenViewModel.Event.ProceedToSignOutConfirmation -> {
+                    checkNotNull(activity) {
+                        "The screen must have an activity to proceed"
+                    }
+
+                    AlertDialog.Builder(activity)
+                        .setTitle("Sign out")
+                        .setMessage("Are you sure you want to sign out?")
+                        .setPositiveButton("Yes") { _, _ ->
+                            viewModel.onSignOutConfirmed()
+                        }
+                        .setNegativeButton("No", null)
+                        .show()
+                }
             }
         }
     }

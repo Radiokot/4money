@@ -95,6 +95,10 @@ class PreferencesScreenViewModel(
     }
 
     fun onSignOutClicked() {
+        _events.tryEmit(Event.ProceedToSignOutConfirmation)
+    }
+
+    fun onSignOutConfirmed() {
         signOut()
     }
 
@@ -160,5 +164,10 @@ class PreferencesScreenViewModel(
 
         object ProceedToPasscodeSetup : Event
         object SignedOut : Event
+
+        /**
+         * Pass the confirmation to [onSignOutConfirmed].
+         */
+        object ProceedToSignOutConfirmation : Event
     }
 }
