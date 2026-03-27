@@ -111,6 +111,9 @@ class AccountsViewModel(
 
                         totalInThisCurrency to totalInPrimaryCurrency
                     }
+                    .filter { (totalInThisCurrency, _) ->
+                        totalInThisCurrency.value.signum() != 0
+                    }
             }
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
