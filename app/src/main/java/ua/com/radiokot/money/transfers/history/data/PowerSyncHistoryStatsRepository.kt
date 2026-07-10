@@ -157,6 +157,50 @@ class PowerSyncHistoryStatsRepository(
                 amountsBySubcategoryId
             }
             .flowOn(Dispatchers.Default)
+
+    override fun getAccountTotalIncomeAndExpense(
+        accountId: String,
+        period: HistoryPeriod,
+    ): Flow<TotalIncomeAndExpense> =
+        database
+            .watch(
+                sql = SELECT_FOR_COUNTERPARTY,
+                parameters = listOf(
+                    accountId,
+                    accountId,
+                    period.startInclusive.toDbDayString(),
+                    period.endExclusive.toDbDayString(),
+                ),
+                mapper = { sqlCursor ->
+                    val transferSourceAmount =
+                        sqlCursor.getString(DbSchema.TRANSFER_SOURCE_AMOUNT)
+                    val transferDestinationId =
+                        sqlCursor.getString(DbSchema.TRANSFER_DESTINATION_ID)
+                    val transferDestinationAmount =
+                        sqlCursor.getString(DbSchema.TRANSFER_DESTINATION_AMOUNT)
+
+                    if (transferDestinationId in accountId) {
+                        true to transferDestinationAmount
+                    } else {
+                        false to transferSourceAmount
+                    }
+                },
+            )
+            .map { amountsToSum ->
+                var income = BigInteger.ZERO
+                var expense = BigInteger.ZERO
+
+                amountsToSum.forEach { (isIncome, amountString) ->
+                    if (isIncome) {
+                        income += BigInteger(amountString)
+                    } else {
+                        expense += BigInteger(amountString)
+                    }
+                }
+
+                TotalIncomeAndExpense(income to expense)
+            }
+            .flowOn(Dispatchers.Default)
 }
 
 private const val TRANSFER_SELECTED_COUNTERPARTY_ID = "transferCounterpartyId"
@@ -211,4 +255,14 @@ private const val SELECT_FOR_EXPENSE_CATEGORY =
             "substr(${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_TIME}, 1, 10) as $TRANSFER_SELECTED_DAY_STRING " +
             "FROM ${DbSchema.TRANSFERS_TABLE} " +
             "WHERE $TRANSFER_SELECTED_COUNTERPARTY_ID in ($SELECT_CATEGORY_AND_ITS_SUBCATEGORY_IDS) " +
+            "AND $TRANSFER_DAY_IN_PERIOD"
+
+private const val SELECT_FOR_COUNTERPARTY =
+    "SELECT " +
+            "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_SOURCE_AMOUNT}, " +
+            "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_DESTINATION_ID}, " +
+            "${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_DESTINATION_AMOUNT}, " +
+            "substr(${DbSchema.TRANSFERS_TABLE}.${DbSchema.TRANSFER_TIME}, 1, 10) as $TRANSFER_SELECTED_DAY_STRING " +
+            "FROM ${DbSchema.TRANSFERS_TABLE} " +
+            "WHERE (${DbSchema.TRANSFER_SOURCE_ID} = ? OR ${DbSchema.TRANSFER_DESTINATION_ID} = ?) " +
             "AND $TRANSFER_DAY_IN_PERIOD"

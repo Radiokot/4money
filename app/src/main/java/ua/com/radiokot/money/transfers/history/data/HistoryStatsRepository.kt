@@ -47,4 +47,13 @@ interface HistoryStatsRepository {
         isIncome: Boolean,
         period: HistoryPeriod,
     ): Flow<CategoryAmountsBySubcategoryId>
+
+    /**
+     * @return Total of income and expense for the account for the [period].
+     * All non-negative.
+     */
+    fun getAccountTotalIncomeAndExpense(
+        accountId: String,
+        period: HistoryPeriod,
+    ): Flow<TotalIncomeAndExpense>
 }

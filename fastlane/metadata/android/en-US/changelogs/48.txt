@@ -1,2 +1,0 @@
-Added:
-- Amount breakdown by subcategory on the category details sheet

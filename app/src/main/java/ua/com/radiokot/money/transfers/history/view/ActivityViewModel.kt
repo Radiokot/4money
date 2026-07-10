@@ -32,24 +32,30 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
+import ua.com.radiokot.money.currency.view.ViewCurrency
 import ua.com.radiokot.money.eventSharedFlow
 import ua.com.radiokot.money.isSameDayAs
 import ua.com.radiokot.money.lazyLogger
 import ua.com.radiokot.money.map
 import ua.com.radiokot.money.transfers.data.Transfer
+import ua.com.radiokot.money.transfers.data.TransferCounterparty
+import ua.com.radiokot.money.transfers.history.data.HistoryStatsRepository
 import ua.com.radiokot.money.transfers.history.data.TransferHistoryRepository
 import ua.com.radiokot.money.transfers.logic.RevertTransferUseCase
 import ua.com.radiokot.money.transfers.view.ViewDate
@@ -66,6 +72,7 @@ class ActivityViewModel(
     historyStatsPeriodViewModel: HistoryStatsPeriodViewModel,
     private val activityFilterViewModelDelegate: ActivityFilterViewModelDelegate,
     private val transferHistoryRepository: TransferHistoryRepository,
+    private val historyStatsRepository: HistoryStatsRepository,
     private val revertTransferUseCase: RevertTransferUseCase,
 ) : ViewModel(),
     HistoryStatsPeriodViewModel by historyStatsPeriodViewModel,
@@ -145,6 +152,33 @@ class ActivityViewModel(
                     .map { it.first }
             }
             .flowOn(Dispatchers.Default)
+
+    val totalIncomeAndExpense: StateFlow<ViewTotalIncomeAndExpense?> =
+        combine(
+            historyStatsPeriod,
+            activityFilterViewModelDelegate.activityFilterTransferCounterparties,
+            transform = ::Pair
+        )
+            .flatMapLatest { (period, counterparties) ->
+                val accountCounterparty =
+                    counterparties
+                        ?.first() as? TransferCounterparty.Account
+                        ?: return@flatMapLatest flowOf(null)
+
+                historyStatsRepository
+                    .getAccountTotalIncomeAndExpense(
+                        accountId = accountCounterparty.id.toString(),
+                        period = period,
+                    )
+                    .map { incomeAndExpense ->
+                        ViewTotalIncomeAndExpense(
+                            income = incomeAndExpense.income,
+                            expense = incomeAndExpense.expense,
+                            currency = ViewCurrency(accountCounterparty.account.currency),
+                        )
+                    }
+            }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun onTransferItemClicked(item: ViewTransferListItem.Transfer) {
         val transfer = item.source

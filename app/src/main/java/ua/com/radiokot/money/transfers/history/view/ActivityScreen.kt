@@ -32,13 +32,17 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import ua.com.radiokot.money.currency.view.ViewAmountFormat
 import ua.com.radiokot.money.transfers.view.TransferList
 import ua.com.radiokot.money.transfers.view.ViewTransferCounterparty
 import ua.com.radiokot.money.transfers.view.ViewTransferListItem
@@ -48,6 +52,7 @@ fun ActivityScreenRoot(
     modifier: Modifier = Modifier,
     viewModel: ActivityViewModel,
 ) = ActivityScreen(
+    totalIncomeAndExpense = viewModel.totalIncomeAndExpense.collectAsState(),
     itemPagingFlow = viewModel.transferItemPagingFlow,
     onTransferItemClicked = remember { viewModel::onTransferItemClicked },
     onTransferItemLongClicked = remember { viewModel::onTransferItemLongClicked },
@@ -66,6 +71,7 @@ fun ActivityScreenRoot(
 @Composable
 private fun ActivityScreen(
     modifier: Modifier = Modifier,
+    totalIncomeAndExpense: State<ViewTotalIncomeAndExpense?>,
     itemPagingFlow: Flow<PagingData<ViewTransferListItem>>,
     onTransferItemClicked: (ViewTransferListItem.Transfer) -> Unit,
     onTransferItemLongClicked: (ViewTransferListItem.Transfer) -> Unit,
@@ -110,6 +116,55 @@ private fun ActivityScreen(
                     if (i != counterparties.value.size - 1) {
                         append(", ")
                     }
+                }
+            },
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontStyle = FontStyle.Italic,
+                textAlign = TextAlign.Center,
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 8.dp,
+                )
+        )
+    }
+
+    val totalIncomeAndExpense = totalIncomeAndExpense.value
+    if (totalIncomeAndExpense != null) {
+        val locale = LocalConfiguration.current.locales.get(0)
+        val amountFormat = remember(locale) {
+            ViewAmountFormat(locale)
+        }
+
+        BasicText(
+            text = buildAnnotatedString {
+                if (totalIncomeAndExpense.income.signum() > 0) {
+                    append("In ")
+                    append(
+                        amountFormat(
+                            value = totalIncomeAndExpense.income,
+                            currency = totalIncomeAndExpense.currency,
+                            customColor = Color.Unspecified,
+                        )
+                    )
+                }
+
+                if (totalIncomeAndExpense.expense.signum() > 0) {
+                    if (totalIncomeAndExpense.income.signum() > 0) {
+                        append("  ")
+                    }
+                    append("Out ")
+                    append(
+                        amountFormat(
+                            value = totalIncomeAndExpense.expense,
+                            currency = totalIncomeAndExpense.currency,
+                            customColor = Color.Unspecified,
+                        )
+                    )
                 }
             },
             style = TextStyle(

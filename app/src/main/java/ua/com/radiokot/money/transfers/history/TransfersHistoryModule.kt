@@ -61,6 +61,7 @@ val transfersHistoryModule = module {
                             "to share the same instance"
                 },
                 transferHistoryRepository = get(),
+                historyStatsRepository = get(),
                 revertTransferUseCase = get(),
             )
         } bind ActivityViewModel::class

@@ -1,0 +1,2 @@
+Added:
+- Display of total In and Out for an account when browsing its activity
