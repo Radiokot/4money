@@ -20,12 +20,12 @@
 package ua.com.radiokot.money.powersync
 
 import com.powersync.PowerSyncDatabase
+import com.powersync.PowerSyncException
 import com.powersync.connectors.PowerSyncBackendConnector
 import com.powersync.connectors.PowerSyncCredentials
 import com.powersync.db.crud.CrudEntry
 import com.powersync.db.crud.CrudTransaction
 import com.powersync.db.crud.UpdateType
-import com.powersync.db.runWrapped
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.annotations.SupabaseInternal
 import io.github.jan.supabase.auth.Auth
@@ -37,6 +37,7 @@ import io.github.jan.supabase.postgrest.rpc
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.plugin
 import io.ktor.client.statement.bodyAsText
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -213,6 +214,11 @@ class AtomicCrudSupabaseConnector(
             }
             transaction.complete(null)
         } catch (e: Exception) {
+
+            if (e is CancellationException) {
+                throw e
+            }
+
             if (errorCode != null && PostgresFatalCodes.isFatalError(errorCode.toString())) {
                 /**
                  * Instead of blocking the queue with these errors,
@@ -263,7 +269,7 @@ class AtomicCrudSupabaseConnector(
             transfersCrudEntry != null
                     && transfersCrudEntry.op == UpdateType.PUT
                     && transfersCrudEntry.metadata == SPECIAL_TRANSACTION_TRANSFER
-            -> {
+                -> {
                 supabaseClient.postgrest.rpc(
                     function = "transfer",
                     parameters = TransferInput(transfersCrudEntry),
@@ -274,7 +280,7 @@ class AtomicCrudSupabaseConnector(
             transfersCrudEntry != null
                     && transfersCrudEntry.op == UpdateType.PUT
                     && transfersCrudEntry.metadata == SPECIAL_TRANSACTION_TRANSFER_EDIT
-            -> {
+                -> {
                 supabaseClient.postgrest.rpc(
                     function = "transfer_edit",
                     parameters = TransferInput(transfersCrudEntry),
@@ -284,7 +290,7 @@ class AtomicCrudSupabaseConnector(
 
             transfersCrudEntry != null
                     && transfersCrudEntry.op == UpdateType.DELETE
-            -> {
+                -> {
                 supabaseClient.postgrest.rpc(
                     function = "transfer_revert",
                     parameters = JsonObject(
@@ -299,6 +305,23 @@ class AtomicCrudSupabaseConnector(
 
         return false
     }
+
+    private inline fun <R> runWrapped(block: () -> R): R =
+        try {
+            block()
+        } catch (t: Throwable) {
+            if (t is CancellationException) {
+                throw t
+            }
+
+            if (t is PowerSyncException) {
+                log.error(t) { "PowerSync exception" }
+                throw t
+            } else {
+                log.error(t) { "other exception" }
+                throw PowerSyncException(t.message ?: "Unknown internal exception", t)
+            }
+        }
 
     companion object {
         const val SPECIAL_TRANSACTION_TRANSFER = "transfer"

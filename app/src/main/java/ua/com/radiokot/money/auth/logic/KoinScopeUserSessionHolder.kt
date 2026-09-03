@@ -27,8 +27,7 @@ import org.koin.android.ext.android.getKoin
 import org.koin.androidx.scope.createActivityScope
 import org.koin.androidx.scope.createFragmentScope
 import org.koin.compose.ComposeContextWrapper
-import org.koin.compose.LocalKoinApplication
-import org.koin.compose.LocalKoinScope
+import org.koin.compose.LocalKoinScopeContext
 import org.koin.core.Koin
 import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.module.Module
@@ -97,12 +96,9 @@ fun UserSessionScope(
 ) {
     val koin = KoinPlatform.getKoin()
     CompositionLocalProvider(
-        LocalKoinApplication.provides(ComposeContextWrapper(koin)),
-        LocalKoinScope.provides(
-            ComposeContextWrapper(
-                koin.getScopeOrNull(DI_SCOPE_SESSION)
-                    ?: koin.scopeRegistry.rootScope
-            )
+        LocalKoinScopeContext provides ComposeContextWrapper(
+            koin.getScopeOrNull(DI_SCOPE_SESSION)
+                ?: koin.scopeRegistry.rootScope
         ),
         content = content,
     )
