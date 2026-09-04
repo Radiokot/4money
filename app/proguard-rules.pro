@@ -38,3 +38,7 @@
 -keep class org.slf4j.** { *; }
 -keep class io.github.oshai.** { *; }
 -dontwarn com.oracle.svm.core.annotate.**
+
+# Keep original PowerSync enums
+# https://github.com/powersync-ja/powersync-kotlin/issues/377
+-keep enum com.powersync.** { *; }
