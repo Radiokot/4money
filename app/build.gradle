@@ -27,8 +27,8 @@ android {
         targetSdk 36
         minSdk 26
 
-        versionCode 49
-        versionName "0.31.0"
+        versionCode 50
+        versionName "0.31.1"
 
         resConfigs "en"
 
